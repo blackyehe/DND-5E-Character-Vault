@@ -1,0 +1,106 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-parchment: #f4ead5;
+  --color-parchment-dark: #e6d7b8;
+  --color-ink: #2b2118;
+  --color-ink-soft: #5a4a38;
+  --color-blood: #8b1a1a;
+  --color-blood-soft: #b23a3a;
+  --color-gold: #b8860b;
+  --color-gold-soft: #d4a843;
+  --color-forest: #2f5d3a;
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-body: 'Segoe UI', system-ui, sans-serif;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-ink);
+  color: var(--color-parchment);
+  margin: 0;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* utility classes reused across sheet */
+.sheet-tab {
+  padding: 0.5rem 1.25rem;
+  border-bottom: 3px solid transparent;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.sheet-tab:hover {
+  color: var(--color-gold-soft);
+}
+.sheet-tab.active {
+  border-bottom-color: var(--color-gold);
+  color: var(--color-gold-soft);
+}
+
+.panel {
+  background: linear-gradient(180deg, #3a2e22 0%, #2f2519 100%);
+  border: 1px solid #4a3c2a;
+  border-radius: 0.5rem;
+}
+
+.input-base {
+  background: #1e1811;
+  border: 1px solid #4a3c2a;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  color: var(--color-parchment);
+  width: 100%;
+}
+.input-base:focus {
+  outline: none;
+  border-color: var(--color-gold);
+}
+
+.btn-primary {
+  background: var(--color-blood);
+  color: var(--color-parchment);
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.375rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btn-primary:hover {
+  background: var(--color-blood-soft);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  border: 1px solid #4a3c2a;
+  color: var(--color-parchment);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.btn-ghost:hover {
+  border-color: var(--color-gold);
+}
+
+.label-micro {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-ink-soft);
+  font-weight: 600;
+}

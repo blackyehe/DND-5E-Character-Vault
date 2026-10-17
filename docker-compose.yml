@@ -1,0 +1,31 @@
+services:
+  db:
+    image: ghcr.io/5e-bits/5e-database:v4.7.0
+    ports: ['27017:27017']
+    volumes: [mongo-data:/data/db2]
+    healthcheck:
+      test: ['CMD', 'curl', '--connect-timeout', '10', '--silent', '--fail', 'http://localhost:27017']
+      interval: 5s
+
+  cache:
+    image: redis:6.2.5
+    ports: ['6379:6379']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+
+  srd-api:
+    image: ghcr.io/5e-bits/5e-srd-api:v5.11.0
+    ports: ['3000:3000']
+    environment:
+      MONGODB_URI: mongodb://db/5e-database
+      REDIS_URL: redis://cache:6379
+      NODE_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
