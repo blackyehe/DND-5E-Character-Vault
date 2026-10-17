@@ -96,6 +96,35 @@ If it fails (schema filtering, caching, etc.), fall back to merged
 list-endpoints on our own API (`/api/content/:type` = SRD + custom) **before**
 building the content pickers around either path.
 
+### Go/no-go result (verified 2026-10-17): **GO**
+
+- The seeded database prefixes all collections by rules version (`2014-spells`,
+  `2024-spells`, `2014-classes`, …). There is **no** bare `spells` collection —
+  the API maps `/api/2014/spells` to the `2014-spells` collection.
+- Inserted a test spell doc into `5e-database`.`2014-spells` via `mongosh` in the
+  `db` container, flushed Redis and restarted `srd-api` so nothing was served from
+  cache. Both routes returned **200**:
+  - `GET /api/2014/spells/zz-test-homebrew-spell` (detail)
+  - `GET /api/2014/spells?name=Zz%20Test` (list, `count: 1`)
+- **Decision: custom spells are inserted directly into the SRD `2014-spells`
+  collection** and served by the official API for free. No merged-endpoint
+  fallback is required for spells.
+- **Caveat for the content system**: because list responses are served from
+  Redis and the SRD API prewarms its cache on every container start, a freshly
+  inserted custom spell may not appear in *cached list* responses until the
+  `srd-api` container is restarted (or its Redis keys flushed). Detail routes
+  resolve per-request and are not affected. The already-built content routes
+  (`/api/content/spells` on our own API, `dnd_site`.`customcontents`) remain a
+  valid store for custom spells; sync them into `2014-spells` when the user
+  wants them SRD-served, or keep them app-side — both paths are viable.
+- **Backgrounds/feats DO have SRD API routes** (`GET /api/2014/backgrounds`,
+  `/api/2014/feats`), but coverage is thin (1 each in the seed: "Acolyte" and
+  "Grappler"). Our own `/api/content/:type` custom-content store complements
+  these; the pickers should merge SRD + custom for backgrounds/feats rather than
+  assume one source. (Earlier plan text saying the API "has no" backgrounds/feats
+  endpoints was inaccurate — corrected here.)
+- The test spell was deleted and Redis flushed after verification.
+
 ## Repo layout
 
 ```
