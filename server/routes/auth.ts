@@ -5,18 +5,19 @@ import jwt from 'jsonwebtoken'
 import { User } from '../models/User'
 import { env } from '../env'
 import { requireAuth } from '../middleware/auth'
+import { requestLimit } from '../middleware/request-limit'
 
 const router = Router()
 
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  displayName: z.string().min(1).max(64),
+  email: z.string().trim().toLowerCase().email().max(254),
+  password: z.string().min(8).refine(value => Buffer.byteLength(value, 'utf8') <= 72, 'Password must be 72 bytes or shorter'),
+  displayName: z.string().trim().min(1).max(64),
 })
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
+  email: z.string().trim().toLowerCase().email().max(254),
+  password: z.string().max(256),
 })
 
 function setTokenCookie(res: Response, userId: string) {
@@ -30,7 +31,7 @@ function setTokenCookie(res: Response, userId: string) {
   })
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', requestLimit('register', 10, 3600), async (req, res) => {
   const parsed = registerSchema.safeParse(req.body)
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() })
@@ -46,7 +47,7 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ id: user.id, email: user.email, displayName: user.displayName })
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', requestLimit('login', 30, 900), async (req, res) => {
   const parsed = loginSchema.safeParse(req.body)
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid input' })

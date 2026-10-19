@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const mode = ref<'login' | 'register'>('login')
 const email = ref('')
@@ -22,7 +23,8 @@ async function submit() {
     } else {
       await auth.register(email.value, password.value, displayName.value)
     }
-    router.push({ name: 'dashboard' })
+    const next = typeof route.query.next === 'string' ? route.query.next : ''
+    router.replace(next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/login') && !next.startsWith('/api') ? next : '/')
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Something went wrong'
   } finally {

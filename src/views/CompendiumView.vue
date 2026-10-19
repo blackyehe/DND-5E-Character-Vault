@@ -1,114 +1,226 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { srd, type SrdRef, type SrdSpell, type SrdMonster } from '../lib/srd'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { contentLabel, homebrew, srd, type SrdEquipment, type SrdMagicItem, type SrdRef, type SrdSpell } from '../lib/srd'
+import OrcbrewPacks from '../components/OrcbrewPacks.vue'
+import { hasMagicItemTags,emptyItemFilters,itemSearchText,matchesEquipmentItem,matchesMagicItem,normalEquipmentSearch } from '../lib/magic-item-filters'
+import { equipmentTags } from '../../shared/item-classification'
+import type { EquipmentItem } from '../../shared/character'
+import { api } from '../lib/api'
+import ItemFilters from '../components/items/ItemFilters.vue'
+import ItemRules from '../components/sheet/ItemRules.vue'
+import '../components/sheet/sheet.css'
+import '../components/sheet/sheet-details.css'
 
-const tab = ref<'spells' | 'monsters' | 'classes' | 'races'>('spells')
+type Kind = keyof typeof homebrew
+type Tab = Kind | 'equipment' | 'magic-items' | 'homebrew'
+type LibraryRef = SrdRef & {workshopItem?:EquipmentItem}
+type Detail = LibraryRef & Record<string, unknown>
+const tabs: Tab[] = ['spells', 'equipment', 'magic-items', 'monsters', 'classes', 'races', 'subraces', 'backgrounds', 'feats', 'subclasses', 'languages', 'invocations', 'boons', 'selections', 'other', 'homebrew']
+const tab = ref<Tab>('spells')
+const tabLabel = (value: Tab) => ({ equipment: 'Items', 'magic-items': 'Magic items', homebrew: 'Homebrew files', other: 'Other reference' }[value as string] ?? value)
 const query = ref('')
-const results = ref<SrdRef[]>([])
+const results = ref<LibraryRef[]>([])
+const filters=ref(emptyItemFilters())
+const visibleResults=computed(()=>results.value.filter(entry=>{
+  if(tab.value!=='equipment'&&tab.value!=='magic-items')return true
+  const item=entry.workshopItem??(tab.value==='equipment'?normalEquipmentSearch[entry.index]:undefined)
+  return item?matchesEquipmentItem(item,filters.value):tab.value==='magic-items'?matchesMagicItem(entry.index,filters.value):!Object.values(filters.value).some(Boolean)
+}))
+const unclassifiedMagicItems=computed(()=>results.value.filter(entry=>!entry.workshopItem&&!hasMagicItemTags(entry.index)).length)
 const loading = ref(false)
-const detail = ref<SrdSpell | SrdMonster | null>(null)
-
+const error = ref('')
+const detail = ref<Detail | null>(null)
+const detailLoading = ref(false)
+watch(visibleResults, entries => {
+  if (detail.value && !entries.some(entry => entry.index === detail.value?.index)) {
+    ++detailNumber
+    detail.value = null
+    detailLoading.value = false
+  }
+})
+const spellDetail = computed(() => detail.value as unknown as SrdSpell | null)
+const itemDetail = computed(() => detail.value as unknown as (SrdEquipment & SrdMagicItem) | null)
+const itemStats = computed(() => {
+  const item = itemDetail.value
+  if (!item) return []
+  const values: [string, string][] = []
+  const add = (label: string, value: string | undefined) => { if (value) values.push([label, value]) }
+  add('Category', [item.weapon_category, item.weapon_range, item.armor_category, item.equipment_category?.name].filter(Boolean).join(' · '))
+  add('Rarity', item.rarity?.name)
+  add('Cost', item.cost ? `${item.cost.quantity} ${item.cost.unit}` : undefined)
+  add('Weight', item.weight !== undefined ? `${item.weight} lb` : undefined)
+  add('Damage', item.damage ? `${item.damage.damage_dice} ${item.damage.damage_type.name}` : undefined)
+  add('Two-handed damage', item.two_handed_damage ? `${item.two_handed_damage.damage_dice} ${item.two_handed_damage.damage_type.name}` : undefined)
+  if (item.armor_class) {
+    const ac = item.armor_class
+    add('Armour class', `${item.index === 'shield' ? '+' : ''}${ac.base}${ac.dex_bonus ? ` + DEX modifier${ac.max_bonus !== undefined ? ` (maximum +${ac.max_bonus})` : ''}` : ''}`)
+  }
+  add('Strength required', item.str_minimum ? String(item.str_minimum) : undefined)
+  add('Stealth', item.stealth_disadvantage ? 'Disadvantage' : undefined)
+  const range = item.throw_range ?? item.range
+  add(item.throw_range ? 'Thrown range' : 'Range', range ? `${range.normal}${range.long ? ` / ${range.long}` : ''} ft` : undefined)
+  add('Properties', item.properties?.map(p => p.name).join(', '))
+  add('Speed', item.speed ? `${item.speed.quantity} ${item.speed.unit}` : undefined)
+  add('Capacity', item.capacity)
+  return values
+})
+let customDetails = new Map<string, Detail>()
 let timer: ReturnType<typeof setTimeout> | undefined
+let requestNumber = 0
+let detailNumber = 0
+
+const description = computed(() => String(detail.value?.description ?? ''))
+const blocks = computed(() => {
+  const entry = detail.value
+  const raw = entry?.details as Record<string, unknown> | undefined
+  const values = entry?.homebrew_traits ?? entry?.traits ?? raw?.[':options'] ?? []
+  if (!Array.isArray(values)) return []
+  return values.filter((value) => value && typeof value === 'object').map((value) => ({
+    name: String(value.name ?? value[':name'] ?? ''),
+    description: String(value.description ?? value[':description'] ?? ''),
+    level: value.level ?? value[':level'],
+  })).filter((value) => value.description)
+})
 
 async function search() {
-  loading.value = true
+  const sequence = ++requestNumber
+  ++detailNumber
+  const kind = tab.value
   detail.value = null
-  try {
-    if (tab.value === 'spells') {
-      results.value = await srd.spells(query.value ? { name: query.value } : undefined)
-    } else if (tab.value === 'monsters') {
-      results.value = await srd.monsters(query.value ? { name: query.value } : undefined)
-    } else if (tab.value === 'classes') {
-      results.value = await srd.classes()
-    } else {
-      results.value = await srd.races()
-    }
-  } finally {
-    loading.value = false
-  }
+  detailLoading.value = false
+  results.value = []
+  loading.value = false
+  if (kind === 'homebrew') return
+  const term = query.value.trim()
+  loading.value = true
+  error.value = ''
+  detail.value = null
+  const requests: Promise<LibraryRef[]>[] = [kind in homebrew ? homebrew[kind as Kind]() : Promise.resolve([])]
+  if(kind==='equipment'||kind==='magic-items')requests.unshift(api.get<{id:string;item:EquipmentItem}[]>('/api/items').then(items=>items.filter(entry=>!!entry.item.magical===(kind==='magic-items')).map(entry=>({index:`workshop-item-${entry.id}`,name:entry.item.name,displayName:`${entry.item.name} · My Workshop`,url:'',sourcePack:'My Workshop',workshopItem:entry.item}))))
+  if (kind === 'equipment') requests.unshift(srd.equipment())
+  if (kind === 'magic-items') requests.unshift(srd.magicItems())
+  if (kind === 'spells') requests.unshift(srd.spells(term ? { name: term } : undefined))
+  if (kind === 'monsters') requests.unshift(srd.monsters(term ? { name: term } : undefined))
+  if (kind === 'classes') requests.unshift(srd.classes())
+  if (kind === 'races') requests.unshift(srd.races())
+  const settled = await Promise.allSettled(requests)
+  if (sequence !== requestNumber) return
+  const custom = settled[settled.length - 1]
+  customDetails = new Map(custom?.status === 'fulfilled'
+    ? custom.value.map((item) => [item.index, item as unknown as Detail]) : [])
+  const combined=settled.flatMap(result=>result.status==='fulfilled'?result.value:[])
+  for(const entry of combined)if(entry.workshopItem)customDetails.set(entry.index,entry as Detail)
+  results.value=combined.filter(entry=>!term||(entry.workshopItem?itemSearchText(entry.workshopItem):kind==='equipment'&&normalEquipmentSearch[entry.index]?itemSearchText(normalEquipmentSearch[entry.index]!):contentLabel(entry).toLowerCase()).includes(term.toLowerCase()))
+  if (settled.some((result) => result.status === 'rejected')) error.value = 'Some content could not be loaded. Please try again.'
+  loading.value = false
 }
 
 watch(query, () => {
+  ++requestNumber
   clearTimeout(timer)
   timer = setTimeout(search, 300)
 })
-
-watch(tab, search)
+watch(tab, () => { clearTimeout(timer);filters.value=emptyItemFilters();search() })
+onBeforeUnmount(() => { clearTimeout(timer); ++requestNumber; ++detailNumber })
 
 async function openDetail(index: string) {
+  const sequence = ++detailNumber
+  if (customDetails.has(index)) { detail.value = customDetails.get(index) ?? null; return }
+  detail.value = null
+  detailLoading.value = true
   try {
-    if (tab.value === 'spells') detail.value = await srd.spell(index)
-    else if (tab.value === 'monsters') detail.value = await srd.monster(index)
-    else if (tab.value === 'classes') detail.value = (await srd.class(index)) as unknown as SrdSpell
-    else detail.value = (await srd.race(index)) as unknown as SrdSpell
-  } catch {
-    /* ignore */
-  }
+    const kind = tab.value
+    const loaders = { spells: srd.spell, equipment: srd.equipmentItem, 'magic-items': srd.magicItem, monsters: srd.monster, classes: srd.class, races: srd.race }
+    if (kind in loaders) {
+      const entry = await loaders[kind as keyof typeof loaders](index)
+      if (sequence === detailNumber) detail.value = entry as unknown as Detail
+    }
+  } catch { if (sequence === detailNumber) error.value = 'Could not load this entry.' }
+  finally { if (sequence === detailNumber) detailLoading.value = false }
 }
 
-// kick off initial load
 search()
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-6 py-8">
+  <div class="compendium-page max-w-5xl mx-auto px-6 py-8">
     <h1 class="font-display text-3xl text-[var(--color-gold-soft)] mb-6">Compendium</h1>
-
     <div class="flex gap-2 mb-4 flex-wrap">
-      <button
-        v-for="t in ['spells', 'monsters', 'classes', 'races']"
-        :key="t"
-        class="btn-ghost text-sm capitalize"
-        :class="{ '!border-[var(--color-gold)] !text-[var(--color-gold-soft)]': tab === t }"
-        @click="tab = t as typeof tab"
-      >
-        {{ t }}
+      <button v-for="item in tabs" :key="item" class="btn-ghost text-sm capitalize"
+        :class="{ '!border-[var(--color-gold)] !text-[var(--color-gold-soft)]': tab === item }" @click="tab = item">
+        {{ tabLabel(item) }}
       </button>
-      <input v-model="query" class="input-base max-w-xs ml-auto" :placeholder="`Search ${tab}…`" />
+      <input v-if="tab !== 'homebrew'" v-model="query" class="input-base max-w-xs ml-auto" :placeholder="`Search ${tabLabel(tab).toLowerCase()}…`" aria-label="Search compendium" />
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="panel p-4 lg:col-span-1 max-h-[70vh] overflow-y-auto">
-        <p v-if="loading" class="text-sm text-[var(--color-ink-soft)]">Loading…</p>
-        <ul v-else class="space-y-1">
-          <li
-            v-for="r in results"
-            :key="r.index"
-            class="p-2 rounded hover:bg-[#3a2e22] cursor-pointer capitalize text-sm"
-            @click="openDetail(r.index)"
-          >
-            {{ r.name }}
-          </li>
-        </ul>
-      </div>
-
-      <div class="panel p-6 lg:col-span-2 min-h-[200px]">
-        <p v-if="!detail" class="text-[var(--color-ink-soft)]">
-          Select an entry to read its description.
-        </p>
-        <div v-else>
-          <h2 class="font-display text-2xl text-[var(--color-gold-soft)] mb-2 capitalize">
-            {{ detail.name }}
-          </h2>
-
-          <template v-if="tab === 'spells'">
-            <p class="text-sm text-[var(--color-ink-soft)] mb-4">
-              Level {{ (detail as SrdSpell).level }}
-              {{ (detail as SrdSpell).school?.name ?? '' }} ·
-              {{ (detail as SrdSpell).casting_time }} · {{ (detail as SrdSpell).range }}
-            </p>
-            <div v-for="(para, i) in (detail as SrdSpell).desc ?? []" :key="i" class="mb-3 leading-relaxed">
-              {{ para }}
-            </div>
-          </template>
-
-          <template v-else>
-            <pre class="whitespace-pre-wrap text-sm leading-relaxed">{{
-              JSON.stringify(detail, null, 2)
-            }}</pre>
-          </template>
+    <div v-if="tab==='magic-items'||tab==='equipment'" class="panel p-4 mb-4 hero-sheet">
+      <ItemFilters v-model="filters" :extra-tags="results.flatMap(entry=>entry.workshopItem?equipmentTags(entry.workshopItem):[])" :magic-only="tab==='magic-items'" />
+      <p v-if="!loading" class="sheet-small" role="status">{{visibleResults.length}} items · Includes your saved Workshop items.</p>
+      <p v-if="tab==='magic-items'" class="sheet-small">Generic magic weapons match their allowed base types. Damage filters include base and extra attack damage, excluding spells and resistance.</p>
+      <p v-if="tab==='magic-items'&&!loading&&unclassifiedMagicItems" class="sheet-small">{{unclassifiedMagicItems}} SRD entries have no filter tags yet. Clear filters to see them.</p>
+    </div>
+    <OrcbrewPacks v-if="tab === 'homebrew'" />
+    <template v-else>
+      <p v-if="error" class="text-sm text-[var(--site-danger)] mb-3" role="alert">{{ error }}</p>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="panel p-4 lg:col-span-1 max-h-[70vh] overflow-y-auto">
+          <p v-if="loading" class="text-sm">Loading…</p>
+          <p v-else-if="!visibleResults.length" class="text-sm">No matching entries. Try another search or clear your filters.</p>
+          <ul v-else class="space-y-1">
+            <li v-for="entry in visibleResults" :key="entry.index">
+              <button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" @click="openDetail(entry.index)">
+                {{ contentLabel(entry) }}
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div class="panel p-6 lg:col-span-2 min-h-[200px]">
+          <p v-if="detailLoading" role="status">Loading details…</p>
+          <p v-else-if="!detail">Select an entry to read its description.</p>
+          <div v-else>
+            <h2 class="font-display text-2xl text-[var(--color-gold-soft)] mb-2">{{ detail.name }}</h2>
+            <p v-if="detail.sourcePack" class="text-sm mb-4">{{ detail.sourcePack }}</p>
+            <template v-if="tab === 'spells'">
+              <p class="text-sm mb-4">
+                Level {{ spellDetail?.level }} {{ spellDetail?.school?.name }} · {{ spellDetail?.casting_time }} · {{ spellDetail?.range }}
+                <br />{{ spellDetail?.components.join(', ') }} · {{ spellDetail?.duration }}{{ spellDetail?.ritual ? ' · Ritual' : '' }}
+              </p>
+              <p v-for="(paragraph, index) in spellDetail?.desc ?? []" :key="index" class="mb-3 whitespace-pre-wrap leading-relaxed">{{ paragraph }}</p>
+            </template>
+            <template v-else-if="(tab==='equipment'||tab==='magic-items')&&detail.workshopItem"><ItemRules :item="detail.workshopItem" /><p v-if="detail.workshopItem.weapon" class="text-sm mt-3">{{detail.workshopItem.weapon.dice}} {{detail.workshopItem.weapon.damageType}} · {{detail.workshopItem.weapon.category}} · {{detail.workshopItem.weapon.range}}</p><p v-if="detail.workshopItem.armor" class="text-sm mt-3">Base {{detail.workshopItem.armor.shield?'shield bonus':'AC'}}: {{detail.workshopItem.armor.base}}{{detail.workshopItem.armor.dex?' + DEX':''}}{{detail.workshopItem.armor.cap!==undefined?` (maximum +${detail.workshopItem.armor.cap})`:''}}</p></template>
+            <template v-else-if="tab === 'equipment' || tab === 'magic-items'">
+              <p class="text-sm mb-4">SRD 2014</p>
+              <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-5">
+                <div v-for="[label, value] in itemStats" :key="label">
+                  <dt class="text-sm opacity-80">{{ label }}</dt>
+                  <dd>{{ value }}</dd>
+                </div>
+              </dl>
+              <p v-for="(paragraph, index) in itemDetail?.desc ?? []" :key="`desc-${index}`" class="mb-3 whitespace-pre-wrap leading-relaxed">{{ paragraph }}</p>
+              <p v-for="(paragraph, index) in itemDetail?.special ?? []" :key="`special-${index}`" class="mb-3 whitespace-pre-wrap leading-relaxed">{{ paragraph }}</p>
+              <template v-if="itemDetail?.contents?.length">
+                <h3 class="font-display text-lg mb-2">Contents</h3>
+                <ul class="list-disc pl-5 mb-4"><li v-for="content in itemDetail.contents" :key="content.item.index">{{ content.quantity }} × {{ content.item.name }}</li></ul>
+              </template>
+              <template v-if="itemDetail?.variants?.length">
+                <h3 class="font-display text-lg mb-2">Variants</h3>
+                <div class="flex flex-wrap gap-2"><button v-for="variant in itemDetail.variants" :key="variant.index" class="btn-ghost text-sm" @click="openDetail(variant.index)">{{ variant.name }}</button></div>
+              </template>
+            </template>
+            <template v-else>
+              <p v-if="description" class="mb-4 whitespace-pre-wrap leading-relaxed">{{ description }}</p>
+              <div v-for="(block, index) in blocks" :key="index" class="mb-4">
+                <h3 class="font-display text-lg text-[var(--color-gold-soft)]">{{ block.name }}{{ block.level ? ` (level ${block.level})` : '' }}</h3>
+                <p class="whitespace-pre-wrap leading-relaxed">{{ block.description }}</p>
+              </div>
+              <details :open="!description && !blocks.length">
+                <summary class="cursor-pointer text-sm mb-3">Full reference details</summary>
+                <pre class="whitespace-pre-wrap break-words text-xs leading-relaxed">{{ JSON.stringify(detail.details ?? detail, null, 2) }}</pre>
+              </details>
+            </template>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+    <p class="text-xs mt-6 opacity-80">Standard rules: SRD 5.1 by Wizards of the Coast LLC · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Data from <a href="https://github.com/5e-bits/5e-srd-api" target="_blank" rel="noopener noreferrer">5e Bits</a>.</p>
   </div>
 </template>

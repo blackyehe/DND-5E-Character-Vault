@@ -7,6 +7,7 @@ export const SKILL_ABILITY: Record<string, AbilityKey> = {
   animalHandling: 'wis',
   arcana: 'int',
   athletics: 'str',
+  history: 'int',
   deception: 'cha',
   insight: 'wis',
   intimidation: 'cha',
@@ -84,9 +85,9 @@ export function maxHP(
   useFixed = true,
 ): number {
   const con = abilityMod(conScore)
-  if (level <= 1) return hitDie + con
-  const base = useFixed ? Math.floor(averageRoll(hitDie)) : averageRoll(hitDie)
-  return hitDie + con + (level - 1) * (base + con)
+  if (level <= 1) return Math.max(1, hitDie + con)
+  const base = useFixed ? Math.ceil(averageRoll(hitDie)) : averageRoll(hitDie)
+  return Math.max(1, hitDie + con) + (level - 1) * Math.max(1, base + con)
 }
 
 export function carriedWeight(equipment: { weight: number; qty: number }[]): number {

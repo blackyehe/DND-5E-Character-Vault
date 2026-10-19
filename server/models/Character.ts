@@ -28,6 +28,8 @@ const metaSchema = new Schema(
     alignment: { type: String, default: '' },
     xp: { type: Number, default: 0 },
     portrait: { type: String, default: '' },
+    classIndex:String,subclassIndex:String,raceIndex:String,
+    classLevels: { type: [{ name: String, index:String, level: { type: Number, min: 1, max: 20 } }], default: undefined },
   },
   { _id: false },
 )
@@ -81,6 +83,8 @@ const combatSchema = new Schema(
     deathSavesFailure: { type: Number, default: 0 },
     speed: { type: Number, default: 30 },
     inspiration: { type: Boolean, default: false },
+    acMode: { type: String, enum: ['manual', 'equipment'], default: 'manual' },
+    itemAcBaseline:Number,
   },
   { _id: false },
 )
@@ -95,6 +99,8 @@ const attackSchema = new Schema(
     damageType: { type: String, default: '' },
     notes: { type: String, default: '' },
     magicBonus: { type: Number, default: 0 },
+    proficient: { type: Boolean },
+    addAbilityDamage: { type: Boolean },
   },
   { _id: true },
 )
@@ -106,6 +112,21 @@ const equipmentSchema = new Schema(
     weight: { type: Number, default: 0 },
     equipped: { type: Boolean, default: false },
     notes: { type: String, default: '' },
+    index: String,
+    magicIndex: String,
+    category: String,
+    tags: { type: [String], default: undefined },
+    rarity: String,
+    value: { type: new Schema({ amount: Number, currency: String }, { _id: false }), default: undefined },
+    attunementRequirement: String,
+    description: String,
+    referenceDescription: String,
+      kind:{type:String,enum:['weapon','armour','accessory','consumable','treasure','gear']},
+      magical:Boolean,requiresAttunement:Boolean,attuned:Boolean,templateId:String,templateRevision:Number,grantId:String,
+      effects:{type:new Schema({ac:{type:Number,default:0},saves:{type:Number,default:0}},{_id:false}),default:undefined},
+    armor: { type: new Schema({ base: Number, dex: Boolean, cap: Number, shield: Boolean, category: String }, { _id: false }), default: undefined },
+    weapon: { type: new Schema({ dice: String, damageType: String, range: String, finesse: Boolean, ranged: Boolean, category: String, noDamage: Boolean }, { _id: false }), default: undefined },
+    magicBonus: Number,
   },
   { _id: true },
 )
@@ -114,6 +135,7 @@ const spellSlotSchema = new Schema(
   {
     max: { type: Number, default: 0 },
     used: { type: Number, default: 0 },
+    recovery: { type: String, enum: ['short', 'long'] },
   },
   { _id: false },
 )
@@ -121,8 +143,10 @@ const spellSlotSchema = new Schema(
 const spellcastingSchema = new Schema(
   {
     ability: { type: String, default: 'int' },
+    limitOverride:Boolean,
+    slotRule: { type: new Schema({ progression: { type: String, enum: ['full', 'half', 'third', 'pact'], required: true }, className: String, workshopId:String }, { _id: false }), default: undefined },
     slots: {
-      type: {
+      type: new Schema({
         l1: { type: spellSlotSchema, default: () => ({}) },
         l2: { type: spellSlotSchema, default: () => ({}) },
         l3: { type: spellSlotSchema, default: () => ({}) },
@@ -132,7 +156,7 @@ const spellcastingSchema = new Schema(
         l7: { type: spellSlotSchema, default: () => ({}) },
         l8: { type: spellSlotSchema, default: () => ({}) },
         l9: { type: spellSlotSchema, default: () => ({}) },
-      },
+      }, { _id: false }),
       default: () => ({}),
     },
     prepared: { type: stringArray, default: [] },
@@ -156,8 +180,14 @@ const personalitySchema = new Schema(
 
 const featureSchema = new Schema(
   {
+    ruleId:String,featureId:String,selectedOptions:{type:[String],default:undefined},
     name: { type: String, default: '' },
     description: { type: String, default: '' },
+    origin: { type: String, enum: ['racial', 'class', 'subclass', 'background', 'feat', 'other'] },
+    level: { type: Number, min: 1, max: 20 },
+    pinned: Boolean,
+    combatHidden: Boolean,
+    order: Number,
   },
   { _id: true },
 )
@@ -175,16 +205,20 @@ const proficienciesSchema = new Schema(
 const characterSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    companionKind: { type: String, enum: ['shadow-champion'] },
     meta: { type: metaSchema, default: () => ({}) },
     abilities: { type: abilitySchema, default: () => ({}) },
     saves: { type: savesSchema, default: () => ({}) },
     skills: { type: skillsSchema, default: () => ({}) },
     combat: { type: combatSchema, default: () => ({}) },
+    externalImport: { type: Schema.Types.Mixed },
+    homebrew:{type:Schema.Types.Mixed},
     attacks: { type: [attackSchema], default: [] },
     equipment: { type: [equipmentSchema], default: [] },
     spellcasting: { type: spellcastingSchema, default: () => ({}) },
     personality: { type: personalitySchema, default: () => ({}) },
     features: { type: [featureSchema], default: [] },
+    resources: { type: [new Schema({ id: { type: String, required: true }, name: { type: String, required: true }, ruleId:String, max: { type: Number, min: 0, max: 999, default: 0 }, used: { type: Number, min: 0, max: 999, default: 0 }, recovery: { type: String, enum: ['short', 'long', 'manual'], default: 'long' }, automatic: Boolean, unlimited: Boolean, notes: String, scaling: { type: new Schema({ perLevel: { type: Number, min: 0, max: 999, required: true }, base: { type: Number, min: 0, max: 999, required: true }, className: String }, { _id: false }), default: undefined } }, { _id: false })], default: [] },
     proficiencies: { type: proficienciesSchema, default: () => ({}) },
   },
   { timestamps: true },

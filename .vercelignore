@@ -1,0 +1,11 @@
+.git
+.idea
+.vscode
+.env*
+*.local
+backups
+**/*.test.ts
+node_modules
+server/node_modules
+server/scripts
+dist

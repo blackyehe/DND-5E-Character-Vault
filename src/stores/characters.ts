@@ -1,159 +1,29 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { playUpdate } from '../../shared/rooms'
 import { api } from '../lib/api'
-import type { AbilityKey, Proficiency } from '../lib/calc'
+import { resolveCharacterProgression } from '../../shared/character-progression'
+import type { SrdSpell } from '../lib/srd'
 
-export interface CharacterSummary {
-  _id: string
-  meta: {
-    name: string
-    race: string
-    klass: string
-    level: number
-    subclass?: string
-    background?: string
-    portrait?: string
-  }
-  updatedAt: string
-}
-
-export interface Attack {
-  _id?: string
-  name: string
-  ability: AbilityKey
-  range: string
-  damageDice: string
-  damageBonus: number
-  damageType: string
-  notes: string
-  magicBonus: number
-}
-
-export interface EquipmentItem {
-  _id?: string
-  name: string
-  qty: number
-  weight: number
-  equipped: boolean
-  notes: string
-}
-
-export interface SpellSlots {
-  max: number
-  used: number
-}
-
-export interface Character {
-  _id: string
-  meta: {
-    name: string
-    race: string
-    subrace: string
-    klass: string
-    subclass: string
-    background: string
-    level: number
-    alignment: string
-    xp: number
-    portrait: string
-  }
-  abilities: Record<AbilityKey, number>
-  saves: Record<AbilityKey, boolean>
-  skills: Record<string, Proficiency>
-  combat: {
-    ac: number
-    hpMax: number
-    hpCurrent: number
-    hpTemp: number
-    hitDiceTotal: number
-    hitDiceUsed: number
-    deathSavesSuccess: number
-    deathSavesFailure: number
-    speed: number
-    inspiration: boolean
-  }
-  attacks: Attack[]
-  equipment: EquipmentItem[]
-  spellcasting: {
-    ability: AbilityKey
-    slots: Record<string, SpellSlots>
-    prepared: string[]
-    known: string[]
-  }
-  personality: {
-    traits: string
-    ideals: string
-    bonds: string
-    flaws: string
-    appearance: string
-    backstory: string
-    notes: string
-  }
-  features: { _id?: string; name: string; description: string }[]
-  proficiencies: {
-    armor: string[]
-    weapons: string[]
-    tools: string[]
-    languages: string[]
-  }
-  updatedAt: string
-}
-
-export function emptyCharacter(): Omit<Character, '_id' | 'updatedAt'> {
-  return {
-    meta: {
-      name: '',
-      race: '',
-      subrace: '',
-      klass: '',
-      subclass: '',
-      background: '',
-      level: 1,
-      alignment: '',
-      xp: 0,
-      portrait: '',
-    },
-    abilities: { str: 10, dex: 10, int: 10, wis: 10, con: 10, cha: 10 },
-    saves: { str: false, dex: false, int: false, wis: false, con: false, cha: false },
-    skills: {},
-    combat: {
-      ac: 10,
-      hpMax: 10,
-      hpCurrent: 10,
-      hpTemp: 0,
-      hitDiceTotal: 1,
-      hitDiceUsed: 0,
-      deathSavesSuccess: 0,
-      deathSavesFailure: 0,
-      speed: 30,
-      inspiration: false,
-    },
-    attacks: [],
-    equipment: [],
-    spellcasting: {
-      ability: 'int',
-      slots: {},
-      prepared: [],
-      known: [],
-    },
-    personality: {
-      traits: '',
-      ideals: '',
-      bonds: '',
-      flaws: '',
-      appearance: '',
-      backstory: '',
-      notes: '',
-    },
-    features: [],
-    proficiencies: { armor: [], weapons: [], tools: [], languages: [] },
-  }
-}
+import { emptyCharacter, type Character, type CharacterSummary, type EquipmentItem } from '../../shared/character'
+export * from '../../shared/character'
 
 export const useCharactersStore = defineStore('characters', () => {
   const list = ref<CharacterSummary[]>([])
   const current = ref<Character | null>(null)
   const loading = ref(false)
+  const saving = ref(false)
+  const saveError = ref('')
+  const roomContext = ref<{ roomId: string; role: 'dm' | 'player'; preview?:boolean; championFor?:string } | null>(null)
+  const editing = ref(false),rulesPending=ref(false),lastOpenMs=ref(0)
+  const mutation = ref(0)
+  const openingSpells=ref<Record<string,SrdSpell>>({})
+  const libraryRevision=ref('')
+  const canEditPermanent = computed(() => roomContext.value?.role !== 'player')
+  let fetchGeneration = 0
+  let previewDirty=false
+  const pendingReads=new Map<string,{generation:number;promise:Promise<void>}>()
+  function sheetApiPath(id:string){const scope=roomContext.value;return scope?`/api/rooms/${scope.roomId}/characters/${scope.championFor?`${scope.championFor}/champions/`:''}${id}`:`/api/characters/${id}`}
 
   async function fetchList() {
     loading.value = true
@@ -164,13 +34,45 @@ export const useCharactersStore = defineStore('characters', () => {
     }
   }
 
-  async function fetchOne(id: string) {
+  async function fetchOne(id: string,options:{quick?:boolean}={}) {
+    const scope = roomContext.value
+    const path=sheetApiPath(id)
+    const key=`${path}:${scope?.role??'owner'}:${Boolean(scope?.preview)}:${Boolean(options.quick)}`
+    const pending=pendingReads.get(key)
+    if(pending?.generation===fetchGeneration)return pending.promise
+    const generation = ++fetchGeneration
+    const initialVersion = current.value?._id === id ? current.value.updatedAt : null
+    const initialMutation=mutation.value,started=performance.now()
     loading.value = true
-    try {
-      current.value = await api.get<Character>(`/api/characters/${id}`)
-    } finally {
-      loading.value = false
-    }
+    const promise=(async()=>{try {
+      const payload = await api.get<Character|{character:Character;spells:Record<string,SrdSpell>;libraryRevision?:string}>(path+(options.quick?'?view=quick':''),{timeoutMs:12000})
+      const character='character' in payload?payload.character:payload
+      if (generation === fetchGeneration && initialMutation===mutation.value && !saving.value && (initialVersion === null || current.value?._id !== id || current.value.updatedAt === initialVersion)) {
+        const data=resolveCharacterProgression(character)
+        if(scope?.role==='player')delete data.externalImport
+        // A quick refresh with the same saved version must not downgrade rules
+        // already resolved for the displayed sheet.
+        if(!options.quick||current.value?._id!==id||current.value.updatedAt!==data.updatedAt)current.value=data
+        if('spells' in payload)openingSpells.value=payload.spells
+        if('libraryRevision' in payload&&payload.libraryRevision)libraryRevision.value=payload.libraryRevision
+        if(options.quick)lastOpenMs.value=performance.now()-started
+        if(options.quick)previewDirty=false
+      }
+    } finally {if(generation===fetchGeneration)loading.value=false}})()
+    pendingReads.set(key,{generation,promise})
+    try {await promise}finally{if(pendingReads.get(key)?.promise===promise)pendingReads.delete(key)}
+  }
+
+  function acceptResolved(character:Character,expectedMutation:number,expectedScope:string) {
+    const scope=roomContext.value,scopeKey=`${scope?.roomId??'owner'}:${scope?.role??'owner'}:${Boolean(scope?.preview)}${scope?.championFor?`:${scope.championFor}`:''}`
+    if(expectedScope!==scopeKey||current.value?._id!==character._id||current.value.updatedAt!==character.updatedAt||saving.value||expectedMutation!==mutation.value||scope?.preview&&previewDirty)return false
+    const data=resolveCharacterProgression(character)
+    if(scope?.role==='player')delete data.externalImport
+    if(JSON.stringify(data)===JSON.stringify(current.value))return true
+    if(editing.value){rulesPending.value=true;return false}
+    current.value=data
+    rulesPending.value=false
+    return true
   }
 
   async function create(payload: Partial<Character>) {
@@ -185,9 +87,37 @@ export const useCharactersStore = defineStore('characters', () => {
   }
 
   async function update(id: string, patch: Partial<Character>) {
-    const updated = await api.patch<Character>(`/api/characters/${id}`, patch)
-    current.value = updated
-    return updated
+    mutation.value++
+    if(roomContext.value?.preview){
+      if(current.value?._id!==id)throw new Error('Open a character before trying the preview.')
+      const data=resolveCharacterProgression({...current.value,...patch})
+      delete data.externalImport
+      previewDirty=true;current.value=data;saveError.value=''
+      return data
+    }
+    saving.value = true; saveError.value = ''
+    try {
+      const scope = roomContext.value
+      const updated = scope?.role === 'player'
+        ? await api.patch<Character>(`/api/rooms/${scope.roomId}/characters/${id}/play`, playUpdate(current.value!, patch))
+        : await api.patch<Character>(`/api/characters/${id}`, { ...patch, ...(current.value?._id === id ? { expectedUpdatedAt: current.value.updatedAt } : {}) })
+      if (current.value?._id === id) current.value = resolveCharacterProgression(updated)
+      rulesPending.value=false
+      return updated
+    } catch (error) {
+      saveError.value = error instanceof Error ? error.message : 'Could not save changes. Please try again.'
+      throw error
+    } finally { saving.value = false }
+  }
+
+  async function giveItem(id:string,item:EquipmentItem,requestId:string,remember=false){
+    if(roomContext.value?.role==='player')throw new Error('Only the DM can give items.')
+    mutation.value++;saving.value=true;saveError.value=''
+    try{
+      const result=await api.post<{character:Character;message:string}>(`/api/characters/${id}/items`,{item,requestId,remember})
+      if(current.value?._id===id)current.value=resolveCharacterProgression(result.character)
+      return result
+    }catch(error){saveError.value=error instanceof Error?error.message:'Could not give this item.';throw error}finally{saving.value=false}
   }
 
   async function remove(id: string) {
@@ -211,10 +141,17 @@ export const useCharactersStore = defineStore('characters', () => {
     list,
     current,
     loading,
+    saving,
+    saveError,
+    roomContext,
+    sheetApiPath,
+    editing,rulesPending,mutation,lastOpenMs,acceptResolved,openingSpells,libraryRevision,
+    canEditPermanent,
     fetchList,
     fetchOne,
     create,
     update,
+    giveItem,
     remove,
     duplicate,
     importCharacter,

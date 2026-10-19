@@ -1,123 +1,70 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useCharactersStore } from '../stores/characters'
-import CoreTab from '../components/sheet/CoreTab.vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import WorkshopRuleReview from '../components/workshop/WorkshopRuleReview.vue'
+import { useRoute, RouterLink, onBeforeRouteLeave } from 'vue-router'
+import { useCharactersStore, type Character } from '../stores/characters'
+import { provideSheetLibrary } from '../composables/useSheetLibrary'
+import CharacterSidebar from '../components/sheet/CharacterSidebar.vue'
 import CombatTab from '../components/sheet/CombatTab.vue'
 import EquipmentSpellsTab from '../components/sheet/EquipmentSpellsTab.vue'
+import FeaturesTab from '../components/sheet/FeaturesTab.vue'
+import CoreTab from '../components/sheet/CoreTab.vue'
 import BioTab from '../components/sheet/BioTab.vue'
-import {
-  profBonus,
-  initiative,
-} from '../lib/calc'
-
-const route = useRoute()
-const router = useRouter()
-const store = useCharactersStore()
-
-const id = computed(() => route.params.id as string)
-const activeTab = ref<'core' | 'combat' | 'equipment' | 'bio'>('core')
-
-const tabs = [
-  { key: 'core', label: 'Core' },
-  { key: 'combat', label: 'Combat' },
-  { key: 'equipment', label: 'Equipment & Spells' },
-  { key: 'bio', label: 'Bio & Notes' },
-] as const
-
-onMounted(async () => {
-  await store.fetchOne(id.value)
-})
-
-watch(id, async (newId) => {
-  if (newId) await store.fetchOne(newId)
-})
-
-function save(patch: Record<string, unknown>) {
-  if (!store.current) return
-  store.update(id.value, patch)
-}
-
-const header = computed(() => {
-  const c = store.current
-  if (!c) return null
-  return {
-    name: c.meta.name,
-    klass: c.meta.klass,
-    level: c.meta.level,
-    ac: c.combat.ac,
-    hp: c.combat.hpCurrent,
-    hpMax: c.combat.hpMax,
-    init: initiative(c.abilities.dex),
-    speed: c.combat.speed,
-    pb: profBonus(c.meta.level),
-  }
-})
+import CharacterEditTab from '../components/sheet/CharacterEditTab.vue'
+import SpellbookPanel from '../components/sheet/SpellbookPanel.vue'
+import '../components/sheet/sheet.css'
+import '../components/sheet/sheet-details.css'
+import ShadowChampions from '../components/ShadowChampions.vue'
+import { progressionClasses } from '../../shared/character-progression'
+import { isRevenantShadow } from '../../shared/class-rules'
+const route = useRoute(), store = useCharactersStore()
+const props = defineProps<{ characterId?: string; roomId?: string; role?: 'dm' | 'player'; compactSummary?:boolean; playerPreview?:boolean;championFor?:string }>()
+const id = computed(() => props.characterId ?? String(route.params.id))
+const c = computed(() => store.current as Character)
+const championClass=computed(()=>c.value?progressionClasses(c.value).find(entry=>isRevenantShadow(entry.name)):undefined)
+const library = provideSheetLibrary(c)
+const active = ref('combat'), loadError = ref('')
+const editSection=ref('identity'),repairSpell=ref(''),repairOpen=ref(false),sheetMain=ref<HTMLElement|null>(null)
+const editDirty = ref(false), pendingTab = ref(''),pendingRules=ref(false)
+watch(active,value=>{store.editing=value==='edit'},{immediate:true})
+watch(()=>store.rulesPending,value=>{if(value)pendingRules.value=true})
+let refreshingRules=false
+async function refreshRules(){if(refreshingRules||store.roomContext?.preview||store.loading)return;if(editDirty.value){pendingRules.value=true;return}if(store.saving||!store.current)return;refreshingRules=true;try{await store.fetchOne(id.value,{quick:true});await library.reload();pendingRules.value=false}catch{/* Existing character stays usable. */}finally{refreshingRules=false}}
+const storageRefresh=(event:StorageEvent)=>{if(event.key==='codex:workshop-revision')void refreshRules()}
+const focusRefresh=()=>{if(!props.roomId&&document.visibilityState==='visible')void refreshRules()}
+onMounted(()=>{window.addEventListener('codex:workshop-published',refreshRules);window.addEventListener('focus',focusRefresh);window.addEventListener('storage',storageRefresh);document.addEventListener('visibilitychange',focusRefresh)})
+onUnmounted(()=>{store.editing=false;window.removeEventListener('codex:workshop-published',refreshRules);window.removeEventListener('focus',focusRefresh);window.removeEventListener('storage',storageRefresh);document.removeEventListener('visibilitychange',focusRefresh)})
+function openSpellRepair(index=''){editSection.value='spells';repairSpell.value=index;repairOpen.value=true;switchTab('edit')}
+function showTab(key:string){active.value=key;void nextTick(()=>sheetMain.value?.scrollIntoView({block:'start'}))}
+function switchTab(key: string) { if (key === active.value) return; if (editDirty.value) pendingTab.value = key; else showTab(key) }
+function discardAndSwitch() { editDirty.value = false; showTab(pendingTab.value); pendingTab.value = '' }
+onBeforeRouteLeave(() => !editDirty.value || window.confirm('Discard your unsaved character edits and leave this page?'))
+const tabs = computed(() => [...(props.compactSummary?[{key:'summary',label:'Summary'}]:[]),{ key: 'combat', label: 'Combat' }, { key: 'spells', label: 'Spells' }, { key: 'equipment', label: 'Equipment' }, { key: 'features', label: 'Features' }, { key: 'proficiencies', label: 'Proficiencies' }, { key: 'bio', label: 'Bio & notes' },...(championClass.value&&!props.championFor?[{key:'champions',label:'Shadow Champions'}]:[]), ...(store.canEditPermanent ? [{ key: 'edit', label: 'Edit character' }] : [])])
+async function openCharacter(){loadError.value='';try{await store.fetchOne(id.value,{quick:true})}catch(error){loadError.value=error instanceof Error?error.message:'Could not open this character. Try again.'}}
+watch(() => [id.value, props.roomId, props.role,props.playerPreview,props.championFor] as const, async () => {
+  store.roomContext = props.roomId ? { roomId: props.roomId, role: props.role ?? 'player',preview:props.playerPreview,championFor:props.championFor } : null
+  active.value = props.compactSummary?'summary':'combat'; loadError.value = ''; store.current = null
+  await openCharacter()
+}, { immediate: true })
+defineExpose({ editDirty,retryOpen:openCharacter })
 </script>
-
 <template>
-  <div>
-    <div
-      v-if="header"
-      class="sticky top-0 z-20 bg-[#241c13] border-b border-[#4a3c2a] px-6 py-3"
-    >
-      <div class="max-w-6xl mx-auto flex items-center gap-6 flex-wrap">
-        <button class="btn-ghost text-xs" @click="router.push('/')">← Back</button>
-        <div class="flex-1 min-w-[200px]">
-          <input
-            :value="header.name"
-            class="font-display text-2xl bg-transparent border-none outline-none text-[var(--color-gold-soft)] w-full"
-            placeholder="Character name"
-            @change="save({ meta: { ...store.current!.meta, name: ($event.target as HTMLInputElement).value } })"
-          />
-          <p class="text-sm text-[var(--color-ink-soft)]">
-            Level {{ header.level }} {{ header.klass }}
-          </p>
-        </div>
-        <div class="flex gap-5 text-center">
-          <div>
-            <div class="label-micro">AC</div>
-            <div class="font-display text-2xl">{{ header.ac }}</div>
-          </div>
-          <div>
-            <div class="label-micro">HP</div>
-            <div class="font-display text-2xl">{{ header.hp }}/{{ header.hpMax }}</div>
-          </div>
-          <div>
-            <div class="label-micro">Init</div>
-            <div class="font-display text-2xl">{{ header.init >= 0 ? '+' : '' }}{{ header.init }}</div>
-          </div>
-          <div>
-            <div class="label-micro">Speed</div>
-            <div class="font-display text-2xl">{{ header.speed }}</div>
-          </div>
-          <div>
-            <div class="label-micro">Prof</div>
-            <div class="font-display text-2xl">+{{ header.pb }}</div>
-          </div>
-        </div>
-      </div>
+  <div class="hero-sheet">
+    <div class="sheet-page-top"><RouterLink v-if="championFor" :to="`/rooms/${roomId}`">← Game room</RouterLink><RouterLink v-else-if="!roomId" to="/">← Your characters</RouterLink><span>{{ role === 'player' ? 'PLAYER SHEET · PERMANENT EDITING BY DM' : 'CHARACTER SHEET · 2014 RULES' }}</span><span role="status">{{ playerPreview ? 'Temporary preview · changes are not saved' : store.saving ? 'Saving…' : 'Changes save automatically during play' }}</span></div>
+    <p v-if="championFor" class="sheet-notice">Shadow Champion reference sheet. You can inspect every tab and try resources here; changes in this preview are temporary.</p><p v-if="loadError" class="sheet-alert" role="alert">{{ loadError }} <button type="button" class="sheet-button sheet-small-button" :disabled="store.loading" @click="openCharacter">Try again</button></p>
+    <div v-else-if="c" class="sheet-workspace" :class="{'sheet-workspace-compact':compactSummary}">
+      <CharacterSidebar v-if="!compactSummary" @edit="switchTab('edit')" />
+      <main ref="sheetMain" class="sheet-main">
+        <nav class="sheet-navigation" aria-label="Character sections"><button v-for="tab in tabs" :key="tab.key" :aria-current="active === tab.key ? 'page' : undefined" :class="{ active: active === tab.key }" @click="switchTab(tab.key)">{{ tab.label }}</button></nav>
+        <section v-if="pendingTab" class="sheet-panel" role="alertdialog" aria-label="Unsaved character edits" style="margin-bottom:20px"><h3>Keep your edits?</h3><p class="sheet-small">Your character has unsaved changes. Save them in Edit, or discard the draft to change tabs.</p><div class="sheet-filter-buttons" style="margin-top:14px"><button class="sheet-button" @click="pendingTab=''">Keep editing</button><button class="sheet-button" @click="discardAndSwitch">Discard draft & change tab</button></div></section>
+        <p v-if="store.saveError" class="sheet-alert" role="alert">{{ store.saveError }} Your last saved values are still shown.</p>
+        <p v-if="pendingRules" class="sheet-notice">Saved class rules changed while you were editing. Your draft is kept; saving it will apply the latest rules and flag conflicts.</p><WorkshopRuleReview v-if="store.canEditPermanent" @edit="editSection='rules';switchTab('edit')" />
+        <p v-if="library.warning.value" class="sheet-notice">{{ library.warning.value }}</p>
+        <p v-else-if="library.loading.value" class="sheet-refresh-status" role="status">Saved sheet is ready. Refreshing rules and reference details…</p>
+        <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSidebar @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
+        <details class="sheet-loading-status"><summary>Loading status</summary><p>Saved sheet opened in {{(store.lastOpenMs/1000).toFixed(2)}} seconds.</p><p>{{library.loading.value?'Rules and reference details are still refreshing.':`Rules and reference check: ${(library.lastReferenceMs.value/1000).toFixed(2)} seconds.`}}</p><button v-if="library.warning.value" type="button" class="sheet-button sheet-small-button" :disabled="library.loading.value" @click="library.reload">Retry reference details</button></details>
+      </main>
     </div>
-
-    <div v-if="store.current" class="max-w-6xl mx-auto px-6 py-6">
-      <div class="flex border-b border-[#4a3c2a] mb-6">
-        <button
-          v-for="t in tabs"
-          :key="t.key"
-          class="sheet-tab"
-          :class="{ active: activeTab === t.key }"
-          @click="activeTab = t.key"
-        >
-          {{ t.label }}
-        </button>
-      </div>
-
-      <CoreTab v-if="activeTab === 'core'" />
-      <CombatTab v-else-if="activeTab === 'combat'" />
-      <EquipmentSpellsTab v-else-if="activeTab === 'equipment'" />
-      <BioTab v-else />
-    </div>
-
-    <p v-else class="text-center text-[var(--color-ink-soft)] py-16">Loading character…</p>
+    <p v-else class="sheet-empty" role="status">Opening your character…</p>
   </div>
 </template>

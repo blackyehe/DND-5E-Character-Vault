@@ -1,0 +1,22 @@
+.progression-editor { color:var(--cb-ink); min-width:0; }
+.progression-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:10px 14px; margin:10px 0; }
+.progression-editor label { display:flex; flex-direction:column; gap:5px; color:var(--cb-muted); font-size:12px; }
+.progression-editor input,.progression-editor select { box-sizing:border-box; width:100%; min-width:0; border:1px solid var(--cb-line); border-radius:5px; background:var(--cb-field); color:var(--cb-ink); padding:9px 10px; font:inherit; font-size:14px; }
+.progression-editor select { background:var(--cb-select,var(--cb-field)); color:var(--cb-select-ink,var(--cb-ink)); }
+.progression-editor option { background:var(--cb-select,var(--cb-field)); color:var(--cb-select-ink,var(--cb-ink)); }
+.progression-editor input:disabled { opacity:.85; background:var(--cb-soft); }
+.progression-summary { display:flex; flex-wrap:wrap; gap:8px 20px; padding:12px 14px; background:var(--cb-accent-soft); border:1px solid var(--cb-line); border-radius:6px; font-size:14px; margin:12px 0; }
+.progression-summary>strong { flex-basis:100%; color:var(--cb-accent-text); }
+.progression-hint { color:var(--cb-muted); font-size:13px; line-height:1.6; margin:9px 0; }
+.progression-hint strong { color:var(--cb-ink); font-weight:500; }
+.progression-slot-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:9px; margin:14px 0; }
+.progression-slot { border:1px solid var(--cb-line); border-radius:6px; background:var(--cb-soft); padding:10px; display:flex; flex-direction:column; gap:8px; }
+.progression-slot>strong { font-size:13px; font-weight:500; }
+.progression-slot small { color:var(--cb-accent-text); font-size:12px; }
+.progression-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.progression-resource { padding:13px 0; border-top:1px solid var(--cb-line); }
+.progression-remaining { display:flex; flex-direction:column; justify-content:center; padding-left:12px; }
+.progression-remaining strong { color:var(--cb-accent-text); font-size:26px; font-weight:500; }
+.progression-remaining small { color:var(--cb-muted); font-size:12px; }
+.progression-link { background:transparent; border:0; color:var(--cb-accent-text); cursor:pointer; text-decoration:underline; font:inherit; font-size:13px; padding:3px 0; }
+.progression-button { background:var(--cb-field); border:1px solid var(--cb-line); border-radius:5px; color:var(--cb-ink); padding:8px 12px; font:inherit; font-size:13px; cursor:pointer; }

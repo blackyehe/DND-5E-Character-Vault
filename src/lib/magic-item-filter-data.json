@@ -1,0 +1,3247 @@
+{
+  "source": "https://github.com/5e-bits/5e-srd-api/tree/85acb251dad0b044a72c554c2d7f2d0c11e43504/packages/5e-database/src/2014/en",
+  "weapons": [
+    {
+      "index": "club",
+      "name": "Club",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "dagger",
+      "name": "Dagger",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "greatclub",
+      "name": "Greatclub",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "handaxe",
+      "name": "Handaxe",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "javelin",
+      "name": "Javelin",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "light-hammer",
+      "name": "Light hammer",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "mace",
+      "name": "Mace",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "quarterstaff",
+      "name": "Quarterstaff",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "sickle",
+      "name": "Sickle",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "spear",
+      "name": "Spear",
+      "group": "Simple",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "crossbow-light",
+      "name": "Crossbow, light",
+      "group": "Simple",
+      "range": "Ranged",
+      "damage": "piercing"
+    },
+    {
+      "index": "dart",
+      "name": "Dart",
+      "group": "Simple",
+      "range": "Ranged",
+      "damage": "piercing"
+    },
+    {
+      "index": "shortbow",
+      "name": "Shortbow",
+      "group": "Simple",
+      "range": "Ranged",
+      "damage": "piercing"
+    },
+    {
+      "index": "sling",
+      "name": "Sling",
+      "group": "Simple",
+      "range": "Ranged",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "battleaxe",
+      "name": "Battleaxe",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "flail",
+      "name": "Flail",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "glaive",
+      "name": "Glaive",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "greataxe",
+      "name": "Greataxe",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "greatsword",
+      "name": "Greatsword",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "halberd",
+      "name": "Halberd",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "lance",
+      "name": "Lance",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "longsword",
+      "name": "Longsword",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "maul",
+      "name": "Maul",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "morningstar",
+      "name": "Morningstar",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "pike",
+      "name": "Pike",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "rapier",
+      "name": "Rapier",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "scimitar",
+      "name": "Scimitar",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "shortsword",
+      "name": "Shortsword",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "trident",
+      "name": "Trident",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "war-pick",
+      "name": "War pick",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "piercing"
+    },
+    {
+      "index": "warhammer",
+      "name": "Warhammer",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "bludgeoning"
+    },
+    {
+      "index": "whip",
+      "name": "Whip",
+      "group": "Martial",
+      "range": "Melee",
+      "damage": "slashing"
+    },
+    {
+      "index": "blowgun",
+      "name": "Blowgun",
+      "group": "Martial",
+      "range": "Ranged",
+      "damage": "piercing"
+    },
+    {
+      "index": "crossbow-hand",
+      "name": "Crossbow, hand",
+      "group": "Martial",
+      "range": "Ranged",
+      "damage": "piercing"
+    },
+    {
+      "index": "crossbow-heavy",
+      "name": "Crossbow, heavy",
+      "group": "Martial",
+      "range": "Ranged",
+      "damage": "piercing"
+    },
+    {
+      "index": "longbow",
+      "name": "Longbow",
+      "group": "Martial",
+      "range": "Ranged",
+      "damage": "piercing"
+    },
+    {
+      "index": "net",
+      "name": "Net",
+      "group": "Martial",
+      "range": "Ranged",
+      "damage": ""
+    }
+  ],
+  "armours": [
+    {
+      "index": "padded-armor",
+      "name": "Padded Armor",
+      "group": "Light"
+    },
+    {
+      "index": "leather-armor",
+      "name": "Leather Armor",
+      "group": "Light"
+    },
+    {
+      "index": "studded-leather-armor",
+      "name": "Studded Leather Armor",
+      "group": "Light"
+    },
+    {
+      "index": "hide-armor",
+      "name": "Hide Armor",
+      "group": "Medium"
+    },
+    {
+      "index": "chain-shirt",
+      "name": "Chain Shirt",
+      "group": "Medium"
+    },
+    {
+      "index": "scale-mail",
+      "name": "Scale Mail",
+      "group": "Medium"
+    },
+    {
+      "index": "breastplate",
+      "name": "Breastplate",
+      "group": "Medium"
+    },
+    {
+      "index": "half-plate-armor",
+      "name": "Half Plate Armor",
+      "group": "Medium"
+    },
+    {
+      "index": "ring-mail",
+      "name": "Ring Mail",
+      "group": "Heavy"
+    },
+    {
+      "index": "chain-mail",
+      "name": "Chain Mail",
+      "group": "Heavy"
+    },
+    {
+      "index": "splint-armor",
+      "name": "Splint Armor",
+      "group": "Heavy"
+    },
+    {
+      "index": "plate-armor",
+      "name": "Plate Armor",
+      "group": "Heavy"
+    },
+    {
+      "index": "shield",
+      "name": "Shield",
+      "group": "Shield"
+    }
+  ],
+  "items": {
+    "adamantine-armor": {
+      "category": "armor",
+      "armourTypes": [
+        "breastplate",
+        "chain-mail",
+        "chain-shirt",
+        "half-plate-armor",
+        "plate-armor",
+        "ring-mail",
+        "scale-mail",
+        "splint-armor"
+      ],
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "ammunition": {
+      "category": "ammunition",
+      "tags": [],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "ammunition-1": {
+      "category": "ammunition",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "ammunition-2": {
+      "category": "ammunition",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "ammunition-3": {
+      "category": "ammunition",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "amulet-of-health": {
+      "category": "wondrous-items",
+      "tags": [
+        "amulet"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "amulet-of-proof-against-detection-and-location": {
+      "category": "wondrous-items",
+      "tags": [
+        "amulet"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "amulet-of-the-planes": {
+      "category": "wondrous-items",
+      "tags": [
+        "amulet"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "animated-shield": {
+      "category": "armor",
+      "armourTypes": [
+        "shield"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "apparatus-of-the-crab": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "armor": {
+      "category": "armor",
+      "armourTypes": [
+        "breastplate",
+        "chain-mail",
+        "chain-shirt",
+        "half-plate-armor",
+        "hide-armor",
+        "leather-armor",
+        "padded-armor",
+        "plate-armor",
+        "ring-mail",
+        "scale-mail",
+        "splint-armor",
+        "studded-leather-armor"
+      ],
+      "tags": [],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "armor-1": {
+      "category": "armor",
+      "armourTypes": [
+        "breastplate",
+        "chain-mail",
+        "chain-shirt",
+        "half-plate-armor",
+        "hide-armor",
+        "leather-armor",
+        "padded-armor",
+        "plate-armor",
+        "ring-mail",
+        "scale-mail",
+        "splint-armor",
+        "studded-leather-armor"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "armor-2": {
+      "category": "armor",
+      "armourTypes": [
+        "breastplate",
+        "chain-mail",
+        "chain-shirt",
+        "half-plate-armor",
+        "hide-armor",
+        "leather-armor",
+        "padded-armor",
+        "plate-armor",
+        "ring-mail",
+        "scale-mail",
+        "splint-armor",
+        "studded-leather-armor"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "armor-3": {
+      "category": "armor",
+      "armourTypes": [
+        "breastplate",
+        "chain-mail",
+        "chain-shirt",
+        "half-plate-armor",
+        "hide-armor",
+        "leather-armor",
+        "padded-armor",
+        "plate-armor",
+        "ring-mail",
+        "scale-mail",
+        "splint-armor",
+        "studded-leather-armor"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "armor-of-invulnerability": {
+      "category": "armor",
+      "armourTypes": [
+        "plate-armor"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "armor-of-resistance": {
+      "category": "armor",
+      "armourTypes": [
+        "breastplate",
+        "chain-mail",
+        "chain-shirt",
+        "half-plate-armor",
+        "hide-armor",
+        "leather-armor",
+        "padded-armor",
+        "plate-armor",
+        "ring-mail",
+        "scale-mail",
+        "splint-armor",
+        "studded-leather-armor"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "armor-of-vulnerability": {
+      "category": "armor",
+      "armourTypes": [
+        "plate-armor"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "arrow-catching-shield": {
+      "category": "armor",
+      "armourTypes": [
+        "shield"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "arrow-of-slaying": {
+      "category": "ammunition",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "bag-of-beans": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "bag-of-devouring": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "bag-of-holding": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "bag-of-tricks": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "bag-of-tricks-gray": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "bag-of-tricks-rust": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "bag-of-tricks-tan": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "bead-of-force": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "belt-of-dwarvenkind": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "belt-of-giant-strength": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "varies",
+      "attunement": true
+    },
+    "belt-of-giant-strength-hill": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "belt-of-giant-strength-stone": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "belt-of-giant-strength-frost": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "belt-of-giant-strength-fire": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "belt-of-giant-strength-cloud": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "belt-of-giant-strength-storm": {
+      "category": "wondrous-items",
+      "tags": [
+        "belt"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "berserker-axe": {
+      "category": "weapon",
+      "weaponTypes": [
+        "battleaxe",
+        "greataxe",
+        "handaxe"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "boots-of-elvenkind": {
+      "category": "wondrous-items",
+      "tags": [
+        "boots"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "boots-of-levitation": {
+      "category": "wondrous-items",
+      "tags": [
+        "boots"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "boots-of-speed": {
+      "category": "wondrous-items",
+      "tags": [
+        "boots"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "boots-of-striding-and-springing": {
+      "category": "wondrous-items",
+      "tags": [
+        "boots"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "boots-of-the-winterlands": {
+      "category": "wondrous-items",
+      "tags": [
+        "boots"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "bowl-of-commanding-water-elementals": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "bracers-of-archery": {
+      "category": "wondrous-items",
+      "tags": [
+        "bracers"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "bracers-of-defense": {
+      "category": "wondrous-items",
+      "tags": [
+        "bracers"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "brazier-of-commanding-fire-elementals": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "brooch-of-shielding": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "broom-of-flying": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "candle-of-invocation": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "cape-of-the-mountebank": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "carpet-of-flying": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "carpet-of-flying-3x5": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "carpet-of-flying-4x6": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "carpet-of-flying-5x7": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "carpet-of-flying-6x9": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "censer-of-controlling-air-elementals": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "chime-of-opening": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "circlet-of-blasting": {
+      "category": "wondrous-items",
+      "tags": [
+        "headwear"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "cloak-of-arachnida": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "cloak-of-displacement": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "cloak-of-elvenkind": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "cloak-of-protection": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "cloak-of-the-bat": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "cloak-of-the-manta-ray": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "crystal-ball": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "crystal-ball-of-mind-reading": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "crystal-ball-of-telepathy": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "crystal-ball-of-true-seeing": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "cube-of-force": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "cubic-gate": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "dagger-of-venom": {
+      "category": "weapon",
+      "weaponTypes": [
+        "dagger"
+      ],
+      "bonusDamageTypes": [
+        "poison"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "dancing-sword": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "decanter-of-endless-water": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "deck-of-illusions": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "deck-of-many-things": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "defender": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "demon-armor": {
+      "category": "armor",
+      "armourTypes": [
+        "plate-armor"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dimensional-shackles": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "dragon-scale-mail": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-black": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-blue": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-brass": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-bronze": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-copper": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-gold": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-green": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-red": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-silver": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-scale-mail-white": {
+      "category": "armor",
+      "armourTypes": [
+        "scale-mail"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "dragon-slayer": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "dust-of-disappearance": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "dust-of-dryness": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "dust-of-sneezing-and-choking": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "dwarven-plate": {
+      "category": "armor",
+      "armourTypes": [
+        "plate-armor"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "dwarven-thrower": {
+      "category": "weapon",
+      "weaponTypes": [
+        "warhammer"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "efficient-quiver": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "efreeti-bottle": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "elemental-gem": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "elemental-gem-air": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "elemental-gem-earth": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "elemental-gem-fire": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "elemental-gem-water": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "elven-chain": {
+      "category": "armor",
+      "armourTypes": [
+        "chain-shirt"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "eversmoking-bottle": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "eyes-of-charming": {
+      "category": "wondrous-items",
+      "tags": [
+        "eyewear"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "eyes-of-minute-seeing": {
+      "category": "wondrous-items",
+      "tags": [
+        "eyewear"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "eyes-of-the-eagle": {
+      "category": "wondrous-items",
+      "tags": [
+        "eyewear"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "feather-token": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "feather-token-anchor": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "feather-token-bird": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "feather-token-fan": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "feather-token-swan-boat": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "feather-token-tree": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "feather-token-whip": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-bronze-griffon": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-ebony-fly": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-golden-lions": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-ivory-goats": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-marble-elephant": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-obsidian-steed": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-onyx-dog": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-serpentine-owl": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "figurine-of-wondrous-power-silver-raven": {
+      "category": "wondrous-items",
+      "tags": [
+        "figurine"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "flame-tongue": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "bonusDamageTypes": [
+        "fire"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "folding-boat": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "frost-brand": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "bonusDamageTypes": [
+        "cold"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "gauntlets-of-ogre-power": {
+      "category": "wondrous-items",
+      "tags": [
+        "gloves"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "gem-of-brightness": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "gem-of-seeing": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "giant-slayer": {
+      "category": "weapon",
+      "weaponTypes": [
+        "battleaxe",
+        "greataxe",
+        "greatsword",
+        "handaxe",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "glamoured-studded-leather-armor": {
+      "category": "armor",
+      "armourTypes": [
+        "leather-armor",
+        "studded-leather-armor"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "gloves-of-missile-snaring": {
+      "category": "wondrous-items",
+      "tags": [
+        "gloves"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "gloves-of-swimming-and-climbing": {
+      "category": "wondrous-items",
+      "tags": [
+        "gloves"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "goggles-of-night": {
+      "category": "wondrous-items",
+      "tags": [
+        "eyewear"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "hammer-of-thunderbolts": {
+      "category": "weapon",
+      "weaponTypes": [
+        "maul"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "handy-haversack": {
+      "category": "wondrous-items",
+      "tags": [
+        "bag"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "hat-of-disguise": {
+      "category": "wondrous-items",
+      "tags": [
+        "headwear"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "headband-of-intellect": {
+      "category": "wondrous-items",
+      "tags": [
+        "headwear"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "helm-of-brilliance": {
+      "category": "wondrous-items",
+      "tags": [
+        "headwear"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "helm-of-comprehending-languages": {
+      "category": "wondrous-items",
+      "tags": [
+        "headwear"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "helm-of-telepathy": {
+      "category": "wondrous-items",
+      "tags": [
+        "headwear"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "helm-of-teleportation": {
+      "category": "wondrous-items",
+      "tags": [
+        "headwear"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "holy-avenger": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "bonusDamageTypes": [
+        "radiant"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "horn-of-blasting": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "horn-of-valhalla": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "horn-of-valhalla-silver": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "horn-of-valhalla-brass": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "horn-of-valhalla-bronze": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "horn-of-valhalla-iron": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "horseshoes-of-a-zephyr": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "horseshoes-of-speed": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "immovable-rod": {
+      "category": "rod",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "instant-fortress": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "ioun-stone": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "varies",
+      "attunement": true
+    },
+    "ioun-stone-of-absorption": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ioun-stone-of-agility": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ioun-stone-of-awareness": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ioun-stone-of-fortitude": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ioun-stone-of-greater-absorption": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ioun-stone-of-insight": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ioun-stone-of-intellect": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ioun-stone-of-leadership": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ioun-stone-of-mastery": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ioun-stone-of-protection": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ioun-stone-of-regeneration": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ioun-stone-of-reserve": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ioun-stone-of-strength": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ioun-stone-of-sustenance": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "iron-bands-of-binding": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "iron-flask": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "javelin-of-lightning": {
+      "category": "weapon",
+      "weaponTypes": [
+        "javelin"
+      ],
+      "bonusDamageTypes": [
+        "lightning"
+      ],
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "lantern-of-revealing": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "luck-blade": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "mace-of-disruption": {
+      "category": "weapon",
+      "weaponTypes": [
+        "mace"
+      ],
+      "bonusDamageTypes": [
+        "radiant"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "mace-of-smiting": {
+      "category": "weapon",
+      "weaponTypes": [
+        "mace"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "mace-of-terror": {
+      "category": "weapon",
+      "weaponTypes": [
+        "mace"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "mantle-of-spell-resistance": {
+      "category": "wondrous-items",
+      "tags": [
+        "cloak"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "manual-of-bodily-health": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "manual-of-gainful-exercise": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "manual-of-golems": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "manual-of-golems-clay": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "manual-of-golems-flesh": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "manual-of-golems-iron": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "manual-of-golems-stone": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "manual-of-quickness-of-action": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "marvelous-pigments": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "medallion-of-thoughts": {
+      "category": "wondrous-items",
+      "tags": [
+        "amulet"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "mirror-of-life-trapping": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "mithral-armor": {
+      "category": "armor",
+      "armourTypes": [
+        "breastplate",
+        "chain-mail",
+        "chain-shirt",
+        "half-plate-armor",
+        "hide-armor",
+        "plate-armor",
+        "ring-mail",
+        "scale-mail",
+        "splint-armor"
+      ],
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "necklace-of-adaptation": {
+      "category": "wondrous-items",
+      "tags": [
+        "necklace"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "necklace-of-fireballs": {
+      "category": "wondrous-items",
+      "tags": [
+        "necklace"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "necklace-of-prayer-beads": {
+      "category": "wondrous-items",
+      "tags": [
+        "necklace"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "nine-lives-stealer": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "oathbow": {
+      "category": "weapon",
+      "weaponTypes": [
+        "longbow"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "oil-of-etherealness": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "oil-of-sharpness": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "oil-of-slipperiness": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "pearl-of-power": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "periapt-of-health": {
+      "category": "wondrous-items",
+      "tags": [
+        "amulet"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "periapt-of-proof-against-poison": {
+      "category": "wondrous-items",
+      "tags": [
+        "amulet"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "periapt-of-wound-closure": {
+      "category": "wondrous-items",
+      "tags": [
+        "amulet"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "philter-of-love": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "pipes-of-haunting": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "pipes-of-the-sewers": {
+      "category": "wondrous-items",
+      "tags": [
+        "instrument"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "plate-armor-of-etherealness": {
+      "category": "armor",
+      "armourTypes": [
+        "plate-armor"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "portable-hole": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-animal-friendship": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-clairvoyance": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-climbing": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "common",
+      "attunement": false
+    },
+    "potion-of-diminution": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-flying": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "potion-of-gaseous-form": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-giant-strength": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "potion-of-giant-strength-hill": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-giant-strength-frost": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-giant-strength-stone": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-giant-strength-fire": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-giant-strength-cloud": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "potion-of-giant-strength-storm": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "potion-of-growth": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-healing": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "potion-of-healing-common": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "common",
+      "attunement": false
+    },
+    "potion-of-healing-greater": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-healing-superior": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-healing-supreme": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "potion-of-heroism": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-invisibility": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "potion-of-mind-reading": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "potion-of-poison": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-acid": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-cold": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-fire": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-force": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-lightning": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-necrotic": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-poison": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-psychic": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-radiant": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-resistance-thunder": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "potion-of-speed": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "potion-of-water-breathing": {
+      "category": "potion",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "restorative-ointment": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "ring-of-animal-influence": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "ring-of-djinni-summoning": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-elemental-command": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-elemental-command-air": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-elemental-command-earth": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-elemental-command-fire": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-elemental-command-water": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-evasion": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-feather-falling": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-free-action": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-invisibility": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-jumping": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "ring-of-mind-shielding": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "ring-of-protection": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-regeneration": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ring-of-resistance": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-acid": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-cold": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-fire": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-force": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-lightning": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-necrotic": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-poison": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-psychic": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-radiant": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-resistance-thunder": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-shooting-stars": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ring-of-spell-storing": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-spell-turning": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "ring-of-swimming": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "ring-of-telekinesis": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "ring-of-the-ram": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "ring-of-three-wishes": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "ring-of-warmth": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "ring-of-water-walking": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "ring-of-x-ray-vision": {
+      "category": "ring",
+      "tags": [
+        "ring"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "robe-of-eyes": {
+      "category": "wondrous-items",
+      "tags": [
+        "eyewear",
+        "robe"
+      ],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "robe-of-scintillating-colors": {
+      "category": "wondrous-items",
+      "tags": [
+        "robe"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "robe-of-stars": {
+      "category": "wondrous-items",
+      "tags": [
+        "robe"
+      ],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "robe-of-the-archmagi": {
+      "category": "wondrous-items",
+      "tags": [
+        "robe"
+      ],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "robe-of-useful-items": {
+      "category": "wondrous-items",
+      "tags": [
+        "robe"
+      ],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "rod-of-absorption": {
+      "category": "rod",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "rod-of-alertness": {
+      "category": "rod",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "rod-of-lordly-might": {
+      "category": "rod",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "rod-of-rulership": {
+      "category": "rod",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "rod-of-security": {
+      "category": "rod",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "rope-of-climbing": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "rope-of-entanglement": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "scarab-of-protection": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "scimitar-of-speed": {
+      "category": "weapon",
+      "weaponTypes": [
+        "scimitar"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "shield-of-missile-attraction": {
+      "category": "armor",
+      "armourTypes": [
+        "shield"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "slippers-of-spider-climbing": {
+      "category": "wondrous-items",
+      "tags": [
+        "boots"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "sovereign-glue": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "spell-scroll": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "spell-scroll-cantrip": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "common",
+      "attunement": false
+    },
+    "spell-scroll-1st": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "common",
+      "attunement": false
+    },
+    "spell-scroll-2nd": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "spell-scroll-3rd": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "spell-scroll-4th": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "spell-scroll-5th": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "spell-scroll-6th": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "spell-scroll-7th": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "spell-scroll-8th": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "spell-scroll-9th": {
+      "category": "scroll",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "spellguard-shield": {
+      "category": "armor",
+      "armourTypes": [
+        "shield"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "sphere-of-annihilation": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "staff-of-charming": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "staff-of-fire": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "staff-of-frost": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "staff-of-healing": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "staff-of-power": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "staff-of-striking": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "staff-of-swarming-insects": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "staff-of-the-magi": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "staff-of-the-python": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "staff-of-the-woodlands": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "staff-of-thunder-and-lightning": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "staff-of-withering": {
+      "category": "staff",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "stone-of-controlling-earth-elementals": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "stone-of-good-luck-luckstone": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "sun-blade": {
+      "category": "weapon",
+      "weaponTypes": [
+        "longsword"
+      ],
+      "bonusDamageTypes": [
+        "radiant"
+      ],
+      "replacesDamage": true,
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "sword-of-life-stealing": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "bonusDamageTypes": [
+        "necrotic"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "sword-of-sharpness": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "scimitar"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "sword-of-wounding": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "rapier",
+        "scimitar",
+        "shortsword"
+      ],
+      "bonusDamageTypes": [
+        "necrotic"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "talisman-of-pure-good": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "talisman-of-the-sphere": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "talisman-of-ultimate-evil": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "tome-of-clear-thought": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "tome-of-leadership-and-influence": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "tome-of-understanding": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "trident-of-fish-command": {
+      "category": "weapon",
+      "weaponTypes": [
+        "trident"
+      ],
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "universal-solvent": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "vicious-weapon": {
+      "category": "weapon",
+      "weaponTypes": [
+        "battleaxe",
+        "blowgun",
+        "club",
+        "crossbow-hand",
+        "crossbow-heavy",
+        "crossbow-light",
+        "dagger",
+        "dart",
+        "flail",
+        "glaive",
+        "greataxe",
+        "greatclub",
+        "greatsword",
+        "halberd",
+        "handaxe",
+        "javelin",
+        "lance",
+        "light-hammer",
+        "longbow",
+        "longsword",
+        "mace",
+        "maul",
+        "morningstar",
+        "net",
+        "pike",
+        "quarterstaff",
+        "rapier",
+        "scimitar",
+        "shortbow",
+        "shortsword",
+        "sickle",
+        "sling",
+        "spear",
+        "trident",
+        "war-pick",
+        "warhammer",
+        "whip"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "vorpal-sword": {
+      "category": "weapon",
+      "weaponTypes": [
+        "greatsword",
+        "longsword",
+        "scimitar"
+      ],
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": true
+    },
+    "wand-of-binding": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "wand-of-enemy-detection": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "wand-of-fear": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "wand-of-fireballs": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "wand-of-lightning-bolts": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "wand-of-magic-detection": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "wand-of-magic-missiles": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "wand-of-paralysis": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "wand-of-polymorph": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "wand-of-secrets": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "wand-of-the-war-mage": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "varies",
+      "attunement": true
+    },
+    "wand-of-the-war-mage-1": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "wand-of-the-war-mage-2": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "wand-of-the-war-mage-3": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": true
+    },
+    "wand-of-web": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "wand-of-wonder": {
+      "category": "wand",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "weapon": {
+      "category": "weapon",
+      "weaponTypes": [
+        "battleaxe",
+        "blowgun",
+        "club",
+        "crossbow-hand",
+        "crossbow-heavy",
+        "crossbow-light",
+        "dagger",
+        "dart",
+        "flail",
+        "glaive",
+        "greataxe",
+        "greatclub",
+        "greatsword",
+        "halberd",
+        "handaxe",
+        "javelin",
+        "lance",
+        "light-hammer",
+        "longbow",
+        "longsword",
+        "mace",
+        "maul",
+        "morningstar",
+        "net",
+        "pike",
+        "quarterstaff",
+        "rapier",
+        "scimitar",
+        "shortbow",
+        "shortsword",
+        "sickle",
+        "sling",
+        "spear",
+        "trident",
+        "war-pick",
+        "warhammer",
+        "whip"
+      ],
+      "tags": [],
+      "rarity": "varies",
+      "attunement": false
+    },
+    "weapon-1": {
+      "category": "weapon",
+      "weaponTypes": [
+        "battleaxe",
+        "blowgun",
+        "club",
+        "crossbow-hand",
+        "crossbow-heavy",
+        "crossbow-light",
+        "dagger",
+        "dart",
+        "flail",
+        "glaive",
+        "greataxe",
+        "greatclub",
+        "greatsword",
+        "halberd",
+        "handaxe",
+        "javelin",
+        "lance",
+        "light-hammer",
+        "longbow",
+        "longsword",
+        "mace",
+        "maul",
+        "morningstar",
+        "net",
+        "pike",
+        "quarterstaff",
+        "rapier",
+        "scimitar",
+        "shortbow",
+        "shortsword",
+        "sickle",
+        "sling",
+        "spear",
+        "trident",
+        "war-pick",
+        "warhammer",
+        "whip"
+      ],
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "weapon-2": {
+      "category": "weapon",
+      "weaponTypes": [
+        "battleaxe",
+        "blowgun",
+        "club",
+        "crossbow-hand",
+        "crossbow-heavy",
+        "crossbow-light",
+        "dagger",
+        "dart",
+        "flail",
+        "glaive",
+        "greataxe",
+        "greatclub",
+        "greatsword",
+        "halberd",
+        "handaxe",
+        "javelin",
+        "lance",
+        "light-hammer",
+        "longbow",
+        "longsword",
+        "mace",
+        "maul",
+        "morningstar",
+        "net",
+        "pike",
+        "quarterstaff",
+        "rapier",
+        "scimitar",
+        "shortbow",
+        "shortsword",
+        "sickle",
+        "sling",
+        "spear",
+        "trident",
+        "war-pick",
+        "warhammer",
+        "whip"
+      ],
+      "tags": [],
+      "rarity": "rare",
+      "attunement": false
+    },
+    "weapon-3": {
+      "category": "weapon",
+      "weaponTypes": [
+        "battleaxe",
+        "blowgun",
+        "club",
+        "crossbow-hand",
+        "crossbow-heavy",
+        "crossbow-light",
+        "dagger",
+        "dart",
+        "flail",
+        "glaive",
+        "greataxe",
+        "greatclub",
+        "greatsword",
+        "halberd",
+        "handaxe",
+        "javelin",
+        "lance",
+        "light-hammer",
+        "longbow",
+        "longsword",
+        "mace",
+        "maul",
+        "morningstar",
+        "net",
+        "pike",
+        "quarterstaff",
+        "rapier",
+        "scimitar",
+        "shortbow",
+        "shortsword",
+        "sickle",
+        "sling",
+        "spear",
+        "trident",
+        "war-pick",
+        "warhammer",
+        "whip"
+      ],
+      "tags": [],
+      "rarity": "very rare",
+      "attunement": false
+    },
+    "well-of-many-worlds": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "legendary",
+      "attunement": false
+    },
+    "wind-fan": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "uncommon",
+      "attunement": false
+    },
+    "winged-boots": {
+      "category": "wondrous-items",
+      "tags": [
+        "boots"
+      ],
+      "rarity": "uncommon",
+      "attunement": true
+    },
+    "wings-of-flying": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "rare",
+      "attunement": true
+    },
+    "orb-of-dragonkind": {
+      "category": "wondrous-items",
+      "tags": [],
+      "rarity": "artifact",
+      "attunement": true
+    }
+  }
+}

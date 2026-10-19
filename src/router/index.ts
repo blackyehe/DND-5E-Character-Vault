@@ -3,16 +3,27 @@ import { useAuthStore } from '../stores/auth'
 
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
-import CharacterSheetView from '../views/CharacterSheetView.vue'
-import CompendiumView from '../views/CompendiumView.vue'
+const CharacterSheetView=()=>import('../views/CharacterSheetView.vue')
+const CompendiumView=()=>import('../views/CompendiumView.vue')
+const CharacterCreationView=()=>import('../views/CharacterCreationView.vue')
+const HomebrewWorkshopView=()=>import('../views/HomebrewWorkshopView.vue')
+const RoomsView=()=>import('../views/RoomsView.vue')
+const RoomView=()=>import('../views/RoomView.vue')
+const RoomJoinView=()=>import('../views/RoomJoinView.vue')
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView },
     { path: '/', name: 'dashboard', component: DashboardView },
+    { path: '/characters/new', name: 'character-new', component: CharacterCreationView },
     { path: '/characters/:id', name: 'character', component: CharacterSheetView, props: true },
     { path: '/compendium', name: 'compendium', component: CompendiumView },
+    { path: '/homebrew', name: 'homebrew-workshop', component: HomebrewWorkshopView },
+    { path: '/rooms', name: 'rooms', component: RoomsView },
+    { path: '/rooms/:roomId', name: 'room', component: RoomView },
+    { path:'/rooms/:roomId/characters/:sourceCharacterId/champions/:id',name:'room-champion',component:CharacterSheetView,props:route=>({characterId:String(route.params.id),roomId:String(route.params.roomId),championFor:String(route.params.sourceCharacterId),role:'player',playerPreview:true}) },
+    { path: '/join', name: 'room-join', component: RoomJoinView },
   ],
 })
 
@@ -22,7 +33,7 @@ router.beforeEach(async (to) => {
     await auth.fetchMe()
   }
   if (to.name !== 'login' && !auth.user) {
-    return { name: 'login' }
+    return { name: 'login', query: { next: to.fullPath } }
   }
   if (to.name === 'login' && auth.user) {
     return { name: 'dashboard' }
