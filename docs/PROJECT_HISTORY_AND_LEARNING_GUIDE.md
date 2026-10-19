@@ -16,6 +16,11 @@ with the chronology, use the glossary when needed, and return to one step at a
 time. The learning questions are prompts for our discussions, not homework that
 must be completed before continuing.
 
+If your editor displays Markdown as source text, use the
+[PDF reading copy](../output/pdf/PROJECT_HISTORY_AND_LEARNING_GUIDE.pdf), which has
+clickable contents and native bookmarks. The Markdown version uses standard
+heading links for readers that render Markdown.
+
 ### What the history can establish
 
 - The **order of requests and decisions** comes from our conversation.
@@ -97,36 +102,35 @@ features follow directly from these distinctions.
 
 | Step | Development stage | Main reason it happened |
 | --- | --- | --- |
-| [01](#step-01) | Inherited app and plan review | Establish what already existed and what could be trusted |
-| [02](#step-02) | Runtime and development environment | Resolve the old Node version and local setup mismatch |
-| [03](#step-03) | Orcbrew import and export | Preserve your existing homebrew files |
-| [04](#step-04) | Orcbrew integration and overlaps | Make imported definitions usable without confusing duplicates |
-| [05](#step-05) | Dedicated character builder | Provide detailed creation with clear navigation |
-| [06](#step-06) | Themes, spell browsing and allowances | Improve readability and explain selection limits |
-| [07](#step-07) | DMV character-link import | Avoid rebuilding existing characters manually |
-| [08](#step-08) | Sheet structure and editing boundaries | Separate permanent changes from everyday play |
-| [09](#step-09) | Compact features, equipment and references | Reduce scrolling and expose useful rules |
-| [10](#step-10) | Custom casting and resource progression | Make Fade’s setup understandable and reusable |
-| [11](#step-11) | Shared class rules, party imports and champions | Generalise character-specific fixes to the class and table |
-| [12](#step-12) | Class and subclass Workshop drafts | Make complex content authoring possible |
-| [13](#step-13) | Workshop publication, revisions and exports | Update existing characters without destroying play state |
-| [14](#step-14) | Private-room design and permissions | Let invited players use assigned DM-owned characters |
-| [15](#step-15) | Public hosting and account migration | Move the project off one local computer |
-| [16](#step-16) | Shared content and Compendium items | Ensure players can read their rules and find standard items |
-| [17](#step-17) | Race builder and missing racial grants | Correct the content type behind missing traits |
-| [18](#step-18) | First loading and editing improvements | Address very slow sheets and difficult spell repair |
-| [19](#step-19) | Inventory rule resolution and compact layout | Make imported weapons and item effects work visibly |
-| [20](#step-20) | Progressive loading and DM Player view | Make sheets usable before heavy references finish loading |
-| [21](#step-21) | Automatic feat resource trackers | Turn feats such as Lucky into usable counters |
-| [22](#step-22) | Summary, resource descriptions and companion access | Apply the next round of table feedback |
-| [23](#step-23) | Item creation, delivery and live template updates | Give players usable loot during a session |
-| [24](#step-24) | Base item types, tags and detailed filtering | Make authored equipment easier to create and find |
-| [25](#step-25) | Git checkpoints and learning documentation | Make the accumulated work reviewable |
+| [01](#step-01-establishing-the-starting-point) | Inherited app and plan review | Establish what already existed and what could be trusted |
+| [02](#step-02-understanding-the-node-and-local-service-setup) | Runtime and development environment | Resolve the old Node version and local setup mismatch |
+| [03](#step-03-bringing-orcbrew-files-into-the-site) | Orcbrew import and export | Preserve your existing homebrew files |
+| [04](#step-04-making-imported-content-usable-and-handling-overlaps) | Orcbrew integration and overlaps | Make imported definitions usable without confusing duplicates |
+| [05](#step-05-building-a-dedicated-character-creation-screen) | Dedicated character builder | Provide detailed creation with clear navigation |
+| [06](#step-06-improving-appearance-and-making-spell-limits-understandable) | Themes, spell browsing and allowances | Improve readability and explain selection limits |
+| [07](#step-07-importing-a-character-from-a-dmv-link) | DMV character-link import | Avoid rebuilding existing characters manually |
+| [08](#step-08-separating-a-playable-sheet-from-permanent-editing) | Sheet structure and editing boundaries | Separate permanent changes from everyday play |
+| [09](#step-09-making-the-sheet-compact-and-its-references-accessible) | Compact features, equipment and references | Reduce scrolling and expose useful rules |
+| [10](#step-10-turning-fades-custom-progression-into-explicit-rules) | Custom casting and resource progression | Make Fade’s setup understandable and reusable |
+| [11](#step-11-generalising-custom-rules-to-the-class-and-the-party) | Shared class rules, party imports and champions | Generalise character-specific fixes to the class and table |
+| [12](#step-12-designing-the-class-and-subclass-workshop) | Class and subclass Workshop drafts | Make complex content authoring possible |
+| [13](#step-13-publishing-rules-and-updating-existing-characters) | Workshop publication, revisions and exports | Update existing characters without destroying play state |
+| [14](#step-14-designing-private-rooms-before-building-their-interface) | Private-room design and permissions | Let invited players use assigned DM-owned characters |
+| [15](#step-15-hosting-the-public-site-and-moving-your-library) | Public hosting and account migration | Move the project off one local computer |
+| [16](#step-16-sharing-character-rules-and-expanding-the-compendium) | Shared content and Compendium items | Ensure players can read their rules and find standard items |
+| [17](#step-17-correcting-missing-racial-features-with-a-race-builder) | Race builder and missing racial grants | Correct the content type behind missing traits |
+| [18](#step-18-first-response-to-slow-sheets-and-difficult-spell-repair) | First loading and editing improvements | Address very slow sheets and difficult spell repair |
+| [19](#step-19-making-inventory-rules-match-what-players-actually-own) | Inventory rule resolution and compact layout | Make imported weapons and item effects work visibly |
+| [20](#step-20-opening-the-saved-sheet-first-and-checking-the-player-experience) | Progressive loading and DM Player view | Make sheets usable before heavy references finish loading |
+| [21](#step-21-creating-resource-trackers-from-feats) | Automatic feat resource trackers | Turn feats such as Lucky into usable counters |
+| [22](#step-22-applying-the-next-feedback-file-summary-and-useful-descriptions) | Summary, resource descriptions and companion access | Apply the next round of table feedback |
+| [23](#step-23-creating-items-and-giving-them-during-a-session) | Item creation, delivery and live template updates | Give players usable loot during a session |
+| [24](#step-24-adding-physical-item-types-tags-and-richer-details) | Base item types, tags and detailed filtering | Make authored equipment easier to create and find |
+| [25](#step-25-recording-reviewable-git-checkpoints) | Git checkpoints and learning documentation | Make the accumulated work reviewable |
 
 ## The development steps
 
-<a id="step-01"></a>
-### 01 — Establishing the starting point
+### Step 01: Establishing the starting point
 
 **Trigger.** You asked for an audit of the plan based on the previous OpenCode
 work, then asked for another audit when that plan changed.
@@ -152,8 +156,7 @@ the original app commit `f61f41b` and plan correction `dde40b8`.
 **Learning question.** What is the difference between an assumption, a small
 experiment that verifies it, and a complete implementation?
 
-<a id="step-02"></a>
-### 02 — Understanding the Node and local-service setup
+### Step 02: Understanding the Node and local-service setup
 
 **Trigger.** You noticed a log reporting Node `v20.15.0` and asked why Node 26
 was not in use.
@@ -172,7 +175,7 @@ an already running terminal or a remote deployment environment.
 Local development also uses separate services: the frontend, the app backend,
 and Docker services for MongoDB, Redis and the SRD API. The Vite development
 proxy directs requests to the appropriate local service. The public deployment
-later introduced a different service arrangement in [Step 15](#step-15).
+later introduced a different service arrangement in [Step 15](#step-15-hosting-the-public-site-and-moving-your-library).
 
 **Where to look.** [package.json](../package.json), [.nvmrc](../.nvmrc),
 [vite.config.ts](../vite.config.ts), [docker-compose.yml](../docker-compose.yml).
@@ -180,8 +183,7 @@ later introduced a different service arrangement in [Step 15](#step-15).
 **Learning question.** Why can a project work in one terminal but fail in another
 even though both terminals are on the same computer?
 
-<a id="step-03"></a>
-### 03 — Bringing Orcbrew files into the site
+### Step 03: Bringing Orcbrew files into the site
 
 **Trigger.** You supplied `Blacky's Book of Shadows2.orcbrew` and asked for import
 and export of that file type.
@@ -207,8 +209,7 @@ validation help turn malformed input into a clear import problem.
 **Learning question.** Why is “we can read and preserve this file” a different
 achievement from “we can automatically apply every rule in this file”?
 
-<a id="step-04"></a>
-### 04 — Making imported content usable and handling overlaps
+### Step 04: Making imported content usable and handling overlaps
 
 **Trigger.** You asked for the Orcbrew content to integrate with the existing
 system, then supplied `all-content.orcbrew` and stressed that overlaps should
@@ -237,8 +238,7 @@ sections remain available as reference data.
 **Learning question.** How can we remove duplicate content without accidentally
 merging two different homebrew versions?
 
-<a id="step-05"></a>
-### 05 — Building a dedicated character-creation screen
+### Step 05: Building a dedicated character-creation screen
 
 **Trigger.** You supplied Dungeon Master’s Vault’s character builder as the main
 inspiration and asked for similar detail with easier navigation.
@@ -265,8 +265,7 @@ protects work when a save fails or the user changes sections.
 **Learning question.** Which values should be saved as choices, and which should
 be calculated from those choices?
 
-<a id="step-06"></a>
-### 06 — Improving appearance and making spell limits understandable
+### Step 06: Improving appearance and making spell limits understandable
 
 **Trigger.** You liked the builder but found spell browsing awkward, the Add
 button difficult to reach under long descriptions, and the preview too small.
@@ -295,8 +294,7 @@ escape hatch because its rules can differ from the standard progression.
 **Learning question.** How do we offer customisation and rules enforcement
 without making unusual but valid characters impossible to enter?
 
-<a id="step-07"></a>
-### 07 — Importing a character from a DMV link
+### Step 07: Importing a character from a DMV link
 
 **Trigger.** You supplied an existing DMV character link and asked whether the
 site could import it directly, with a workaround if necessary.
@@ -323,8 +321,7 @@ to make the server access arbitrary addresses.
 **Learning question.** Why should importing external data create warnings and
 retain the original instead of pretending the conversion is exact?
 
-<a id="step-08"></a>
-### 08 — Separating a playable sheet from permanent editing
+### Step 08: Separating a playable sheet from permanent editing
 
 **Trigger.** Your session-feedback notes led to questions about the permanent
 left summary, daily play controls, class resources, feature presentation, and
@@ -342,7 +339,7 @@ different activity from spending slots, changing current HP or equipping gear.
 
 **Why.** A session interface should make frequent actions easy while protecting
 the character’s underlying choices. This distinction later became the server’s
-DM/player permission boundary in [Step 14](#step-14).
+DM/player permission boundary in [Step 14](#step-14-designing-private-rooms-before-building-their-interface).
 
 **Where to look.** [CharacterSidebar.vue](../src/components/sheet/CharacterSidebar.vue),
 [CharacterEditTab.vue](../src/components/sheet/CharacterEditTab.vue),
@@ -352,8 +349,7 @@ DM/player permission boundary in [Step 14](#step-14).
 **Learning question.** Why does “can use the sheet” not have to mean “can edit
 every field on the character”?
 
-<a id="step-09"></a>
-### 09 — Making the sheet compact and its references accessible
+### Step 09: Making the sheet compact and its references accessible
 
 **Trigger.** Large tracker panels and feature lists required too much scrolling.
 Imported weapon training lists were bloated. Dropdowns were hard to read. The
@@ -385,8 +381,7 @@ are separate problems; compacting the page should not remove the explanation.
 **Learning question.** When does a two-column grid help, and when do shared row
 heights make it harder to read?
 
-<a id="step-10"></a>
-### 10 — Turning Fade’s custom progression into explicit rules
+### Step 10: Turning Fade’s custom progression into explicit rules
 
 **Trigger.** Fade’s imported custom class had incomplete features, and the editor
 made it unclear how many slots or shadow points to enter. You explained that he
@@ -413,8 +408,7 @@ receives.
 **Learning question.** What is the difference between storing today’s answer
 and storing the rule that can calculate tomorrow’s answer?
 
-<a id="step-11"></a>
-### 11 — Generalising custom rules to the class and the party
+### Step 11: Generalising custom rules to the class and the party
 
 **Trigger.** You pointed out that shadow points belong to Revenant Shadow, not
 only to Fade. You requested more character imports and a Shadow Champions
@@ -445,8 +439,7 @@ resources remain separate from ordinary slots so their usage is visible.
 **Learning question.** How do we recognise when a one-character fix should
 become a reusable rule?
 
-<a id="step-12"></a>
-### 12 — Designing the class and subclass Workshop
+### Step 12: Designing the class and subclass Workshop
 
 **Trigger.** You asked for a custom-content creation tool, using DMV as a
 reference, and required confirmation of major decisions. You selected classes
@@ -474,8 +467,7 @@ automatically executable.
 **Learning question.** How does a structured form turn content into data that
 both a person and a program can understand?
 
-<a id="step-13"></a>
-### 13 — Publishing rules and updating existing characters
+### Step 13: Publishing rules and updating existing characters
 
 **Your decisions.** Allow editing an imported pack, with the option to save to
 another or a new pack. Apply saved changes to existing characters automatically.
@@ -509,8 +501,7 @@ more site detail. Backup restoration was added later with the public migration.
 **Learning question.** How can changing a rule update a character while keeping
 the player’s current HP and spent resources meaningful?
 
-<a id="step-14"></a>
-### 14 — Designing private rooms before building their interface
+### Step 14: Designing private rooms before building their interface
 
 **Trigger.** You wanted to create a session, invite users and assign imported
 characters. You reserved control over the interface layout and asked to iterate
@@ -539,8 +530,7 @@ The allowed play fields are deliberately narrower than the full character model.
 **Learning question.** What is the difference between being signed in, being a
 room member, and having permission to use a particular character?
 
-<a id="step-15"></a>
-### 15 — Hosting the public site and moving your library
+### Step 15: Hosting the public site and moving your library
 
 **Trigger.** You requested Vercel deployment and chose the free setup after
 asking for an explanation of the hosting options.
@@ -575,8 +565,7 @@ same public origin.
 **Learning question.** Which parts of a local application must change when it
 becomes a public service used by several accounts?
 
-<a id="step-16"></a>
-### 16 — Sharing character rules and expanding the Compendium
+### Step 16: Sharing character rules and expanding the Compendium
 
 **Trigger.** You asked whether your players needed their own Orcbrew imports,
 whether resources and new items would update during play, and why the Compendium
@@ -598,7 +587,7 @@ damage and resistance are not treated as a weapon’s attack damage.
 
 The request for live resource/item visibility continued through the loading and
 item-delivery work. The current room refresh behaviour is explained in
-[Steps 20](#step-20) and [23](#step-23); it uses polling, not instant push.
+[Steps 20](#step-20-opening-the-saved-sheet-first-and-checking-the-player-experience) and [23](#step-23-creating-items-and-giving-them-during-a-session); it uses polling, not instant push.
 
 **Where to look.** [sheet-references.ts](../server/lib/sheet-references.ts),
 [CompendiumView.vue](../src/views/CompendiumView.vue),
@@ -608,8 +597,7 @@ item-delivery work. The current room refresh behaviour is explained in
 **Learning question.** Why can a player receive the rules they need without
 receiving the owner’s entire raw content library?
 
-<a id="step-17"></a>
-### 17 — Correcting missing racial features with a race builder
+### Step 17: Correcting missing racial features with a race builder
 
 **Trigger.** Missing Shadow Touched features first appeared to be a subclass
 problem. You corrected the request: this needed a race builder. You also asked
@@ -641,8 +629,7 @@ her wizard class is a separate definition.
 **Learning question.** How do we update a derived bonus without applying it twice
 to a value imported from another website?
 
-<a id="step-18"></a>
-### 18 — First response to slow sheets and difficult spell repair
+### Step 18: First response to slow sheets and difficult spell repair
 
 **Trigger.** Playtesting revealed sheets that could take nearly a minute to
 open, a busy DM room, and missing spell definitions that were awkward to replace.
@@ -675,8 +662,7 @@ causes. A visual loading spinner alone could not solve them.
 **Learning question.** How do we tell whether a slow page is caused by download
 size, server work, an external service, or the interface waiting unnecessarily?
 
-<a id="step-19"></a>
-### 19 — Making inventory rules match what players actually own
+### Step 19: Making inventory rules match what players actually own
 
 **Trigger.** Repair buttons distracted from ordinary spell reading. Fade’s
 Longsword of Wounding was not appearing as a proper weapon and did not behave
@@ -707,8 +693,7 @@ automatic calculations; conditional effects remain readable rules.
 **Learning question.** What structured facts does the program need beyond the
 sentence “this character owns a magic longsword”?
 
-<a id="step-20"></a>
-### 20 — Opening the saved sheet first and checking the player experience
+### Step 20: Opening the saved sheet first and checking the player experience
 
 **Trigger.** You requested a DM switch to see the player interface and reported
 that loading speed was still inconsistent after the first improvements.
@@ -742,8 +727,7 @@ the saved sheet.
 **Learning question.** How can displaying something useful sooner matter more
 than making every background task finish at the same time?
 
-<a id="step-21"></a>
-### 21 — Creating resource trackers from feats
+### Step 21: Creating resource trackers from feats
 
 **Trigger.** A player asked for feats such as Lucky to supply their trackers
 automatically beside spell and class resources, including on existing sheets.
@@ -775,8 +759,7 @@ whole site a complete 2024 rules implementation.
 **Learning question.** Why should a tracker have an identity separate from the
 label shown on its card?
 
-<a id="step-22"></a>
-### 22 — Applying the next feedback file: Summary and useful descriptions
+### Step 22: Applying the next feedback file: Summary and useful descriptions
 
 **Trigger.** Your later feedback file requested magic items in Edit, deduplicated
 weapon descriptions, clickable weapon names, resource descriptions, a compact DM
@@ -807,8 +790,7 @@ equipment makes the interface more predictable.
 **Learning question.** How can a reference screen share the full sheet interface
 while granting fewer permissions than the original character?
 
-<a id="step-23"></a>
-### 23 — Creating items and giving them during a session
+### Step 23: Creating items and giving them during a session
 
 **Trigger.** Adding an item through character editing was unreliable and the
 creation path was unclear. Fade had acquired a Ring of Protection, and you wanted
@@ -847,8 +829,7 @@ old sheet already included it.
 **Learning question.** What should be shared between an item template and its
 copies, and what must remain specific to each character’s copy?
 
-<a id="step-24"></a>
-### 24 — Adding physical item types, tags and richer details
+### Step 24: Adding physical item types, tags and richer details
 
 **Trigger.** You asked to choose existing weapon types such as Longsword and
 Greatsword, armour groups such as light and medium, and wondrous-item tags such
@@ -884,8 +865,7 @@ without an entered value are not assigned a mundane base price automatically.
 **Learning question.** Why are “magic weapon,” “longsword,” “martial,” “slashing”
 and “rare” separate properties instead of one very long item-type list?
 
-<a id="step-25"></a>
-### 25 — Recording reviewable Git checkpoints
+### Step 25: Recording reviewable Git checkpoints
 
 **Trigger.** You asked where the commits were, then requested commits you could
 review in GitHub Desktop.

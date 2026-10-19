@@ -4,6 +4,9 @@ A D&D character, homebrew-content and private game-room application.
 
 ## Project documentation
 
+For a reading copy with clickable contents and bookmarks, open the
+[PDF learning guide](output/pdf/PROJECT_HISTORY_AND_LEARNING_GUIDE.pdf).
+
 Start with the [project history and learning guide](docs/PROJECT_HISTORY_AND_LEARNING_GUIDE.md)
 for the chronological development story, reasons behind the changes, code map,
 known limits and suggested lessons. Each numbered step can be revisited separately.
@@ -11,6 +14,11 @@ known limits and suggested lessons. Each numbered step can be revisited separate
 Technical implementation notes are linked from that guide. The original plan is
 in [PLAN.md](PLAN.md); some early sections describe historical proposals rather
 than the current application.
+
+The PDF is generated from the Markdown source with
+`python scripts/build-learning-guide-pdf.py` (requires ReportLab and Calibri or
+DejaVu Sans fonts). Its contents links work inside a PDF reader; a source-code
+editor may display Markdown without rendering navigation.
 
 ## Original frontend scaffold
 
