@@ -215,3 +215,13 @@
 .cb-allowance-card{display:flex;flex-direction:column;gap:4px;padding:12px;background:var(--cb-paper);border:1px solid var(--cb-line);border-radius:5px;color:var(--cb-ink)}.cb-allowance-card>span{font-size:12px}.cb-allowance-card>strong{font:28px Georgia,serif;color:var(--cb-accent-text)}.cb-allowance-card strong>small{font:14px 'Segoe UI',sans-serif;color:var(--cb-muted)}.cb-allowance-card>small{font-size:11px;color:var(--cb-muted)}.cb-allowance-card.is-over{border-color:var(--site-danger)}.cb-allowance-card.is-over>strong{color:var(--site-danger)}
 .cb-spell-override{display:flex;align-items:center;gap:10px;border:1px solid var(--cb-line);border-radius:5px;padding:12px;margin:14px 0;color:var(--cb-ink)}.cb-spell-override>span:nth-child(2){flex:1}.cb-spell-override strong{display:block;font-size:12px}.cb-spell-override small{display:block;font-size:11px;color:var(--cb-muted);margin-top:4px}.cb-spell-actions .cb-checkbox-label{margin-bottom:10px;font-size:12px;color:var(--cb-ink)}.cb-spell-actions .cb-field-hint{margin-bottom:10px;line-height:1.5}
 @media(max-width:540px){.cb-spell-browser{grid-template-rows:270px 510px}.cb-allowance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cb-spell-override{flex-wrap:wrap}}
+
+/* Spell levels read down each independent stack, then continue on the right. */
+.cb-selected-spell-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.cb-selected-spell-columns[data-columns="1"]{grid-template-columns:1fr}
+.cb-selected-spell-column{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cb-selected-spell-level{min-width:0;padding:12px;border:1px solid var(--cb-line);border-radius:6px;background:var(--cb-field)}
+.cb-selected-spell-level h4{font-size:14px;font-weight:600;margin:0 0 8px;color:var(--cb-ink)}
+.cb-selected-spell-level .cb-selected-row{flex-wrap:wrap;gap:8px}
+.cb-selected-spell-level .cb-selected-row>span:first-child{min-width:100px;flex:1}
+@media(max-width:1050px){.cb-selected-spell-columns{grid-template-columns:1fr}}

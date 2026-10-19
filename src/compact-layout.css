@@ -55,7 +55,7 @@
 .sheet-trackers-footer>div { display:flex; gap:7px; }
 .sheet-trackers-footer .sheet-small { font-size:11px; }
 
-/* Content follows reading order across columns, then wraps onto the next row. */
+/* Parallel content stacks; each section controls its own reading order. */
 .sheet-feature-groups,.sheet-spell-grid,.sheet-bio-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:start; }
 .sheet-combat-feature-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 18px; align-items:start; margin-top:10px; }
 .sheet-spell-level { min-width:0; padding:11px 12px 3px; background:var(--cb-field); border:1px solid var(--cb-line); border-radius:6px; }

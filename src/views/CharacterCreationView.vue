@@ -21,6 +21,8 @@ import { emptyCharacter, type Character } from '../../shared/character'
 import { resourcesFor } from '../lib/character-sheet'
 import { slotsFor } from '../../shared/character-progression'
 import { selectedFeatIndexes } from '../lib/advancements'
+import { spellLevelGroups } from '../lib/spell-level-groups'
+import { useIndependentColumns } from '../composables/useIndependentColumns'
 
 const router = useRouter()
 const store = useCharactersStore()
@@ -31,6 +33,8 @@ const { draft, ready, race, klass, subrace, subclass, background, races, classes
   spellResults, spellLoading, spellError, spellDetail, spellDetailLoading, canCast, inventoryBusy,
   spellPolicy, spellCounts, spellProblems } = builder
 const { appearance } = useBuilderAppearance()
+const selectedSpellGroups=computed(()=>spellLevelGroups(draft.spells))
+const selectedSpellColumns=useIndependentColumns(selectedSpellGroups,'column')
 const progressionCharacter = computed(() => {
   const c = emptyCharacter()
   c.meta.level = draft.level; c.meta.klass = klass.value?.name ?? ''; c.abilities = scores.value
@@ -297,7 +301,7 @@ async function createCharacter() {
                   <div v-else class="cb-spell-placeholder"><BuilderIcon name="wand" :size="30" /><p>Select a spell to read its effects.</p></div>
                 </div>
               </div>
-              <div v-if="draft.spells.length" class="cb-subsection"><h3>Your starting spells <span class="cb-count-pill">{{ draft.spells.length }}</span></h3><div v-for="spell in draft.spells" :key="spell.index" class="cb-selected-row"><span><strong>{{ spell.name }}</strong><small>{{ spell.level === 0 ? 'Cantrip' : `Level ${spell.level}` }}</small></span><label v-if="spell.level > 0 && spellPolicy.prepared !== null" class="cb-checkbox-label"><input type="checkbox" :checked="spell.prepared" :disabled="!spell.prepared && !builder.canPrepareSpell(spell.index)" @change="spell.prepared = ($event.target as HTMLInputElement).checked && builder.canPrepareSpell(spell.index)" /> Prepared</label><span v-else class="cb-field-hint">{{ spell.level === 0 ? 'Always ready' : spellPolicy.available ? 'Known' : 'Selected' }}</span><button type="button" :aria-label="`Remove ${spell.name}`" @click="draft.spells = draft.spells.filter((entry) => entry.index !== spell.index)"><BuilderIcon name="close" :size="16" /></button></div></div>
+              <div v-if="draft.spells.length" class="cb-subsection"><h3>Your starting spells <span class="cb-count-pill">{{ draft.spells.length }}</span></h3><div class="cb-selected-spell-columns" :data-columns="selectedSpellColumns.length"><div v-for="(column,columnIndex) in selectedSpellColumns" :key="columnIndex" class="cb-selected-spell-column"><section v-for="group in column" :key="group.level" class="cb-selected-spell-level"><h4>{{group.title}} <span class="cb-count-pill">{{group.spells.length}}</span></h4><div v-for="spell in group.spells" :key="spell.index" class="cb-selected-row"><span><strong>{{ spell.name }}</strong><small>{{ spell.level === 0 ? 'Cantrip' : `Level ${spell.level}` }}</small></span><label v-if="spell.level > 0 && spellPolicy.prepared !== null" class="cb-checkbox-label"><input type="checkbox" :checked="spell.prepared" :disabled="!spell.prepared && !builder.canPrepareSpell(spell.index)" @change="spell.prepared = ($event.target as HTMLInputElement).checked && builder.canPrepareSpell(spell.index)" /> Prepared</label><span v-else class="cb-field-hint">{{ spell.level === 0 ? 'Always ready' : spellPolicy.available ? 'Known' : 'Selected' }}</span><button type="button" :aria-label="`Remove ${spell.name}`" @click="draft.spells = draft.spells.filter((entry) => entry.index !== spell.index)"><BuilderIcon name="close" :size="16" /></button></div></section></div></div></div>
               <details class="cb-advanced" open><summary>Spell slots & level progression <span>Total casts available at level {{draft.level}}</span></summary><SpellSlotEditor creation :character="progressionCharacter" @change="changeCasting" /></details><details class="cb-advanced"><summary>Class & custom points <span>Fixed pools or points gained each level</span></summary><ResourceEditor creation :character="progressionCharacter" @change="draft.resources=$event" /></details>
             </template>
 

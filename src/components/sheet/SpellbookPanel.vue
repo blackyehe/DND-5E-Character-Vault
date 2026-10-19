@@ -8,19 +8,20 @@ import FeatureText from './FeatureText.vue'
 import { isRevenantShadow } from '../../../shared/class-rules'
 import { spellReferenceLabel } from '../../lib/spell-reference'
 import { innateRaceSpells } from '../../../shared/workshop-race'
+import { spellLevelGroups } from '../../lib/spell-level-groups'
 const emit=defineEmits<{repair:[index:string]}>()
 const store = useCharactersStore(), c = computed(() => store.current!), library = useSheetLibrary()
 const query = ref(''), showAll = ref(false)
-const innate = computed(()=>innateRaceSpells(c.value).filter(s=>`${s.name} ${s.usage}`.toLowerCase().includes(query.value.toLowerCase())))
+const innate = computed(()=>innateRaceSpells(c.value).filter(s=>`${s.name} ${s.usage}`.toLowerCase().includes(query.value.toLowerCase())).sort((a,b)=>(library.spells.value[a.index]?.level??10)-(library.spells.value[b.index]?.level??10)||a.name.localeCompare(b.name)))
 const knownCaster = computed(() => { const list=classes(c.value); return list.length>0&&list.every(entry=>isRevenantShadow(entry.name)||['bard','ranger','rogue','fighter','sorcerer','warlock'].includes(entry.name.toLowerCase())) })
 const groups = computed(() => {
   const spells = [...new Set([...c.value.spellcasting.known,...c.value.spellcasting.prepared])].map(index => {
     const detail = library.spells.value[index]
     return { index, detail, name: detail?.name ?? spellReferenceLabel(index), level: detail?.level, ready: detail?.level===0 || knownCaster.value || c.value.spellcasting.prepared.includes(index) }
   }).filter(s => (showAll.value || s.ready) && `${s.name} ${(s.detail?.desc??[]).join(' ')}`.toLowerCase().includes(query.value.toLowerCase()))
-  return Array.from({length:11}, (_,i) => ({level:i-1, title:i===0?'Level unavailable · review in Edit':i===1?'Cantrips':`Level ${i-1} spells`, spells:spells.filter(s=>(s.level??-1)===i-1).sort((a,b)=>a.name.localeCompare(b.name))})).filter(g=>g.spells.length)
+  return spellLevelGroups(spells)
 })
-const columns=useIndependentColumns(groups)
+const columns=useIndependentColumns(groups,'column')
 const missing=computed(()=>[...new Set([...c.value.spellcasting.known,...c.value.spellcasting.prepared])].filter(id=>!library.spells.value[id]||library.spells.value[id]?.referenceFallback||library.spells.value[id]?.definitionAvailable===false))
 async function prepare(index:string) {
   if(store.saving)return
