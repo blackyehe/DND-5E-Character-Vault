@@ -9,9 +9,138 @@ stats, and support for custom/homebrew content later. UI language: English.
 **Rules scope**: first release supports **2014 rules only** (the upstream API's
 `/api/2014` routes). The upstream 2024 routes exist but are out of scope.
 
-**Custom content scope (first release)**: backgrounds, feats, and custom spells.
-Custom races/classes/subclasses are deferred (complex API shapes; the pickers
-work fine against SRD-only races/classes).
+**Custom content scope (first release)**: editable app-native backgrounds,
+feats, and custom spells. The Orcbrew package path below separately maps
+supported race, class, and subclass fields into existing character workflows;
+it does not provide a full editor for those complex definitions.
+
+**Orcbrew package integration (implemented)**: authenticated import/export keeps
+the original UTF-8 EDN bytes, including a BOM, intact. Both single packs and
+collections of named packs are supported (up to 8 MB). Spells, races, subraces,
+classes, backgrounds, feats, subclasses, monsters, languages, invocations, boons,
+and selection tables are available in the Compendium. Existing character flows
+use supported fields; advanced rules and unknown sections remain reference data.
+
+Exact file reimports are idempotent per account. Semantic identities merge
+identical definitions across files while preserving their sources. Differing
+definitions retain distinct, stable IDs and source/version labels; SRD IDs are
+unchanged. Older file-scoped spell IDs remain aliases and are migrated before
+their original file is removed. Disabled definitions stay preserved and can be
+included using the file's checkbox. Import reports show counts and diagnostics,
+including non-finite numbers represented as unspecified values in app records.
+Only original source is stored for new imports; derived records are cached to
+avoid duplicating large archives in MongoDB. File lists return compact summaries,
+and exports download the original source separately.
+
+## Homebrew Workshop (classes/subclasses, 2026-10-18)
+
+`/homebrew` now provides a class/subclass editor with seven freely
+accessible sections: identity, core training, level progression, spellcasting,
+resource trackers, features/choices, and review. Imported definitions can be
+opened as local drafts; new classes and subclasses can also be drafted. Drafts
+are scoped to the signed-in account on this device and kept separately from
+character-creation drafts. Saving or leaving the editor persists the draft.
+
+The live preview supports class levels 1–20, example ability scores, slot
+progressions, absolute cantrip/spell totals, resource formulas and recovery, and
+features available at that level. Imported unknown fields remain attached as
+reference data. Spell versions can be selected independently; unresolved original
+references remain visible for review. Legacy preview drafts acquire provenance
+metadata when opened, preserving imported traits and selection definitions.
+
+The user approved the editor design and the following behavior:
+
+- Classes and subclasses first, then other content types.
+- Edit the imported pack directly, with an option to save into another/new pack.
+- Saved rule changes update existing characters automatically: class rules,
+  granted features, spell slots, and resource maximums update; current HP,
+  spent uses, equipment, and player choices are preserved where possible.
+  Conflicts must be flagged for review.
+- Export DMV-compatible Orcbrew and a complete site backup format.
+
+Save-to-pack supports the original imported file, another existing file, or a
+new file. Edits splice only managed EDN fields; unsupported fields, tags, other
+entries, and leading/trailing source text are retained. Published definitions
+carry a stable rule ID, revision, previous content identities, and a baseline.
+Explicit revision lineage supersedes its earlier catalog entry; unrelated
+same-name versions remain separate. Pack hashes and revision checks reject stale
+saves, and duplicate keys in unrelated target packs are rejected.
+
+Saving synchronizes character grants and resource/slot totals using optimistic
+updates. Current HP, spent uses (including uses above a reduced maximum), gear,
+player-selected options, and edited feature descriptions are retained. Ambiguous
+links, removed/changed choices, customized grants, altered HP/advancement rules,
+and unsupported multiclass slot combinations produce review notices. Busy
+characters receive their current rules when next opened or saved. Unavailable
+source packs retain the last character-bound rule snapshot.
+
+The builder consumes authored hit dice, training, ASI levels, spell lists and
+allowances, resource rules, and choices. Character Edit exposes linked rules,
+selected options, and spell allowances with an explicit override. Rule-managed
+tracker maxima and casting progression are edited in the Workshop. Short/long
+rest play controls remain usable.
+
+Individual class/subclass and whole-pack Orcbrew downloads are available.
+Standard DMV fields are exported; advanced resources and choices also have
+readable descriptions and retain full site automation in a namespaced extension.
+Pact progression is described rather than incorrectly encoded as full casting.
+The complete account backup (versioned JSON) contains all saved content,
+characters, original sources, local Workshop and character drafts, and appearance
+preferences. It excludes credentials. Backup restoration is not part of this
+iteration. Multiclass slot combinations remain manual and flagged for review.
+
+## Character builder (first iteration, 2026-10-18)
+
+The dashboard now opens `/characters/new`, a dedicated builder with nine freely
+accessible sections: ancestry, class/level, ability scores, background,
+proficiencies, spells, equipment, identity, and review. The live summary updates
+as choices change. Drafts are saved on this device per account and are removed
+only after the existing character API successfully creates the sheet.
+
+The builder supports standard array, 27-point buy, manual/rolled abilities,
+SRD and imported content, source labels, racial bonuses, inherited skills,
+class skills, expertise, languages, fixed HP gains, equipped armor AC,
+level-based class features and spell slots, starting gear, and story prompts.
+Appearance controls apply across the entire site: Obsidian (near black),
+Parchment, Moonlight, and Daylight, with Crimson plus the existing accent
+palettes, a custom hex/color picker, subtle or immersive surface coloring,
+and reading size. Text colors adapt for contrast. Preferences remain on this
+device; existing settings are migrated. New installs default to Obsidian/Crimson.
+
+Spell selection shows separate cantrip, known/spellbook, and preparation
+allowances from the 2014 class progression. Wizard book and preparation formulas,
+prepared full-list classes, High Elf cantrips, Lore bonus spells, and Warlock
+Mystic Arcanum are distinguished. Add and preparation controls enforce upper
+limits and accessible spell levels, with validation on final character creation.
+The explicit saved override permits extra spells and handles unsupported
+homebrew, copied spells, and other feature grants. Existing excess selections
+are preserved and flagged when override is off. This is allowance validation,
+not a complete validator for each spell's class, source, or prerequisites.
+
+Spell browsing retains independently scrolling list and description panes with
+a persistent Add action. The live preview has larger labels and values.
+
+Advanced feature choices and imported rules without a supported structured
+mapping use manual adjustments and notes. Multiclassing and automatic level-up
+choices remain outside this iteration.
+
+## Dungeon Master’s Vault character import (2026-10-18)
+
+The dashboard accepts a public DMV character URL and previews saved character
+choices from its public EDN endpoint. EDN/JSON character-data uploads provide a
+fallback. A strict host/path allowlist, redirect refusal, timeout, and 4 MB limit
+bound remote reads; the authenticated account supplies ownership on creation.
+
+The converter handles strict and loose entity selections, names/class levels,
+base abilities and explicit ASIs, skills/expertise, proficiencies, equipment,
+ordinary +1/+2/+3 weapons and attacks, SRD class features/slots, and matches
+installed Orcbrew definitions when unambiguous. Reviewable HP/AC/speed estimates
+are shown before import. Unsupported custom rules are not executed. Unresolved
+spells and custom effects remain explicit review notes and saved choices.
+
+The original source is attached to the new character, included in native JSON
+exports, and downloadable from Bio & Notes. Importing creates a separate sheet;
+no source character or existing local sheet is overwritten.
 
 ## Toolchain
 
@@ -176,6 +305,13 @@ dndoldal/
   - `POST /api/characters/import` (JSON upload)
   - `GET  /api/content/:type` (type = backgrounds | feats | spells; merged
     SRD + custom, or custom-only depending on the step-1 go/no-go outcome)
+  - `GET  /api/content/homebrew/:kind` (normalized entries extracted from
+    imported Orcbrew packs; kind = spells | races | classes | backgrounds |
+    feats | subclasses | subraces | monsters | languages | invocations | boons |
+    selections | other)
+  - `GET/POST /api/content/orcbrew-packs` (summary list / validated, idempotent import)
+  - `GET /api/content/orcbrew-packs/:id/export` (original file download)
+  - `PATCH /api/content/orcbrew-packs/:id` (include disabled source definitions)
   - `POST /api/content/:type`
   - `PUT  /api/content/:type/:id`
   - `DELETE /api/content/:type/:id`
@@ -330,3 +466,61 @@ races/monsters) with detail views, all from `/api/2014`.
 - Homebrew insertion into SRD collections is a step-1 **go/no-go gate**, with
   merged-endpoint fallback
 - Git: repo initialized but no commits yet — initial commit is step 1
+
+## Character sheet revision — session feedback (2026-10-18)
+
+Confirmed with the user before implementation:
+- Persistent DMV-inspired left summary: identity, class/level, XP and XP awards, abilities, AC/max HP/speed, proficiency bonus, passive perception, and compact proficiency/language lists.
+- Permanent values and character choices are edited through a dedicated draft with Save/Discard. Play controls remain available for HP, death saves, inspiration, spent resources, prepared spells, equipped gear, and quantities.
+- Combat combines readable attacks, signed modifiers, slot trackers, class/custom resources, spells grouped by level with collapsible descriptions, and suggested plus pinned/reorderable features.
+- Features have their own tab, grouped by racial/class/subclass/background/feat origin and sorted by gained level. New builder/import results preserve that metadata. Legacy definitions are matched conservatively; unknown levels/origins remain explicitly unclassified and editable.
+- Inventory is searchable and sortable, separates equipped/carried items, preserves descriptions and rule metadata, supports SRD/custom additions in Edit, and can generate attacks from weapons. Decimal weights are preserved. Optional armor-derived AC respects saved custom AC by default on old/imported sheets.
+- Two skill circles represent proficiency and expertise, with independent controls in Edit and read-only indicators during play.
+- Recognised 2014 class resources receive defaults, with editable maximums/recovery, custom trackers, overrides, and bounded spending. Short/long recovery actions affect eligible resource/slot trackers only. Unknown homebrew progression remains manual; older multiclass sheets need explicit per-class levels before automatic class-resource totals can be derived safely.
+- Creation includes a separate searchable Feats & advancements chapter. Class opportunities use either a feat or +2 ability points; applicable racial feat opportunities are separate. Table-rule overrides add extra feats, and existing drafts are preserved. Feat-granted ability bonuses are explicitly recorded; prerequisites and other custom effects require reviewing the feat description.
+- Attack rolls now include weapon proficiency when applicable; enchantments affect both attack and damage, with clear labels and custom-attack overrides.
+
+Rules reference: official 2014 Basic Rules / SRD 5.1, including character advancement and class progression (https://media.wizards.com/2018/dnd/downloads/DnD_BasicRules_2018.pdf).
+Validation: production build and server typecheck; no test suites added or run. Browser visual review uses the existing character without saving changes to its gameplay values.
+
+### Compact layout follow-up (2026-10-18)
+
+- Imported characters with more than 20 distinct weapon proficiency entries resolve to All simple weapons and All martial weapons. The rule applies to DMV previews, JSON imports, existing imported API sheets, and JSON exports; original DMV source snapshots stay attached. Broad group labels are understood by attack proficiency calculations.
+- Spell slots and all point/resource pools share one compact wrapping tracker row. Existing spending, recovery rules, unlimited pools, and disabled custom trackers retain their behaviour.
+- Class and subclass feature groups sit beside one another on wide screens; spell levels, Combat feature summaries, and biography cards also wrap into columns. Narrow screens stack content.
+- Whitespace is reduced throughout the sheet, builder, dashboard, and compendium, retaining normal body text sizes.
+- Native select menus use theme-aware surfaces, borders, and high-contrast text. Feature disclosures have clearer backgrounds and open/focus states.
+- Removed Hide from Combat and Edit. Legacy hidden flags are ignored so previously hidden suggestions reappear; pinning and ordering remain available.
+
+### Equipment facts and independent disclosure columns (2026-10-18)
+
+- Equipment is grouped into equipped/carried weapons, equipped/carried armour and shields, treasure/currency, and equipped/carried general gear. Currency has denomination balances and amount controls rather than an Equipped checkbox.
+- Weapon rows show d20 attack bonuses, damage, selected ability, proficiency, and range using the same attack calculations as Combat. Recorded attack profiles take precedence over derived defaults.
+- Armour rows distinguish base AC, ability/enchantment contributions, and the known gear total if worn. The inventory header shows actual sheet AC; saved custom AC overrides are labelled separately.
+- Combat features, feature-origin panels, and spell-level groups use two independent stacks on wide screens. Expanding the right column no longer inserts blank row space into the left. Narrow screens preserve the original single-column order.
+- Expanded feature text uses readable paragraphs, bullet lists, stronger text contrast, and a separate reading surface.
+- Imported Feats lists become individual reference buttons: hover/focus gives a short preview, while click/tap opens a native accessible dialog with the complete available description and recorded prerequisite/ability-increase metadata. Conflicting source versions require selecting a version; missing definitions are explicitly reported. Reading a reference does not alter character choices or apply feat effects automatically.
+
+### Public private rooms — deployed (2026-10-18)
+
+Approved scope and access:
+- Persistent private rooms, with the roster and assignments on the left and the selected sheet beside them.
+- Persistent reusable joining links: players register or log in, then explicitly join. Joining alone grants no character access. The DM assigns owned characters after players join and can replace the link or remove members and assignments.
+- The DM retains ownership and permanent editing. Assigned players can read spells, equipment, features, proficiencies and biography, and use HP, death saves, inspiration, hit dice, spell slots, class/custom resources, preparation, equipment/quantities, and feature pin/order controls.
+- Server checks membership, assignment and current ownership for each shared sheet, rule-reference request and play action. Player writes use a strict play-state schema, not the permanent editor route. Raw DMV imports are not returned to players. Relevant homebrew references use the owner's library.
+- Visible rooms refresh every 15 seconds and on focus. Stale play writes and stale permanent sheet writes are rejected to avoid overwriting newer state.
+
+Hosting and migration:
+- User chose Vercel Hobby and Atlas Free, with a dedicated Atlas project, approved any-IP network access for Vercel's dynamic addresses, and a database user restricted to readWrite on dnd_site only.
+- Vercel project: dndenjoyerstudio/dndoldal. Production: https://dndoldal.vercel.app (initial deployment dpl_D7RjW7ipd1g1BxZTL28ksVudS4LW, READY). Node 24.x in Frankfurt; frontend and Express use Vercel Services, currently beta.
+- Atlas project Codex of Heroes, cluster codex-heroes in Frankfurt, 512 MB Free. The codex_app account is restricted to dnd_site and that cluster. Its password was entered by the user directly in Vercel as a production secret. JWT signing secret generated without displaying it.
+- New public DM account Blackyehe was registered by the user. The original demo login was not migrated.
+- Saved backup: backups/content-2026-10-18T13-26-05-100Z.json, six characters and two content entries, no user passwords. The public dashboard confirmed restoration of all six characters and both entries into the new account; original IDs and source data were preserved. Local originals remain intact.
+- Import JSON / backup recognises complete native Workshop backups and the migration backup. Restore requires an empty account, validates records, preserves IDs, maps ownership to the signed-in user, and writes both collections in one transaction without overwriting conflicts.
+- Large imports use authenticated temporary upload chunks; large exports and catalogs stream. Orcbrew sources retain their 8 MB decoded limit. Production refuses missing secrets/development signing defaults. Authentication attempts use shared database rate limits, and mutation requests enforce origin checks.
+
+Checks and limits:
+- Frontend production build and server typecheck passed locally and in the Vercel build. No tests were added or run.
+- Actual registration and transactional library restore succeeded on production; six restored characters are visible. Game rooms creation interface is open for the user to name their first room. No artificial players, room assignments, or gameplay resource changes were created for testing.
+- Vercel Standard Protection remains configured; the production domain is publicly reachable while application login and room permissions control data access.
+- Setup and operational notes: docs/PUBLIC_HOSTING.md.
