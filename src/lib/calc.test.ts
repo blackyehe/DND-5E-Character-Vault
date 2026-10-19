@@ -94,8 +94,8 @@ describe('maxHP', () => {
   })
 
   it('scales with level using fixed average', () => {
-    // d8 fixed avg floor = 4; level 3, con +2 => 8+2 + 2*(4+2) = 10 + 12 = 22
-    expect(maxHP(8, 14, 3)).toBe(8 + 2 + 2 * (4 + 2))
+    // SRD 5.1: a d8 uses a fixed gain of 5 after first level.
+    expect(maxHP(8, 14, 3)).toBe(8 + 2 + 2 * (5 + 2))
   })
 })
 
