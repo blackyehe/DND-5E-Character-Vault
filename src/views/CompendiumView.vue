@@ -8,6 +8,8 @@ import type { EquipmentItem } from '../../shared/character'
 import { api } from '../lib/api'
 import ItemFilters from '../components/items/ItemFilters.vue'
 import ItemRules from '../components/sheet/ItemRules.vue'
+import MonsterStatblock from '../components/monsters/MonsterStatblock.vue'
+import { monsterStatblock } from '../../shared/monster-statblock'
 import '../components/sheet/sheet.css'
 import '../components/sheet/sheet-details.css'
 
@@ -44,6 +46,7 @@ watch(visibleResults, entries => {
   }
 })
 const spellDetail = computed(() => detail.value as unknown as SrdSpell | null)
+const monsterDetail = computed(() => monsterStatblock(detail.value))
 const itemDetail = computed(() => detail.value as unknown as (SrdEquipment & SrdMagicItem) | null)
 const itemStats = computed(() => {
   const item = itemDetail.value
@@ -181,6 +184,7 @@ search()
         <div ref="detailPanel" class="panel p-6 lg:col-span-2 min-h-[200px] max-h-[70vh] overflow-y-auto" tabindex="0" role="region" aria-label="Entry details">
           <p v-if="detailLoading" role="status">Loading details…</p>
           <p v-else-if="!detail">Select an entry to read its description.</p>
+          <MonsterStatblock v-else-if="tab==='monsters'" :monster="monsterDetail" :original="detail.details??detail" />
           <div v-else>
             <h2 class="font-display text-2xl text-[var(--color-gold-soft)] mb-2">{{ detail.name }}</h2>
             <p v-if="detail.sourcePack" class="text-sm mb-4">{{ detail.sourcePack }}</p>

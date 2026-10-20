@@ -1,0 +1,46 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { MONSTER_ABILITIES, monsterChallenge, monsterModifier, monsterSigned, type MonsterStatblock, type MonsterRule } from '../../../shared/monster-statblock'
+import MonsterRuleText from './MonsterRuleText.vue'
+import '../../assets/fonts/statblock/font-faces.css'
+import './monster-statblock.css'
+const props=defineProps<{monster:MonsterStatblock;original?:unknown}>()
+const identity=computed(()=>[props.monster.size,props.monster.type+(props.monster.subtype?` (${props.monster.subtype})`:'')].filter(Boolean).join(' ')+(props.monster.alignment?`, ${props.monster.alignment}`:''))
+const facts=computed(()=>[
+  ['Saving Throws',MONSTER_ABILITIES.filter(key=>props.monster.saves[key]!==undefined).map(key=>`${key[0]!.toUpperCase()}${key.slice(1)} ${monsterSigned(props.monster.saves[key]!)}`).join(', ')],
+  ['Skills',props.monster.skills.map(skill=>`${skill.name} ${monsterSigned(skill.bonus)}`).join(', ')],
+  ['Damage Vulnerabilities',props.monster.vulnerabilities],['Damage Resistances',props.monster.resistances],
+  ['Damage Immunities',props.monster.damageImmunities],['Condition Immunities',props.monster.conditionImmunities],
+  ['Senses',props.monster.senses],['Languages',props.monster.languages],
+  ['Challenge',monsterChallenge(props.monster.challenge)+(props.monster.xp!==null?` (${props.monster.xp.toLocaleString('en-US')} XP)`:'')],
+  ['Proficiency Bonus',props.monster.proficiencyBonus!==null?monsterSigned(props.monster.proficiencyBonus):''],
+].filter(([,value])=>value))
+function ruleName(rule:MonsterRule){const compact=(s:string)=>s.toLowerCase().replace(/[^a-z0-9]/g,'');return rule.name+(rule.usage&&!compact(rule.name).includes(compact(rule.usage))?` (${rule.usage})`:'')}
+</script>
+<template>
+  <div class="monster-reader">
+    <p v-if="monster.missing.length" class="monster-import-notice" role="note">Not recorded in this entry: {{monster.missing.join('; ')}}.</p>
+    <article class="monster-statblock" :aria-label="`${monster.name} statblock`">
+      <header class="monster-heading"><h2>{{monster.name}}</h2><p>{{identity||'Size and creature type not recorded'}}</p></header>
+      <div class="monster-taper" aria-hidden="true" />
+      <dl class="monster-primary-stats">
+        <div><dt>Armor Class</dt><dd><template v-if="monster.armorClass.length"><template v-for="(ac,index) in monster.armorClass" :key="index">{{index?', ':''}}{{ac.value??''}}{{ac.note?(ac.value===null?ac.note:` (${ac.note})`):''}}</template></template><template v-else>Not recorded</template></dd></div>
+        <div><dt>Hit Points</dt><dd>{{monster.hitPoints??'Not recorded'}}{{monster.hitDice?` (${monster.hitDice})`:''}}</dd></div>
+        <div><dt>Speed</dt><dd>{{monster.speed||'Not recorded'}}</dd></div>
+      </dl>
+      <div class="monster-taper" aria-hidden="true" />
+      <dl class="monster-abilities" aria-label="Ability scores and modifiers"><div v-for="key in MONSTER_ABILITIES" :key="key"><dt>{{key.toUpperCase()}}</dt><dd>{{monster.abilities[key]===null?'—':`${monster.abilities[key]} (${monsterSigned(monsterModifier(monster.abilities[key]!))})`}}</dd></div></dl>
+      <div class="monster-taper" aria-hidden="true" />
+      <dl class="monster-properties"><div v-for="[label,value] in facts" :key="label"><dt>{{label}}</dt><dd>{{value}}</dd></div></dl>
+      <div class="monster-taper" aria-hidden="true" />
+      <section v-if="monster.description" class="monster-description" aria-label="Description"><MonsterRuleText :text="monster.description" /></section>
+      <section v-for="section in monster.sections" :key="section.kind" class="monster-rule-section" :aria-label="section.title">
+        <h3 v-if="section.kind!=='traits'">{{section.title}}</h3>
+        <p v-if="section.description" class="monster-section-intro"><MonsterRuleText :text="section.description" /></p>
+        <p v-for="(rule,index) in section.entries" :key="`${index}:${rule.name}`" class="monster-rule"><strong><em>{{ruleName(rule).replace(/\.$/,'')}}.</em></strong> <MonsterRuleText :text="rule.description||'Description not recorded.'" /></p>
+      </section>
+    </article>
+    <p class="monster-source">{{monster.source}}</p>
+    <details v-if="original" class="monster-original"><summary>Original reference details</summary><pre>{{JSON.stringify(original,null,2)}}</pre></details>
+  </div>
+</template>

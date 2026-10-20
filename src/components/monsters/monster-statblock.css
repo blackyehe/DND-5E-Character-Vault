@@ -1,0 +1,33 @@
+/* Reference direction: Tetra-cube's classic parchment statblocks. These styles
+   are local to the reader; the surrounding site retains its selected theme. */
+.monster-reader { min-width:0; container-type:inline-size; }
+.monster-reader .monster-statblock {
+  box-sizing:border-box; width:100%; max-width:400px; margin:6px auto 12px; padding:10px 10px 20px;
+  background-color:#fdf1dc;
+  background-image:radial-gradient(ellipse at 18% 30%,#dfc99b24,transparent 65%),repeating-linear-gradient(93deg,#bfa77b08 0 1px,transparent 1px 13px);
+  border-block:5px solid #d99528; outline:1px solid #806540; box-shadow:0 0 16px #86745344;
+  color:#212529; font:400 calc(12.5px * var(--cb-text-scale,1))/1.2 'Noto Sans',Calibri,Arial,sans-serif; overflow-wrap:anywhere;
+}
+.monster-statblock :is(h2,h3,p,dl,dt,dd) { margin:0; padding:0; }
+.monster-reader .monster-heading h2 { color:#922610; font:700 small-caps calc(21px * var(--cb-text-scale,1))/1.2 'Libre Baskerville',Georgia,serif; margin:0 0 3px; }
+.monster-heading p { font-style:italic; font-size:calc(12px * var(--cb-text-scale,1)); }
+.monster-taper { height:5px; background:#922610; clip-path:polygon(0 0,100% 50%,0 100%); margin:9px 0; }
+.monster-primary-stats,.monster-properties { color:#7a200d; }
+.monster-primary-stats>div,.monster-properties>div { margin:3px 0; }
+.monster-primary-stats :is(dt,dd),.monster-properties :is(dt,dd) { display:inline; }
+.monster-primary-stats dt,.monster-properties dt { font-weight:700; margin-right:4px; }
+.monster-abilities { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; color:#7a200d; text-align:center; }
+.monster-abilities dt { font-weight:700; font-size:calc(14px * var(--cb-text-scale,1)); margin:2px 0 3px; }
+.monster-abilities dd { white-space:nowrap; font-size:calc(12px * var(--cb-text-scale,1)); }
+.monster-reader .monster-rule-section h3 { color:#7a200d; border-bottom:1px solid #7a200d; font:400 calc(21px * var(--cb-text-scale,1))/1.2 'Noto Sans',Calibri,Arial,sans-serif; margin:16px 0 8px; }
+.monster-rule-section .monster-rule { margin:8px 0 0; }
+.monster-section-intro,.monster-description { margin-top:8px; }
+.monster-rule-text { white-space:pre-line; }
+.monster-source { font-size:12px; color:var(--cb-muted); text-align:center; margin:8px 0; }
+.monster-import-notice { color:var(--cb-ink); background:var(--cb-soft); border:1px solid var(--cb-line); padding:9px 11px; font-size:13px; margin-bottom:12px; border-radius:4px; }
+.monster-original { color:var(--cb-muted); font-size:12px; margin-top:14px; }
+.monster-original summary { cursor:pointer; padding:6px 0; }
+.monster-original pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; margin-top:8px; }
+@container(max-width:320px) {
+  .monster-abilities { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+}
