@@ -4,6 +4,7 @@ import WorkshopRuleReview from '../components/workshop/WorkshopRuleReview.vue'
 import { useRoute, RouterLink, onBeforeRouteLeave } from 'vue-router'
 import { useCharactersStore, type Character } from '../stores/characters'
 import { provideSheetLibrary } from '../composables/useSheetLibrary'
+import CharacterSummary from '../components/sheet/CharacterSummary.vue'
 import CharacterSidebar from '../components/sheet/CharacterSidebar.vue'
 import CharacterSheetFrame from '../components/sheet/CharacterSheetFrame.vue'
 import { useBuilderAppearance } from '../composables/useBuilderAppearance'
@@ -65,7 +66,7 @@ defineExpose({ editDirty,retryOpen:openCharacter })
         <p v-if="library.warning.value" class="sheet-notice">{{ library.warning.value }}</p>
         <p v-else-if="library.loading.value" class="sheet-refresh-status" role="status">Saved sheet is ready. Refreshing rules and reference details…</p>
         </template>
-        <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSidebar :overview="appearance.sheetLayout==='folio'" @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
+        <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSummary v-if="appearance.sheetLayout==='folio'" @edit="switchTab('edit')" /><CharacterSidebar v-else @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
         <template #footer><details class="sheet-loading-status"><summary>Loading status</summary><p>Saved sheet opened in {{(store.lastOpenMs/1000).toFixed(2)}} seconds.</p><p>{{library.loading.value?'Rules and reference details are still refreshing.':`Rules and reference check: ${(library.lastReferenceMs.value/1000).toFixed(2)} seconds.`}}</p><button v-if="library.warning.value" type="button" class="sheet-button sheet-small-button" :disabled="library.loading.value" @click="library.reload">Retry reference details</button></details></template>
       </CharacterSheetFrame>
     </div>

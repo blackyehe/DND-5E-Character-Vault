@@ -8,6 +8,7 @@ import './compact-layout.css'
 import './components/sheet/sheet-density.css'
 import './assets/fonts/barlow/font-faces.css'
 import './components/sheet/sheet-folio.css'
+import './components/sheet/sheet-refinements.css'
 import App from './App.vue'
 import { router } from './router'
 

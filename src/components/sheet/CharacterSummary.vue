@@ -1,0 +1,31 @@
+<script setup lang="ts">
+import { computed, ref, useId } from 'vue'
+import { useCharactersStore } from '../../stores/characters'
+import { SKILL_ABILITY, skillMod } from '../../lib/calc'
+import { pretty, signed, XP_THRESHOLDS } from '../../lib/character-sheet'
+import SheetVitalsStats from './SheetVitalsStats.vue'
+import SheetDisclosure from './SheetDisclosure.vue'
+const emit=defineEmits<{edit:[]}>()
+const store=useCharactersStore(),c=computed(()=>store.current!),xp=ref<number|''>(''),message=ref(''),xpId=useId()
+const trained=computed(()=>Object.entries(c.value.skills).filter(([,value])=>value==='prof'||value==='expert').map(([key,rank])=>{
+  const ability=SKILL_ABILITY[key]
+  return {key,name:pretty(key),rank,ability,modifier:ability?skillMod(c.value.meta.level,c.value.abilities[ability],rank):undefined}
+}).sort((a,b)=>a.name.localeCompare(b.name)))
+const next=computed(()=>XP_THRESHOLDS[c.value.meta.level])
+const progress=computed(()=>{const base=XP_THRESHOLDS[c.value.meta.level-1]??0,target=next.value;return target?Math.min(100,Math.max(0,(c.value.meta.xp-base)/(target-base)*100)):100})
+async function addXP(){if(store.saving||!Number.isSafeInteger(xp.value)||Number(xp.value)<=0)return;const amount=Number(xp.value);try{await store.update(c.value._id,{meta:{...c.value.meta,xp:c.value.meta.xp+amount}});xp.value='';message.value=`${amount.toLocaleString()} XP added.`}catch{/* Sheet displays save errors. */}}
+</script>
+<template>
+  <div class="sheet-section-stack sheet-summary-overview">
+    <section class="sheet-panel sheet-summary-essentials" aria-label="Character statistics"><SheetVitalsStats include-max-hp /></section>
+    <section class="sheet-panel sheet-summary-skills" aria-label="Skill proficiencies">
+      <h3>Skill proficiencies <span class="sheet-count">{{trained.length}}</span></h3>
+      <ul v-if="trained.length" class="sheet-trained-skills"><li v-for="skill in trained" :key="skill.key"><div><span>{{skill.name}}</span><small>{{skill.ability?.toUpperCase()??'Custom'}}{{skill.rank==='expert'?' · Expertise':' · Proficient'}}</small></div><strong>{{skill.modifier===undefined?'—':signed(skill.modifier)}}</strong></li></ul>
+      <p v-else class="sheet-small">No skill proficiencies recorded.</p>
+    </section>
+    <div class="sheet-summary-secondary">
+      <section class="sheet-panel sheet-summary-training"><h3>Training & languages</h3><SheetDisclosure v-for="(values,group) in c.proficiencies" :key="group" :title="pretty(group)" :metadata="`${values.length} recorded`"><ul class="sheet-training-list"><li v-for="value in values" :key="value">{{value}}</li></ul><p v-if="!values.length" class="sheet-small">None recorded.</p></SheetDisclosure></section>
+      <section class="sheet-panel sheet-summary-experience"><h3>Experience</h3><div class="sheet-between"><strong>{{c.meta.xp.toLocaleString()}} XP</strong><span class="sheet-small">{{next===undefined?'Maximum level':`${Math.max(0,next-c.meta.xp).toLocaleString()} to level ${c.meta.level+1}`}}</span></div><progress :value="progress" max="100" aria-label="Experience toward next level" /><p v-if="next!==undefined&&c.meta.xp>=next" class="sheet-small">Level advancement available · review in Edit.</p><form v-if="store.canEditPermanent" class="sheet-inline" @submit.prevent="addXP"><label class="sheet-sr-only" :for="xpId">Experience to add</label><input :id="xpId" v-model.number="xp" type="number" min="1" step="1" placeholder="XP earned" :disabled="store.saving" /><button class="sheet-button" :disabled="store.saving||!Number.isSafeInteger(xp)||Number(xp)<=0">Add XP</button></form><p class="sheet-sr-only" role="status">{{message}}</p><button v-if="store.canEditPermanent" type="button" class="sheet-button sheet-full" @click="emit('edit')">Edit character</button></section>
+    </div>
+  </div>
+</template>
