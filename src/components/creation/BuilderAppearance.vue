@@ -5,6 +5,7 @@ defineProps<{ open: boolean }>()
 defineEmits<{ close: [] }>()
 const { appearance, resetAppearance, accentColor } = useBuilderAppearance()
 const themes: { id: BuilderTheme; name: string; description: string }[] = [
+  { id: 'folio', name: 'Folio paper', description: 'Neutral paper & clear sheet borders' },
   { id: 'obsidian', name: 'Obsidian', description: 'Near-black, clear text & rich accents' },
   { id: 'parchment', name: 'Parchment', description: 'Warm paper & soft greens' },
   { id: 'dark', name: 'Moonlight', description: 'Dark surfaces & gentle contrast' },
@@ -25,6 +26,8 @@ function restoreInvalidAccent(event: Event) {
   const input = event.target as HTMLInputElement
   if (!/^#[0-9a-f]{6}$/i.test(input.value)) input.value = accentColor.value
 }
+function applyFolio(){Object.assign(appearance,{theme:'folio',sheetLayout:'folio',sheetTypography:'folio',sheetDensity:'compact',customAccent:'#a62d36',coverage:'subtle'})}
+function applyClassic(){Object.assign(appearance,{sheetLayout:'classic',sheetTypography:'classic',sheetDensity:'comfortable'})}
 </script>
 
 <template>
@@ -46,6 +49,11 @@ function restoreInvalidAccent(event: Event) {
         <label class="cb-field">Custom accent<div class="cb-color-picker"><input type="color" aria-label="Custom accent color" :value="accentColor" @input="appearance.customAccent = ($event.target as HTMLInputElement).value" /><input aria-label="Accent hex color" :value="accentColor" maxlength="7" pattern="#[0-9a-fA-F]{6}" @input="updateCustomAccent" @blur="restoreInvalidAccent" /></div></label>
         <label class="cb-field">Color coverage<select v-model="appearance.coverage"><option value="immersive">Immersive — tint panels, headers & borders</option><option value="subtle">Subtle — focus on controls & highlights</option></select></label>
         <label class="cb-field">Reading size<select v-model="appearance.textSize"><option value="comfortable">Comfortable</option><option value="large">Larger text</option></select></label>
+        <label class="cb-field">Character sheet spacing<select v-model="appearance.sheetDensity"><option value="compact">Compact</option><option value="comfortable">Comfortable</option></select><small>Changes spacing without reducing rules text. Works with either reading size.</small></label>
+        <label class="cb-field">Character sheet layout<select v-model="appearance.sheetLayout"><option value="folio">Folio — top stats and resource column</option><option value="classic">Classic — original sheet layout</option></select></label>
+        <label class="cb-field">Character sheet typography<select v-model="appearance.sheetTypography"><option value="folio">Folio — Barlow & Barlow Condensed</option><option value="classic">Classic — Georgia & system text</option></select></label>
+        <button type="button" class="cb-button cb-button-subtle" @click="applyFolio">Use Folio preview style</button>
+        <button type="button" class="cb-button cb-button-subtle" @click="applyClassic">Use Classic sheet</button>
         <button type="button" class="cb-text-button" @click="resetAppearance">Restore defaults</button>
       </div>
     </div>

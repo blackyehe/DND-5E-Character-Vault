@@ -17,7 +17,7 @@ watch(appearanceStyle, (style) => {
 </script>
 
 <template>
-  <div class="site-shell min-h-screen flex flex-col" :data-theme="appearance.theme" :data-accent="appearance.accent" :style="appearanceStyle">
+  <div class="site-shell min-h-screen flex flex-col" :data-theme="appearance.theme" :data-accent="appearance.accent" :data-sheet-density="appearance.sheetDensity" :data-sheet-layout="appearance.sheetLayout" :data-sheet-typography="appearance.sheetTypography" :style="appearanceStyle">
     <AppNav />
     <div v-if="appearanceOpen" class="cb-page cb-appearance-wrap site-appearance-host"><BuilderAppearance :open="appearanceOpen" @close="closeAppearance" /></div>
     <main class="flex-1"><RouterView /></main>

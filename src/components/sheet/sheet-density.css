@@ -1,0 +1,105 @@
+/* Sheet spacing is independent of palette and reading size. Keep these tokens
+   scoped to sheets so future layouts can reuse them without changing forms. */
+.site-shell {
+  --sheet-panel-space:14px;
+  --sheet-section-gap:12px;
+  --sheet-row-space:8px;
+  --sheet-summary-block:7px;
+  --sheet-summary-inline:9px;
+}
+.site-shell[data-sheet-density="compact"] {
+  --sheet-panel-space:12px;
+  --sheet-section-gap:10px;
+  --sheet-row-space:4px;
+  --sheet-summary-block:5px;
+  --sheet-summary-inline:8px;
+}
+.site-shell .hero-sheet .sheet-panel { padding:var(--sheet-panel-space); }
+.site-shell .hero-sheet .sheet-section-stack,
+.site-shell .hero-sheet .sheet-independent-column { gap:var(--sheet-section-gap); }
+.site-shell .hero-sheet .sheet-combat-feature-grid .sheet-independent-column { gap:0; }
+.site-shell .hero-sheet .sheet-two-columns,
+.site-shell .hero-sheet .sheet-two-fields,
+.site-shell .hero-sheet .sheet-feature-groups,
+.site-shell .hero-sheet .sheet-spell-grid,
+.site-shell .hero-sheet .sheet-bio-grid { gap:var(--sheet-section-gap); }
+
+/* A native disclosure and a separate action area: titles can wrap, actions
+   never cover them, and opening one column does not stretch its neighbour. */
+.sheet-disclosure-row { display:flex; align-items:flex-start; gap:8px; min-width:0; border-top:1px solid var(--cb-line); padding:var(--sheet-row-space,8px) 0; }
+.sheet-disclosure { flex:1; min-width:0; }
+.hero-sheet .sheet-disclosure>summary { cursor:pointer; background:var(--cb-soft); border:1px solid var(--cb-line); border-radius:4px; padding:var(--sheet-summary-block,7px) var(--sheet-summary-inline,9px); color:var(--cb-ink); font-size:calc(14px * var(--cb-text-scale,1)); line-height:1.5; }
+.sheet-disclosure-heading { display:inline-flex; flex-wrap:wrap; align-items:baseline; gap:2px 12px; width:calc(100% - 18px); vertical-align:top; }
+.sheet-disclosure-name { min-width:0; overflow-wrap:anywhere; }
+.hero-sheet .sheet-disclosure-meta { display:block; width:100%; margin-left:15px; color:var(--cb-muted); font-size:calc(11px * var(--cb-text-scale,1)); }
+.hero-sheet .sheet-disclosure>summary:hover { border-color:var(--cb-accent-text); }
+.hero-sheet .sheet-disclosure[open]>summary { border-color:var(--cb-select-line,var(--cb-muted)); border-radius:4px 4px 0 0; }
+.sheet-disclosure-body { background:var(--cb-field); border:1px solid var(--cb-line); border-top:0; padding:12px; border-radius:0 0 5px 5px; }
+.sheet-disclosure-body .sheet-combat-description { background:transparent; border:0; padding:0; border-radius:0; }
+.sheet-disclosure-body .sheet-small { margin-bottom:6px; }
+.sheet-disclosure-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:4px; max-width:116px; padding-top:2px; flex-shrink:0; }
+.sheet-disclosure-actions>.sheet-small { padding-top:5px; white-space:nowrap; }
+.sheet-hp-adjustment { margin-top:16px; }
+.sheet-death-save-row { text-align:center; margin:18px 0; }
+
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-disclosure-meta { width:auto; margin-left:auto; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-panel h3 { margin-bottom:9px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-trackers-heading h3,
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-spellbook-toolbar h3 { margin:0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-section-title h2 { margin-bottom:4px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-eyebrow { margin-bottom:3px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-navigation { margin-bottom:12px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-navigation button { padding:6px 10px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-three-columns { gap:8px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet hr { margin:8px 0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-hp-adjustment { margin-top:9px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-death-save-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-death-save-row .sheet-track-pips { margin:4px 0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-table td { padding:7px 8px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-table th { padding:6px 8px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-combat-group { margin-top:12px; padding-top:10px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-combat-group h4 { margin:0 0 6px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-combat-feature-grid { margin-top:6px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-spell-level { padding:8px 9px 2px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-spell-level h4 { margin-bottom:5px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-spellbook-hint { margin:6px 0 9px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-trackers-heading { margin-bottom:8px; gap:8px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-grid { gap:7px; align-items:start; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-card { padding:7px 8px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-card .sheet-track-pips { margin:5px 0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-total strong { font-size:19px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-actions>small,
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-recovery { font-size:11px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-trackers-footer { gap:8px; margin-top:8px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-equipment-item { padding:8px 0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-item-profile { margin-top:5px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-equipment-stat { display:inline-flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:3px 6px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-item-weight { margin-top:4px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-inventory-controls { gap:8px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-item-quantity { width:64px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-key-values>div,
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-skill-row { padding:5px 0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-identity .sheet-summary-vitals { margin:10px 0; padding:8px 0; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-identity .sheet-summary-vitals small { font-size:10px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-identity .sheet-summary-vitals strong { margin-top:3px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-ability-stack { gap:5px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-details { margin-top:8px; padding-top:6px; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-empty { padding:12px; }
+
+/* Compact mouse rows must still offer usable targets on touch screens. */
+@media(pointer:coarse) {
+  .site-shell .hero-sheet .sheet-disclosure>summary { min-height:44px; }
+  .site-shell .hero-sheet .sheet-disclosure-actions button,
+  .site-shell .hero-sheet .sheet-navigation button,
+  .site-shell .hero-sheet .sheet-tracker-actions button,
+  .site-shell .hero-sheet .sheet-trackers-footer button { min-height:44px; min-width:44px; }
+  .site-shell .hero-sheet .sheet-track-pips { gap:8px; }
+  .site-shell .hero-sheet .sheet-track-pips button { width:44px; height:44px; }
+  .site-shell .hero-sheet input,.site-shell .hero-sheet select { font-size:max(16px,1em); }
+}
+@media(max-width:480px) {
+  .sheet-disclosure-actions { max-width:72px; }
+  .site-shell .hero-sheet .sheet-disclosure-meta { width:100%; margin-left:0; }
+  .site-shell .hero-sheet .sheet-hp-adjustment { flex-wrap:wrap; }
+  .site-shell .hero-sheet .sheet-hp-adjustment>label { flex-basis:100%; }
+}

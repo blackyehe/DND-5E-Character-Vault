@@ -5,6 +5,8 @@ import { useRoute, RouterLink, onBeforeRouteLeave } from 'vue-router'
 import { useCharactersStore, type Character } from '../stores/characters'
 import { provideSheetLibrary } from '../composables/useSheetLibrary'
 import CharacterSidebar from '../components/sheet/CharacterSidebar.vue'
+import CharacterSheetFrame from '../components/sheet/CharacterSheetFrame.vue'
+import { useBuilderAppearance } from '../composables/useBuilderAppearance'
 import CombatTab from '../components/sheet/CombatTab.vue'
 import EquipmentSpellsTab from '../components/sheet/EquipmentSpellsTab.vue'
 import FeaturesTab from '../components/sheet/FeaturesTab.vue'
@@ -23,7 +25,9 @@ const id = computed(() => props.characterId ?? String(route.params.id))
 const c = computed(() => store.current as Character)
 const championClass=computed(()=>c.value?progressionClasses(c.value).find(entry=>isRevenantShadow(entry.name)):undefined)
 const library = provideSheetLibrary(c)
+const {appearance}=useBuilderAppearance()
 const active = ref('combat'), loadError = ref('')
+watch(()=>appearance.sheetLayout,layout=>{if(layout==='classic'&&!props.compactSummary&&active.value==='summary')active.value='combat'})
 const editSection=ref('identity'),repairSpell=ref(''),repairOpen=ref(false),sheetMain=ref<HTMLElement|null>(null)
 const editDirty = ref(false), pendingTab = ref(''),pendingRules=ref(false)
 watch(active,value=>{store.editing=value==='edit'},{immediate:true})
@@ -39,7 +43,7 @@ function showTab(key:string){active.value=key;void nextTick(()=>sheetMain.value?
 function switchTab(key: string) { if (key === active.value) return; if (editDirty.value) pendingTab.value = key; else showTab(key) }
 function discardAndSwitch() { editDirty.value = false; showTab(pendingTab.value); pendingTab.value = '' }
 onBeforeRouteLeave(() => !editDirty.value || window.confirm('Discard your unsaved character edits and leave this page?'))
-const tabs = computed(() => [...(props.compactSummary?[{key:'summary',label:'Summary'}]:[]),{ key: 'combat', label: 'Combat' }, { key: 'spells', label: 'Spells' }, { key: 'equipment', label: 'Equipment' }, { key: 'features', label: 'Features' }, { key: 'proficiencies', label: 'Proficiencies' }, { key: 'bio', label: 'Bio & notes' },...(championClass.value&&!props.championFor?[{key:'champions',label:'Shadow Champions'}]:[]), ...(store.canEditPermanent ? [{ key: 'edit', label: 'Edit character' }] : [])])
+const tabs = computed(() => [...(props.compactSummary||appearance.sheetLayout==='folio'?[{key:'summary',label:'Summary'}]:[]),{ key: 'combat', label: 'Combat' }, { key: 'spells', label: 'Spells' }, { key: 'equipment', label: 'Equipment' }, { key: 'features', label: 'Features' }, { key: 'proficiencies', label: 'Proficiencies' }, { key: 'bio', label: 'Bio & notes' },...(championClass.value&&!props.championFor?[{key:'champions',label:'Shadow Champions'}]:[]), ...(store.canEditPermanent ? [{ key: 'edit', label: 'Edit character' }] : [])])
 async function openCharacter(){loadError.value='';try{await store.fetchOne(id.value,{quick:true})}catch(error){loadError.value=error instanceof Error?error.message:'Could not open this character. Try again.'}}
 watch(() => [id.value, props.roomId, props.role,props.playerPreview,props.championFor] as const, async () => {
   store.roomContext = props.roomId ? { roomId: props.roomId, role: props.role ?? 'player',preview:props.playerPreview,championFor:props.championFor } : null
@@ -52,18 +56,18 @@ defineExpose({ editDirty,retryOpen:openCharacter })
   <div class="hero-sheet">
     <div class="sheet-page-top"><RouterLink v-if="championFor" :to="`/rooms/${roomId}`">← Game room</RouterLink><RouterLink v-else-if="!roomId" to="/">← Your characters</RouterLink><span>{{ role === 'player' ? 'PLAYER SHEET · PERMANENT EDITING BY DM' : 'CHARACTER SHEET · 2014 RULES' }}</span><span role="status">{{ playerPreview ? 'Temporary preview · changes are not saved' : store.saving ? 'Saving…' : 'Changes save automatically during play' }}</span></div>
     <p v-if="championFor" class="sheet-notice">Shadow Champion reference sheet. You can inspect every tab and try resources here; changes in this preview are temporary.</p><p v-if="loadError" class="sheet-alert" role="alert">{{ loadError }} <button type="button" class="sheet-button sheet-small-button" :disabled="store.loading" @click="openCharacter">Try again</button></p>
-    <div v-else-if="c" class="sheet-workspace" :class="{'sheet-workspace-compact':compactSummary}">
-      <CharacterSidebar v-if="!compactSummary" @edit="switchTab('edit')" />
-      <main ref="sheetMain" class="sheet-main">
-        <nav class="sheet-navigation" aria-label="Character sections"><button v-for="tab in tabs" :key="tab.key" :aria-current="active === tab.key ? 'page' : undefined" :class="{ active: active === tab.key }" @click="switchTab(tab.key)">{{ tab.label }}</button></nav>
+    <div v-else-if="c" ref="sheetMain">
+      <CharacterSheetFrame :active="active" :tabs="tabs" :compact-summary="compactSummary" @select="switchTab" @edit="switchTab('edit')">
+        <template #status>
         <section v-if="pendingTab" class="sheet-panel" role="alertdialog" aria-label="Unsaved character edits" style="margin-bottom:20px"><h3>Keep your edits?</h3><p class="sheet-small">Your character has unsaved changes. Save them in Edit, or discard the draft to change tabs.</p><div class="sheet-filter-buttons" style="margin-top:14px"><button class="sheet-button" @click="pendingTab=''">Keep editing</button><button class="sheet-button" @click="discardAndSwitch">Discard draft & change tab</button></div></section>
         <p v-if="store.saveError" class="sheet-alert" role="alert">{{ store.saveError }} Your last saved values are still shown.</p>
         <p v-if="pendingRules" class="sheet-notice">Saved class rules changed while you were editing. Your draft is kept; saving it will apply the latest rules and flag conflicts.</p><WorkshopRuleReview v-if="store.canEditPermanent" @edit="editSection='rules';switchTab('edit')" />
         <p v-if="library.warning.value" class="sheet-notice">{{ library.warning.value }}</p>
         <p v-else-if="library.loading.value" class="sheet-refresh-status" role="status">Saved sheet is ready. Refreshing rules and reference details…</p>
-        <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSidebar @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
-        <details class="sheet-loading-status"><summary>Loading status</summary><p>Saved sheet opened in {{(store.lastOpenMs/1000).toFixed(2)}} seconds.</p><p>{{library.loading.value?'Rules and reference details are still refreshing.':`Rules and reference check: ${(library.lastReferenceMs.value/1000).toFixed(2)} seconds.`}}</p><button v-if="library.warning.value" type="button" class="sheet-button sheet-small-button" :disabled="library.loading.value" @click="library.reload">Retry reference details</button></details>
-      </main>
+        </template>
+        <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSidebar :overview="appearance.sheetLayout==='folio'" @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
+        <template #footer><details class="sheet-loading-status"><summary>Loading status</summary><p>Saved sheet opened in {{(store.lastOpenMs/1000).toFixed(2)}} seconds.</p><p>{{library.loading.value?'Rules and reference details are still refreshing.':`Rules and reference check: ${(library.lastReferenceMs.value/1000).toFixed(2)} seconds.`}}</p><button v-if="library.warning.value" type="button" class="sheet-button sheet-small-button" :disabled="library.loading.value" @click="library.reload">Retry reference details</button></details></template>
+      </CharacterSheetFrame>
     </div>
     <p v-else class="sheet-empty" role="status">Opening your character…</p>
   </div>

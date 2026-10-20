@@ -3,6 +3,7 @@
 .vscode
 .env*
 *.local
+.preview.local/
 backups
 **/*.test.ts
 node_modules

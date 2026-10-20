@@ -1,15 +1,19 @@
 import { computed, reactive, ref, watch } from 'vue'
 
-export type BuilderTheme = 'parchment' | 'dark' | 'light' | 'obsidian'
+export type BuilderTheme = 'parchment' | 'dark' | 'light' | 'obsidian' | 'folio'
 export type BuilderAccent = 'forest' | 'violet' | 'ocean' | 'ember' | 'crimson'
 export type BuilderTextSize = 'comfortable' | 'large'
-const defaults = { theme: 'obsidian' as BuilderTheme, accent: 'crimson' as BuilderAccent, textSize: 'comfortable' as BuilderTextSize, coverage: 'immersive' as 'subtle' | 'immersive', customAccent: '' }
+export type SheetDensity = 'comfortable' | 'compact'
+export type SheetLayout = 'classic' | 'folio'
+export type SheetTypography = 'classic' | 'folio'
+const defaults = { theme: 'obsidian' as BuilderTheme, accent: 'crimson' as BuilderAccent, textSize: 'comfortable' as BuilderTextSize, sheetDensity: 'compact' as SheetDensity, sheetLayout: 'folio' as SheetLayout, sheetTypography: 'folio' as SheetTypography, coverage: 'immersive' as 'subtle' | 'immersive', customAccent: '' }
 const settings = reactive({ ...defaults })
 const appearanceOpen = ref(false)
 const storageKey = 'codex:builder-appearance:v1'
 let initialized = false
 const accents = { forest: '#46765c', violet: '#8664b3', ocean: '#367e9d', ember: '#b46447', crimson: '#be3449' }
 const palettes = {
+  folio: { canvas: '#f2f2ef', paper: '#ffffff', field: '#f8f8f6', soft: '#f4f4f2', line: '#cbccd0', ink: '#29292e', muted: '#62636d', header: '#202127', summary: '#202127' },
   parchment: { canvas: '#efeee7', paper: '#faf9f4', field: '#fffefa', soft: '#e9ede2', line: '#d6ddcd', ink: '#2c3c32', muted: '#65755f', header: '#1d352c', summary: '#243e32' },
   light: { canvas: '#edf1f4', paper: '#ffffff', field: '#ffffff', soft: '#f0f4f6', line: '#d2dce1', ink: '#25343e', muted: '#596d79', header: '#233740', summary: '#233740' },
   dark: { canvas: '#12191d', paper: '#1c262c', field: '#182126', soft: '#243138', line: '#3a4a52', ink: '#e8eee9', muted: '#b1c2bf', header: '#10191e', summary: '#172328' },
@@ -64,9 +68,13 @@ export function useBuilderAppearance() {
     try {
       const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}')
       if (stored && typeof stored === 'object') {
-        if (['parchment', 'dark', 'light', 'obsidian'].includes(stored.theme)) settings.theme = stored.theme
+        if (Object.keys(palettes).includes(stored.theme)) settings.theme = stored.theme
         if (Object.keys(accents).includes(stored.accent)) settings.accent = stored.accent
         if (['comfortable', 'large'].includes(stored.textSize)) settings.textSize = stored.textSize
+        // Older preferences keep their palette and reading size; spacing has its own default.
+        if (['comfortable', 'compact'].includes(stored.sheetDensity)) settings.sheetDensity = stored.sheetDensity
+        if (['classic', 'folio'].includes(stored.sheetLayout)) settings.sheetLayout = stored.sheetLayout
+        if (['classic', 'folio'].includes(stored.sheetTypography)) settings.sheetTypography = stored.sheetTypography
         if (['subtle', 'immersive'].includes(stored.coverage)) settings.coverage = stored.coverage
         if (typeof stored.customAccent === 'string' && /^#[0-9a-f]{6}$/i.test(stored.customAccent)) settings.customAccent = stored.customAccent
       }

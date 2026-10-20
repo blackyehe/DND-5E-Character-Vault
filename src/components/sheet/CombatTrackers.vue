@@ -8,6 +8,7 @@ import RuleReference from './RuleReference.vue'
 import { useSheetLibrary } from '../../composables/useSheetLibrary'
 import { featResourceKey } from '../../../shared/feat-resources'
 import type { CharacterResource } from '../../../shared/character'
+defineProps<{ variant?:'rail' }>()
 
 const store = useCharactersStore(), c = computed(() => store.current!)
 const library=useSheetLibrary()
@@ -48,7 +49,7 @@ function rest(kind: 'short' | 'long') {
 </script>
 
 <template>
-  <section class="sheet-panel sheet-trackers">
+  <section class="sheet-panel sheet-trackers" :class="{'sheet-trackers-rail':variant==='rail'}">
     <header class="sheet-trackers-heading"><h3>Spell slots & resources</h3><dl v-if="hasMagic" class="sheet-casting-stats"><div><dt>Casting</dt><dd>{{ c.spellcasting.ability.toUpperCase() }}</dd></div><div><dt>Spell attack</dt><dd>{{ signed(spellAttack) }}</dd></div><div><dt>Save DC</dt><dd>{{ 8 + spellAttack }}</dd></div></dl></header>
     <fieldset :disabled="store.saving"><div class="sheet-tracker-grid">
       <article v-for="[key,s] in slots" :key="key" class="sheet-tracker-card"><header><h4>Level {{ key.slice(1) }} slots</h4><span class="sheet-tracker-total"><strong>{{ Math.max(0, s.max-s.used) }}</strong> / {{ s.max }}</span></header><div v-if="s.max<=12" class="sheet-track-pips"><button v-for="i in s.max" :key="i" :class="{spent:i>s.max-s.used}" :aria-label="`Level ${key.slice(1)} slot ${i}: ${i>s.max-s.used?'spent':'available'}`" :aria-pressed="i<=s.max-s.used" @click="slot(key,i>s.max-s.used?-1:1)" /></div><div v-else class="sheet-tracker-count">{{ s.max-s.used }} available</div><div class="sheet-tracker-actions"><button class="sheet-button sheet-small-button" :aria-label="`Use level ${key.slice(1)} slot`" :disabled="s.used>=s.max" @click="slot(key,1)">Use</button><button class="sheet-button sheet-small-button" :aria-label="`Restore level ${key.slice(1)} slot`" :disabled="s.used<=0" @click="slot(key,-1)">Restore</button><small>{{ recovery(s.recovery)==='short'?'Short rest':'Long rest' }}</small></div></article>
