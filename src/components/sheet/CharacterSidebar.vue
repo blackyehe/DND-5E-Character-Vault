@@ -2,10 +2,11 @@
 import { computed, ref } from 'vue'
 import { useCharactersStore } from '../../stores/characters'
 import { ABILITY_KEYS, abilityMod, passivePerception, profBonus } from '../../lib/calc'
-import { XP_THRESHOLDS, pretty, sheetAC, signed } from '../../lib/character-sheet'
+import { XP_THRESHOLDS, pretty, sheetAC, signed, sheetProficiencies } from '../../lib/character-sheet'
 defineEmits<{ edit: [] }>()
 defineProps<{overview?:boolean}>()
 const store = useCharactersStore(), c = computed(() => store.current!)
+const proficiencies = computed(() => sheetProficiencies(c.value))
 const xp = ref<number | ''>(''), xpMessage = ref('')
 const next = computed(() => XP_THRESHOLDS[c.value.meta.level])
 const progress = computed(() => {
@@ -29,7 +30,7 @@ async function addXP() {
     <div v-if="!overview" class="sheet-ability-stack"><div v-for="key in ABILITY_KEYS" :key="key" class="sheet-ability-row"><span>{{ key.toUpperCase() }}</span><strong>{{ c.abilities[key] }}</strong><b>{{ signed(abilityMod(c.abilities[key])) }}</b></div></div>
     <dl class="sheet-key-values"><div><dt>Proficiency bonus</dt><dd>{{ signed(profBonus(c.meta.level)) }}</dd></div><div><dt>Passive perception</dt><dd>{{ passivePerception(c.meta.level, c.abilities.wis, c.skills.perception ?? 'none') }}</dd></div></dl>
     <details class="sheet-details" open><summary>Skill proficiencies <span>{{ trained.length }}</span></summary><ul class="sheet-compact-list"><li v-for="[name, value] in trained" :key="name">{{ pretty(name) }}<small v-if="value === 'expert'">Expertise</small></li><li v-if="!trained.length" class="sheet-muted">None recorded</li></ul></details>
-    <details v-for="(values, group) in c.proficiencies" :key="group" class="sheet-details"><summary>{{ pretty(group) }} <span>{{ values.length }}</span></summary><ul class="sheet-compact-list"><li v-for="value in values" :key="value">{{ value }}</li><li v-if="!values.length" class="sheet-muted">None recorded</li></ul></details>
+    <details v-for="(values, group) in proficiencies" :key="group" class="sheet-details"><summary>{{ pretty(group) }} <span>{{ values.length }}</span></summary><ul class="sheet-compact-list"><li v-for="value in values" :key="value">{{ value }}</li><li v-if="!values.length" class="sheet-muted">None recorded</li></ul></details>
     <button v-if="store.canEditPermanent" class="sheet-button sheet-full" @click="$emit('edit')">Edit character</button>
   </section></aside>
 </template>

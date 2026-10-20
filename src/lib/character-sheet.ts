@@ -1,12 +1,16 @@
 import type { Attack, Character, CharacterFeature } from '../../shared/character'
 import { abilityMod, attackBonus } from './calc'
 import { itemBonuses, itemActive } from '../../shared/item-rules'
+import { compactWeaponProficiencies } from '../../shared/weapon-proficiencies'
 export { equipmentFrom } from '../../shared/equipment-definitions'
 
 export const XP_THRESHOLDS = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000]
 export const signed = (n: number) => n >= 0 ? `+${n}` : String(n)
 export const pretty = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/-/g, ' ').replace(/^./, c => c.toUpperCase())
 export const ORIGINS = { racial: 'Racial traits', class: 'Class features', subclass: 'Subclass features', background: 'Background', feat: 'Feats', other: 'Other / unclassified' } as const
+export function sheetProficiencies(c: Character) {
+  return { ...c.proficiencies, weapons: compactWeaponProficiencies(c.proficiencies.weapons) }
+}
 export { classes, automaticResources, resourcesFor } from '../../shared/character-resources'
 export function sheetAC(c: Character) {
   const bonus=itemBonuses(c).ac
