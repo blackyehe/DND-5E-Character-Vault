@@ -38,7 +38,15 @@ Frontend and backend type checks and the production build pass. Manual local rev
 
 ## Publication and rollback
 
-Publication was explicitly authorised by the user. Deployment details and live observations are appended after rollout.
+Publication was explicitly authorised by the user. The creator was published on 20 October 2026.
+
+- Application commit: `709538a` — guided monster creator and reusable action library.
+- Deployment: `dpl_CZeMBtahKsw61yrRF1iCL2JzJbuF`.
+- Deployment URL: https://dndoldal-gagat13q7-dndenjoyerstudio.vercel.app
+- Public site: https://dndoldal.vercel.app/homebrew
+- Vercel reported READY before promotion, and the public domain was verified against that deployment afterward. `/api/health` returned `{"ok":true}`.
+- Signed-in live review confirmed the new Workshop section, guided editor, readable preview, button placement beneath Traits & actions, required-name validation and the existing account's pack choices. No browser warnings or errors were captured during that review. Only an empty device draft was opened; no production packs, reusable actions or characters were changed during verification.
+- Screenshot: `.preview.local/monster-creator-live.png` (local review artifact; excluded from deployment).
 
 The preceding production deployment is `dpl_6wuUR7adiwhc9hLmnx4DqV8aRMYc`, the monster-reader release. Restore it with:
 
@@ -46,6 +54,6 @@ The preceding production deployment is `dpl_6wuUR7adiwhc9hLmnx4DqV8aRMYc`, the m
 vercel rollback dpl_6wuUR7adiwhc9hLmnx4DqV8aRMYc --scope dndenjoyerstudio --yes
 ```
 
-The pre-creator source checkpoint is `5bef522`. Revert the creator implementation commit, rebuild and deploy for a source rollback. A Git revert alone does not change Vercel.
+The pre-creator source checkpoint is `5bef522`, tagged `pre-monster-creator-2026-10-20`. Revert implementation commit `709538a`, rebuild and deploy for a source rollback. A Git revert alone does not change Vercel.
 
 Application rollback preserves the database. Saved monsters remain ordinary readable Orcbrew entries; reusable actions remain stored but their editor is unavailable in the older application. Restoring a backup containing the new action content type requires this creator release or a later version. No rollback was executed.
