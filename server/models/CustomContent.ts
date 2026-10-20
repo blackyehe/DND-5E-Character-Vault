@@ -5,8 +5,10 @@ const { Schema } = mongoose
 const customContentSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    type: { type: String, enum: ['background', 'feat', 'spell', 'orcbrew','item','monster-action'], required: true },
+    type: { type: String, enum: ['background', 'feat', 'spell', 'orcbrew','item','monster-action','deleted-content'], required: true },
     data: { type: Schema.Types.Mixed, required: true },
+    deletedContent: { type: Schema.Types.Mixed },
+    workshopTrash: { type: [Schema.Types.Mixed], default: undefined },
     sourceHash: { type: String },
   },
   { timestamps: true },

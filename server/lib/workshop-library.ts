@@ -66,6 +66,11 @@ export type WorkshopLibrary=Awaited<ReturnType<typeof workshopLibrary>>
 export async function resolveWorkshopCharacter(character:unknown,userId:string|undefined,library?:WorkshopLibrary) {
   const data=library??await workshopLibrary(userId)
   const resolved=applyWorkshopRules(character as CharacterData,data.rules,data.initial)
+  if(resolved.homebrew){
+    const restored=(id:string)=>id.startsWith('missing-rule:')&&data.rules.some(r=>id===`missing-rule:${r.id}`)
+    resolved.homebrew.conflicts=resolved.homebrew.conflicts.filter(c=>!restored(c.id))
+    resolved.homebrew.acknowledged=resolved.homebrew.acknowledged.filter(id=>!restored(id))
+  }
   for(const binding of resolved.homebrew?.bindings??[])if(!data.rules.some(r=>r.id===binding.ruleId)){
     const id=`missing-rule:${binding.ruleId}`
     if(!resolved.homebrew!.acknowledged.includes(id)&&!resolved.homebrew!.conflicts.some(c=>c.id===id))resolved.homebrew!.conflicts.push({id,message:`${binding.rule.name}'s source pack is unavailable. The last saved rules are still in use.`})

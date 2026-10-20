@@ -22,7 +22,7 @@ export interface MonsterDraft {
   senses:{blindsight:number;darkvision:number;tremorsense:number;truesight:number;blindBeyond:boolean};passiveOverride:number|null
   languages:string;understandsOnly:boolean;telepathy:number
   rules:MonsterAction[];introductions:Partial<Record<MonsterSectionKind,string>>;endNotes:Partial<Record<MonsterSectionKind,string>>
-  presentation:'one'|'two';published?:{packId:string;hash:string;revision:number;key:string}
+  presentation:'one'|'two';published?:{packId:string;hash:string;revision:number;key:string;index?:string}
 }
 export interface SavedMonsterAction {id:string;revision:number;action:MonsterAction}
 export function newMonsterAction(section:MonsterSectionKind='actions'):MonsterAction{return {id:crypto.randomUUID(),name:'New '+(section==='traits'?'trait':section==='reactions'?'reaction':'action'),section,mode:'text',description:'',usage:'',ability:'str',proficient:true,attackOverride:null,reach:'5 ft.',attackType:'Melee Weapon Attack',damage:'1d6',damageType:'bludgeoning',addAbility:true,extraDamage:'',target:'one target',saveAbility:'dex',dcOverride:null}}
