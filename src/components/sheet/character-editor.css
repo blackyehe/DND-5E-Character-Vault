@@ -1,0 +1,21 @@
+/* Keep the editor controls aligned with its existing 880px content panels. */
+.site-shell .hero-sheet .sheet-editor>:is(.sheet-section-title,.sheet-editor-navigation,.sheet-sticky-actions,.sheet-alert) {
+  width:100%;
+  max-width:880px;
+  margin-inline:auto;
+}
+.sheet-editor-navigation {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:0 0 16px;
+  position:sticky;
+  top:0;
+  padding:8px 0;
+  background:var(--cb-paper);
+  z-index:15;
+}
+.sheet-editor-navigation button[aria-current=page] {
+  border-color:var(--cb-accent-mark);
+  color:var(--cb-accent-text);
+}

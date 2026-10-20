@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { contentLabel, homebrew, srd, type SrdEquipment, type SrdMagicItem, type SrdRef, type SrdSpell } from '../lib/srd'
 import OrcbrewPacks from '../components/OrcbrewPacks.vue'
 import { hasMagicItemTags,emptyItemFilters,itemSearchText,matchesEquipmentItem,matchesMagicItem,normalEquipmentSearch } from '../lib/magic-item-filters'
@@ -30,6 +30,11 @@ const unclassifiedMagicItems=computed(()=>results.value.filter(entry=>!entry.wor
 const loading = ref(false)
 const error = ref('')
 const detail = ref<Detail | null>(null)
+const detailPanel = ref<HTMLElement | null>(null)
+watch(() => detail.value?.index, async () => {
+  await nextTick()
+  detailPanel.value?.scrollTo({ top:0 })
+})
 const detailLoading = ref(false)
 watch(visibleResults, entries => {
   if (detail.value && !entries.some(entry => entry.index === detail.value?.index)) {
@@ -161,7 +166,7 @@ search()
     <OrcbrewPacks v-if="tab === 'homebrew'" />
     <template v-else>
       <p v-if="error" class="text-sm text-[var(--site-danger)] mb-3" role="alert">{{ error }}</p>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div class="panel p-4 lg:col-span-1 max-h-[70vh] overflow-y-auto">
           <p v-if="loading" class="text-sm">Loading…</p>
           <p v-else-if="!visibleResults.length" class="text-sm">No matching entries. Try another search or clear your filters.</p>
@@ -173,7 +178,7 @@ search()
             </li>
           </ul>
         </div>
-        <div class="panel p-6 lg:col-span-2 min-h-[200px]">
+        <div ref="detailPanel" class="panel p-6 lg:col-span-2 min-h-[200px] max-h-[70vh] overflow-y-auto" tabindex="0" role="region" aria-label="Entry details">
           <p v-if="detailLoading" role="status">Loading details…</p>
           <p v-else-if="!detail">Select an entry to read its description.</p>
           <div v-else>

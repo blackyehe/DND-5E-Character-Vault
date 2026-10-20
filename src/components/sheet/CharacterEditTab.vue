@@ -18,6 +18,7 @@ import { featResourceKey } from '../../../shared/feat-resources'
 import { featNames } from '../../lib/feat-references'
 import ItemComposer from '../items/ItemComposer.vue'
 import { itemBonuses } from '../../../shared/item-rules'
+import './character-editor.css'
 const props=defineProps<{initialSection?:string;repairSpell?:string;repairOpen?:boolean}>()
 const editorSection=ref(props.initialSection??'identity')
 const sections=[['identity','Identity'],['rules','Rules & choices'],['stats','Stats & training'],['equipment','Equipment & attacks'],['spells','Spells & slots'],['resources','Resources'],['features','Features'],['bio','Notes']]
