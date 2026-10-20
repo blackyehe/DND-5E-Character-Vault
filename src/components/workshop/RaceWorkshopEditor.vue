@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { vMotionPanel } from '../../directives/siteMotion'
 import { computed, ref } from 'vue'
 import { ABILITY_KEYS, SKILL_ABILITY } from '../../lib/calc'
 import { contentLabel, type SrdRef } from '../../lib/srd'
@@ -14,7 +15,7 @@ function toggle(list:string[],value:string){const i=list.indexOf(value);if(i<0)l
 function addSpell(){const spell=props.spells.find(s=>s.index===selected.value);if(!spell||race.value.spells.some(s=>s.index===spell.index))return;race.value.spells.push({id:crypto.randomUUID(),index:spell.index,name:spell.name,level:1,ability:'cha',usage:'',needsReview:true});selected.value=''}
 </script>
 
-<template><section class="hw-editor hw-panel"><header class="hw-editor-header"><p class="hw-eyebrow">RACE BUILDER</p><h2>{{({identity:'Identity',foundation:'Body & training',progression:'Trait progression',magic:'Innate spells',resources:'Resource trackers',features:'Traits & choices',review:'Review'})[step]}}</h2><p class="hw-hint">Saved racial rules apply to every matching character. Ability scores and play state are preserved.</p></header>
+<template><section v-motion-panel="step" class="hw-editor hw-panel"><header class="hw-editor-header"><p class="hw-eyebrow">RACE BUILDER</p><h2>{{({identity:'Identity',foundation:'Body & training',progression:'Trait progression',magic:'Innate spells',resources:'Resource trackers',features:'Traits & choices',review:'Review'})[step]}}</h2><p class="hw-hint">Saved racial rules apply to every matching character. Ability scores and play state are preserved.</p></header>
   <div v-if="step==='identity'" class="hw-section-body">
     <div class="hw-form-grid"><label>Race name<input v-model="draft.name" maxlength="200" placeholder="Shadow Touched" /></label><label>Source / collection<input v-model="draft.source" maxlength="200" /></label></div>
     <label>Description & lore<textarea v-model="draft.description" rows="8" /></label>

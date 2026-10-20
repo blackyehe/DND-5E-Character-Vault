@@ -4,6 +4,7 @@ import { useCharactersStore, type Character } from '../../stores/characters'
 import { profBonus } from '../../lib/calc'
 import { sheetAC, signed } from '../../lib/character-sheet'
 import SheetVitalsStats from './SheetVitalsStats.vue'
+import { vMotionCounter } from '../../directives/siteMotion'
 defineProps<{ compact?:boolean }>()
 const store=useCharactersStore(),c=computed(()=>store.current!),amount=ref(1)
 async function combat(patch:Partial<Character['combat']>){if(store.saving)return;try{await store.update(c.value._id,{combat:{...c.value.combat,...patch}})}catch{/* The sheet displays save errors. */}}
@@ -17,17 +18,17 @@ function changeHP(heal:boolean,value=amount.value){
 </script>
 <template>
   <section class="sheet-panel sheet-hit-points" :class="{'sheet-hit-points-compact':compact}">
-    <div v-if="compact" class="sheet-between"><h3>Hit points</h3><span class="sheet-small">Temp {{c.combat.hpTemp}}</span></div>
+    <div v-if="compact" class="sheet-between"><h3>Hit points</h3><span v-motion-counter="c.combat.hpTemp" class="sheet-small">Temp {{c.combat.hpTemp}}</span></div>
     <h3 v-else>Vitals</h3>
     <fieldset :disabled="store.saving">
       <template v-if="compact">
-        <div class="sheet-hp-quick"><p aria-label="Current and maximum hit points"><strong>{{c.combat.hpCurrent}}</strong> / {{c.combat.hpMax}}</p><div><button type="button" class="sheet-button" :disabled="c.combat.hpCurrent<=0&&c.combat.hpTemp<=0" aria-label="Take 1 damage" @click="changeHP(false,1)">−1</button><button type="button" class="sheet-button" :disabled="c.combat.hpCurrent>=c.combat.hpMax" aria-label="Heal 1 hit point" @click="changeHP(true,1)">+1</button></div></div>
+        <div class="sheet-hp-quick"><p aria-label="Current and maximum hit points"><strong v-motion-counter="c.combat.hpCurrent">{{c.combat.hpCurrent}}</strong> / {{c.combat.hpMax}}</p><div><button type="button" class="sheet-button" :disabled="c.combat.hpCurrent<=0&&c.combat.hpTemp<=0" aria-label="Take 1 damage" @click="changeHP(false,1)">−1</button><button type="button" class="sheet-button" :disabled="c.combat.hpCurrent>=c.combat.hpMax" aria-label="Heal 1 hit point" @click="changeHP(true,1)">+1</button></div></div>
         <p class="sheet-small">AC {{sheetAC(c)}} · Proficiency {{signed(profBonus(c.meta.level))}}</p>
       </template>
       <SheetVitalsStats v-else />
       <component :is="compact?'details':'div'" class="sheet-hp-adjustments" :class="{'sheet-vitals-form':!compact}">
         <summary v-if="compact">Adjust HP / temporary HP</summary>
-        <div class="sheet-three-columns"><label>Current HP<input :value="c.combat.hpCurrent" type="number" min="0" :max="c.combat.hpMax" @change="hp(($event.target as HTMLInputElement).value,'hpCurrent')" /></label><label>Maximum HP<output>{{c.combat.hpMax}}</output></label><label>Temporary HP<input :value="c.combat.hpTemp" type="number" min="0" @change="hp(($event.target as HTMLInputElement).value,'hpTemp')" /></label></div>
+        <div class="sheet-three-columns"><label>Current HP<input v-motion-counter="c.combat.hpCurrent" :value="c.combat.hpCurrent" type="number" min="0" :max="c.combat.hpMax" @change="hp(($event.target as HTMLInputElement).value,'hpCurrent')" /></label><label>Maximum HP<output>{{c.combat.hpMax}}</output></label><label>Temporary HP<input v-motion-counter="c.combat.hpTemp" :value="c.combat.hpTemp" type="number" min="0" @change="hp(($event.target as HTMLInputElement).value,'hpTemp')" /></label></div>
         <div class="sheet-inline sheet-hp-adjustment"><label style="flex:1">Damage / healing<input v-model.number="amount" type="number" min="1" /></label><button type="button" class="sheet-button" :disabled="!Number.isInteger(amount)||amount<1" @click="changeHP(false)">Damage</button><button type="button" class="sheet-button" :disabled="!Number.isInteger(amount)||amount<1" @click="changeHP(true)">Heal</button></div>
         <div v-if="!compact" class="sheet-vitals-extras"><label>Hit dice used · {{c.combat.hitDiceTotal}} total<input :value="c.combat.hitDiceUsed" type="number" min="0" :max="c.combat.hitDiceTotal" @change="combat({hitDiceUsed:Math.min(c.combat.hitDiceTotal,Math.max(0,Math.floor(Number(($event.target as HTMLInputElement).value)||0)))})" /></label><label class="sheet-checkbox"><input type="checkbox" :checked="c.combat.inspiration" @change="combat({inspiration:!c.combat.inspiration})" /> Inspiration</label></div>
         <p class="sheet-small sheet-hp-hint">Damage uses temporary HP first.</p>

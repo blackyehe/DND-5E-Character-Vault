@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { vMotionCounter } from '../../directives/siteMotion'
 import { useCharactersStore } from '../../stores/characters'
 import { initiative, passivePerception, profBonus } from '../../lib/calc'
 import { sheetAC, signed } from '../../lib/character-sheet'
@@ -8,7 +9,7 @@ const c=computed(()=>useCharactersStore().current!)
 </script>
 <template>
   <dl class="sheet-vitals-strip" aria-label="Defenses and passive statistics">
-    <div><dt>AC</dt><dd>{{sheetAC(c)}}</dd></div>
+    <div><dt>AC</dt><dd v-motion-counter="sheetAC(c)">{{sheetAC(c)}}</dd></div>
     <div v-if="includeMaxHp"><dt>Max HP</dt><dd>{{c.combat.hpMax}}</dd></div>
     <div><dt>Speed</dt><dd>{{c.combat.speed}} <small>ft.</small></dd></div>
     <div><dt>Initiative</dt><dd>{{signed(initiative(c.abilities.dex))}}</dd></div>

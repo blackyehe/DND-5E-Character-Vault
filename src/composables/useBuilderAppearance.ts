@@ -6,7 +6,8 @@ export type BuilderTextSize = 'comfortable' | 'large'
 export type SheetDensity = 'comfortable' | 'compact'
 export type SheetLayout = 'classic' | 'folio'
 export type SheetTypography = 'classic' | 'folio'
-const defaults = { theme: 'obsidian' as BuilderTheme, accent: 'crimson' as BuilderAccent, textSize: 'comfortable' as BuilderTextSize, sheetDensity: 'compact' as SheetDensity, sheetLayout: 'folio' as SheetLayout, sheetTypography: 'folio' as SheetTypography, coverage: 'immersive' as 'subtle' | 'immersive', customAccent: '' }
+export type SiteMotion = 'balanced' | 'reduced'
+const defaults = { theme: 'obsidian' as BuilderTheme, accent: 'crimson' as BuilderAccent, textSize: 'comfortable' as BuilderTextSize, sheetDensity: 'compact' as SheetDensity, sheetLayout: 'folio' as SheetLayout, sheetTypography: 'folio' as SheetTypography, coverage: 'immersive' as 'subtle' | 'immersive', customAccent: '', motion: 'balanced' as SiteMotion }
 const settings = reactive({ ...defaults })
 const appearanceOpen = ref(false)
 const storageKey = 'codex:builder-appearance:v1'
@@ -75,6 +76,7 @@ export function useBuilderAppearance() {
         if (['comfortable', 'compact'].includes(stored.sheetDensity)) settings.sheetDensity = stored.sheetDensity
         if (['classic', 'folio'].includes(stored.sheetLayout)) settings.sheetLayout = stored.sheetLayout
         if (['classic', 'folio'].includes(stored.sheetTypography)) settings.sheetTypography = stored.sheetTypography
+        if (['balanced', 'reduced'].includes(stored.motion)) settings.motion = stored.motion
         if (['subtle', 'immersive'].includes(stored.coverage)) settings.coverage = stored.coverage
         if (typeof stored.customAccent === 'string' && /^#[0-9a-f]{6}$/i.test(stored.customAccent)) settings.customAccent = stored.customAccent
       }

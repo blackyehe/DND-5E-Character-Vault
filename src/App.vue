@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import { nextTick, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { RouterView } from 'vue-router'
 import AppNav from './components/ui/AppNav.vue'
 import BuilderAppearance from './components/creation/BuilderAppearance.vue'
 import { useBuilderAppearance } from './composables/useBuilderAppearance'
+import { cancelSiteMotion } from './directives/siteMotion'
 const { appearance, appearanceStyle, appearanceOpen } = useBuilderAppearance()
+watch(() => appearance.motion, cancelSiteMotion, { flush: 'sync' })
+let motionPreference: MediaQueryList | undefined
+onMounted(() => {
+  motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
+  motionPreference.addEventListener('change', cancelSiteMotion)
+})
+onUnmounted(() => {
+  motionPreference?.removeEventListener('change', cancelSiteMotion)
+  cancelSiteMotion()
+})
 async function closeAppearance() {
   appearanceOpen.value = false
   await nextTick()
@@ -17,7 +28,7 @@ watch(appearanceStyle, (style) => {
 </script>
 
 <template>
-  <div class="site-shell min-h-screen flex flex-col" :data-theme="appearance.theme" :data-accent="appearance.accent" :data-sheet-density="appearance.sheetDensity" :data-sheet-layout="appearance.sheetLayout" :data-sheet-typography="appearance.sheetTypography" :style="appearanceStyle">
+  <div class="site-shell min-h-screen flex flex-col" :data-theme="appearance.theme" :data-accent="appearance.accent" :data-sheet-density="appearance.sheetDensity" :data-sheet-layout="appearance.sheetLayout" :data-sheet-typography="appearance.sheetTypography" :data-motion="appearance.motion" :style="appearanceStyle">
     <AppNav />
     <div v-if="appearanceOpen" class="cb-page cb-appearance-wrap site-appearance-host"><BuilderAppearance :open="appearanceOpen" @close="closeAppearance" /></div>
     <main class="flex-1"><RouterView /></main>

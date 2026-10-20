@@ -1,0 +1,61 @@
+/* Balanced hybrid: feedback for actions, with no page-load choreography. */
+.site-shell {
+  --motion-control:150ms;
+  --motion-panel:220ms;
+  --motion-ease:cubic-bezier(.2,.7,.2,1);
+}
+
+@media (prefers-reduced-motion:no-preference) {
+  .site-shell[data-motion="balanced"] :is(.btn-primary,.btn-ghost,.sheet-button,.cb-button,.hw-button,.hw-icon-button,.cb-theme-option,.cb-accent-options button,.sheet-navigation button,.hw-step-nav>button,.mw-steps>button) {
+    transition:transform var(--motion-control) var(--motion-ease),background-color var(--motion-control) var(--motion-ease),border-color var(--motion-control) var(--motion-ease),color var(--motion-control) var(--motion-ease);
+  }
+  .site-shell[data-motion="balanced"] :is(.btn-primary,.btn-ghost,.sheet-button,.cb-button,.hw-button,.hw-icon-button,.cb-theme-option,.cb-accent-options button,.sheet-navigation button,.hw-step-nav>button,.mw-steps>button):not(:disabled):not([aria-disabled="true"]):active {
+    transform:translateY(1px) scale(.98);
+  }
+  .site-shell[data-motion="balanced"] :is(.rooms-list-item,.hw-content-card,.cb-choice,.sheet-track-pips button,details>summary) {
+    transition:background-color var(--motion-control) var(--motion-ease),border-color var(--motion-control) var(--motion-ease),color var(--motion-control) var(--motion-ease);
+  }
+  /* Native disclosures retain their open state, keyboard controls and focus behavior.
+     Older engines simply open and close immediately. */
+  @supports (interpolate-size:allow-keywords) and selector(details::details-content) and (transition-behavior:allow-discrete) {
+    .site-shell[data-motion="balanced"] details::details-content {
+      interpolate-size:allow-keywords;
+      block-size:0;
+      overflow:clip;
+      overflow-clip-margin:4px;
+      opacity:0;
+      translate:0 3px;
+      transition:block-size var(--motion-panel) var(--motion-ease),opacity var(--motion-panel) var(--motion-ease),translate var(--motion-panel) var(--motion-ease),content-visibility var(--motion-panel) allow-discrete;
+    }
+    .site-shell[data-motion="balanced"] details[open]::details-content {
+      block-size:auto;
+      opacity:1;
+      translate:0 0;
+    }
+  }
+}
+
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  .site-shell[data-motion="balanced"] :is(.btn-primary,.btn-ghost,.sheet-button,.cb-button,.hw-button,.hw-icon-button,.cb-theme-option,.cb-accent-options button,.sheet-navigation button,.hw-step-nav>button,.mw-steps>button):not(:disabled):not([aria-disabled="true"]):hover:not(:active) {
+    transform:translateY(-1px);
+  }
+  .site-shell[data-motion="balanced"] .rooms-list-item:hover { border-color:var(--cb-accent-text); }
+}
+
+.sheet-hp-quick strong,.sheet-tracker-total strong { display:inline-block; font-variant-numeric:tabular-nums; }
+
+/* Device preference and OS setting both disable motion, including legacy transitions. */
+.site-shell[data-motion="reduced"],.site-shell[data-motion="reduced"] *,
+.site-shell[data-motion="reduced"] *::before,.site-shell[data-motion="reduced"] *::after,
+.site-shell[data-motion="reduced"] details::details-content {
+  animation:none!important;
+  transition:none!important;
+  scroll-behavior:auto!important;
+}
+@media (prefers-reduced-motion:reduce) {
+  .site-shell,.site-shell *,.site-shell *::before,.site-shell *::after,.site-shell details::details-content {
+    animation:none!important;
+    transition:none!important;
+    scroll-behavior:auto!important;
+  }
+}
