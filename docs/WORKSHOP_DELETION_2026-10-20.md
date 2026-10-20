@@ -20,6 +20,19 @@ Imported definitions without Workshop metadata and SRD content are not individua
 
 ## Verification and rollout
 
-No automated tests were requested, added or run. Type-check/build results and live review observations are recorded after completion. Production content is not deleted merely to verify the interface.
+No automated tests were requested, added or run. Frontend and backend type checks and the production build passed. Signed-in live review confirmed the Recently deleted endpoint loads without errors, saved class and item Delete controls appear, and draft/pack confirmations explain scope correctly. Both confirmations were cancelled; no production creation or draft was deleted or restored during verification. Production database mutation/recovery paths were reviewed in code but were not exercised against user content. No warnings or errors were captured in the browser during review.
 
-The pre-change application deployment is `dpl_CZeMBtahKsw61yrRF1iCL2JzJbuF`; source checkpoint `008b22e`. Rolling the application back preserves recovery data, but its interface requires this release or a later one.
+- Application commit: `4da65fc`.
+- Published deployment: `dpl_2Ebm6Rsd9ncdfhHayhyTaLPEsq8i`.
+- Public domain: https://dndoldal.vercel.app/homebrew
+- Deployment URL: https://dndoldal-32ywp6ryo-dndenjoyerstudio.vercel.app
+- Vercel reported READY before promotion, and the public domain was verified against this ID afterward. `/api/health` returned `{"ok":true}`.
+- Local screenshots: `.preview.local/workshop-delete-controls-live.png` and `.preview.local/workshop-delete-confirmation.png` (excluded from deployments).
+
+The pre-change application deployment is `dpl_CZeMBtahKsw61yrRF1iCL2JzJbuF`; source checkpoint `008b22e`, tagged `pre-workshop-deletion-2026-10-20`. Rolling the application back preserves recovery data, but its interface requires this release or a later one. Rollback command:
+
+```powershell
+vercel rollback dpl_CZeMBtahKsw61yrRF1iCL2JzJbuF --scope dndenjoyerstudio --yes
+```
+
+Reverting Git commit `4da65fc` requires a new deployment to change the public application. No rollback was executed.
