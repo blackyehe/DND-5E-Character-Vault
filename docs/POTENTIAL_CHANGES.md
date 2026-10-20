@@ -41,3 +41,12 @@ The current reference cache and its measurements are documented separately:
 
 - [Cache behaviour and baseline timings](SHEET_CACHE_AND_TIMINGS_2026-10-20.md)
 - [Published release, observed results and rollback](SHEET_CACHE_RELEASE_2026-10-20.md)
+
+## PC-002 — Adapt an existing creature
+
+**Added:** 20 October 2026  
+**Status:** Retained for after the monster creator is finished; not part of the initial creator.
+
+The user liked the “Template and adapt” preview and explicitly requested retaining it as a separate feature from the creation tab. The proposed flow starts from an existing creature, lets the DM adapt its statistics and rules, then reviews the resulting creature before saving. The original creature remains available.
+
+Build and finish the monster creator first. Return to this separate adaptation workflow afterwards. Its entry point and detailed behaviour still need review before implementation.
