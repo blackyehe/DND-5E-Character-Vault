@@ -1,6 +1,7 @@
 /* Reference direction: Tetra-cube's classic parchment statblocks. These styles
    are local to the reader; the surrounding site retains its selected theme. */
 .monster-reader { min-width:0; container-type:inline-size; }
+.monster-statblock .monster-editable{cursor:pointer}.monster-statblock .monster-editable:hover,.monster-statblock .monster-editable:focus-visible{outline:1px dashed #922610;outline-offset:2px;background:#d9952820}
 .monster-reader .monster-statblock {
   box-sizing:border-box; width:100%; max-width:400px; margin:6px auto 12px; padding:10px 10px 20px;
   background-color:#fdf1dc;

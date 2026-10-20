@@ -133,3 +133,18 @@ export function placeWorkshopEntry(source:string|undefined,compiled:ReturnType<t
   return source.slice(0,span.start)+applyMap(source,root,patch({[section]:patch({[`:${key}`]:new Literal(compiled.text)})}),spans)+source.slice(span.end)
 }
 export const workshopKey=(draft:WorkshopDraft)=>draft.imported?.contentKey||`${slug(draft.name)||draft.kind}-${draft.id.slice(0,8)}`
+
+/** Add/replace only our own monster definition; preserve unrelated EDN bytes. */
+export function placeMonsterEntry(source:string|undefined,key:string,entry:Record<string,unknown>,nativeId:string):string {
+  const section=':orcpub.dnd.e5/monsters',text=writeEdn(entry)
+  if(!source)return `{${section} {${writeEdn(keyword(key))} ${text}}}\n`
+  const spans=new WeakMap<object,EdnSpan>(),root=readEdn(source,()=>{},spans)
+  const nodes:object[]=[]
+  function visit(node:unknown,depth=0){if(depth>16)return;const record=object(node);for(const [name,value]of Object.entries(object(record[section])))if(name.replace(/^:/,'')===key){if(object(object(value)[':codex/monster']).id!==nativeId)throw new Error('This key belongs to another creature. Choose a different pack.');nodes.push(object(value))}for(const [name,value]of Object.entries(record))if(!name.startsWith(':')&&value&&typeof value==='object'&&!Array.isArray(value))visit(value,depth+1)}
+  visit(root)
+  if(nodes.length){let result=source;for(const node of nodes.sort((a,b)=>spans.get(b)!.start-spans.get(a)!.start)){const span=spans.get(node)!;result=result.slice(0,span.start)+text+result.slice(span.end)}return result}
+  const span=spans.get(root as object);if(!span)throw new Error('The target pack must be an EDN map.')
+  return source.slice(0,span.start)+applyMap(source,root,patch({[section]:patch({[`:${key}`]:new Literal(text)})}),spans)+source.slice(span.end)
+}
+
+export const monsterKeyword=keyword

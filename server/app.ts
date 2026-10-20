@@ -9,6 +9,7 @@ import characterImportRoutes from './routes/character-import'
 import workshopRoutes from './routes/workshop'
 import roomRoutes from './routes/rooms'
 import itemRoutes from './routes/items'
+import monsterWorkshopRoutes from './routes/monster-workshop'
 import { readSrdRule } from './lib/srd-client'
 import { uploadRoutes, finishUpload, streamLargeResponses } from './middleware/large-transfer'
 import { requireAuth } from './middleware/auth'
@@ -78,6 +79,7 @@ app.use('/api/content', contentRoutes)
 app.use('/api/workshop', workshopRoutes)
 app.use('/api/rooms', roomRoutes)
 app.use('/api/items', itemRoutes)
+app.use('/api/monster-workshop', monsterWorkshopRoutes)
 app.use('/api', (_req, res) => res.status(404).json({ error: 'API route not found.' }))
 app.use((err: Error & { status?: number; code?: number }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err.status === 413) return res.status(413).json({ error: 'Uploaded request is too large.' })
