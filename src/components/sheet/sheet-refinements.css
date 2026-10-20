@@ -18,6 +18,7 @@
 .site-shell .hero-sheet .sheet-summary-training .sheet-disclosure>summary { font-size:calc(15px * var(--cb-text-scale,1)); }
 
 /* Vitals fills the available width without leaving its play controls behind. */
+.site-shell .hero-sheet .sheet-combat-tab.sheet-section-stack>.sheet-panel { width:100%; max-width:none; margin-inline:0; }
 .hero-sheet .sheet-hit-points:not(.sheet-hit-points-compact) .sheet-vitals-strip { border-bottom:1px solid var(--cb-line); padding-bottom:12px; margin-bottom:12px; }
 .sheet-vitals-form { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,.8fr); gap:8px 18px; align-items:end; }
 .site-shell .hero-sheet .sheet-vitals-form .sheet-hp-adjustment { margin:0; }

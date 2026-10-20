@@ -15,7 +15,7 @@ async function save(patch: Partial<Character>) { if (store.saving) return; try {
 function combat(patch: Partial<Character['combat']>) { return save({ combat: { ...c.value.combat, ...patch } }) }
 </script>
 <template>
-  <div class="sheet-section-stack"><header class="sheet-section-title"><p class="sheet-eyebrow">READY FOR THE NEXT TURN</p><h2>Combat</h2><p>Your defenses, attacks, spells, and remaining resources in one place.</p></header>
+  <div class="sheet-section-stack sheet-combat-tab"><header class="sheet-section-title"><p class="sheet-eyebrow">READY FOR THE NEXT TURN</p><h2>Combat</h2><p>Your defenses, attacks, spells, and remaining resources in one place.</p></header>
     <HitPointsPanel />
     <section v-if="c.combat.hpCurrent===0" class="sheet-panel sheet-death-saves" aria-label="Death saves">
       <h3>Death saves</h3>
