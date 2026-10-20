@@ -36,12 +36,33 @@ The statblock uses bundled Libre Baskerville and Noto Sans Latin WOFF2 fonts (ab
 - Production frontend build completed successfully.
 - Actual component markup was reviewed locally with an SRD Goblin, an Adult Red Dragon and an imported Hobgoblin Warlord. These cover short rules, long action lists, recharge labels, legendary actions and an imported reaction.
 - A long imported entry was scrolled to its reaction and source without expanding individual rules.
-- No automated tests were added or run. This release has not yet been reviewed in the production Compendium.
+- No automated tests were added or run. Post-publication checks are recorded below.
 
 Local example fixtures and review helpers live under the ignored `.preview.local/` directory and are excluded from deployments.
 
 ## Release and rollback
 
-This document describes a local implementation, not a production rollout. The production domain remains on its preceding release until publication is approved.
+The user approved publication on 20 October 2026: “this can go live yeah.” Application commit `7ef28e1` was built and promoted successfully.
 
-Before this change, the Git checkpoint was `88c3483` on `codex/folio-sheet-rollout`. The existing production deployment is `dpl_7UGM4XjRtayHBiqjGjsYfdeofNBD` (application commit `529f0ba`). A later rollout can restore that deployment if needed. For source rollback, revert the monster-reader commit in Git; no database rollback is required.
+- Public site: https://dndoldal.vercel.app/compendium — select **Monsters**.
+- Published deployment: `dpl_6wuUR7adiwhc9hLmnx4DqV8aRMYc`.
+- Deployment URL: https://dndoldal-3um9qf9x4-dndenjoyerstudio.vercel.app
+- Inspection confirmed the public domain resolves to this Ready deployment.
+- Home page returned HTTP 200; backend health reported `ok: true`.
+- The signed-in live Compendium rendered the Adult Red Dragon's complete stats, traits, actions and legendary actions.
+- Its detail panel measured 502px high with 1092px of content, `overflow-y: auto`, and no horizontal overflow. Scrolling reached 590px, the bottom of the panel, with the final legendary action readable. Captured browser error logs were empty for this check.
+- No production content edits, permission changes or database migrations were performed.
+
+### Immediate deployment rollback
+
+The exact preceding live deployment remains available: `dpl_7UGM4XjRtayHBiqjGjsYfdeofNBD` (application commit `529f0ba`).
+
+```powershell
+vercel rollback dpl_7UGM4XjRtayHBiqjGjsYfdeofNBD --scope dndenjoyerstudio --yes
+```
+
+This restores the previous application while preserving the current database and play state. Rollback is documented, not executed.
+
+### Source rollback
+
+Before this change, the Git checkpoint was `88c3483` on `codex/folio-sheet-rollout`. Revert `7ef28e1` in GitHub Desktop to remove the reader, then rebuild and deploy. A Git revert alone does not update Vercel; the deployment rollback is the quickest return to the exact previous live application. No database rollback is required.
