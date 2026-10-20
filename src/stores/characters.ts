@@ -1,12 +1,22 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { playUpdate } from '../../shared/rooms'
 import { api } from '../lib/api'
 import { resolveCharacterProgression } from '../../shared/character-progression'
 import type { SrdSpell } from '../lib/srd'
+import { useAuthStore } from './auth'
 
 import { emptyCharacter, type Character, type CharacterSummary, type EquipmentItem } from '../../shared/character'
 export * from '../../shared/character'
+export interface SheetLoadMeasurement {
+  at:string
+  characterId:string
+  sheetMs:number
+  referenceMs:number|null
+  referenceStartedAt:number
+  source:'network'|'cache'|null
+  partial:boolean
+}
 
 export const useCharactersStore = defineStore('characters', () => {
   const list = ref<CharacterSummary[]>([])
@@ -19,6 +29,19 @@ export const useCharactersStore = defineStore('characters', () => {
   const mutation = ref(0)
   const openingSpells=ref<Record<string,SrdSpell>>({})
   const libraryRevision=ref('')
+  const loadHistory=ref<SheetLoadMeasurement[]>([])
+  watch(()=>useAuthStore().user?.id,()=>{loadHistory.value=[];lastOpenMs.value=0})
+  function startReferenceTiming(id:string,source:'network'|'cache'){
+    const row=loadHistory.value[0]
+    if(row?.characterId===id&&row.referenceMs===null&&row.source===null)row.source=source
+  }
+  function recordReferenceTiming(id:string,partial:boolean){
+    const row=loadHistory.value[0]
+    if(row?.characterId===id&&row.referenceMs===null){
+      row.referenceMs=performance.now()-row.referenceStartedAt;row.partial=partial
+      return {ms:row.referenceMs,source:row.source??'network'}
+    }
+  }
   const canEditPermanent = computed(() => roomContext.value?.role !== 'player')
   let fetchGeneration = 0
   let previewDirty=false
@@ -55,7 +78,11 @@ export const useCharactersStore = defineStore('characters', () => {
         if(!options.quick||current.value?._id!==id||current.value.updatedAt!==data.updatedAt)current.value=data
         if('spells' in payload)openingSpells.value=payload.spells
         if('libraryRevision' in payload&&payload.libraryRevision)libraryRevision.value=payload.libraryRevision
-        if(options.quick)lastOpenMs.value=performance.now()-started
+        if(options.quick&&initialVersion===null){
+          lastOpenMs.value=performance.now()-started
+          loadHistory.value.unshift({at:new Date().toISOString(),characterId:id,sheetMs:lastOpenMs.value,referenceMs:null,referenceStartedAt:performance.now(),source:null,partial:false})
+          loadHistory.value=loadHistory.value.slice(0,30)
+        }
         if(options.quick)previewDirty=false
       }
     } finally {if(generation===fetchGeneration)loading.value=false}})()
@@ -145,7 +172,7 @@ export const useCharactersStore = defineStore('characters', () => {
     saveError,
     roomContext,
     sheetApiPath,
-    editing,rulesPending,mutation,lastOpenMs,acceptResolved,openingSpells,libraryRevision,
+    editing,rulesPending,mutation,lastOpenMs,acceptResolved,openingSpells,libraryRevision,loadHistory,startReferenceTiming,recordReferenceTiming,
     canEditPermanent,
     fetchList,
     fetchOne,

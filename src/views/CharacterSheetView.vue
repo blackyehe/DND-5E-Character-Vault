@@ -7,6 +7,7 @@ import { provideSheetLibrary } from '../composables/useSheetLibrary'
 import CharacterSummary from '../components/sheet/CharacterSummary.vue'
 import CharacterSidebar from '../components/sheet/CharacterSidebar.vue'
 import CharacterSheetFrame from '../components/sheet/CharacterSheetFrame.vue'
+import SheetLoadingStatus from '../components/sheet/SheetLoadingStatus.vue'
 import { useBuilderAppearance } from '../composables/useBuilderAppearance'
 import CombatTab from '../components/sheet/CombatTab.vue'
 import EquipmentSpellsTab from '../components/sheet/EquipmentSpellsTab.vue'
@@ -67,7 +68,7 @@ defineExpose({ editDirty,retryOpen:openCharacter })
         <p v-else-if="library.loading.value" class="sheet-refresh-status" role="status">Saved sheet is ready. Refreshing rules and reference details…</p>
         </template>
         <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSummary v-if="appearance.sheetLayout==='folio'" @edit="switchTab('edit')" /><CharacterSidebar v-else @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
-        <template #footer><details class="sheet-loading-status"><summary>Loading status</summary><p>Saved sheet opened in {{(store.lastOpenMs/1000).toFixed(2)}} seconds.</p><p>{{library.loading.value?'Rules and reference details are still refreshing.':`Rules and reference check: ${(library.lastReferenceMs.value/1000).toFixed(2)} seconds.`}}</p><button v-if="library.warning.value" type="button" class="sheet-button sheet-small-button" :disabled="library.loading.value" @click="library.reload">Retry reference details</button></details></template>
+        <template #footer><SheetLoadingStatus :loading="library.loading.value" :reference-ms="library.lastReferenceMs.value" :source="library.referenceSource.value" :warning="!!library.warning.value" @reload="library.reload" /></template>
       </CharacterSheetFrame>
     </div>
     <p v-else class="sheet-empty" role="status">Opening your character…</p>

@@ -1,15 +1,16 @@
 import { computed, inject, onMounted, onUnmounted, provide, ref, watch, type ComputedRef, type InjectionKey } from 'vue'
 import type { Character, CharacterFeature, EquipmentItem, FeatureOrigin } from '../../shared/character'
 import { classes, equipmentFrom } from '../lib/character-sheet'
-import { srd, type HomebrewBackground, type HomebrewClass, type HomebrewFeat, type HomebrewRace, type HomebrewSubclass, type SrdRef, type SrdSpell } from '../lib/srd'
+import { srd, type HomebrewFeat, type SrdRef, type SrdSpell } from '../lib/srd'
 import { api } from '../lib/api'
 import { useCharactersStore } from '../stores/characters'
 import { innateRaceSpells } from '../../shared/workshop-race'
 import { legacySrdSpellKey } from '../lib/spell-reference'
+import { useAuthStore } from '../stores/auth'
+import { sheetReferenceCache, sheetReferenceCacheKey, sheetReferenceInputs, type SheetReferences } from '../lib/sheet-reference-cache'
 
-interface SheetReferences {character?:Character;spells:SrdSpell[];feats:HomebrewFeat[];races:HomebrewRace[];subclasses:HomebrewSubclass[];classes:HomebrewClass[];backgrounds:HomebrewBackground[]}
 function createLibrary(c:ComputedRef<Character>) {
-  const store=useCharactersStore()
+  const store=useCharactersStore(),auth=useAuthStore()
   const customSpellCatalog=ref<SrdSpell[]>([]), spells=ref<Record<string,SrdSpell>>({}),items=ref<Record<string,EquipmentItem>>({})
   const metadata=ref<Record<string,{origin:FeatureOrigin;level?:number}>>({})
   const ruleCatalog=ref<SrdRef[]>([]),featCatalog=ref<HomebrewFeat[]>([]),equipmentCatalog=ref<SrdRef[]>([])
@@ -17,9 +18,9 @@ function createLibrary(c:ComputedRef<Character>) {
   const spellOptions=ref<(SrdRef&{level?:number})[]>([]),loading=ref(false),warning=ref(''),editorLoading=ref(false)
   let generation=0,editorScope=''
   let referenceController:AbortController|undefined
-  const lastReferenceMs=ref(0)
+  const lastReferenceMs=ref(0),referenceSource=ref<'network'|'cache'>('network')
   const cache=new Map<string,Promise<unknown>>()
-  const scope=()=>`${store.roomContext?.roomId??'owner'}:${store.roomContext?.role??'owner'}:${Boolean(store.roomContext?.preview)}:${store.roomContext?.championFor??''}:${c.value?._id}:${c.value?.homebrew?.bindings.map(b=>`${b.ruleId}:${b.revision}`).join('|')??''}`
+  const scope=()=>`${auth.user?.id??''}:${store.roomContext?.roomId??'owner'}:${store.roomContext?.role??'owner'}:${Boolean(store.roomContext?.preview)}:${store.roomContext?.championFor??''}:${c.value?._id}:${store.libraryRevision}:${c.value?.homebrew?.bindings.map(b=>`${b.ruleId}:${b.revision}`).join('|')??''}`
   function cached<T>(key:string,load:()=>Promise<T>):Promise<T>{const id=`${scope()}:${key}`;if(!cache.has(id))cache.set(id,load().catch(error=>{cache.delete(id);throw error}));return cache.get(id) as Promise<T>}
   async function resolveSpell(index:string) {
     const custom=customSpellCatalog.value.find(s=>s.index===index||s.contentKey===index||s.aliases?.includes(index))
@@ -46,7 +47,7 @@ function createLibrary(c:ComputedRef<Character>) {
     const run=++generation
     referenceController?.abort()
     let character=c.value
-    if(!character)return
+    if(!character){loading.value=false;return}
     referenceController=new AbortController()
     const expectedMutation=store.mutation,context=store.roomContext,expectedScope=`${context?.roomId??'owner'}:${context?.role??'owner'}:${Boolean(context?.preview)}${context?.championFor?`:${context.championFor}`:''}`,started=performance.now()
     loading.value=true;warning.value=''
@@ -57,10 +58,16 @@ function createLibrary(c:ComputedRef<Character>) {
     const failed:string[]=[],jobs:Promise<unknown>[]=[]
     const safe=async<T>(name:string,task:Promise<T>,fallback:T)=>task.catch(()=>{failed.push(name);return fallback})
     const path=store.sheetApiPath(character._id)+'/references'
-    const refs=await safe('homebrew references',api.get<SheetReferences>(path,{timeoutMs:20000,signal:referenceController.signal}),{spells:[],feats:[],races:[],subclasses:[],classes:[],backgrounds:[]} as SheetReferences)
+    const cacheKey=sheetReferenceCacheKey({userId:auth.user?.id,path,role:context?.role??'owner',version:character.updatedAt,revision:store.libraryRevision,preview:context?.preview})
+    const cacheEpoch=sheetReferenceCache.epoch
+    const cachedReferences=cacheKey?sheetReferenceCache.read(cacheKey):undefined
+    referenceSource.value=cachedReferences?'cache':'network'
+    store.startReferenceTiming(character._id,referenceSource.value)
+    const refs=cachedReferences??await safe('homebrew references',api.get<SheetReferences>(path,{timeoutMs:20000,signal:referenceController.signal}),{spells:[],feats:[],races:[],subclasses:[],classes:[],backgrounds:[]} as SheetReferences)
     if(run!==generation)return
+    if(cacheKey&&!cachedReferences&&!failed.length)sheetReferenceCache.write(cacheKey,refs,cacheEpoch)
     lastReferenceMs.value=performance.now()-started
-    if(refs.character&&store.acceptResolved(refs.character,expectedMutation,expectedScope))character=c.value
+    if(refs.character&&store.acceptResolved(cachedReferences?{...refs.character,externalImport:character.externalImport}:refs.character,expectedMutation,expectedScope))character=c.value
     customSpellCatalog.value=refs.spells
     if(!editorScope)featCatalog.value=refs.feats
     const spellMap:Record<string,SrdSpell>={}
@@ -108,14 +115,16 @@ function createLibrary(c:ComputedRef<Character>) {
     await Promise.allSettled(jobs)
     if(run!==generation)return
     lastReferenceMs.value=performance.now()-started
+    const opening=store.recordReferenceTiming(character._id,failed.length>0)
+    if(opening){lastReferenceMs.value=opening.ms;referenceSource.value=opening.source}
     warning.value=failed.length?'Some reference details could not refresh. Saved character details remain usable.':''
     loading.value=false
   }
   const features=computed<CharacterFeature[]>(()=>(c.value?.features??[]).map(f=>({...metadata.value[f.name.toLowerCase()],...f})))
   onMounted(load)
   onUnmounted(()=>{generation++;referenceController?.abort();cache.clear()})
-  watch(()=>c.value?`${c.value._id}:${c.value.updatedAt}:${store.libraryRevision}:${c.value.meta.level}:${JSON.stringify(c.value.meta.classLevels)}:${c.value.meta.klass}:${c.value.meta.race}:${c.value.meta.subclass}:${c.value.equipment.map(i=>i.name).join('|')}:${c.value.spellcasting.known.join('|')}:${c.value.spellcasting.prepared.join('|')}:${c.value.homebrew?.bindings.map(b=>`${b.ruleId}:${b.revision}`).join('|')??''}:${innateRaceSpells(c.value).map(s=>s.index).join('|')}`:'',load)
-  return {spells,resolveSpell,items,features,featCatalog,ruleCatalog,equipmentCatalog,magicItemCatalog,spellOptions,loadEditorCatalogs,editorLoading,loading,warning,lastReferenceMs,reload:async()=>{cache.clear();editorScope='';await load()}}
+  watch(()=>c.value?`${scope()}:${sheetReferenceInputs(c.value)}`:'',load)
+  return {spells,resolveSpell,items,features,featCatalog,ruleCatalog,equipmentCatalog,magicItemCatalog,spellOptions,loadEditorCatalogs,editorLoading,loading,warning,lastReferenceMs,referenceSource,reload:async()=>{cache.clear();sheetReferenceCache.clear();editorScope='';await load()}}
 }
  type Library=ReturnType<typeof createLibrary>
 const key:InjectionKey<Library>=Symbol('sheet-library')
