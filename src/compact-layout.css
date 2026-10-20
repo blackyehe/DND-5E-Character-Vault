@@ -138,8 +138,9 @@
 .site-shell .sheet-table td { padding:8px; }
 .site-shell .sheet-equipment-item { padding:10px 0; }
 .site-shell .rooms-page { max-width:960px; }
-.site-shell .rooms-create { max-width:700px; margin-inline:auto; }
-.site-shell .rooms-list { max-width:800px; margin-inline:auto; }
+.site-shell .rooms-page>.sheet-section-title { text-align:center; }
+.site-shell .rooms-create,.site-shell .rooms-list { width:100%; max-width:800px; margin-inline:auto; }
+.site-shell .rooms-list { grid-template-columns:minmax(0,1fr); }
 .site-shell .cb-panel { padding:18px; }
 .site-shell .hw-section-body { min-height:0; }
 .site-shell .hw-library-intro { padding:20px; gap:20px; }
