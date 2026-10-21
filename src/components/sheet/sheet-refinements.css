@@ -11,6 +11,8 @@
 .sheet-trained-skills li small { display:block; font-size:calc(11px * var(--cb-text-scale,1)); color:var(--cb-muted); margin-top:2px; }
 .sheet-trained-skills li strong { flex-shrink:0; font:500 calc(23px * var(--cb-text-scale,1))/1.2 var(--sheet-title-font); color:var(--cb-accent-text); }
 .sheet-summary-secondary { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start; }
+/* Summary cards share their grid's edges, including a wide collapsed-roster view. */
+.site-shell .hero-sheet .sheet-summary-overview>.sheet-panel { width:100%; max-width:none; margin-inline:0; }
 .sheet-summary-experience progress { display:block; width:100%; height:5px; accent-color:var(--cb-accent-solid); margin:12px 0; }
 .sheet-summary-experience .sheet-between { flex-wrap:wrap; }
 .sheet-training-list { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:6px 18px; font-size:calc(14px * var(--cb-text-scale,1)); }

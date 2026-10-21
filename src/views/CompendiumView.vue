@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { contentLabel, homebrew, srd, type SrdEquipment, type SrdMagicItem, type SrdRef, type SrdSpell } from '../lib/srd'
+import { contentLabel, homebrew, srd, type SrdEquipment, type SrdMagicItem, type SrdRef, type SrdSpell, type SrdLevel } from '../lib/srd'
 import OrcbrewPacks from '../components/OrcbrewPacks.vue'
 import { hasMagicItemTags,emptyItemFilters,itemSearchText,matchesEquipmentItem,matchesMagicItem,normalEquipmentSearch } from '../lib/magic-item-filters'
 import { equipmentTags } from '../../shared/item-classification'
@@ -9,6 +9,7 @@ import { api } from '../lib/api'
 import ItemFilters from '../components/items/ItemFilters.vue'
 import ItemRules from '../components/sheet/ItemRules.vue'
 import MonsterStatblock from '../components/monsters/MonsterStatblock.vue'
+import ReferenceReader from '../components/compendium/ReferenceReader.vue'
 import { monsterStatblock } from '../../shared/monster-statblock'
 import '../components/sheet/sheet.css'
 import '../components/sheet/sheet-details.css'
@@ -38,6 +39,7 @@ watch(() => detail.value?.index, async () => {
   detailPanel.value?.scrollTo({ top:0 })
 })
 const detailLoading = ref(false)
+const levels=ref<SrdLevel[]>([]),levelsLoading=ref(false),levelsError=ref('')
 watch(visibleResults, entries => {
   if (detail.value && !entries.some(entry => entry.index === detail.value?.index)) {
     ++detailNumber
@@ -77,24 +79,12 @@ let timer: ReturnType<typeof setTimeout> | undefined
 let requestNumber = 0
 let detailNumber = 0
 
-const description = computed(() => String(detail.value?.description ?? ''))
-const blocks = computed(() => {
-  const entry = detail.value
-  const raw = entry?.details as Record<string, unknown> | undefined
-  const values = entry?.homebrew_traits ?? entry?.traits ?? raw?.[':options'] ?? []
-  if (!Array.isArray(values)) return []
-  return values.filter((value) => value && typeof value === 'object').map((value) => ({
-    name: String(value.name ?? value[':name'] ?? ''),
-    description: String(value.description ?? value[':description'] ?? ''),
-    level: value.level ?? value[':level'],
-  })).filter((value) => value.description)
-})
-
 async function search() {
   const sequence = ++requestNumber
   ++detailNumber
   const kind = tab.value
   detail.value = null
+  levels.value=[];levelsLoading.value=false;levelsError.value=''
   detailLoading.value = false
   results.value = []
   loading.value = false
@@ -111,6 +101,11 @@ async function search() {
   if (kind === 'monsters') requests.unshift(srd.monsters(term ? { name: term } : undefined))
   if (kind === 'classes') requests.unshift(srd.classes())
   if (kind === 'races') requests.unshift(srd.races())
+  if (kind === 'subraces') requests.unshift(srd.subraces())
+  if (kind === 'subclasses') requests.unshift(srd.subclasses())
+  if (kind === 'backgrounds') requests.unshift(srd.backgrounds())
+  if (kind === 'feats') requests.unshift(srd.feats())
+  if (kind === 'languages') requests.unshift(srd.languages())
   const settled = await Promise.allSettled(requests)
   if (sequence !== requestNumber) return
   const custom = settled[settled.length - 1]
@@ -133,18 +128,27 @@ onBeforeUnmount(() => { clearTimeout(timer); ++requestNumber; ++detailNumber })
 
 async function openDetail(index: string) {
   const sequence = ++detailNumber
+  levels.value=[];levelsLoading.value=false;levelsError.value='';error.value=''
+  detailLoading.value=false
   if (customDetails.has(index)) { detail.value = customDetails.get(index) ?? null; return }
   detail.value = null
   detailLoading.value = true
   try {
     const kind = tab.value
-    const loaders = { spells: srd.spell, equipment: srd.equipmentItem, 'magic-items': srd.magicItem, monsters: srd.monster, classes: srd.class, races: srd.race }
+    const loaders = { spells: srd.spell, equipment: srd.equipmentItem, 'magic-items': srd.magicItem, monsters: srd.monster, classes: srd.class, races: srd.race,subraces:srd.subrace,subclasses:srd.subclass,backgrounds:srd.background,feats:srd.feat,languages:srd.language }
     if (kind in loaders) {
       const entry = await loaders[kind as keyof typeof loaders](index)
-      if (sequence === detailNumber) detail.value = entry as unknown as Detail
+      if (sequence === detailNumber) { detail.value = entry as unknown as Detail;void loadLevels(index,kind,sequence) }
     }
   } catch { if (sequence === detailNumber) error.value = 'Could not load this entry.' }
   finally { if (sequence === detailNumber) detailLoading.value = false }
+}
+async function loadLevels(index:string,kind:Tab,sequence=detailNumber){
+  if(kind!=='classes'&&kind!=='subclasses')return
+  levelsLoading.value=true;levelsError.value=''
+  try{const values=await (kind==='classes'?srd.classLevels(index):srd.subclassLevels(index));if(sequence===detailNumber&&detail.value?.index===index)levels.value=values}
+  catch{if(sequence===detailNumber)levelsError.value='Features by level could not be loaded. The core entry is still available.'}
+  finally{if(sequence===detailNumber)levelsLoading.value=false}
 }
 
 search()
@@ -155,7 +159,7 @@ search()
     <h1 class="font-display text-3xl text-[var(--color-gold-soft)] mb-6">Compendium</h1>
     <div class="flex gap-2 mb-4 flex-wrap">
       <button v-for="item in tabs" :key="item" class="btn-ghost text-sm capitalize"
-        :class="{ '!border-[var(--color-gold)] !text-[var(--color-gold-soft)]': tab === item }" @click="tab = item">
+        :aria-pressed="tab===item" :class="{ '!border-[var(--color-gold)] !text-[var(--color-gold-soft)]': tab === item }" @click="tab = item">
         {{ tabLabel(item) }}
       </button>
       <input v-if="tab !== 'homebrew'" v-model="query" class="input-base max-w-xs ml-auto" :placeholder="`Search ${tabLabel(tab).toLowerCase()}…`" aria-label="Search compendium" />
@@ -168,14 +172,14 @@ search()
     </div>
     <OrcbrewPacks v-if="tab === 'homebrew'" />
     <template v-else>
-      <p v-if="error" class="text-sm text-[var(--site-danger)] mb-3" role="alert">{{ error }}</p>
+      <p v-if="error" class="text-sm text-[var(--site-danger)] mb-3" role="alert">{{ error }} <button type="button" class="btn-ghost" @click="search">Retry content</button></p>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div class="panel p-4 lg:col-span-1 max-h-[70vh] overflow-y-auto">
           <p v-if="loading" class="text-sm">Loading…</p>
           <p v-else-if="!visibleResults.length" class="text-sm">No matching entries. Try another search or clear your filters.</p>
           <ul v-else class="space-y-1">
             <li v-for="entry in visibleResults" :key="entry.index">
-              <button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" @click="openDetail(entry.index)">
+              <button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="detail?.index===entry.index?'true':undefined" @click="openDetail(entry.index)">
                 {{ contentLabel(entry) }}
               </button>
             </li>
@@ -191,9 +195,12 @@ search()
             <template v-if="tab === 'spells'">
               <p class="text-sm mb-4">
                 Level {{ spellDetail?.level }} {{ spellDetail?.school?.name }} · {{ spellDetail?.casting_time }} · {{ spellDetail?.range }}
-                <br />{{ spellDetail?.components.join(', ') }} · {{ spellDetail?.duration }}{{ spellDetail?.ritual ? ' · Ritual' : '' }}
+                <br />{{ spellDetail?.components?.join(', ') }} · {{ spellDetail?.duration }}{{ spellDetail?.concentration ? ' · Concentration' : '' }}{{ spellDetail?.ritual ? ' · Ritual' : '' }}
               </p>
+              <p v-if="detail.material" class="text-sm mb-4">Material: {{detail.material}}</p>
               <p v-for="(paragraph, index) in spellDetail?.desc ?? []" :key="index" class="mb-3 whitespace-pre-wrap leading-relaxed">{{ paragraph }}</p>
+              <template v-if="spellDetail?.higher_level?.length"><h3 class="font-display text-lg mb-2">At higher levels</h3><p v-for="(paragraph,index) in spellDetail.higher_level" :key="`higher-${index}`" class="mb-3 whitespace-pre-wrap leading-relaxed">{{paragraph}}</p></template>
+              <p v-if="!spellDetail?.desc?.length" class="text-sm">This source does not include a spell description.</p>
             </template>
             <template v-else-if="(tab==='equipment'||tab==='magic-items')&&detail.workshopItem"><ItemRules :item="detail.workshopItem" /><p v-if="detail.workshopItem.weapon" class="text-sm mt-3">{{detail.workshopItem.weapon.dice}} {{detail.workshopItem.weapon.damageType}} · {{detail.workshopItem.weapon.category}} · {{detail.workshopItem.weapon.range}}</p><p v-if="detail.workshopItem.armor" class="text-sm mt-3">Base {{detail.workshopItem.armor.shield?'shield bonus':'AC'}}: {{detail.workshopItem.armor.base}}{{detail.workshopItem.armor.dex?' + DEX':''}}{{detail.workshopItem.armor.cap!==undefined?` (maximum +${detail.workshopItem.armor.cap})`:''}}</p></template>
             <template v-else-if="tab === 'equipment' || tab === 'magic-items'">
@@ -215,17 +222,7 @@ search()
                 <div class="flex flex-wrap gap-2"><button v-for="variant in itemDetail.variants" :key="variant.index" class="btn-ghost text-sm" @click="openDetail(variant.index)">{{ variant.name }}</button></div>
               </template>
             </template>
-            <template v-else>
-              <p v-if="description" class="mb-4 whitespace-pre-wrap leading-relaxed">{{ description }}</p>
-              <div v-for="(block, index) in blocks" :key="index" class="mb-4">
-                <h3 class="font-display text-lg text-[var(--color-gold-soft)]">{{ block.name }}{{ block.level ? ` (level ${block.level})` : '' }}</h3>
-                <p class="whitespace-pre-wrap leading-relaxed">{{ block.description }}</p>
-              </div>
-              <details :open="!description && !blocks.length">
-                <summary class="cursor-pointer text-sm mb-3">Full reference details</summary>
-                <pre class="whitespace-pre-wrap break-words text-xs leading-relaxed">{{ JSON.stringify(detail.details ?? detail, null, 2) }}</pre>
-              </details>
-            </template>
+            <ReferenceReader v-else :key="`${tab}:${detail.index}`" :entry="detail" :kind="tab" :levels="levels" :levels-loading="levelsLoading" :levels-error="levelsError" @retry-levels="loadLevels(detail.index,tab)" />
           </div>
         </div>
       </div>

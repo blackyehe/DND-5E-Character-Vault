@@ -220,6 +220,12 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 export const srd = {
+  async subclasses() { return (await getJson<SrdListResponse<SrdRef>>('/subclasses')).results },
+  async subraces() { return (await getJson<SrdListResponse<SrdRef>>('/subraces')).results },
+  async feats() { return (await getJson<SrdListResponse<SrdRef>>('/feats')).results },
+  feat: (index: string) => getJson<SrdRef & Record<string, unknown>>(`/feats/${index}`),
+  language: (index: string) => getJson<SrdRef & Record<string, unknown>>(`/languages/${index}`),
+  subclassLevels: (index: string) => getJson<SrdLevel[]>(`/subclasses/${index}/levels`),
   async backgrounds() {
     return (await getJson<SrdListResponse<SrdRef>>('/backgrounds')).results
   },
