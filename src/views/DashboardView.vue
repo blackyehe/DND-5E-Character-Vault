@@ -7,11 +7,13 @@ import CharacterLinkImport from '../components/CharacterLinkImport.vue'
 import CharacterRoster from '../components/characters/CharacterRoster.vue'
 import { api } from '../lib/api'
 import { cancelMotionWithin, vMotionCharacter } from '../directives/siteMotion'
+import { useCharacterSwitchScroll } from '../composables/useCharacterSwitchScroll'
 import '../dashboard.css'
 
 const CharacterSheetView = defineAsyncComponent(() => import('./CharacterSheetView.vue'))
 const store = useCharactersStore(), auth = useAuthStore(), router = useRouter(), route = useRoute()
 const sheet = ref<{ editDirty: boolean } | null>(null), motionHost = ref<HTMLElement | null>(null)
+const switchScroll = useCharacterSwitchScroll(motionHost)
 const fileInput = ref<HTMLInputElement | null>(null), actionsMenu = ref<HTMLDetailsElement | null>(null)
 const listReady = ref(false), listBusy = ref(false), listError = ref(''), actionError = ref('')
 const importBusy = ref(false), linkSaving = ref(false), actionBusy = ref(false), importMessage = ref('')
@@ -44,6 +46,7 @@ function maySwitch() {
   return !sheet.value?.editDirty || window.confirm('Discard your unsaved character edits and open another character?')
 }
 function openCharacter(id: string, animate = true) {
+  if (selectedId.value && selectedId.value !== id) switchScroll.begin()
   cancelMotionWithin(motionHost.value)
   animateWhenReady.value = animate ? id : ''
   selectedId.value = id
@@ -60,6 +63,7 @@ async function sheetReady(id: string) {
   await nextTick()
   if (selectedId.value === id) motionSequence.value++
 }
+function sheetSettled(id: string) { if (selectedId.value === id) void switchScroll.finish() }
 function rememberSection(value: string) { sections.set(selectedId.value, value === 'edit' ? 'summary' : value) }
 async function loadCharacters() {
   if (listBusy.value) return
@@ -179,7 +183,7 @@ async function onImportFile(event: Event) {
           <div class="dashboard-actions"><RouterLink v-if="selected" :to="`/characters/${selected._id}`" class="dashboard-open-page">Open sheet page</RouterLink><details ref="actionsMenu" class="dashboard-character-actions" @keydown.esc.stop="closeActions"><summary>Character actions</summary><div><button type="button" :disabled="busy" @click="onDuplicate">Duplicate</button><button type="button" :disabled="busy" @click="onExport">Export saved character</button><button type="button" :disabled="busy" @click="onDelete">Delete character</button></div></details></div>
         </div>
         <div ref="motionHost" v-motion-character="motionSequence" class="character-sheet-container character-sheet-motion">
-          <CharacterSheetView v-if="selectedId" ref="sheet" :character-id="selectedId" :initial-section="currentSection" compact-summary embedded @ready="sheetReady" @section-change="rememberSection" />
+          <CharacterSheetView v-if="selectedId" ref="sheet" :character-id="selectedId" :initial-section="currentSection" compact-summary embedded @ready="sheetReady" @settled="sheetSettled" @section-change="rememberSection" />
         </div>
       </section>
     </div>

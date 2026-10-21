@@ -23,7 +23,7 @@ import { progressionClasses } from '../../shared/character-progression'
 import { isRevenantShadow } from '../../shared/class-rules'
 const route = useRoute(), store = useCharactersStore()
 const props = defineProps<{ characterId?: string; roomId?: string; role?: 'dm' | 'player'; compactSummary?:boolean; playerPreview?:boolean;championFor?:string;embedded?:boolean;initialSection?:string }>()
-const emit = defineEmits<{ ready: [id: string]; 'section-change': [section: string] }>()
+const emit = defineEmits<{ ready: [id: string]; settled: [id: string]; 'section-change': [section: string] }>()
 const id = computed(() => props.characterId ?? String(route.params.id))
 const c = computed(() => store.current as Character)
 const championClass=computed(()=>c.value?progressionClasses(c.value).find(entry=>isRevenantShadow(entry.name)):undefined)
@@ -35,19 +35,19 @@ const editSection=ref('identity'),repairSpell=ref(''),repairOpen=ref(false),shee
 const editDirty = ref(false), pendingTab = ref(''),pendingRules=ref(false)
 watch(active,value=>{store.editing=value==='edit';emit('section-change',value)},{immediate:true})
 watch(()=>store.rulesPending,value=>{if(value)pendingRules.value=true})
-let refreshingRules=false
+let refreshingRules=false,disposed=false
 async function refreshRules(){if(refreshingRules||store.roomContext?.preview||store.loading)return;if(editDirty.value){pendingRules.value=true;return}if(store.saving||!store.current)return;refreshingRules=true;try{await store.fetchOne(id.value,{quick:true});await library.reload();pendingRules.value=false}catch{/* Existing character stays usable. */}finally{refreshingRules=false}}
 const storageRefresh=(event:StorageEvent)=>{if(event.key==='codex:workshop-revision')void refreshRules()}
 const focusRefresh=()=>{if(!props.roomId&&document.visibilityState==='visible')void refreshRules()}
 onMounted(()=>{window.addEventListener('codex:workshop-published',refreshRules);window.addEventListener('focus',focusRefresh);window.addEventListener('storage',storageRefresh);document.addEventListener('visibilitychange',focusRefresh)})
-onUnmounted(()=>{store.editing=false;window.removeEventListener('codex:workshop-published',refreshRules);window.removeEventListener('focus',focusRefresh);window.removeEventListener('storage',storageRefresh);document.removeEventListener('visibilitychange',focusRefresh)})
+onUnmounted(()=>{disposed=true;store.editing=false;window.removeEventListener('codex:workshop-published',refreshRules);window.removeEventListener('focus',focusRefresh);window.removeEventListener('storage',storageRefresh);document.removeEventListener('visibilitychange',focusRefresh)})
 function openSpellRepair(index=''){editSection.value='spells';repairSpell.value=index;repairOpen.value=true;switchTab('edit')}
 function showTab(key:string){active.value=key;if(!props.embedded)void nextTick(()=>sheetMain.value?.scrollIntoView({block:'start'}))}
 function switchTab(key: string) { if (key === active.value) return; if (editDirty.value) pendingTab.value = key; else showTab(key) }
 function discardAndSwitch() { editDirty.value = false; showTab(pendingTab.value); pendingTab.value = '' }
 onBeforeRouteLeave(() => !editDirty.value || window.confirm('Discard your unsaved character edits and leave this page?'))
 const tabs = computed(() => [...(props.compactSummary||appearance.sheetLayout==='folio'?[{key:'summary',label:'Summary'}]:[]),{ key: 'combat', label: 'Combat' }, { key: 'spells', label: 'Spells' }, { key: 'equipment', label: 'Equipment' }, { key: 'features', label: 'Features' }, { key: 'proficiencies', label: 'Proficiencies' }, { key: 'bio', label: 'Bio & notes' },...(championClass.value&&!props.championFor?[{key:'champions',label:'Shadow Champions'}]:[]), ...(store.canEditPermanent ? [{ key: 'edit', label: 'Edit character' }] : [])])
-async function openCharacter(){const requested=id.value;loadError.value='';try{await store.fetchOne(requested,{quick:true});if(id.value===requested&&store.current?._id===requested)emit('ready',requested)}catch(error){if(id.value===requested)loadError.value=error instanceof Error?error.message:'Could not open this character. Try again.'}}
+async function openCharacter(){const requested=id.value;loadError.value='';try{await store.fetchOne(requested,{quick:true});if(!disposed&&id.value===requested&&store.current?._id===requested)emit('ready',requested)}catch(error){if(!disposed&&id.value===requested)loadError.value=error instanceof Error?error.message:'Could not open this character. Try again.'}finally{if(!disposed&&id.value===requested)emit('settled',requested)}}
 watch(() => [id.value, props.roomId, props.role,props.playerPreview,props.championFor] as const, async () => {
   store.roomContext = props.roomId ? { roomId: props.roomId, role: props.role ?? 'player',preview:props.playerPreview,championFor:props.championFor } : null
   editDirty.value=false;pendingTab.value='';pendingRules.value=false;repairOpen.value=false;repairSpell.value='';editSection.value='identity'

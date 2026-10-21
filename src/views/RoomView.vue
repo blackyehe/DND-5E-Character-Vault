@@ -7,6 +7,7 @@ import { useCharactersStore } from '../stores/characters'
 import { useAuthStore } from '../stores/auth'
 import CharacterRoster from '../components/characters/CharacterRoster.vue'
 import { cancelMotionWithin, vMotionCharacter } from '../directives/siteMotion'
+import { useCharacterSwitchScroll } from '../composables/useCharacterSwitchScroll'
 import CharacterSheetView from './CharacterSheetView.vue'
 import ItemComposer from '../components/items/ItemComposer.vue'
 import '../rooms.css'
@@ -18,6 +19,7 @@ const playerPreview=ref(false)
 const giveOpen=ref(false)
 const rosterCollapsed=ref(false),rosterQuery=ref(''),motionSequence=ref(0),animateWhenReady=ref('')
 const motionHost=ref<HTMLElement|null>(null),sections=new Map<string,string>()
+const switchScroll=useCharacterSwitchScroll(motionHost)
 const auth=useAuthStore()
 const preferenceKey=computed(()=>`codex:room-workspace:v1:${auth.user?.id??'anonymous'}:${roomId.value}`)
 let preferredCharacter=''
@@ -34,6 +36,7 @@ const dmCharacters=computed(()=>(room.value?.characters??[]).map(character=>({
 })))
 function rememberSection(value:string){if(viewRole.value==='dm')sections.set(`${roomId.value}:${selected.value}`,value==='edit'?'summary':value)}
 async function sheetReady(id:string){if(viewRole.value!=='dm'||selected.value!==id||animateWhenReady.value!==id)return;animateWhenReady.value='';await nextTick();if(selected.value===id)motionSequence.value++}
+function sheetSettled(id:string){if(selected.value===id)void switchScroll.finish()}
 watch([selected,rosterCollapsed],()=>{if(!room.value||room.value.role!=='dm')return;try{localStorage.setItem(preferenceKey.value,JSON.stringify({selected:selected.value,collapsed:rosterCollapsed.value}))}catch{/* Room preferences are optional. */}})
 const selectedAssignment=computed(()=>{const character=room.value?.characters.find(c=>c._id===selected.value);return character?.assignedTo?'Assigned to '+(room.value?.members.find(m=>m.id===character.assignedTo)?.displayName??'player'):'Unassigned'})
 function selectFromMenu(event:Event){const target=event.target as HTMLSelectElement;select(target.value);target.value=selected.value}
@@ -60,7 +63,7 @@ async function load(refresh = false) {
     paused.value = true
   } finally { refreshing.value = false; if (run !== generation) void load() }
 }
-function select(id: string) { if (selected.value === id||store.saving||busy.value||giveOpen.value) return; if (sheet.value?.editDirty && !window.confirm('Discard your unsaved character edits and open another sheet?')) return;cancelMotionWithin(motionHost.value);animateWhenReady.value=viewRole.value==='dm'?id:'';selected.value = id; notice.value = '' }
+function select(id: string) { if (selected.value === id||store.saving||busy.value||giveOpen.value) return; if (sheet.value?.editDirty && !window.confirm('Discard your unsaved character edits and open another sheet?')) return;switchScroll.begin();cancelMotionWithin(motionHost.value);animateWhenReady.value=viewRole.value==='dm'?id:'';selected.value = id; notice.value = '' }
 async function assign(characterId: string, event: Event) {
   const select = event.target as HTMLSelectElement, value = select.value
   busy.value = true; error.value = ''
@@ -91,7 +94,7 @@ onBeforeRouteLeave(() => {if(!store.saving&&!busy.value)return true;notice.value
       <aside v-if="viewRole==='player'&&playerCharacters.length>1" class="sheet-panel room-roster"><h2>Your characters</h2><article v-for="character in playerCharacters" :key="character._id" class="room-roster-entry"><button class="room-character-button" :aria-pressed="selected===character._id" @click="select(character._id)"><strong>{{character.meta.name}}</strong><small>Level {{character.meta.level}} · {{character.meta.klass}}</small></button></article></aside>
       <div class="room-selected-sheet">
         <div v-if="viewRole==='dm'&&selected" class="room-selected-tools"><span class="sheet-small">{{selectedAssignment}}</span><label class="room-selected-assignment">Assigned player<select :value="room.characters.find(c=>c._id===selected)?.assignedTo??''" :disabled="busy||store.saving" @change="assign(selected,$event)"><option value="">Unassigned</option><option v-for="member in room.members" :key="member.id" :value="member.id">{{member.displayName}}</option></select></label></div>
-        <div ref="motionHost" v-motion-character="viewRole==='dm'?motionSequence:0" :class="{'character-sheet-container':viewRole==='dm','character-sheet-motion':viewRole==='dm'}"><CharacterSheetView v-if="selected" ref="sheet" :key="`${room.id}:${selected}:${playerPreview}`" :character-id="selected" :room-id="room.id" :role="viewRole" :compact-summary="viewRole==='dm'" :embedded="viewRole==='dm'" :initial-section="viewRole==='dm'?initialSection:undefined" :player-preview="playerPreview" @ready="sheetReady" @section-change="rememberSection" /><section v-else class="sheet-panel"><h2>{{room.role==='player'?'You’re at the table':'Choose a character'}}</h2><p class="sheet-prose">{{room.role==='player'?'Your DM has not assigned a character yet. This page updates while you wait.':'Import or create a character from your dashboard to use it here.'}}</p></section></div>
+        <div ref="motionHost" v-motion-character="viewRole==='dm'?motionSequence:0" :class="{'character-sheet-container':viewRole==='dm','character-sheet-motion':viewRole==='dm'}"><CharacterSheetView v-if="selected" ref="sheet" :key="`${room.id}:${selected}:${playerPreview}`" :character-id="selected" :room-id="room.id" :role="viewRole" :compact-summary="viewRole==='dm'" :embedded="viewRole==='dm'" :initial-section="viewRole==='dm'?initialSection:undefined" :player-preview="playerPreview" @ready="sheetReady" @settled="sheetSettled" @section-change="rememberSection" /><section v-else class="sheet-panel"><h2>{{room.role==='player'?'You’re at the table':'Choose a character'}}</h2><p class="sheet-prose">{{room.role==='player'?'Your DM has not assigned a character yet. This page updates while you wait.':'Import or create a character from your dashboard to use it here.'}}</p></section></div>
       </div>
     </div><ItemComposer v-if="giveOpen" mode="give" :character-id="selected" :character-name="room?.characters.find(c=>c._id===selected)?.meta.name" @close="giveOpen=false" @saved="notice=$event" />
   </div>
