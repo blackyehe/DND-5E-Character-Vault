@@ -11,6 +11,7 @@ import './components/sheet/sheet-folio.css'
 import './components/sheet/sheet-refinements.css'
 import './components/sheet/sheet-alignment.css'
 import './site-motion.css'
+import './site-scrollbars.css'
 import App from './App.vue'
 import { router } from './router'
 

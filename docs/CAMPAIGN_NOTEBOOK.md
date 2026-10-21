@@ -142,25 +142,26 @@ existing Obsidian map-plugin projects. Proposed first implementation:
 - Keep DM pin placement and player browsing separate. No movement, encounter
   automation or replacement for Owlbear Rodeo is required for this first pass.
 
-### Placement proposal (awaiting user decision)
+### Placement decision (confirmed 21 October 2026)
 
-The user requested planning before implementation and has not yet chosen between
-placing maps inside Campaign notebook or in a separate tab.
+The user chose a separate Maps tab inside each game room. UI corrections to the
+notebook, scrolling and site motion take priority; maps remain planning only.
+The alternatives below are retained as decision history.
 
 | Option | Navigation | Benefit | Tradeoff |
 | --- | --- | --- | --- |
 | Maps inside notebook | Characters / Campaign notebook, then Journal / Story items / Maps | Keeps campaign material together | Makes notebook navigation broader; maps compete with a text-oriented layout |
-| Separate room Maps tab (recommended) | Characters / Campaign notebook / Maps | Gives maps a full workspace and a visible entry point | Adds one room tab |
+| Separate room Maps tab (chosen) | Characters / Campaign notebook / Maps | Gives maps a full workspace and a visible entry point | Adds one room tab |
 | Global Maps section | Main site navigation, with room selection | Useful if maps must be reused across many rooms | Adds navigation and sharing complexity before it is needed |
 
-Recommended arrangement: keep Obsidian import as a DM action in Campaign
+Proposed supporting workflow: keep Obsidian import as a DM action in Campaign
 notebook, since imported notes become ordinary notebook entries. Give maps a
 separate room tab using the same notes and permissions. Clicking a pin opens a
 note drawer beside the map, preserving its pan/zoom position. Open in notebook
 provides the full editor/history when needed. One note record serves both views;
 there is no second copy of its text to keep synchronized.
 
-Suggested implementation order, after the placement decision:
+Suggested implementation order, after the priority UI corrections:
 
 1. Preview the chosen room navigation, map canvas and note drawer using sample
    content. Confirm DM placement controls and the player reading view.
@@ -174,8 +175,8 @@ Suggested implementation order, after the placement decision:
    links, and import/reimport conflict review. Player edits use the existing note
    permissions, versions and stale-write protection.
 
-Confirm before implementation: room tab versus notebook subtab; whether players
-may create/move pins or only read them; and image-storage quotas/provider within
+Confirm before implementation: whether players may create/move pins or only
+read them; and image-storage quotas/provider within
 the existing free-hosting constraint. A shared image itself must be suitable for
 players: hiding pins cannot hide spoilers already printed on the image.
 
@@ -250,4 +251,5 @@ To undo this filter rollout while retaining the notebook:
 vercel rollback dpl_4owAUiqmwAa7eByZzJpDmE7bctoF --scope dndenjoyerstudio --yes
 ```
 
-Obsidian imports and maps remain proposals awaiting the user's placement decision.
+Obsidian imports and maps remain unimplemented. The user subsequently selected
+a separate room Maps tab; pin permissions and image storage still need decisions.

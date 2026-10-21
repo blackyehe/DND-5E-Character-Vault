@@ -1,0 +1,18 @@
+/* Keep the page width steady between short/long tabs and loading states.
+   overflow-y:scroll also provides a fallback for engines without gutter support. */
+html { overflow-y:scroll; scrollbar-gutter:stable; }
+
+/* Reserve space on bounded vertical readers before their content overflows.
+   Horizontal-only navigation and tables deliberately keep their existing layout. */
+.site-shell :is(
+  .compendium-results,.compendium-detail,
+  .cb-spell-results,.cb-spell-description,.cb-summary,.cb-navigation,
+  .advancement-browser,.item-composer-body,.item-result-list,
+  .mw-preview-scroll,.mw-library-row p,
+  .notebook-folders,.notebook-entry-scroll,.notebook-pin-scroll,
+  .notebook-reader-scroll,.notebook-link-results,.notebook-version-scroll,
+  .notebook-conflict .notebook-prose,.notebook-room-picker,
+  .sheet-sidebar,.sheet-compact-list,.sheet-chips,.sheet-feat-dialog-body,
+  .sheet-spell-repair-results,.hw-spell-picker,.hw-preview,
+  .hw-schedule-rows,.hw-modal,.overflow-y-auto,textarea
+) { scrollbar-gutter:stable; }

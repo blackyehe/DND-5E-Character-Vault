@@ -6,7 +6,7 @@ import type { RoomDetail } from '../../shared/rooms'
 import { useCharactersStore } from '../stores/characters'
 import { useAuthStore } from '../stores/auth'
 import CharacterRoster from '../components/characters/CharacterRoster.vue'
-import { cancelMotionWithin, vMotionCharacter } from '../directives/siteMotion'
+import { cancelMotionWithin, vMotionCharacter, vMotionPanel } from '../directives/siteMotion'
 import { useCharacterSwitchScroll } from '../composables/useCharacterSwitchScroll'
 import CharacterSheetView from './CharacterSheetView.vue'
 import ItemComposer from '../components/items/ItemComposer.vue'
@@ -98,6 +98,7 @@ onBeforeRouteUpdate((to,from)=>{if(to.params.roomId===from.params.roomId)return 
     </details>
     <div v-if="room?.role==='dm'&&playerPreview" class="room-character-toolbar"><label>Preview character<select :value="selected" @change="selectFromMenu"><option v-if="!room.characters.length" value="">No characters available</option><option v-for="character in room.characters" :key="character._id" :value="character._id">{{character.meta.name}} · Level {{character.meta.level}} {{character.meta.klass}}</option></select></label><p v-if="selected" class="sheet-small">{{selectedAssignment}}</p></div>
     <p v-if="playerPreview" class="room-preview-banner" role="status"><strong>{{previewName?`${previewName}’s player view`:'Player view · character preview'}}</strong><span>Try HP, slots, points, and equipment here. Preview changes are temporary and are not saved. Switch Player view off to return to your live DM sheet.</span></p>
+    <div v-motion-panel="roomSection" class="room-section-content">
     <section v-if="room&&roomSection==='notebook'" class="room-notebook-workspace"><CampaignNotebook v-if="!playerPreview||selected" ref="notebook" :key="`${room.id}:${playerPreview}:${playerPreview?selected:''}`" :room-id="room.id" :preview-character="playerPreview?selected:undefined" :initial-character="notebookCharacter" /><p v-else class="sheet-notice">Choose a character to preview the notebook as a player.</p></section>
     <div v-if="room" v-show="roomSection==='characters'" :class="viewRole==='dm'?'character-workspace room-dm-workspace':{'room-workspace':true,'room-player-workspace':playerCharacters.length<=1}" :data-collapsed="rosterCollapsed">
       <CharacterRoster v-if="viewRole==='dm'&&room.characters.length" v-model:query="rosterQuery" :characters="dmCharacters" :selected-id="selected" :collapsed="rosterCollapsed" :disabled="busy||store.saving||giveOpen" @toggle="rosterCollapsed=!rosterCollapsed" @select="select" />
@@ -106,6 +107,6 @@ onBeforeRouteUpdate((to,from)=>{if(to.params.roomId===from.params.roomId)return 
         <div v-if="viewRole==='dm'&&selected" class="room-selected-tools"><span class="sheet-small">{{selectedAssignment}}</span><label class="room-selected-assignment">Assigned player<select :value="room.characters.find(c=>c._id===selected)?.assignedTo??''" :disabled="busy||store.saving" @change="assign(selected,$event)"><option value="">Unassigned</option><option v-for="member in room.members" :key="member.id" :value="member.id">{{member.displayName}}</option></select></label></div>
         <div ref="motionHost" v-motion-character="viewRole==='dm'?motionSequence:0" :class="{'character-sheet-container':viewRole==='dm','character-sheet-motion':viewRole==='dm'}"><CharacterSheetView v-if="selected" ref="sheet" :key="`${room.id}:${selected}:${playerPreview}`" :character-id="selected" :room-id="room.id" :role="viewRole" :compact-summary="viewRole==='dm'" :embedded="viewRole==='dm'" :initial-section="viewRole==='dm'?initialSection:undefined" :player-preview="playerPreview" @open-notebook="openNotebook" @ready="sheetReady" @settled="sheetSettled" @section-change="rememberSection" /><section v-else class="sheet-panel"><h2>{{room.role==='player'?'You’re at the table':'Choose a character'}}</h2><p class="sheet-prose">{{room.role==='player'?'Your DM has not assigned a character yet. This page updates while you wait.':'Import or create a character from your dashboard to use it here.'}}</p></section></div>
       </div>
-    </div><ItemComposer v-if="giveOpen" mode="give" :character-id="selected" :character-name="room?.characters.find(c=>c._id===selected)?.meta.name" @close="giveOpen=false" @saved="notice=$event" />
+    </div></div><ItemComposer v-if="giveOpen" mode="give" :character-id="selected" :character-name="room?.characters.find(c=>c._id===selected)?.meta.name" @close="giveOpen=false" @saved="notice=$event" />
   </div>
 </template>

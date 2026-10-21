@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { vMotionPanel } from '../directives/siteMotion'
 import { contentLabel, homebrew, srd, type SrdEquipment, type SrdMagicItem, type SrdRef, type SrdSpell, type SrdLevel } from '../lib/srd'
 import OrcbrewPacks from '../components/OrcbrewPacks.vue'
 import { hasMagicItemTags,emptyItemFilters,itemSearchText,matchesEquipmentItem,matchesMagicItem,normalEquipmentSearch } from '../lib/magic-item-filters'
@@ -166,6 +167,7 @@ search()
       </button>
       <input v-if="tab !== 'homebrew'" v-model="query" class="input-base max-w-xs ml-auto" :placeholder="`Search ${tabLabel(tab).toLowerCase()}…`" aria-label="Search compendium" />
     </div>
+    <div v-motion-panel="tab" class="compendium-content">
     <div v-if="tab!=='homebrew'" class="panel compendium-filter-panel" role="region" aria-label="Compendium filters" :aria-busy="loading">
       <ItemFilters v-if="tab==='magic-items'||tab==='equipment'" v-model="filters" :extra-tags="results.flatMap(entry=>entry.workshopItem?equipmentTags(entry.workshopItem):[])" :magic-only="tab==='magic-items'" :hide-reset="true" />
       <CompendiumFilters v-else v-model="categoryFilters" :fields="categoryFields" />
@@ -192,7 +194,7 @@ search()
             </li>
           </ul>
         </div>
-        <div ref="detailPanel" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details">
+        <div ref="detailPanel" v-motion-panel="detail?.index" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details">
           <p v-if="detailLoading" role="status">Loading details…</p>
           <p v-else-if="!detail">Select an entry to read its description.</p>
           <MonsterStatblock v-else-if="tab==='monsters'" :monster="monsterDetail" :original="detail.details??detail" />
@@ -234,6 +236,7 @@ search()
         </div>
       </div>
     </template>
+    </div>
     <p class="text-xs mt-6 opacity-80">Standard rules: SRD 5.1 by Wizards of the Coast LLC · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Data from <a href="https://github.com/5e-bits/5e-srd-api" target="_blank" rel="noopener noreferrer">5e Bits</a>.</p>
   </div>
 </template>

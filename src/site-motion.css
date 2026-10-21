@@ -6,14 +6,11 @@
 }
 
 @media (prefers-reduced-motion:no-preference) {
-  .site-shell[data-motion="balanced"] :is(.btn-primary,.btn-ghost,.sheet-button,.cb-button,.hw-button,.hw-icon-button,.cb-theme-option,.cb-accent-options button,.sheet-navigation button,.hw-step-nav>button,.mw-steps>button) {
+  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item,.cb-choice,details>summary) {
     transition:transform var(--motion-control) var(--motion-ease),background-color var(--motion-control) var(--motion-ease),border-color var(--motion-control) var(--motion-ease),color var(--motion-control) var(--motion-ease);
   }
-  .site-shell[data-motion="balanced"] :is(.btn-primary,.btn-ghost,.sheet-button,.cb-button,.hw-button,.hw-icon-button,.cb-theme-option,.cb-accent-options button,.sheet-navigation button,.hw-step-nav>button,.mw-steps>button):not(:disabled):not([aria-disabled="true"]):active {
+  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item):not(:disabled):not([aria-disabled="true"]):active {
     transform:translateY(1px) scale(.98);
-  }
-  .site-shell[data-motion="balanced"] :is(.rooms-list-item,.hw-content-card,.cb-choice,.sheet-track-pips button,details>summary) {
-    transition:background-color var(--motion-control) var(--motion-ease),border-color var(--motion-control) var(--motion-ease),color var(--motion-control) var(--motion-ease);
   }
   /* Native disclosures retain their open state, keyboard controls and focus behavior.
      Older engines simply open and close immediately. */
@@ -36,7 +33,7 @@
 }
 
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
-  .site-shell[data-motion="balanced"] :is(.btn-primary,.btn-ghost,.sheet-button,.cb-button,.hw-button,.hw-icon-button,.cb-theme-option,.cb-accent-options button,.sheet-navigation button,.hw-step-nav>button,.mw-steps>button):not(:disabled):not([aria-disabled="true"]):hover:not(:active) {
+  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item):not(:disabled):not([aria-disabled="true"]):hover:not(:active) {
     transform:translateY(-1px);
   }
   .site-shell[data-motion="balanced"] .rooms-list-item:hover { border-color:var(--cb-accent-text); }

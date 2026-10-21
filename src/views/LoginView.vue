@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { vMotionPanel } from '../directives/siteMotion'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -35,7 +36,7 @@ async function submit() {
 
 <template>
   <div class="min-h-screen flex items-center justify-center px-4">
-    <div class="panel w-full max-w-md p-8">
+    <div v-motion-panel="mode" class="panel w-full max-w-md p-8">
       <h1 class="font-display text-3xl text-center text-[var(--color-gold-soft)] mb-1">
         Codex of Heroes
       </h1>

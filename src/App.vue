@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, watch } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import AppNav from './components/ui/AppNav.vue'
 import BuilderAppearance from './components/creation/BuilderAppearance.vue'
 import { useBuilderAppearance } from './composables/useBuilderAppearance'
-import { cancelSiteMotion } from './directives/siteMotion'
+import { cancelSiteMotion, vMotionPanel } from './directives/siteMotion'
+const route = useRoute()
 const { appearance, appearanceStyle, appearanceOpen } = useBuilderAppearance()
 watch(() => appearance.motion, cancelSiteMotion, { flush: 'sync' })
 let motionPreference: MediaQueryList | undefined
@@ -31,6 +32,6 @@ watch(appearanceStyle, (style) => {
   <div class="site-shell min-h-screen flex flex-col" :data-theme="appearance.theme" :data-accent="appearance.accent" :data-sheet-density="appearance.sheetDensity" :data-sheet-layout="appearance.sheetLayout" :data-sheet-typography="appearance.sheetTypography" :data-motion="appearance.motion" :style="appearanceStyle">
     <AppNav />
     <div v-if="appearanceOpen" class="cb-page cb-appearance-wrap site-appearance-host"><BuilderAppearance :open="appearanceOpen" @close="closeAppearance" /></div>
-    <main class="flex-1"><RouterView /></main>
+    <main v-motion-panel="route.path" class="flex-1"><RouterView /></main>
   </div>
 </template>
