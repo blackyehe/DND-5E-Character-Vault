@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import ItemRules from './sheet/ItemRules.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../lib/api'
 import { useCharactersStore, type Character } from '../stores/characters'
 import { ABILITY_KEYS } from '../lib/calc'
 
-defineEmits<{ close: [] }>()
+const props = defineProps<{ stayOnPage?: boolean; beforeImport?: () => boolean }>()
+const emit = defineEmits<{ close: []; imported: [character: Character]; saving: [value: boolean] }>()
 interface Preview { character: Omit<Character, '_id' | 'updatedAt'>; warnings: string[]; matchedSpells: number; unresolvedSpells: string[]; sourceUrl: string }
 const router = useRouter(), store = useCharactersStore()
 const url = ref(''), error = ref(''), busy = ref(false), saving = ref(false)
+watch(saving, value => emit('saving', value), { flush: 'sync' })
 const preview = ref<Preview | null>(null), file = ref<HTMLInputElement | null>(null)
 const valid = computed(() => {
   const c = preview.value?.character
@@ -36,11 +38,13 @@ async function readFile(event: Event) {
 }
 async function importCharacter() {
   if (!preview.value || !valid.value || saving.value) return
+  if (props.beforeImport && !props.beforeImport()) return
   saving.value = true; error.value = ''
   try {
     const c = preview.value.character
     const created = await store.create({ ...c, combat: { ...c.combat, hpCurrent: Math.min(c.combat.hpCurrent, c.combat.hpMax) } })
-    await router.push({ name: 'character', params: { id: created._id } })
+    if (props.stayOnPage) { emit('imported', created); preview.value = null; url.value = '' }
+    else await router.push({ name: 'character', params: { id: created._id } })
   } catch (failure) { error.value = failure instanceof Error ? failure.message : 'Could not import the character. Your preview is still here.' }
   finally { saving.value = false }
 }

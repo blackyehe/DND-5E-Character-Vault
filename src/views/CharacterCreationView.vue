@@ -6,7 +6,7 @@ import ShadowChampions from '../components/ShadowChampions.vue'
 import ItemRules from '../components/sheet/ItemRules.vue'
 import { isRevenantShadow, classSpellDefaults } from '../../shared/class-rules'
 import { computed, nextTick, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useCharactersStore } from '../stores/characters'
 import { useCharacterBuilder } from '../composables/useCharacterBuilder'
 import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, skillMod, type AbilityKey } from '../lib/calc'
@@ -25,7 +25,7 @@ import { selectedFeatIndexes } from '../lib/advancements'
 import { spellLevelGroups } from '../lib/spell-level-groups'
 import { useIndependentColumns } from '../composables/useIndependentColumns'
 
-const router = useRouter()
+const router = useRouter(), route = useRoute()
 const store = useCharactersStore()
 const builder = useCharacterBuilder()
 const { draft, ready, race, klass, subrace, subclass, background, races, classes, backgrounds, equipment, languages, feats, context,
@@ -182,7 +182,8 @@ async function createCharacter() {
   try {
     const character = await store.create(builder.create())
     builder.clearDraft()
-    await router.push({ name: 'character', params: { id: character._id } })
+    if (route.query.from === 'dashboard') await router.replace({ name: 'dashboard', query: { character: character._id } })
+    else await router.push({ name: 'character', params: { id: character._id } })
   } catch (error) { createError.value = error instanceof Error ? error.message : 'Could not save the character. Your draft is safe.' }
   finally { creating.value = false }
 }

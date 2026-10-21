@@ -22,7 +22,8 @@ import ShadowChampions from '../components/ShadowChampions.vue'
 import { progressionClasses } from '../../shared/character-progression'
 import { isRevenantShadow } from '../../shared/class-rules'
 const route = useRoute(), store = useCharactersStore()
-const props = defineProps<{ characterId?: string; roomId?: string; role?: 'dm' | 'player'; compactSummary?:boolean; playerPreview?:boolean;championFor?:string }>()
+const props = defineProps<{ characterId?: string; roomId?: string; role?: 'dm' | 'player'; compactSummary?:boolean; playerPreview?:boolean;championFor?:string;embedded?:boolean;initialSection?:string }>()
+const emit = defineEmits<{ ready: [id: string]; 'section-change': [section: string] }>()
 const id = computed(() => props.characterId ?? String(route.params.id))
 const c = computed(() => store.current as Character)
 const championClass=computed(()=>c.value?progressionClasses(c.value).find(entry=>isRevenantShadow(entry.name)):undefined)
@@ -32,7 +33,7 @@ const active = ref('combat'), loadError = ref('')
 watch(()=>appearance.sheetLayout,layout=>{if(layout==='classic'&&!props.compactSummary&&active.value==='summary')active.value='combat'})
 const editSection=ref('identity'),repairSpell=ref(''),repairOpen=ref(false),sheetMain=ref<HTMLElement|null>(null)
 const editDirty = ref(false), pendingTab = ref(''),pendingRules=ref(false)
-watch(active,value=>{store.editing=value==='edit'},{immediate:true})
+watch(active,value=>{store.editing=value==='edit';emit('section-change',value)},{immediate:true})
 watch(()=>store.rulesPending,value=>{if(value)pendingRules.value=true})
 let refreshingRules=false
 async function refreshRules(){if(refreshingRules||store.roomContext?.preview||store.loading)return;if(editDirty.value){pendingRules.value=true;return}if(store.saving||!store.current)return;refreshingRules=true;try{await store.fetchOne(id.value,{quick:true});await library.reload();pendingRules.value=false}catch{/* Existing character stays usable. */}finally{refreshingRules=false}}
@@ -41,22 +42,23 @@ const focusRefresh=()=>{if(!props.roomId&&document.visibilityState==='visible')v
 onMounted(()=>{window.addEventListener('codex:workshop-published',refreshRules);window.addEventListener('focus',focusRefresh);window.addEventListener('storage',storageRefresh);document.addEventListener('visibilitychange',focusRefresh)})
 onUnmounted(()=>{store.editing=false;window.removeEventListener('codex:workshop-published',refreshRules);window.removeEventListener('focus',focusRefresh);window.removeEventListener('storage',storageRefresh);document.removeEventListener('visibilitychange',focusRefresh)})
 function openSpellRepair(index=''){editSection.value='spells';repairSpell.value=index;repairOpen.value=true;switchTab('edit')}
-function showTab(key:string){active.value=key;void nextTick(()=>sheetMain.value?.scrollIntoView({block:'start'}))}
+function showTab(key:string){active.value=key;if(!props.embedded)void nextTick(()=>sheetMain.value?.scrollIntoView({block:'start'}))}
 function switchTab(key: string) { if (key === active.value) return; if (editDirty.value) pendingTab.value = key; else showTab(key) }
 function discardAndSwitch() { editDirty.value = false; showTab(pendingTab.value); pendingTab.value = '' }
 onBeforeRouteLeave(() => !editDirty.value || window.confirm('Discard your unsaved character edits and leave this page?'))
 const tabs = computed(() => [...(props.compactSummary||appearance.sheetLayout==='folio'?[{key:'summary',label:'Summary'}]:[]),{ key: 'combat', label: 'Combat' }, { key: 'spells', label: 'Spells' }, { key: 'equipment', label: 'Equipment' }, { key: 'features', label: 'Features' }, { key: 'proficiencies', label: 'Proficiencies' }, { key: 'bio', label: 'Bio & notes' },...(championClass.value&&!props.championFor?[{key:'champions',label:'Shadow Champions'}]:[]), ...(store.canEditPermanent ? [{ key: 'edit', label: 'Edit character' }] : [])])
-async function openCharacter(){loadError.value='';try{await store.fetchOne(id.value,{quick:true})}catch(error){loadError.value=error instanceof Error?error.message:'Could not open this character. Try again.'}}
+async function openCharacter(){const requested=id.value;loadError.value='';try{await store.fetchOne(requested,{quick:true});if(id.value===requested&&store.current?._id===requested)emit('ready',requested)}catch(error){if(id.value===requested)loadError.value=error instanceof Error?error.message:'Could not open this character. Try again.'}}
 watch(() => [id.value, props.roomId, props.role,props.playerPreview,props.championFor] as const, async () => {
   store.roomContext = props.roomId ? { roomId: props.roomId, role: props.role ?? 'player',preview:props.playerPreview,championFor:props.championFor } : null
-  active.value = props.compactSummary?'summary':'combat'; loadError.value = ''; store.current = null
+  editDirty.value=false;pendingTab.value='';pendingRules.value=false;repairOpen.value=false;repairSpell.value='';editSection.value='identity'
+  active.value = tabs.value.some(tab=>tab.key===props.initialSection&&tab.key!=='edit')?props.initialSection!:(props.compactSummary?'summary':'combat'); loadError.value = ''; store.current = null
   await openCharacter()
 }, { immediate: true })
 defineExpose({ editDirty,retryOpen:openCharacter })
 </script>
 <template>
   <div class="hero-sheet">
-    <div class="sheet-page-top"><RouterLink v-if="championFor" :to="`/rooms/${roomId}`">← Game room</RouterLink><RouterLink v-else-if="!roomId" to="/">← Your characters</RouterLink><span>{{ role === 'player' ? 'PLAYER SHEET · PERMANENT EDITING BY DM' : 'CHARACTER SHEET · 2014 RULES' }}</span><span role="status">{{ playerPreview ? 'Temporary preview · changes are not saved' : store.saving ? 'Saving…' : 'Changes save automatically during play' }}</span></div>
+    <div class="sheet-page-top"><RouterLink v-if="championFor" :to="`/rooms/${roomId}`">← Game room</RouterLink><RouterLink v-else-if="!roomId&&!embedded" to="/">← Your characters</RouterLink><span>{{ role === 'player' ? 'PLAYER SHEET · PERMANENT EDITING BY DM' : 'CHARACTER SHEET · 2014 RULES' }}</span><span role="status">{{ playerPreview ? 'Temporary preview · changes are not saved' : store.saving ? 'Saving…' : 'Changes save automatically during play' }}</span></div>
     <p v-if="championFor" class="sheet-notice">Shadow Champion reference sheet. You can inspect every tab and try resources here; changes in this preview are temporary.</p><p v-if="loadError" class="sheet-alert" role="alert">{{ loadError }} <button type="button" class="sheet-button sheet-small-button" :disabled="store.loading" @click="openCharacter">Try again</button></p>
     <div v-else-if="c" ref="sheetMain">
       <CharacterSheetFrame :active="active" :tabs="tabs" :compact-summary="compactSummary" @select="switchTab" @edit="switchTab('edit')">

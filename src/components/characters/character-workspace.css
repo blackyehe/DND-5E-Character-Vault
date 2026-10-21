@@ -1,0 +1,61 @@
+.site-shell .character-workspace { display:grid; grid-template-columns:216px minmax(0,1fr); gap:22px; align-items:start; }
+.site-shell .character-workspace[data-collapsed="true"] { grid-template-columns:56px minmax(0,1fr); }
+.character-roster { min-width:0; position:sticky; top:14px; align-self:start; }
+.character-roster-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; }
+.character-roster-heading h2 { margin:0; font-size:21px; }
+.character-roster-heading h2 small { font:400 12px/1.4 var(--sheet-body-font,inherit); color:var(--cb-muted); }
+.character-roster-toggle { padding:5px 8px; font-size:12px; display:flex; align-items:center; gap:5px; }
+.character-roster-search { display:grid; gap:6px; font-size:12px; color:var(--cb-muted); margin-bottom:11px; }
+.character-roster-search input { width:100%; min-width:0; border:1px solid var(--cb-line); border-radius:4px; padding:8px 9px; color:var(--cb-ink); background:var(--cb-field); font:inherit; font-size:14px; }
+.character-roster-list { display:grid; gap:4px; }
+.character-roster-entry { display:flex; align-items:center; gap:10px; min-width:0; width:100%; padding:11px 9px; text-align:left; color:var(--cb-ink); border:1px solid transparent; border-radius:5px; background:transparent; font:inherit; cursor:pointer; }
+.character-roster-entry:hover:not(:disabled) { background:var(--cb-paper); }
+.character-roster-entry[aria-current="true"] { background:var(--cb-accent-soft); border-color:var(--cb-line); box-shadow:inset 3px 0 var(--cb-accent-solid); }
+.character-roster-entry:disabled { opacity:.55; cursor:wait; }
+.character-roster-initial { display:grid; place-items:center; flex-shrink:0; width:34px; height:40px; border:1px solid var(--cb-line); border-radius:4px; background:var(--cb-field); color:var(--cb-accent-text); font:500 24px/1 var(--sheet-title-font,Georgia); overflow:hidden; }
+.character-roster-initial img { width:100%; height:100%; object-fit:cover; }
+.character-roster-copy { display:grid; gap:4px; min-width:0; overflow-wrap:anywhere; }
+.character-roster-copy strong { font-size:15px; font-weight:500; line-height:1.25; }
+.character-roster-copy small { font-size:12px; color:var(--cb-muted); line-height:1.35; }
+.character-roster-empty { display:grid; gap:10px; padding:15px 0; font-size:13px; color:var(--cb-muted); }
+.character-roster-empty .btn-ghost { justify-self:start; }
+.character-workspace[data-collapsed="true"] .character-roster-heading h2,
+.character-workspace[data-collapsed="true"] .character-roster-search,
+.character-workspace[data-collapsed="true"] .character-roster-copy,
+.character-workspace[data-collapsed="true"] .character-roster-toggle>span:last-child { display:none; }
+.character-workspace[data-collapsed="true"] .character-roster-heading { justify-content:center; }
+.character-workspace[data-collapsed="true"] .character-roster-entry { padding:8px; justify-content:center; }
+.character-sheet-container { min-width:0; container-type:inline-size; overflow:clip; overflow-clip-margin:5px; }
+.character-sheet-motion { min-width:0; }
+.site-shell .character-sheet-container .hero-sheet { padding:0; margin:0; max-width:none; width:100%; }
+.site-shell .character-sheet-container .sheet-workspace-compact { display:block; }
+.site-shell .character-sheet-container .sheet-tab-with-rail { grid-template-columns:minmax(0,1fr) 230px; }
+.site-shell[data-sheet-typography="folio"] .character-roster { font-family:var(--sheet-body-font); }
+.site-shell[data-sheet-typography="folio"] .character-roster-heading h2 { font:500 23px/1.2 var(--sheet-title-font); }
+@container (max-width:780px) {
+  .site-shell .character-sheet-container .sheet-tab-with-rail { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .character-sheet-container .sheet-resource-rail { grid-row:1; }
+  .site-shell .character-sheet-container .sheet-rail-toggle { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; text-align:left; }
+  .character-sheet-container .sheet-rail-content { margin-top:10px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:start; }
+  .character-sheet-container .sheet-resource-rail[data-open="false"] .sheet-rail-content { display:none; }
+}
+@container (max-width:520px) {
+  .character-sheet-container .sheet-rail-content { grid-template-columns:minmax(0,1fr); }
+  .character-sheet-container .sheet-folio-abilities { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(prefers-reduced-motion:no-preference) {
+  .site-shell[data-motion="balanced"] .character-workspace { transition:grid-template-columns 380ms cubic-bezier(.16,1,.3,1); }
+  .site-shell[data-motion="balanced"] .character-roster-entry { transition:background-color 150ms,border-color 150ms; }
+}
+@media(max-width:760px) {
+  .site-shell .character-workspace,.site-shell .character-workspace[data-collapsed="true"] { grid-template-columns:minmax(0,1fr); gap:20px; }
+  .character-roster { position:static; }
+  .character-roster-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .character-roster-entry { padding:9px 7px; }
+  .character-roster-search input { font-size:16px; }
+  .character-workspace[data-collapsed="true"] .character-roster-list { display:flex; flex-wrap:wrap; gap:5px; }
+  .character-workspace[data-collapsed="true"] .character-roster-entry { width:auto; }
+  .character-workspace[data-collapsed="true"] .character-roster-heading { justify-content:flex-start; }
+}
+@media(max-width:390px) { .character-roster-list { grid-template-columns:minmax(0,1fr); } }
+@media(pointer:coarse) { .character-roster-toggle { min-height:44px; } }

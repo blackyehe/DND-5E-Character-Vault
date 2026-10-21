@@ -14,3 +14,10 @@
 .sheet-refresh-status{font-size:11px;color:var(--cb-muted);margin-bottom:10px}
 .sheet-loading-status{margin-top:18px;padding-top:9px;border-top:1px solid var(--cb-line);font-size:11px;color:var(--cb-muted)}
 .sheet-loading-status>summary{cursor:pointer}.sheet-loading-status>p{margin-top:7px}
+
+.site-shell .game-room.room-dm-library{max-width:1480px}
+.room-selected-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.hero-sheet .room-selected-assignment{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:12px}
+.hero-sheet .room-selected-assignment select{width:auto;max-width:240px;padding:6px 9px;font-size:13px}
+.room-dm-workspace>.room-selected-sheet:only-child{grid-column:1/-1}
+@media(prefers-reduced-motion:no-preference){.site-shell[data-motion="balanced"] .room-dm-library .room-management::details-content{transition-duration:320ms}}
