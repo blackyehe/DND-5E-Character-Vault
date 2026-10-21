@@ -2,7 +2,8 @@
 
 ## Dashboard and DM room character workspaces
 
-**Status:** Implemented on 21 October 2026; release details are recorded in `DASHBOARD_ROOM_WORKSPACE_RELEASE_2026-10-21.md`.  
+**Status:** Implemented and published on 21 October 2026. See `DASHBOARD_ROOM_WORKSPACE_RELEASE_2026-10-21.md`.
+
 **Authorization:** The user confirmed “Yes—implement and publish”, then requested the same layout principles and animations for the DM view inside rooms.
 
 ### Selected direction
