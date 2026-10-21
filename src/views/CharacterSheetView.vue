@@ -56,7 +56,8 @@ watch(() => [id.value, props.roomId, props.role,props.playerPreview,props.champi
   await openCharacter()
 }, { immediate: true })
 function discardEdits(){editDirty.value=false;pendingTab.value='';active.value='summary'}
-defineExpose({ editDirty,retryOpen:openCharacter,discardEdits })
+function reviewRules(){editSection.value='rules';switchTab('edit')}
+defineExpose({ editDirty,retryOpen:openCharacter,discardEdits,reviewRules })
 </script>
 <template>
   <div class="hero-sheet">
@@ -67,11 +68,11 @@ defineExpose({ editDirty,retryOpen:openCharacter,discardEdits })
         <template #status>
         <section v-if="pendingTab" class="sheet-panel" role="alertdialog" aria-label="Unsaved character edits" style="margin-bottom:20px"><h3>Keep your edits?</h3><p class="sheet-small">Your character has unsaved changes. Save them in Edit, or discard the draft to change tabs.</p><div class="sheet-filter-buttons" style="margin-top:14px"><button class="sheet-button" @click="pendingTab=''">Keep editing</button><button class="sheet-button" @click="discardAndSwitch">Discard draft & change tab</button></div></section>
         <p v-if="store.saveError" class="sheet-alert" role="alert">{{ store.saveError }} Your last saved values are still shown.</p>
-        <p v-if="pendingRules" class="sheet-notice">Saved class rules changed while you were editing. Your draft is kept; saving it will apply the latest rules and flag conflicts.</p><WorkshopRuleReview v-if="store.canEditPermanent" @edit="editSection='rules';switchTab('edit')" />
+        <p v-if="pendingRules" class="sheet-notice">Saved class rules changed while you were editing. Your draft is kept; saving it will apply the latest rules and flag conflicts.</p><WorkshopRuleReview v-if="store.canEditPermanent&&!(roomId&&role==='dm')" @edit="reviewRules" />
         <p v-if="library.warning.value" class="sheet-notice">{{ library.warning.value }}</p>
         <p v-else-if="library.loading.value" class="sheet-refresh-status" role="status">Saved sheet is ready. Refreshing rules and reference details…</p>
         </template>
-        <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSummary v-if="appearance.sheetLayout==='folio'" @edit="switchTab('edit')" /><CharacterSidebar v-else @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
+        <section v-if="active==='summary'" class="sheet-summary-tab"><CharacterSummary v-if="appearance.sheetLayout==='folio'" /><CharacterSidebar v-else @edit="switchTab('edit')" /></section><section v-else-if="active==='champions'&&championClass" class="sheet-panel"><ShadowChampions :level="championClass.level" :room-id="roomId" :character-id="id" /></section><CombatTab v-else-if="active === 'combat'" @repair-spell="openSpellRepair" /><SpellbookPanel v-else-if="active === 'spells'" @repair="openSpellRepair" /><EquipmentSpellsTab v-else-if="active === 'equipment'" /><FeaturesTab v-else-if="active === 'features'" /><CoreTab v-else-if="active === 'proficiencies'" /><BioTab v-else-if="active === 'bio'" /><CharacterEditTab v-else-if="store.canEditPermanent" :initial-section="editSection" :repair-spell="repairSpell" :repair-open="repairOpen" @dirty="editDirty=$event" @saved="editDirty=false;active = 'combat'" />
         <template #footer><SheetLoadingStatus :loading="library.loading.value" :reference-ms="library.lastReferenceMs.value" :source="library.referenceSource.value" :warning="!!library.warning.value" @reload="library.reload" /></template>
       </CharacterSheetFrame>
     </div>

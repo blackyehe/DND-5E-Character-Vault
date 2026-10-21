@@ -12,6 +12,8 @@ import ItemRules from '../components/sheet/ItemRules.vue'
 import MonsterStatblock from '../components/monsters/MonsterStatblock.vue'
 import ReferenceReader from '../components/compendium/ReferenceReader.vue'
 import CompendiumFilters from '../components/compendium/CompendiumFilters.vue'
+import CompendiumCategories from '../components/compendium/CompendiumCategories.vue'
+import { compendiumTabLabel as tabLabel, type CompendiumTab as Tab } from '../lib/compendium-navigation'
 import { availableFacets, categoryFacetDefinitions, commonFacetDefinitions, compendiumFacets, matchesFacets } from '../../shared/compendium-facets'
 import { monsterStatblock } from '../../shared/monster-statblock'
 import '../components/sheet/sheet.css'
@@ -19,12 +21,9 @@ import '../components/sheet/sheet-details.css'
 import '../components/compendium/compendium-layout.css'
 
 type Kind = keyof typeof homebrew
-type Tab = Kind | 'equipment' | 'magic-items' | 'homebrew'
 type LibraryRef = SrdRef & {workshopItem?:EquipmentItem}
 type Detail = LibraryRef & Record<string, unknown>
-const tabs: Tab[] = ['spells', 'equipment', 'magic-items', 'monsters', 'classes', 'races', 'subraces', 'backgrounds', 'feats', 'subclasses', 'languages', 'invocations', 'boons', 'selections', 'other', 'homebrew']
 const tab = ref<Tab>('spells')
-const tabLabel = (value: Tab) => ({ equipment: 'Items', 'magic-items': 'Magic items', homebrew: 'Homebrew files', other: 'Other reference' }[value as string] ?? value)
 const query = ref('')
 const results = ref<LibraryRef[]>([])
 const filters=ref(emptyItemFilters())
@@ -160,13 +159,8 @@ search()
 <template>
   <div class="compendium-page max-w-5xl mx-auto px-6 py-8">
     <h1 class="font-display text-3xl text-[var(--color-gold-soft)] mb-6">Compendium</h1>
-    <div class="compendium-navigation flex gap-2 flex-wrap">
-      <button v-for="item in tabs" :key="item" class="btn-ghost text-sm capitalize"
-        :aria-pressed="tab===item" :class="{ '!border-[var(--color-gold)] !text-[var(--color-gold-soft)]': tab === item }" @click="tab = item">
-        {{ tabLabel(item) }}
-      </button>
-      <input v-if="tab !== 'homebrew'" v-model="query" class="input-base max-w-xs ml-auto" :placeholder="`Search ${tabLabel(tab).toLowerCase()}…`" aria-label="Search compendium" />
-    </div>
+    <CompendiumCategories v-model="tab" />
+    <label v-if="tab !== 'homebrew'" class="compendium-search"><span>Search {{tabLabel(tab).toLowerCase()}}</span><input v-model="query" type="search" class="input-base" :placeholder="`Search ${tabLabel(tab).toLowerCase()}…`" /></label>
     <div v-motion-panel="tab" class="compendium-content">
     <div v-if="tab!=='homebrew'" class="panel compendium-filter-panel" role="region" aria-label="Compendium filters" :aria-busy="loading">
       <ItemFilters v-if="tab==='magic-items'||tab==='equipment'" v-model="filters" :extra-tags="results.flatMap(entry=>entry.workshopItem?equipmentTags(entry.workshopItem):[])" :magic-only="tab==='magic-items'" :hide-reset="true" />

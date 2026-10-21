@@ -1,7 +1,6 @@
 /* Own the gaps here: character-sheet margin/padding must not affect this page. */
 .compendium-page,.compendium-content { display:flex; flex-direction:column; gap:18px; min-width:0; }
 .compendium-page>h1,.compendium-page>p { margin-top:0; margin-bottom:0; }
-.compendium-navigation { align-items:center; }
 .compendium-filter-panel { margin:0; padding:18px; min-width:0; }
 .compendium-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:12px 14px; min-width:0; }
 .compendium-filters label { display:flex; flex-direction:column; gap:5px; min-width:0; font-size:13px; color:var(--cb-ink); }
@@ -28,7 +27,6 @@
   .compendium-browser>.compendium-results { max-height:38vh; }
   .compendium-browser>.compendium-detail { max-height:70vh; }
   .compendium-filters,.compendium-filter-panel .item-search-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .compendium-navigation input { max-width:none; flex:1 1 100%; margin-left:0; }
   .compendium-filter-footer>.compendium-filters { max-width:none; }
 }
 @media(max-width:359px) { .compendium-filters,.compendium-filter-panel .item-search-filters { grid-template-columns:minmax(0,1fr); } }

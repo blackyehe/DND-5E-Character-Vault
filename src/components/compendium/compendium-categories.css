@@ -1,0 +1,23 @@
+.compendium-category-row { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; }
+.compendium-category-row>button,.compendium-category-folder>summary { padding:8px 11px; font-size:13px; white-space:nowrap; line-height:1.5; }
+.compendium-category-folder { position:relative; flex-shrink:0; }
+.compendium-category-folder>summary { display:flex; align-items:center; gap:7px; list-style:none; cursor:pointer; border:1px solid var(--cb-line); border-radius:6px; color:var(--cb-ink); background:var(--cb-soft); }
+.compendium-category-folder>summary::-webkit-details-marker { display:none; }
+.compendium-category-folder>summary:hover { border-color:var(--cb-accent-text); }
+.compendium-category-row>[aria-current=page],.compendium-category-folder[data-active=true]>summary { background:var(--cb-accent-soft); color:var(--cb-accent-text); border-color:var(--cb-accent-text); }
+.compendium-category-options { position:absolute; left:0; top:calc(100% + 6px); z-index:40; min-width:190px; padding:6px; background:var(--cb-paper); color:var(--cb-ink); border:1px solid var(--cb-line); border-radius:7px; box-shadow:0 9px 24px #0003; display:grid; gap:3px; }
+.compendium-category-folder:nth-last-child(2) .compendium-category-options { left:auto; right:0; }
+.compendium-category-options>button { padding:9px 12px; text-align:left; border-radius:4px; font-size:14px; cursor:pointer; }
+.compendium-category-options>button:hover,.compendium-category-options>[aria-current=page] { background:var(--cb-accent-soft); color:var(--cb-accent-text); }
+.compendium-categories :is(button,summary,select):focus-visible { outline:2px solid var(--cb-accent-text); outline-offset:3px; }
+.compendium-search { display:grid; gap:6px; width:100%; min-width:0; font-size:13px; color:var(--cb-muted); }
+.compendium-search input { width:100%; max-width:none; min-width:0; }
+.compendium-category-select { display:none; }
+/* The popup is positioned outside its disclosure; skip height clipping here. */
+.site-shell .compendium-category-folder::details-content { block-size:auto!important; overflow:visible!important; translate:none!important; opacity:1!important; transition:none!important; }
+.compendium-category-folder:not([open])>.compendium-category-options { display:none; }
+@media(max-width:900px) {
+  .compendium-category-row { display:none; }
+  .compendium-category-select { display:grid; gap:6px; font-size:13px; color:var(--cb-muted); }
+  .compendium-category-select select { width:100%; padding:10px; border:1px solid var(--cb-line); border-radius:5px; font:inherit; }
+}
