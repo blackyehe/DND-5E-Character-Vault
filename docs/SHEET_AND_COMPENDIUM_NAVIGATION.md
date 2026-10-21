@@ -65,3 +65,17 @@ vercel rollback dpl_wqYDdj29jGM61DdGWBxciZcHe5DZ --scope dndenjoyerstudio --yes
 ```
 
 No database migration is required.
+
+## Published release
+
+Published and promoted to https://dndoldal.vercel.app on 21 October 2026.
+
+- Feature commit: `81c1782`.
+- Ready production deployment: `dpl_3ETa93UDLMNfgqDoN8CaHVjMvNmH`.
+- Deployment URL: https://dndoldal-b4dfjqya9-dndenjoyerstudio.vercel.app.
+- Vercel frontend build and backend typecheck passed.
+- After promotion, the public alias resolved to the new ready deployment.
+  The home page, stylesheet and `/api/health` returned HTTP 200; health reported
+  `{"ok":true}`. The stylesheet retained the stable scrollbar rules.
+- The notebook API returned HTTP 401 when signed out, as expected.
+- The previous deployment and Git backup above remain available for rollback.
