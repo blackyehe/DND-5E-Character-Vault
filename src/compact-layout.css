@@ -118,8 +118,8 @@
   .sheet-tracker-grid { grid-template-columns:1fr; }
 }
 
-/* Keep workspaces centred and readable on large displays. Nested cards retain
-   their own grid widths; forms and short sections do not stretch edge to edge. */
+/* Keep workspaces centred and readable on large displays. Reading panels share
+   their grid edges; forms retain their dedicated editing widths. */
 .site-shell .hero-sheet,.site-shell .game-room { max-width:1240px; width:100%; }
 .site-shell .compendium-page { max-width:1200px; }
 .site-shell .dashboard-page { max-width:1140px; }
@@ -128,10 +128,8 @@
 .site-shell :is(.panel,.sheet-panel,.cb-panel,.hw-panel) { min-width:0; overflow-wrap:anywhere; }
 .site-shell .sheet-main { width:100%; max-width:1024px; margin-inline:auto; }
 .site-shell .sheet-section-stack { gap:12px; }
-.site-shell .sheet-section-stack>.sheet-panel { width:100%; max-width:1024px; margin-inline:auto; }
+.site-shell .sheet-section-stack>.sheet-panel { width:100%; max-width:none; margin-inline:0; }
 .site-shell .sheet-editor>.sheet-panel { width:100%; max-width:880px; margin-inline:auto; }
-.site-shell .sheet-section-stack>.sheet-inventory-group { max-width:920px; }
-.site-shell .sheet-section-stack>.sheet-panel:first-of-type:has(> .sheet-between) { max-width:920px; }
 .site-shell .sheet-panel { padding:14px; }
 .site-shell .sheet-panel h3 { font-size:19px; margin-bottom:10px; }
 .site-shell .sheet-two-columns { gap:12px; }
@@ -160,7 +158,7 @@
   .site-shell .sheet-spellbook-toolbar .sheet-search { flex:1; min-width:150px; }
   .site-shell .sheet-inventory-controls { gap:10px; }
 }
-.site-shell .sheet-summary-tab{width:100%;max-width:720px;margin-inline:auto}
+.site-shell .sheet-summary-tab{width:100%;max-width:none;margin-inline:0}
 .site-shell .sheet-summary-tab .sheet-sidebar{position:static;max-height:none;overflow:visible;width:100%}
 .site-shell .sheet-summary-tab .sheet-ability-stack{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .site-shell .sheet-summary-tab .sheet-ability-row{grid-template-columns:1fr;gap:3px;padding:9px}

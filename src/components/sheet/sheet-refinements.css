@@ -1,8 +1,10 @@
 /* Shared summary / Combat numbers: one short row with the same calculations. */
-.site-shell .hero-sheet .sheet-vitals-strip { display:flex; align-items:stretch; justify-content:space-between; gap:8px 14px; flex-wrap:wrap; margin:0; }
-.site-shell .hero-sheet .sheet-vitals-strip>div { display:flex; align-items:center; gap:7px; min-width:0; }
-.sheet-vitals-strip dt { font:400 calc(12px * var(--cb-text-scale,1))/1.3 var(--sheet-body-font); color:var(--cb-muted); max-width:80px; }
-.sheet-vitals-strip dd { font:500 calc(24px * var(--cb-text-scale,1))/1.2 var(--sheet-title-font); color:var(--cb-ink); white-space:nowrap; }
+.sheet-vitals-statistics { container:sheet-vitals / inline-size; min-width:0; }
+.site-shell .hero-sheet .sheet-vitals-strip { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); align-items:stretch; gap:8px 12px; margin:0; }
+.site-shell .hero-sheet .sheet-vitals-strip[data-count="5"] { grid-template-columns:repeat(5,minmax(0,1fr)); }
+.site-shell .hero-sheet .sheet-vitals-strip>div { display:flex; align-items:center; justify-content:center; gap:7px; min-width:0; min-height:36px; }
+.sheet-vitals-strip dt { font:400 calc(12px * var(--cb-text-scale,1))/1.3 var(--sheet-body-font); color:var(--cb-muted); max-width:80px; text-align:center; }
+.sheet-vitals-strip dd { font:500 calc(24px * var(--cb-text-scale,1))/1.2 var(--sheet-title-font); color:var(--cb-ink); white-space:nowrap; min-inline-size:2ch; text-align:center; font-variant-numeric:tabular-nums; margin:0; }
 .sheet-vitals-strip dd small { font:400 calc(12px * var(--cb-text-scale,1))/1.3 var(--sheet-body-font); color:var(--cb-muted); }
 .site-shell .hero-sheet .sheet-trained-skills { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(195px,100%),1fr)); gap:0 18px; list-style:none; margin:0; padding:0; }
 .sheet-trained-skills li { display:flex; justify-content:space-between; align-items:center; gap:10px; border-top:1px solid var(--cb-line); padding:8px 0; min-width:0; }
@@ -11,8 +13,6 @@
 .sheet-trained-skills li small { display:block; font-size:calc(11px * var(--cb-text-scale,1)); color:var(--cb-muted); margin-top:2px; }
 .sheet-trained-skills li strong { flex-shrink:0; font:500 calc(23px * var(--cb-text-scale,1))/1.2 var(--sheet-title-font); color:var(--cb-accent-text); }
 .sheet-summary-secondary { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start; }
-/* Summary cards share their grid's edges, including a wide collapsed-roster view. */
-.site-shell .hero-sheet .sheet-summary-overview>.sheet-panel { width:100%; max-width:none; margin-inline:0; }
 .sheet-summary-experience progress { display:block; width:100%; height:5px; accent-color:var(--cb-accent-solid); margin:12px 0; }
 .sheet-summary-experience .sheet-between { flex-wrap:wrap; }
 .sheet-training-list { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:6px 18px; font-size:calc(14px * var(--cb-text-scale,1)); }
@@ -20,7 +20,6 @@
 .site-shell .hero-sheet .sheet-summary-training .sheet-disclosure>summary { font-size:calc(15px * var(--cb-text-scale,1)); }
 
 /* Vitals fills the available width without leaving its play controls behind. */
-.site-shell .hero-sheet .sheet-combat-tab.sheet-section-stack>.sheet-panel { width:100%; max-width:none; margin-inline:0; }
 .hero-sheet .sheet-hit-points:not(.sheet-hit-points-compact) .sheet-vitals-strip { border-bottom:1px solid var(--cb-line); padding-bottom:12px; margin-bottom:12px; }
 .sheet-vitals-form { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,.8fr); gap:8px 18px; align-items:end; }
 .site-shell .hero-sheet .sheet-vitals-form .sheet-hp-adjustment { margin:0; }
@@ -51,11 +50,20 @@
 @media(max-width:650px) {
   .sheet-summary-secondary,.sheet-vitals-form { grid-template-columns:1fr; }
   .sheet-vitals-extras { grid-column:auto; }
-  .site-shell .hero-sheet .sheet-vitals-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-  .site-shell .hero-sheet .sheet-vitals-strip>div { display:block; }
-  .sheet-vitals-strip dt { min-height:30px; }
-  .sheet-vitals-strip dd { margin-top:3px; }
   .sheet-death-save-controls { gap:4px 18px; }
+}
+@container sheet-vitals (max-width:690px) {
+  .site-shell .hero-sheet .sheet-vitals-strip,
+  .site-shell .hero-sheet .sheet-vitals-strip[data-count="5"] { grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px 12px; }
+  .site-shell .hero-sheet .sheet-vitals-strip>div { grid-column:span 2; }
+  .site-shell .hero-sheet .sheet-vitals-strip[data-count="5"]>div:nth-last-child(-n+2) { grid-column:span 3; }
+}
+@container sheet-vitals (max-width:420px) {
+  .site-shell .hero-sheet .sheet-vitals-strip,
+  .site-shell .hero-sheet .sheet-vitals-strip[data-count="5"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .site-shell .hero-sheet .sheet-vitals-strip>div,
+  .site-shell .hero-sheet .sheet-vitals-strip[data-count="5"]>div:nth-last-child(-n+2) { grid-column:span 1; }
+  .site-shell .hero-sheet .sheet-vitals-strip[data-count="5"]>div:last-child { grid-column:1/-1; }
 }
 @media(pointer:coarse) {
   .site-shell .hero-sheet .sheet-list-group>summary { min-height:44px; padding:8px 0; }

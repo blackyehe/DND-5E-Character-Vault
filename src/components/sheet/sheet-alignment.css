@@ -1,0 +1,45 @@
+/* Each tab uses the width left by its roster and resource rail. */
+.sheet-tab-content { container:sheet-content / inline-size; }
+.site-shell .hero-sheet .sheet-tab-content>.sheet-panel { width:100%; max-width:none; margin-inline:0; }
+.site-shell .hero-sheet .sheet-feature-sections,
+.site-shell .hero-sheet .sheet-summary-secondary,
+.site-shell .hero-sheet .sheet-bio-grid,
+.site-shell .hero-sheet .sheet-two-columns { min-width:0; width:100%; }
+
+/* Numeric cells keep equal gutters as single- and double-digit values change. */
+.hero-sheet :is(.sheet-vitals-strip,.sheet-folio-abilities,.sheet-summary-vitals,.sheet-ability-row,.sheet-casting-stats,.sheet-tracker-total,.sheet-hp-quick,.sheet-numeric-values,.sheet-trained-skills,.sheet-skill-row,.sheet-table,.sheet-equipment-stat,.sheet-coin-balances) { font-variant-numeric:tabular-nums; }
+.site-shell .hero-sheet .sheet-folio-abilities dd { display:inline-flex; align-items:baseline; gap:5px; text-align:center; }
+.sheet-folio-abilities .sheet-ability-score { display:inline-block; min-inline-size:2ch; text-align:center; }
+.site-shell .hero-sheet .sheet-folio-abilities dd small { display:inline-block; min-inline-size:3ch; text-align:center; margin:0; }
+.hero-sheet .sheet-ability-row b { text-align:center; }
+.hero-sheet .sheet-numeric-values dd,
+.hero-sheet .sheet-skill-row>strong,
+.hero-sheet .sheet-trained-skills li>strong { flex-shrink:0; min-inline-size:3.5ch; text-align:center; }
+.site-shell .hero-sheet input[type="number"] { text-align:center; font-variant-numeric:tabular-nums; }
+.hero-sheet .sheet-hp-adjustments .sheet-three-columns>label { text-align:center; }
+.hero-sheet .sheet-equipment-stat>strong { min-inline-size:2.5ch; text-align:center; }
+.site-shell .hero-sheet .sheet-trackers .sheet-casting-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px 12px; text-align:center; }
+.site-shell .hero-sheet .sheet-trackers .sheet-casting-stats>div { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; }
+.hero-sheet .sheet-casting-stats dd { min-inline-size:3ch; text-align:center; margin:0; }
+.hero-sheet .sheet-tracker-total { display:inline-flex; align-items:baseline; justify-content:flex-end; gap:3px; min-inline-size:5ch; }
+.hero-sheet .sheet-tracker-total strong { min-inline-size:2ch; text-align:center; }
+.hero-sheet .sheet-hp-quick>p { display:inline-flex; align-items:baseline; gap:4px; }
+.hero-sheet .sheet-hp-quick>p>strong { min-inline-size:2ch; text-align:center; }
+
+/* A desktop browser may still have a narrow sheet beside an expanded roster. */
+@container sheet-content (max-width:640px) {
+  .site-shell .hero-sheet .sheet-tab-content .sheet-two-columns,
+  .site-shell .hero-sheet .sheet-tab-content .sheet-bio-grid,
+  .site-shell .hero-sheet .sheet-tab-content .sheet-summary-secondary,
+  .site-shell .hero-sheet .sheet-tab-content .sheet-spell-grid { grid-template-columns:minmax(0,1fr); }
+  .site-shell .hero-sheet .sheet-inventory-row { flex-wrap:wrap; }
+  .site-shell .hero-sheet .sheet-inventory-description { flex-basis:100%; }
+  .site-shell .hero-sheet .sheet-inventory-controls { margin-left:auto; flex-wrap:wrap; }
+  .site-shell .hero-sheet .sheet-vitals-form { grid-template-columns:minmax(0,1fr); }
+  .site-shell .hero-sheet .sheet-vitals-extras { grid-column:auto; }
+}
+@container sheet-content (max-width:420px) {
+  .site-shell .hero-sheet .sheet-two-fields,
+  .site-shell .hero-sheet .sheet-form-grid { grid-template-columns:minmax(0,1fr); }
+  .site-shell .hero-sheet .sheet-spellbook-toolbar .sheet-search { width:100%; min-width:0; }
+}
