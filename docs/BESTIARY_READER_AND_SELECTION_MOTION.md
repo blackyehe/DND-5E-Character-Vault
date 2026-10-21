@@ -84,3 +84,17 @@ Backup tag: `backup/pre-bestiary-reader-motion-2026-10-22`.
 ```powershell
 vercel rollback dpl_3ETa93UDLMNfgqDoN8CaHVjMvNmH --scope dndenjoyerstudio --yes
 ```
+
+## Night Mode correction — 22 October 2026
+
+The user selected the reference site's dark theme. The shared reader now uses
+5etools' standard Night Mode palette: background `#222222`, body text `#bbbbbb`,
+gold headings/rules `#d29a38` and grey outer borders `#565656`. Ability rows and
+modifier/save cells use the reference's separate translucent grey fills. Table
+labels use a brighter `#aaaaaa` for readability. Workshop edit feedback uses gold.
+
+The local component's computed background, body text and heading colours matched
+the inspected reference. Production build and whitespace review passed. This is
+a CSS-only correction shared by Compendium and Workshop, with no data changes.
+Pre-correction Git commit: `0bef2b8`; prior live deployment:
+`dpl_D7MNP2Sjqqrg4UQoNR9C9tSiVW3F`.
