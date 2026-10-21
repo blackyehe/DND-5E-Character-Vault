@@ -140,8 +140,16 @@ existing Obsidian map-plugin projects. Proposed first implementation:
 
 ## Review and release state
 
-Implementation is local. No production deployment or production data migration
-has been performed for this feature.
+Published on 21 October 2026 at https://dndoldal.vercel.app.
+
+- Feature commit: `16d8651`.
+- Production deployment: `dpl_4owAUiqmwAa7eByZzJpDmE7bctoF`.
+- Deployment URL: https://dndoldal-ezbqpgsfi-dndenjoyerstudio.vercel.app.
+- Previous production retained: `dpl_DLxxhoPFfVrcjVJ72TJQ2hN31sfq`.
+- Git backup tag: `backup/pre-campaign-notebook-2026-10-21` (`c7ddf6b`).
+
+The release adds new notebook collections and does not migrate existing character
+or campaign data. Obsidian import and linked maps remain planning only.
 
 Review used the real Vue UI and Express/Mongoose implementation against a
 separate loopback Docker replica set, seeded with disposable users, two
@@ -152,11 +160,25 @@ assigned-character history, could not read a DM-only entry (404), received no
 private notes in the index, and could not create a Story item (403).
 
 Frontend and server typechecks and the production build passed. No automated
-test suites were added or run. A manual production review
-of deployment-specific behavior remains for a release.
+test suites were added or run. The Vercel production build/typecheck also passed.
+After promotion, the public site's deployment ID matched the release, health
+returned 200, and the notebook route returned JSON 401 when signed out. Live
+room/notebook bundles were available. The release browser was signed out, so
+private-room editing was reviewed locally rather than using the user's live
+account or writing review entries into the campaign.
 
 Rollback checkpoint before this work: `c7ddf6b`. Reverting the notebook feature
 commit restores the former UI/API; new notebook collections remain retained for
 recovery and are not deleted by a code rollback. Later notebook data must be
 included explicitly in any complete room/site backup tooling: existing character
 and Workshop exports do not yet export room notebook entries.
+
+
+To roll the live site back to the preceding deployment:
+
+```powershell
+vercel rollback dpl_DLxxhoPFfVrcjVJ72TJQ2hN31sfq --scope dndenjoyerstudio --yes
+```
+
+This restores the prior application while retaining any notebook records created
+since this release. They become available again when the notebook code returns.
