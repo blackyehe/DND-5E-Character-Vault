@@ -52,3 +52,16 @@ vercel rollback dpl_HMvHEsT4vtVGjudwhDw68noZrvzd --scope dndenjoyerstudio --yes
 ```
 
 This UI release requires no database migration.
+
+## Published release
+
+- Feature commit: `8e1a63f`.
+- Production deployment: `dpl_wqYDdj29jGM61DdGWBxciZcHe5DZ`.
+- Deployment URL: https://dndoldal-9oo6ysj5f-dndenjoyerstudio.vercel.app.
+- Public site: https://dndoldal.vercel.app.
+
+Vercel's frontend build and server typecheck passed. After promotion the public
+alias resolved to the new READY deployment. The page, stylesheet and health
+endpoint returned 200, the public stylesheet included the stable gutter and
+persistent scrollbar rules, and a signed-out notebook request returned 401.
+Authenticated campaign data was reviewed only in the disposable local room.
