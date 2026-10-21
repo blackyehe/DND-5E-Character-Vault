@@ -14,7 +14,15 @@
 .compendium-browser { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:18px; align-items:start; }
 .compendium-browser>.panel { min-width:0; margin:0; max-height:70vh; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
 .compendium-detail { min-height:200px; overflow-wrap:anywhere; }
+.compendium-detail-content { min-width:0; }
 .compendium-results button[aria-current=true] { background:var(--cb-soft); box-shadow:inset 3px 0 var(--cb-accent-text); }
+@media(prefers-reduced-motion:no-preference) {
+  .site-shell[data-motion=balanced] .compendium-results button[aria-current=true] { animation:compendium-entry-selected 190ms var(--motion-ease,ease-out); }
+}
+@keyframes compendium-entry-selected {
+  from { box-shadow:inset 6px 0 var(--cb-accent-text); }
+  to { box-shadow:inset 3px 0 var(--cb-accent-text); }
+}
 .compendium-page select:focus-visible { outline:2px solid var(--cb-accent-text); outline-offset:2px; }
 .compendium-pack-filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:18px; }
 .compendium-pack-filters label { display:flex; flex-direction:column; flex:1 1 180px; gap:5px; font-size:13px; min-width:0; }

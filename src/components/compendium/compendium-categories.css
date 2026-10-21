@@ -16,6 +16,16 @@
 /* The popup is positioned outside its disclosure; skip height clipping here. */
 .site-shell .compendium-category-folder::details-content { block-size:auto!important; overflow:visible!important; translate:none!important; opacity:1!important; transition:none!important; }
 .compendium-category-folder:not([open])>.compendium-category-options { display:none; }
+@media(prefers-reduced-motion:no-preference) {
+  .site-shell[data-motion=balanced] .compendium-category-folder[open]>.compendium-category-options {
+    transform-origin:top left;
+    animation:compendium-folder-open var(--motion-panel,220ms) var(--motion-ease,ease-out);
+  }
+}
+@keyframes compendium-folder-open {
+  from { opacity:0; transform:translateY(-4px) scale(.98); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
 @media(max-width:900px) {
   .compendium-category-row { display:none; }
   .compendium-category-select { display:grid; gap:6px; font-size:13px; color:var(--cb-muted); }

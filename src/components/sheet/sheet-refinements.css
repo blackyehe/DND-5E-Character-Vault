@@ -19,6 +19,10 @@
 .sheet-experience-content { display:flex; align-items:center; gap:12px 24px; flex-wrap:wrap; }
 .sheet-experience-content>div { flex:1 1 260px; min-width:0; }
 .sheet-experience-content>form { flex:0 1 270px; min-width:0; }
+/* XP earned and Add XP share one control height in every sheet layout. */
+.site-shell .hero-sheet .sheet-experience-content>form { align-items:stretch; }
+.site-shell .hero-sheet .sheet-experience-content>form :is(input,button) { min-height:40px; padding-block:8px; line-height:1.5; }
+.sheet-experience-content>form>button { flex-shrink:0; }
 .sheet-training-list { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:6px 18px; font-size:calc(14px * var(--cb-text-scale,1)); }
 .site-shell .hero-sheet .sheet-summary-training .sheet-disclosure-meta { width:auto; margin-left:auto; }
 .site-shell .hero-sheet .sheet-summary-training .sheet-disclosure>summary { font-size:calc(15px * var(--cb-text-scale,1)); }

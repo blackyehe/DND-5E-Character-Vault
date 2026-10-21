@@ -182,13 +182,14 @@ search()
           <p v-else-if="!visibleResults.length" class="text-sm">No matching entries. Try another search or clear your filters.</p>
           <ul v-else class="space-y-1">
             <li v-for="entry in visibleResults" :key="entry.index">
-              <button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="detail?.index===entry.index?'true':undefined" @click="openDetail(entry.index)">
+              <button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="selectedDetailIndex===entry.index?'true':undefined" @click="openDetail(entry.index)">
                 {{ contentLabel(entry) }}
               </button>
             </li>
           </ul>
         </div>
-        <div ref="detailPanel" v-motion-panel="detail?.index" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details">
+        <div ref="detailPanel" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details" :aria-busy="detailLoading">
+          <div v-motion-panel="detail ? `${tab}:${detail.index}` : null" class="compendium-detail-content">
           <p v-if="detailLoading" role="status">Loading details…</p>
           <p v-else-if="!detail">Select an entry to read its description.</p>
           <MonsterStatblock v-else-if="tab==='monsters'" :monster="monsterDetail" :original="detail.details??detail" />
@@ -226,6 +227,7 @@ search()
               </template>
             </template>
             <ReferenceReader v-else :key="`${tab}:${detail.index}`" :entry="detail" :kind="tab" :levels="levels" :levels-loading="levelsLoading" :levels-error="levelsError" @retry-levels="loadLevels(detail.index,tab)" />
+          </div>
           </div>
         </div>
       </div>
