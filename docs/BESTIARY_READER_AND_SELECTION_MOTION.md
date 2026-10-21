@@ -98,3 +98,9 @@ the inspected reference. Production build and whitespace review passed. This is
 a CSS-only correction shared by Compendium and Workshop, with no data changes.
 Pre-correction Git commit: `0bef2b8`; prior live deployment:
 `dpl_D7MNP2Sjqqrg4UQoNR9C9tSiVW3F`.
+
+Published correction: commit `8805fc5`, deployment
+`dpl_5WGJo3563vgFPqHNSxksjg1xPoyp`, promoted to https://dndoldal.vercel.app.
+The public alias resolved to the ready deployment; health returned HTTP 200
+with `{"ok":true}`. The previous deployment and Git tag
+`backup/pre-bestiary-night-theme-2026-10-22` remain available for rollback.
