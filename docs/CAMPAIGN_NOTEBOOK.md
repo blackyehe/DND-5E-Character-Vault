@@ -24,7 +24,11 @@ preferences apply. No new animation library is used.
    Highlight selection to mark it. Save changes explicitly saves a version.
 5. The DM chooses Whole room, Selected characters, or DM only. New DM entries
    default to DM only; new player notes default to Whole room.
-6. Relevant to is an organizational filter, independent from access/sharing.
+6. Show for lists only characters currently assigned to a room member. Relevant
+   to is an organizational filter, independent from access/sharing. If an
+   assignment is removed, or the notebook is opened from an unassigned NPC's
+   sheet, the filter falls back to Whole library. NPCs remain available to the DM
+   in the entry editor; this change affects the browsing filter only.
 7. Connect entries in Edit. Connections appear in both directions, filtered by
    each reader's access. `[[Exact connected title]]` becomes a clickable link;
    `[label](note:ENTRY_ID)` uses a stable ID and survives renaming.
@@ -137,6 +141,43 @@ existing Obsidian map-plugin projects. Proposed first implementation:
   revision snapshots. Decide the free-storage provider before implementation.
 - Keep DM pin placement and player browsing separate. No movement, encounter
   automation or replacement for Owlbear Rodeo is required for this first pass.
+
+### Placement proposal (awaiting user decision)
+
+The user requested planning before implementation and has not yet chosen between
+placing maps inside Campaign notebook or in a separate tab.
+
+| Option | Navigation | Benefit | Tradeoff |
+| --- | --- | --- | --- |
+| Maps inside notebook | Characters / Campaign notebook, then Journal / Story items / Maps | Keeps campaign material together | Makes notebook navigation broader; maps compete with a text-oriented layout |
+| Separate room Maps tab (recommended) | Characters / Campaign notebook / Maps | Gives maps a full workspace and a visible entry point | Adds one room tab |
+| Global Maps section | Main site navigation, with room selection | Useful if maps must be reused across many rooms | Adds navigation and sharing complexity before it is needed |
+
+Recommended arrangement: keep Obsidian import as a DM action in Campaign
+notebook, since imported notes become ordinary notebook entries. Give maps a
+separate room tab using the same notes and permissions. Clicking a pin opens a
+note drawer beside the map, preserving its pan/zoom position. Open in notebook
+provides the full editor/history when needed. One note record serves both views;
+there is no second copy of its text to keep synchronized.
+
+Suggested implementation order, after the placement decision:
+
+1. Preview the chosen room navigation, map canvas and note drawer using sample
+   content. Confirm DM placement controls and the player reading view.
+2. Implement a reviewed Markdown/ZIP import: preserve source/folders, resolve
+   links, report duplicates and missing links, and keep imported notes DM-only.
+   Folder-name privacy and attachment storage must be resolved before publishing
+   imported folders/images, because current notebook folder names are shared.
+3. Implement image maps with pan/zoom, manual pins linked to existing note IDs,
+   DM pin editing, and explicit sharing. Load maps and images only when opened.
+4. Add the connection workflow: create/link notes from pins, note-to-map return
+   links, and import/reimport conflict review. Player edits use the existing note
+   permissions, versions and stale-write protection.
+
+Confirm before implementation: room tab versus notebook subtab; whether players
+may create/move pins or only read them; and image-storage quotas/provider within
+the existing free-hosting constraint. A shared image itself must be suitable for
+players: hiding pins cannot hide spoilers already printed on the image.
 
 ## Review and release state
 

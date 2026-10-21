@@ -23,6 +23,7 @@ const readOnly = computed(() => !!props.previewCharacter || !!index.value?.readO
 const canManage = computed(() => !!index.value && !readOnly.value && (index.value.role === 'dm' || section.value === 'journal'))
 const activeFolder = computed(() => index.value?.folders.find(item => item.id === folder.value))
 const activeFolders = computed(() => index.value?.folders.filter(item => !item.deletedAt) ?? [])
+const filterCharacters = computed(() => index.value?.characters.filter(character => character.assigned) ?? [])
 const folderList = computed(() => index.value?.folders.filter(item => trash.value ? !!item.deletedAt : !item.deletedAt) ?? [])
 const pinKey = computed(() => `codex:notebook-pins:v1:${auth.user?.id ?? 'anonymous'}:${props.roomId}`)
 const date = (value: string) => new Date(value).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'})
@@ -44,7 +45,7 @@ async function loadIndex(append = false, quiet = false) {
     if (disposed || gen !== generation || run !== listRun) return
     if (append && index.value) result.entries = [...new Map([...index.value.entries, ...result.entries].map(item => [item.id, item])).values()]
     index.value = result; rememberLabels(result.entries)
-    if (relevant.value && !result.characters.some(c => c.id === relevant.value)) relevant.value = ''
+    if (relevant.value && !result.characters.some(c => c.id === relevant.value && c.assigned)) relevant.value = ''
     await loadPins(gen)
   } catch (e) {if (gen === generation && run === listRun) failure(e)}
   finally {if (run === listRun) loading.value = false}
@@ -180,7 +181,7 @@ onUnmounted(() => {disposed = true; generation++; clearInterval(poll); clearTime
     <div class="notebook-layout" :data-browse="browse">
       <aside id="notebook-library" class="notebook-index" aria-label="Notebook library">
         <label>Search notes<input v-model="search" type="search" maxlength="120" placeholder="Title or description" /></label>
-        <label>Show for<select v-model="relevant" :disabled="busy" @change="loadIndex()"><option value="">Whole library</option><option v-for="character in index?.characters" :key="character.id" :value="character.id">Relevant to {{character.name}}</option></select></label>
+        <label>Show for<select v-model="relevant" :disabled="busy" @change="loadIndex()"><option value="">Whole library</option><option v-for="character in filterCharacters" :key="character.id" :value="character.id">Relevant to {{character.name}}</option></select></label>
         <div v-if="pinnedEntries.length&&!trash" class="notebook-pinned"><h3>Pinned for you</h3><div class="notebook-pin-scroll"><button v-for="entry in pinnedEntries" :key="entry.id" class="notebook-entry sheet-button" :aria-current="selected?.id===entry.id?'true':undefined" @click="openEntry(entry.id)">{{entry.title}}</button></div></div>
         <div class="notebook-folder-heading"><h3>{{trash?'Deleted folders':'Folders'}}</h3><button v-if="canManage&&!trash" class="sheet-button sheet-small-button" :disabled="busy||dirty" :aria-expanded="newFolderOpen" @click="newFolderOpen=!newFolderOpen">New</button></div>
         <form v-if="newFolderOpen&&!trash" class="notebook-folder-form" @submit.prevent="saveFolder()"><label>Folder name<input v-model="folderTitle" required maxlength="120" /></label><p class="sheet-small">Folder names are visible to everyone in the room. Sharing is set on each note.</p><button class="sheet-button" :disabled="busy||!folderTitle.trim()||dirty">Create folder</button></form>

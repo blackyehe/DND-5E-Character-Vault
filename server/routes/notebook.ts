@@ -101,10 +101,12 @@ router.get('/', async (req, res) => {
   const ctx = await context(params(req), req.userId!, typeof req.query.previewCharacter === 'string' ? req.query.previewCharacter : undefined)
   const query = parsed(z.object({section, offset: z.coerce.number().int().min(0).max(100000).default(0), search: z.string().max(120).default(''), folder: z.string().max(30).default('all'), deleted: z.enum(['true', 'false']).default('false'), character: z.string().max(24).default(''), ids: z.string().max(2600).default('')}).strict(), Object.fromEntries(Object.entries(req.query).filter(([key]) => key !== 'previewCharacter')))
   if (query.character && (!isValidObjectId(query.character) || !ctx.characters.some(c => String(c._id) === query.character))) return fail(400, 'Character filter is unavailable.')
+  const assignedCharacters = new Set(ctx.room.assignments.filter(a => ctx.room.members.some(member => String(member) === String(a.userId))).map(a => String(a.characterId)))
   const folders = await Notebook.find({roomId: ctx.room._id, kind: 'folder', section: query.section}).sort({title: 1}).lean()
   const filter: Record<string, unknown> = {roomId: ctx.room._id, kind: 'entry', section: query.section, deletedAt: query.deleted === 'true' ? {$ne: null} : null, ...scope(ctx)}
   if (query.search) {const regex = query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); filter.$and = [{$or: [{title: {$regex: regex, $options: 'i'}}, {body: {$regex: regex, $options: 'i'}}]}]}
-  if (query.character) filter.relevantCharacterIds = query.character
+  // An NPC shortcut or a removed assignment falls back to the whole library.
+  if (query.character && assignedCharacters.has(query.character)) filter.relevantCharacterIds = query.character
   if (query.folder === 'unfiled') filter.folderId = {$nin: folders.filter(f => !f.deletedAt).map(f => f._id)}
   else if (query.folder !== 'all') {if (!isValidObjectId(query.folder)) return fail(400, 'Invalid folder.'); filter.folderId = query.folder}
   if (query.ids) filter._id = {$in: parsed(z.array(id).max(100), query.ids.split(','))}
@@ -112,7 +114,7 @@ router.get('/', async (req, res) => {
   const [entries, total] = await Promise.all([Notebook.find(filter).select('-body -relatedIds').sort({title: 1, _id: 1}).skip(query.offset).limit(60).lean(), Notebook.countDocuments(filter)])
   res.json({entries: entries.map(entry => summary(entry, ctx)), total, nextOffset: query.offset + entries.length < total ? query.offset + entries.length : null,
     folders: folders.map(f => ({id: String(f._id), title: f.title, section: f.section, revision: f.revision, deletedAt: f.deletedAt?.toISOString() ?? null, count: counts.filter(e => String(e.folderId) === String(f._id)).length})),
-    characters: ctx.characters.map(c => ({id: String(c._id), name: c.meta.name})), role: ctx.dm ? 'dm' : 'player', readOnly: ctx.readOnly})
+    characters: ctx.characters.map(c => ({id: String(c._id), name: c.meta.name, assigned: assignedCharacters.has(String(c._id))})), role: ctx.dm ? 'dm' : 'player', readOnly: ctx.readOnly})
 })
 router.get('/entries/:entryId', async (req, res) => {
   const ctx = await context(params(req), req.userId!, typeof req.query.previewCharacter === 'string' ? req.query.previewCharacter : undefined)

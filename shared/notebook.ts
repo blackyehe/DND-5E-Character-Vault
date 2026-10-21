@@ -15,7 +15,7 @@ export interface NotebookEntry extends NotebookSummary {
 }
 export interface NotebookIndex {
   entries: NotebookSummary[]; folders: NotebookFolder[]; total: number; nextOffset: number | null
-  characters: {id: string; name: string}[]; role: 'dm' | 'player'; readOnly: boolean
+  characters: {id: string; name: string; assigned: boolean}[]; role: 'dm' | 'player'; readOnly: boolean
 }
 export interface NotebookVersion {
   revision: number; title: string; body: string; editedBy: string; savedAt: string; action: string
