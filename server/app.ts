@@ -8,6 +8,7 @@ import contentRoutes from './routes/content'
 import characterImportRoutes from './routes/character-import'
 import workshopRoutes from './routes/workshop'
 import roomRoutes from './routes/rooms'
+import notebookRoutes from './routes/notebook'
 import itemRoutes from './routes/items'
 import monsterWorkshopRoutes from './routes/monster-workshop'
 import workshopTrashRoutes from './routes/workshop-trash'
@@ -78,6 +79,7 @@ app.use('/api/characters/import', characterImportRoutes)
 app.use('/api/characters', characterRoutes)
 app.use('/api/content', contentRoutes)
 app.use('/api/workshop', workshopRoutes)
+app.use('/api/rooms/:roomId/notebook', notebookRoutes)
 app.use('/api/rooms', roomRoutes)
 app.use('/api/items', itemRoutes)
 app.use('/api/monster-workshop', monsterWorkshopRoutes)

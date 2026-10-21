@@ -19,11 +19,12 @@ import SpellbookPanel from '../components/sheet/SpellbookPanel.vue'
 import '../components/sheet/sheet.css'
 import '../components/sheet/sheet-details.css'
 import ShadowChampions from '../components/ShadowChampions.vue'
+import NotebookShortcut from '../components/notebook/NotebookShortcut.vue'
 import { progressionClasses } from '../../shared/character-progression'
 import { isRevenantShadow } from '../../shared/class-rules'
 const route = useRoute(), store = useCharactersStore()
 const props = defineProps<{ characterId?: string; roomId?: string; role?: 'dm' | 'player'; compactSummary?:boolean; playerPreview?:boolean;championFor?:string;embedded?:boolean;initialSection?:string }>()
-const emit = defineEmits<{ ready: [id: string]; settled: [id: string]; 'section-change': [section: string] }>()
+const emit = defineEmits<{ ready: [id: string]; settled: [id: string]; 'section-change': [section: string]; 'open-notebook': [characterId: string] }>()
 const id = computed(() => props.characterId ?? String(route.params.id))
 const c = computed(() => store.current as Character)
 const championClass=computed(()=>c.value?progressionClasses(c.value).find(entry=>isRevenantShadow(entry.name)):undefined)
@@ -54,11 +55,12 @@ watch(() => [id.value, props.roomId, props.role,props.playerPreview,props.champi
   active.value = tabs.value.some(tab=>tab.key===props.initialSection&&tab.key!=='edit')?props.initialSection!:(props.compactSummary?'summary':'combat'); loadError.value = ''; store.current = null
   await openCharacter()
 }, { immediate: true })
-defineExpose({ editDirty,retryOpen:openCharacter })
+function discardEdits(){editDirty.value=false;pendingTab.value='';active.value='summary'}
+defineExpose({ editDirty,retryOpen:openCharacter,discardEdits })
 </script>
 <template>
   <div class="hero-sheet">
-    <div class="sheet-page-top"><RouterLink v-if="championFor" :to="`/rooms/${roomId}`">← Game room</RouterLink><RouterLink v-else-if="!roomId&&!embedded" to="/">← Your characters</RouterLink><span>{{ role === 'player' ? 'PLAYER SHEET · PERMANENT EDITING BY DM' : 'CHARACTER SHEET · 2014 RULES' }}</span><span role="status">{{ playerPreview ? 'Temporary preview · changes are not saved' : store.saving ? 'Saving…' : 'Changes save automatically during play' }}</span></div>
+    <div class="sheet-page-top"><RouterLink v-if="championFor" :to="`/rooms/${roomId}`">← Game room</RouterLink><RouterLink v-else-if="!roomId&&!embedded" to="/">← Your characters</RouterLink><span>{{ role === 'player' ? 'PLAYER SHEET · PERMANENT EDITING BY DM' : 'CHARACTER SHEET · 2014 RULES' }}</span><span role="status">{{ playerPreview ? 'Temporary preview · changes are not saved' : store.saving ? 'Saving…' : 'Changes save automatically during play' }}</span><button v-if="roomId&&!championFor" type="button" class="sheet-button sheet-small-button" :disabled="store.saving" @click="emit('open-notebook',id)">Open notebook</button><NotebookShortcut v-else-if="!championFor" :character-id="id" :disabled="store.saving||editDirty" /></div>
     <p v-if="championFor" class="sheet-notice">Shadow Champion reference sheet. You can inspect every tab and try resources here; changes in this preview are temporary.</p><p v-if="loadError" class="sheet-alert" role="alert">{{ loadError }} <button type="button" class="sheet-button sheet-small-button" :disabled="store.loading" @click="openCharacter">Try again</button></p>
     <div v-else-if="c" ref="sheetMain">
       <CharacterSheetFrame :active="active" :tabs="tabs" :compact-summary="compactSummary" @select="switchTab" @edit="switchTab('edit')">

@@ -21,3 +21,5 @@
 .hero-sheet .room-selected-assignment select{width:auto;max-width:240px;padding:6px 9px;font-size:13px}
 .room-dm-workspace>.room-selected-sheet:only-child{grid-column:1/-1}
 @media(prefers-reduced-motion:no-preference){.site-shell[data-motion="balanced"] .room-dm-library .room-management::details-content{transition-duration:320ms}}
+
+.room-section-nav{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--cb-line);padding:0 0 14px;margin-bottom:16px}.room-section-nav>[aria-current=page]{background:var(--cb-accent-soft);border-color:var(--cb-accent-text);color:var(--cb-ink)}.room-notebook-workspace{width:100%;min-width:0;max-width:none;margin-inline:auto}.game-room:has(.room-notebook-workspace){max-width:1200px!important}.game-room:has(.room-notebook-workspace)>.room-management{width:100%;max-width:none;margin-inline:0}
