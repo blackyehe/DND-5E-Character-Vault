@@ -223,3 +223,31 @@ vercel rollback dpl_DLxxhoPFfVrcjVJ72TJQ2hN31sfq --scope dndenjoyerstudio --yes
 
 This restores the prior application while retaining any notebook records created
 since this release. They become available again when the notebook code returns.
+
+### Assigned-character filter follow-up (21 October 2026)
+
+- Published fix commit: `93d63a3`.
+- Current production: `dpl_HMvHEsT4vtVGjudwhDw68noZrvzd`.
+- Deployment URL: https://dndoldal-nvcu7b6i2-dndenjoyerstudio.vercel.app.
+- Previous notebook release retained: `dpl_4owAUiqmwAa7eByZzJpDmE7bctoF`.
+- Git rollback tag: `backup/pre-notebook-assigned-filter-2026-10-21`
+  (`9d3c3f4`).
+
+The Show for selector now lists only characters assigned to current room members.
+Unassigned NPC shortcuts fall back to Whole library. Note-sharing controls retain
+their existing character choices and permission checks.
+
+Frontend/server typechecks, the local production build, and Vercel's build and
+typecheck passed. After promotion, the public alias resolved to the new deployment,
+health returned 200, the new notebook bundle returned JavaScript with status 200,
+and the signed-out notebook request returned JSON 401. No automated tests were
+added or run. Authenticated live selector behavior was not manually exercised in
+this follow-up.
+
+To undo this filter rollout while retaining the notebook:
+
+```powershell
+vercel rollback dpl_4owAUiqmwAa7eByZzJpDmE7bctoF --scope dndenjoyerstudio --yes
+```
+
+Obsidian imports and maps remain proposals awaiting the user's placement decision.
