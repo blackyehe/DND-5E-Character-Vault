@@ -3,7 +3,7 @@ import { computed,watch } from 'vue'
 import { armourCategories,itemFormTags,itemRarities,titleCase } from '../../../shared/item-classification'
 import { emptyItemFilters,magicItemCategories,magicWeaponTypes,magicArmourTypes,magicDamageTypes,type ItemSearchFilters } from '../../lib/magic-item-filters'
 const filters=defineModel<ItemSearchFilters>({required:true})
-const props=defineProps<{magicOnly?:boolean;extraTags?:string[]}>()
+const props=defineProps<{magicOnly?:boolean;extraTags?:string[];hideReset?:boolean}>()
 const availableTags=computed(()=>[...new Set([...itemFormTags,...(props.extraTags??[])])].sort())
 watch(()=>filters.value.category,category=>{
   if(category&&category!=='weapon'){filters.value.weapon='';filters.value.damage=''}
@@ -18,7 +18,7 @@ watch(()=>filters.value.category,category=>{
     <label>Item tag<select v-model="filters.tag"><option value="">Any tag</option><option v-for="tag in availableTags" :key="tag" :value="tag">{{titleCase(tag)}}</option></select></label>
     <label>Rarity<select v-model="filters.rarity"><option value="">Any rarity</option><option v-for="rarity in itemRarities" :key="rarity" :value="rarity">{{titleCase(rarity)}}</option></select></label>
     <label>Attunement<select v-model="filters.attunement"><option value="">Either</option><option value="required">Required</option><option value="none">Not required</option></select></label>
-    <button v-if="Object.values(filters).some(Boolean)" type="button" class="sheet-button" @click="filters=emptyItemFilters()">Clear filters</button>
+    <button v-if="!hideReset&&Object.values(filters).some(Boolean)" type="button" class="sheet-button" @click="filters=emptyItemFilters()">Clear filters</button>
   </div>
 </template>
 <style>

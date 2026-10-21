@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { api } from '../lib/api'
 
 interface OrcbrewPack {
@@ -18,6 +18,9 @@ interface OrcbrewPack {
 }
 
 const packs = ref<OrcbrewPack[]>([])
+const packSearch=ref(''),contentKind=ref('')
+const contentKinds=computed(()=>[...new Set(packs.value.flatMap(pack=>Object.entries(pack.report?.counts??{}).filter(([,count])=>count>0).map(([kind])=>kind)))].sort())
+const visiblePacks=computed(()=>packs.value.filter(pack=>pack.filename.toLowerCase().includes(packSearch.value.trim().toLowerCase())&&(!contentKind.value||(pack.report?.counts[contentKind.value]??0)>0)))
 const loading = ref(false)
 const importing = ref(false)
 const changingPack = ref('')
@@ -152,12 +155,19 @@ onMounted(loadPacks)
     <p v-if="notice" role="status" class="text-sm text-[var(--site-success)]">{{ notice }}</p>
 
     <div class="panel p-5">
+      <div v-if="packs.length" class="compendium-pack-filters">
+        <label>Filename<input v-model="packSearch" class="input-base" placeholder="Search saved files…" /></label>
+        <label>Contains<select v-model="contentKind" class="input-base"><option value="">Any content type</option><option v-for="kind in contentKinds" :key="kind" :value="kind">{{kind.replace(/-/g,' ')}}</option></select></label>
+        <p role="status">{{visiblePacks.length}} of {{packs.length}} files</p>
+        <button v-if="packSearch||contentKind" type="button" class="btn-ghost text-sm" @click="packSearch='';contentKind=''">Clear file filters</button>
+      </div>
       <p v-if="loading" class="text-sm text-[var(--color-ink-soft)]">Loading saved files…</p>
       <p v-else-if="packs.length === 0" class="text-sm text-[var(--color-ink-soft)]">
         No Orcbrew files saved yet. Import one to keep a copy in your account.
       </p>
+      <p v-else-if="!visiblePacks.length" class="text-sm">No matching files. Try another filename or clear the file filters.</p>
       <ul v-else class="divide-y divide-[var(--cb-line)]">
-        <li v-for="pack in packs" :key="pack.id" class="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+        <li v-for="pack in visiblePacks" :key="pack.id" class="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
           <div class="min-w-0">
             <p class="truncate font-medium">{{ pack.filename }}</p>
             <p class="text-xs text-[var(--color-ink-soft)]">

@@ -10,9 +10,12 @@ import ItemFilters from '../components/items/ItemFilters.vue'
 import ItemRules from '../components/sheet/ItemRules.vue'
 import MonsterStatblock from '../components/monsters/MonsterStatblock.vue'
 import ReferenceReader from '../components/compendium/ReferenceReader.vue'
+import CompendiumFilters from '../components/compendium/CompendiumFilters.vue'
+import { availableFacets, categoryFacetDefinitions, commonFacetDefinitions, compendiumFacets, matchesFacets } from '../../shared/compendium-facets'
 import { monsterStatblock } from '../../shared/monster-statblock'
 import '../components/sheet/sheet.css'
 import '../components/sheet/sheet-details.css'
+import '../components/compendium/compendium-layout.css'
 
 type Kind = keyof typeof homebrew
 type Tab = Kind | 'equipment' | 'magic-items' | 'homebrew'
@@ -24,15 +27,26 @@ const tabLabel = (value: Tab) => ({ equipment: 'Items', 'magic-items': 'Magic it
 const query = ref('')
 const results = ref<LibraryRef[]>([])
 const filters=ref(emptyItemFilters())
-const visibleResults=computed(()=>results.value.filter(entry=>{
+const categoryFilters=ref<Record<string,string>>({})
+const indexedResults=computed(()=>results.value.map(entry=>({entry,facts:compendiumFacets(entry,tab.value)})))
+const categoryFields=computed(()=>availableFacets(categoryFacetDefinitions(tab.value),indexedResults.value.map(row=>row.facts)))
+const commonFields=computed(()=>availableFacets(commonFacetDefinitions,indexedResults.value.map(row=>row.facts)))
+const hasFilters=computed(()=>Object.values(categoryFilters.value).some(Boolean)||Object.values(filters.value).some(Boolean))
+const visibleResults=computed(()=>indexedResults.value.filter(({entry,facts})=>{
+  const term=query.value.trim().toLowerCase()
+  const searchable=entry.workshopItem?itemSearchText(entry.workshopItem):tab.value==='equipment'&&normalEquipmentSearch[entry.index]?itemSearchText(normalEquipmentSearch[entry.index]!):contentLabel(entry).toLowerCase()
+  if(term&&!searchable.includes(term))return false
+  if(!matchesFacets(facts,categoryFilters.value))return false
   if(tab.value!=='equipment'&&tab.value!=='magic-items')return true
   const item=entry.workshopItem??(tab.value==='equipment'?normalEquipmentSearch[entry.index]:undefined)
   return item?matchesEquipmentItem(item,filters.value):tab.value==='magic-items'?matchesMagicItem(entry.index,filters.value):!Object.values(filters.value).some(Boolean)
-}))
+}).map(row=>row.entry))
+function clearFilters(){categoryFilters.value={};filters.value=emptyItemFilters()}
 const unclassifiedMagicItems=computed(()=>results.value.filter(entry=>!entry.workshopItem&&!hasMagicItemTags(entry.index)).length)
 const loading = ref(false)
 const error = ref('')
 const detail = ref<Detail | null>(null)
+const selectedDetailIndex=ref('')
 const detailPanel = ref<HTMLElement | null>(null)
 watch(() => detail.value?.index, async () => {
   await nextTick()
@@ -41,8 +55,9 @@ watch(() => detail.value?.index, async () => {
 const detailLoading = ref(false)
 const levels=ref<SrdLevel[]>([]),levelsLoading=ref(false),levelsError=ref('')
 watch(visibleResults, entries => {
-  if (detail.value && !entries.some(entry => entry.index === detail.value?.index)) {
+  if (selectedDetailIndex.value && !entries.some(entry => entry.index === selectedDetailIndex.value)) {
     ++detailNumber
+    selectedDetailIndex.value=''
     detail.value = null
     detailLoading.value = false
   }
@@ -75,7 +90,6 @@ const itemStats = computed(() => {
   return values
 })
 let customDetails = new Map<string, Detail>()
-let timer: ReturnType<typeof setTimeout> | undefined
 let requestNumber = 0
 let detailNumber = 0
 
@@ -83,13 +97,13 @@ async function search() {
   const sequence = ++requestNumber
   ++detailNumber
   const kind = tab.value
+  selectedDetailIndex.value=''
   detail.value = null
   levels.value=[];levelsLoading.value=false;levelsError.value=''
   detailLoading.value = false
   results.value = []
   loading.value = false
   if (kind === 'homebrew') return
-  const term = query.value.trim()
   loading.value = true
   error.value = ''
   detail.value = null
@@ -97,15 +111,7 @@ async function search() {
   if(kind==='equipment'||kind==='magic-items')requests.unshift(api.get<{id:string;item:EquipmentItem}[]>('/api/items').then(items=>items.filter(entry=>!!entry.item.magical===(kind==='magic-items')).map(entry=>({index:`workshop-item-${entry.id}`,name:entry.item.name,displayName:`${entry.item.name} · My Workshop`,url:'',sourcePack:'My Workshop',workshopItem:entry.item}))))
   if (kind === 'equipment') requests.unshift(srd.equipment())
   if (kind === 'magic-items') requests.unshift(srd.magicItems())
-  if (kind === 'spells') requests.unshift(srd.spells(term ? { name: term } : undefined))
-  if (kind === 'monsters') requests.unshift(srd.monsters(term ? { name: term } : undefined))
-  if (kind === 'classes') requests.unshift(srd.classes())
-  if (kind === 'races') requests.unshift(srd.races())
-  if (kind === 'subraces') requests.unshift(srd.subraces())
-  if (kind === 'subclasses') requests.unshift(srd.subclasses())
-  if (kind === 'backgrounds') requests.unshift(srd.backgrounds())
-  if (kind === 'feats') requests.unshift(srd.feats())
-  if (kind === 'languages') requests.unshift(srd.languages())
+  if (['spells','monsters','classes','races','subraces','subclasses','backgrounds','feats','languages'].includes(kind)) requests.unshift(srd.compendium(kind))
   const settled = await Promise.allSettled(requests)
   if (sequence !== requestNumber) return
   const custom = settled[settled.length - 1]
@@ -113,21 +119,17 @@ async function search() {
     ? custom.value.map((item) => [item.index, item as unknown as Detail]) : [])
   const combined=settled.flatMap(result=>result.status==='fulfilled'?result.value:[])
   for(const entry of combined)if(entry.workshopItem)customDetails.set(entry.index,entry as Detail)
-  results.value=combined.filter(entry=>!term||(entry.workshopItem?itemSearchText(entry.workshopItem):kind==='equipment'&&normalEquipmentSearch[entry.index]?itemSearchText(normalEquipmentSearch[entry.index]!):contentLabel(entry).toLowerCase()).includes(term.toLowerCase()))
+  results.value=combined
   if (settled.some((result) => result.status === 'rejected')) error.value = 'Some content could not be loaded. Please try again.'
   loading.value = false
 }
 
-watch(query, () => {
-  ++requestNumber
-  clearTimeout(timer)
-  timer = setTimeout(search, 300)
-})
-watch(tab, () => { clearTimeout(timer);filters.value=emptyItemFilters();search() })
-onBeforeUnmount(() => { clearTimeout(timer); ++requestNumber; ++detailNumber })
+watch(tab, () => { clearFilters();search() })
+onBeforeUnmount(() => { ++requestNumber; ++detailNumber })
 
 async function openDetail(index: string) {
   const sequence = ++detailNumber
+  selectedDetailIndex.value=index
   levels.value=[];levelsLoading.value=false;levelsError.value='';error.value=''
   detailLoading.value=false
   if (customDetails.has(index)) { detail.value = customDetails.get(index) ?? null; return }
@@ -157,24 +159,29 @@ search()
 <template>
   <div class="compendium-page max-w-5xl mx-auto px-6 py-8">
     <h1 class="font-display text-3xl text-[var(--color-gold-soft)] mb-6">Compendium</h1>
-    <div class="flex gap-2 mb-4 flex-wrap">
+    <div class="compendium-navigation flex gap-2 flex-wrap">
       <button v-for="item in tabs" :key="item" class="btn-ghost text-sm capitalize"
         :aria-pressed="tab===item" :class="{ '!border-[var(--color-gold)] !text-[var(--color-gold-soft)]': tab === item }" @click="tab = item">
         {{ tabLabel(item) }}
       </button>
       <input v-if="tab !== 'homebrew'" v-model="query" class="input-base max-w-xs ml-auto" :placeholder="`Search ${tabLabel(tab).toLowerCase()}…`" aria-label="Search compendium" />
     </div>
-    <div v-if="tab==='magic-items'||tab==='equipment'" class="panel p-4 mb-4 hero-sheet">
-      <ItemFilters v-model="filters" :extra-tags="results.flatMap(entry=>entry.workshopItem?equipmentTags(entry.workshopItem):[])" :magic-only="tab==='magic-items'" />
-      <p v-if="!loading" class="sheet-small" role="status">{{visibleResults.length}} items · Includes your saved Workshop items.</p>
-      <p v-if="tab==='magic-items'" class="sheet-small">Generic magic weapons match their allowed base types. Damage filters include base and extra attack damage, excluding spells and resistance.</p>
-      <p v-if="tab==='magic-items'&&!loading&&unclassifiedMagicItems" class="sheet-small">{{unclassifiedMagicItems}} SRD entries have no filter tags yet. Clear filters to see them.</p>
+    <div v-if="tab!=='homebrew'" class="panel compendium-filter-panel" role="region" aria-label="Compendium filters" :aria-busy="loading">
+      <ItemFilters v-if="tab==='magic-items'||tab==='equipment'" v-model="filters" :extra-tags="results.flatMap(entry=>entry.workshopItem?equipmentTags(entry.workshopItem):[])" :magic-only="tab==='magic-items'" :hide-reset="true" />
+      <CompendiumFilters v-else v-model="categoryFilters" :fields="categoryFields" />
+      <div class="compendium-filter-footer">
+        <CompendiumFilters v-model="categoryFilters" :fields="commonFields" />
+        <p role="status">{{loading?'Loading entries…':`${visibleResults.length} of ${results.length} entries`}}</p>
+        <button v-if="hasFilters" type="button" class="btn-ghost text-sm" @click="clearFilters">Clear filters</button>
+      </div>
+      <p v-if="tab==='magic-items'" class="compendium-filter-note">Weapon and damage filters include allowed base weapons and extra attack damage.</p>
+      <p v-if="tab==='magic-items'&&!loading&&unclassifiedMagicItems" class="compendium-filter-note">{{unclassifiedMagicItems}} SRD entries have no item tags yet. Clear filters to see them.</p>
     </div>
     <OrcbrewPacks v-if="tab === 'homebrew'" />
     <template v-else>
       <p v-if="error" class="text-sm text-[var(--site-danger)] mb-3" role="alert">{{ error }} <button type="button" class="btn-ghost" @click="search">Retry content</button></p>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div class="panel p-4 lg:col-span-1 max-h-[70vh] overflow-y-auto">
+      <div class="compendium-browser">
+        <div class="panel p-4 compendium-results" role="region" aria-label="Matching entries" :aria-busy="loading">
           <p v-if="loading" class="text-sm">Loading…</p>
           <p v-else-if="!visibleResults.length" class="text-sm">No matching entries. Try another search or clear your filters.</p>
           <ul v-else class="space-y-1">
@@ -185,7 +192,7 @@ search()
             </li>
           </ul>
         </div>
-        <div ref="detailPanel" class="panel p-6 lg:col-span-2 min-h-[200px] max-h-[70vh] overflow-y-auto" tabindex="0" role="region" aria-label="Entry details">
+        <div ref="detailPanel" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details">
           <p v-if="detailLoading" role="status">Loading details…</p>
           <p v-else-if="!detail">Select an entry to read its description.</p>
           <MonsterStatblock v-else-if="tab==='monsters'" :monster="monsterDetail" :original="detail.details??detail" />

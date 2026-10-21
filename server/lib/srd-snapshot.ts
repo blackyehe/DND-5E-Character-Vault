@@ -1,12 +1,15 @@
 import spellData from '../data/srd-2014-spells.json'
 import equipmentData from '../data/srd-2014-equipment.json'
 import magicItemData from '../data/srd-2014-magic-items.json'
+import compendiumIndex from '../data/srd-2014-compendium-index.json'
+import { compendiumFacets } from '../../shared/compendium-facets'
 
 // Public 2014 rules are served locally, so sheet details never depend on a slow
 // third-party request. Source revision and notices are in server/data/README.md.
 interface Rule {index:string;name:string;url:string;[key:string]:unknown}
 const spells=spellData as Rule[],equipment=equipmentData as Rule[],magicItems=magicItemData as Rule[]
 const spellIndex=new Map(spells.map(s=>[s.index,s]))
+const compendiumSpells=spells.map(entry=>({index:entry.index,name:entry.name,url:entry.url,filterFacets:compendiumFacets(entry,'spells')}))
 export const coreSpell=(index:string)=>spellIndex.get(index)
 export function coreSpellNamed(name:string) {
   const key=(s:string)=>s.toLowerCase().replace(/[^a-z0-9]/g,'')
@@ -15,6 +18,10 @@ export function coreSpellNamed(name:string) {
 }
 export function localSrdRule(path:string):unknown|undefined {
   const url=new URL(path,'https://srd.local/'),parts=url.pathname.slice(1).split('/')
+  if(parts[0]==='compendium'&&parts.length===2&&!url.search){
+    const kind=parts[1]!,entries=kind==='spells'?compendiumSpells:Object.hasOwn(compendiumIndex,kind)?compendiumIndex[kind as keyof typeof compendiumIndex]:undefined
+    return entries?{count:entries.length,results:entries}:null
+  }
   const entries=parts[0]==='spells'?spells:parts[0]==='equipment'?equipment:parts[0]==='magic-items'?magicItems:undefined
   if(!entries)return undefined
   if(parts.length===2&&!url.search)return entries.find(e=>e.index===parts[1])??null

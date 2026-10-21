@@ -220,6 +220,7 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 export const srd = {
+  async compendium(kind: string) { return (await getJson<SrdListResponse<SrdRef & { filterFacets:import('../../shared/compendium-facets').FacetValues }>>(`/compendium/${kind}`)).results },
   async subclasses() { return (await getJson<SrdListResponse<SrdRef>>('/subclasses')).results },
   async subraces() { return (await getJson<SrdListResponse<SrdRef>>('/subraces')).results },
   async feats() { return (await getJson<SrdListResponse<SrdRef>>('/feats')).results },

@@ -11,3 +11,10 @@ Attribution 4.0 International: https://creativecommons.org/licenses/by/4.0/ .
 This snapshot supplies standard spell/equipment/magic-item lookups and character-scoped
 references. It does not replace imported homebrew definitions or
 add its full data to the frontend JavaScript bundle.
+
+`srd-2014-compendium-index.json` contains only names, references, and filter metadata
+for monsters, classes, races, subraces, subclasses, backgrounds, feats, and languages
+from the same pinned revision above. Rebuild with `scripts/update-compendium-index.ts`
+using the server's tsx runner. Spells derive their filter index from the existing local
+spell snapshot. Each Compendium category requests only its own small index; full
+descriptions still load when an entry is selected. No private content is in this index.
