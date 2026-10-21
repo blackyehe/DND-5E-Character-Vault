@@ -69,4 +69,18 @@ from reliably automating every described combat rule.
 Pre-change Git commit: `6c5c784`.
 Pre-change production deployment: `dpl_3ETa93UDLMNfgqDoN8CaHVjMvNmH`.
 
-Release details are recorded below when publication completes.
+Backup tag: `backup/pre-bestiary-reader-motion-2026-10-22`.
+
+## Published release
+
+- Feature commit: `9cc380b`.
+- Published 22 October 2026 at https://dndoldal.vercel.app.
+- Ready deployment: `dpl_D7MNP2Sjqqrg4UQoNR9C9tSiVW3F`.
+- Deployment URL: https://dndoldal-gvipqxf8e-dndenjoyerstudio.vercel.app.
+- After promotion, the public alias resolved to this deployment. The home page
+  returned HTTP 200; `/api/health` returned HTTP 200 with `{"ok":true}`.
+- The previous deployment is retained. To restore it:
+
+```powershell
+vercel rollback dpl_3ETa93UDLMNfgqDoN8CaHVjMvNmH --scope dndenjoyerstudio --yes
+```
