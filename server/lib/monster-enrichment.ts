@@ -26,7 +26,12 @@ export function monsterEnrichmentPlan(entries:MonsterIdentityEntry[]) {
   return {snapshot:monsterSnapshotId,revision:sourceHash(JSON.stringify(entries.map(e=>e.index).sort())),supplements,report,summary:{total:report.length,matched:report.filter(r=>r.reference).length,rules:report.filter(r=>r.reference&&r.mode==='rules-and-info').length,infoOnly:report.filter(r=>r.reference&&r.mode==='info-only').length,lore:report.filter(r=>r.lore).length,art:report.filter(r=>r.art).length,unmatched:report.filter(r=>!r.reference).length}}
 }
 export async function enrichedMonsterEntries<T extends MonsterIdentityEntry>(userId:string|undefined,entries:T[]) {
-  const doc=await CustomContent.findOne({userId,type:'monster-enrichment',sourceHash:'active'}).select('data.entries').lean()
+  if(!entries.length)return entries
+  // Detail views need one supplement, not the account's entire saved bestiary.
+  // Keep legacy keys containing Mongo path syntax readable via the full field.
+  const keys=[...new Set(entries.map(entry=>entry.index))]
+  const fields=keys.every(key=>/^[a-z0-9_-]+$/i.test(key))?keys.map(key=>`data.entries.${key}`).join(' '):'data.entries'
+  const doc=await CustomContent.findOne({userId,type:'monster-enrichment',sourceHash:'active'}).select(fields).lean()
   const saved=(doc?.data as {entries?:Record<string,MonsterEnrichment>}|undefined)?.entries??{}
   return entries.map(entry=>saved[entry.index]?{...entry,monsterEnrichment:withToken(saved[entry.index])}:entry)
 }

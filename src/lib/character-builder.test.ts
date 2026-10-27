@@ -68,7 +68,7 @@ describe('character sheet handoff', () => {
     expect(character.spellcasting).toMatchObject({ ability: 'int', known: ['shield', 'magic-missile'], prepared: ['shield'], slots: { l1: { max: 4, used: 0 }, l2: { max: 2, used: 0 } } })
     expect(character.proficiencies.tools).toEqual(['Lute', 'Disguise kit'])
     expect(character.proficiencies.languages).toEqual(['Common', 'Elvish', 'Draconic'])
-    expect(character.equipment[0]).toEqual({ name: 'Dagger', qty: 2, weight: 1, equipped: true, notes: 'A gift' })
+    expect(character.equipment[0]).toEqual({ index: 'dagger', name: 'Dagger', qty: 2, weight: 1, equipped: true, notes: 'A gift' })
     expect(character.features).toHaveLength(2)
     expect(character.personality.appearance).toContain('Age: 104\nPronouns: she / her')
     expect(character.personality.backstory).toBe('A scholar on the road.')

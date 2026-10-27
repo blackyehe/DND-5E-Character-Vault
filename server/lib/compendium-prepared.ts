@@ -30,7 +30,10 @@ export const preparedReaderEnabled=(userId:string)=>env.COMPENDIUM_READER==='pre
 export async function readPreparedIndex(userId:string,revision:string,kind:BrowseKind,context?:PreparedProbeContext):Promise<BrowseIndex|null> {
  const key=JSON.stringify([userId,revision,kind,'components']);if(context?.failed.has(key))return null
  try{
-  const deadline=context?(context.deadline??=performance.now()+2500):performance.now()+2500
+  // A cold category contains 126 independently checked components in the live
+  // library. Keep a real overall bound without forcing healthy cold reads into
+  // a much more expensive full-source rebuild after only 2.5 seconds.
+  const deadline=context?(context.deadline??=performance.now()+15000):performance.now()+15000
   const metadata=await componentMetadata(userId,deadline),contexts=metadata.map(componentContext)
   if(contexts.some(c=>!c)){context?.failed.add(key);return null}
   const compositionKey=JSON.stringify([userId,kind,sourceHash(JSON.stringify(contexts))]),cached=compositions.get(compositionKey),warm=warmWorkshopCatalog(userId,metadata)

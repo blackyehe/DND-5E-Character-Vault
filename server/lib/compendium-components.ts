@@ -15,10 +15,11 @@ export const COMPONENT_VERSION='compendium-components-3-families'
 export const COMPONENT_METADATA='_catalogue'
 const MAX_CATEGORY_BYTES=64*1024*1024,MAX_COMPRESSED_BYTES=32*1024*1024,MAX_COMPONENT_ENTRIES=100000
 const REQUEST_SOURCE_BYTES=1024*1024,REQUEST_PROJECTION_BYTES=8*1024*1024,REQUEST_ENTRIES=5000
-// Eight normal 512 KiB chunks keep each driver batch around 4 MiB while
-// avoiding a network roundtrip for every source pack. The driver/server BSON
-// limits still apply; malformed payloads are rejected before retention below.
-const CATALOGUE_BATCH_SIZE=8,CHUNK_BYTES=512*1024
+// Most of a multi-category read is verified empty objects. Small batches made
+// 126 packs require dozens of network round trips before any catalogue loaded.
+// MongoDB still caps each wire batch at 16 MiB; total compressed/decoded bytes
+// are checked below before retention, independently of the requested count.
+const CATALOGUE_BATCH_SIZE=128,CHUNK_BYTES=512*1024
 interface RepairBudget {deadline:number;attempts:number;sourceBytes:number;projectionBytes:number;entries:number;chunks:number}
 function remaining(deadline:number,max=1000) {
  const ms=Math.min(max,Math.floor(deadline-performance.now()))
@@ -168,14 +169,16 @@ export async function readComponentCatalogues(userId:string,kind:BrowseKind|read
   }
  }
  const generationKeys=new Map(manifests.map(m=>[m.generation,m.context])),groups=new Map<string,StoredPreparedChunk[]>();let compressed=0,chunks=0
- // Multi-category reads contain many verified empty category objects. Bound a
- // driver batch to at most 32 x 512 KiB instead of paying six separate cursors.
- const cursor=CompendiumComponentObject.find({userId,generation:{$in:manifests.map(m=>m.generation)},kind:{$in:kinds},role:'catalogue',index:COMPONENT_METADATA}).select('generation kind part parts digest payload').sort({generation:1,kind:1,part:1}).setOptions({maxTimeMS:4000,timeoutMS:remaining(deadline,4000)}).cursor({batchSize:kinds.length>1?32:CATALOGUE_BATCH_SIZE})
+ const cursor=CompendiumComponentObject.find({userId,generation:{$in:manifests.map(m=>m.generation)},kind:{$in:kinds},role:'catalogue',index:COMPONENT_METADATA}).select('generation kind part parts digest payload').sort({generation:1,kind:1,part:1}).setOptions({maxTimeMS:4000,timeoutMS:remaining(deadline,15000)}).lean().cursor({batchSize:CATALOGUE_BATCH_SIZE})
  try{for await(const object of cursor){
   remaining(deadline)
   if(++chunks>Math.max(1,packs.length)*kinds.length*129)return null
   const context=generationKeys.get(object.generation);if(!context||!kinds.includes(object.kind as BrowseKind))return null
-  const payload=object.payload as unknown as {length?:number;position?:number},size=payload?.length??payload?.position
+  // Lean Mongo reads return BSON Binary (whose length is a method), while
+  // hydrated documents return Buffer. Validate the bytes in either form.
+  const payload=object.payload as unknown as {buffer?:Uint8Array;position?:number}
+  const size=payload instanceof Uint8Array?payload.byteLength:
+   payload?.buffer instanceof Uint8Array&&Number.isInteger(payload.position)&&payload.position!>=0&&payload.position!<=payload.buffer.byteLength?payload.position:undefined
   if(!Number.isInteger(size)||size!<0||size!>CHUNK_BYTES)return null
   compressed+=size!;if(compressed>MAX_COMPRESSED_BYTES)return null
   const key=context+':'+object.kind,list=groups.get(key)??[];if(list.length>=129)return null;list.push(object as unknown as StoredPreparedChunk);groups.set(key,list)

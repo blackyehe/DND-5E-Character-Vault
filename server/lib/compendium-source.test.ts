@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { newWorkshopDraft } from '../../shared/homebrew-workshop'
 import { EDITABLE_KINDS } from '../../shared/compendium-editing'
 const fixture=vi.hoisted(()=>({entries:Object.fromEntries(['spells','equipment','magic-items','classes','subclasses','races','subraces','monsters','backgrounds','feats','invocations','boons','selections','languages','other'].map(kind=>[kind,[]])) as Record<string,any[]>,item:null as any,read:vi.fn()}))
-vi.mock('./workshop-library',()=>({workshopLibrary:async(user:string)=>({catalog:user==='owner'?fixture.entries:Object.fromEntries(EDITABLE_KINDS.map(k=>[k,[]]))})}))
+vi.mock('./compendium-browse',()=>({browseEntrySource:async(user:string,kind:string,index:string)=>user==='owner'?fixture.entries[kind]?.find(e=>e.index===index)??null:null}))
 vi.mock('../models/CustomContent',()=>({CustomContent:{findOne:(filter:Record<string,unknown>)=>({lean:async()=>filter.userId==='owner'?fixture.item:null})}}))
 vi.mock('../env',()=>({env:{SRD_API_URL:'https://fixture.invalid'}}))
 vi.mock('./srd-client',()=>({readSrdRule:fixture.read}))
@@ -12,7 +12,7 @@ beforeEach(()=>{for(const kind of EDITABLE_KINDS)fixture.entries[kind]=[];fixtur
 describe('editable source resolution',()=>{
   it('returns full native rules with their Workshop editor data and preserved raw source',async()=>{
     const draft=newWorkshopDraft();draft.name='Native class';draft.skillCount=0
-    fixture.entries.classes=[{index:'homebrew-classes-test',name:draft.name,contentKey:'native-class',aliases:[],details:{':codex/workshop':draft,':unknown':{zero:0,enabled:false}}}]
+    fixture.entries.classes=[{index:'homebrew-classes-test',name:draft.name,contentKey:'native-class',aliases:[],workshop:draft,details:{':codex/workshop':draft,':unknown':{zero:0,enabled:false}}}]
     const entry=await compendiumSource('owner','classes','homebrew-classes-test')
     expect(entry?.workshop).toMatchObject({id:draft.id,name:draft.name});expect(entry?.details).toHaveProperty(':unknown',{zero:0,enabled:false})
     expect(await compendiumSource('stranger','classes','homebrew-classes-test')).toBeNull()

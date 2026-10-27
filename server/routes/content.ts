@@ -15,6 +15,7 @@ import { readPackDocuments } from '../lib/pack-source'
 import { ensureContentIndexes } from '../lib/content-indexes'
 import { combinedOrcbrew } from '../lib/orcbrew-export'
 import { itemBrowseEntry } from '../lib/orcbrew-items'
+import { creationCatalog } from '../lib/creation-catalog'
 
 const router = Router()
 router.use(requireAuth)
@@ -39,6 +40,8 @@ function packSummary(doc: { _id: unknown; data: unknown }) {
     return { id: String(doc._id), filename: data.filename, error: error instanceof Error ? error.message : 'Could not read saved file' }
   }
 }
+
+router.get('/creation-options',async(req,res)=>res.json(await creationCatalog(req.userId!)))
 
 router.get('/homebrew/:kind', async (req, res) => {
   const kind = req.params.kind as OrcbrewKind

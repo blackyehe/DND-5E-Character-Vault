@@ -39,7 +39,7 @@ export async function characterRuleLibrary(userId:string|undefined):Promise<Char
     if(full)return full
     try{
       const {componentMetadata,readComponentCatalogues}=await import('./compendium-components')
-      const deadline=performance.now()+2500,metadata=await componentMetadata(userId,deadline)
+      const deadline=performance.now()+15000,metadata=await componentMetadata(userId,deadline)
       // All six categories in one bounded cursor; one shared repair budget.
       const packs=await readComponentCatalogues(userId,CHARACTER_RULE_KINDS,metadata,true,deadline)
       if(packs){

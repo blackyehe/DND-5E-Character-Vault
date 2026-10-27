@@ -131,7 +131,7 @@ async function loadIndex(userId:string,kind:BrowseKind,revision:string,probes:Pr
   const existing=pending.get(key);if(existing)return existing
   const task=(async():Promise<IndexLoad>=>{
     const started=performance.now()
-    const stored=await CompendiumBrowseIndex.find({userId,revision,kind}).sort({part:1}).lean()
+    const stored=await CompendiumBrowseIndex.find({userId,revision,kind}).sort({part:1}).setOptions({maxTimeMS:4000,timeoutMS:5000}).lean()
     const decoded=decodeBrowseIndex(stored as unknown as IndexChunk[])
     if(decoded)return {index:remember(key,decoded),origin:'legacy'}
     if(preparedReaderEnabled(userId)){

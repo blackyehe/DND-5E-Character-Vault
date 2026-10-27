@@ -193,7 +193,13 @@ export interface HomebrewReference extends SrdRef {
   details: Record<string, unknown>
 }
 
+export interface CreationOptions {
+  classes: HomebrewClass[]; races: HomebrewRace[]; backgrounds: HomebrewBackground[];
+  subraces: HomebrewSubrace[]; subclasses: HomebrewSubclass[]; feats: HomebrewFeat[];
+  languages: HomebrewReference[]; spells: HomebrewSpell[];
+}
 export const homebrew = {
+  creationOptions: () => api.get<CreationOptions>('/api/content/creation-options',{timeoutMs:30000}),
   equipment: () => api.get<SrdRef[]>('/api/content/homebrew/equipment?view=index',{timeoutMs:60000}),
   'magic-items': () => api.get<SrdRef[]>('/api/content/homebrew/magic-items?view=index',{timeoutMs:60000}),
   spells: () => api.get<HomebrewSpell[]>('/api/content/homebrew/spells'),

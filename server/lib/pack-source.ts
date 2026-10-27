@@ -3,6 +3,8 @@ import { decodedPackData } from './pack-storage'
 
 export const PACK_SOURCE_CHARS=192*1024
 const PARALLEL_READS=4
+const PACK_BATCH_SIZE=12
+const READ_OPTIONS={maxTimeMS:10000,timeoutMS:12000}
 
 /** Bound each database reply instead of receiving a multi-megabyte cursor batch.
  * Every piece belongs to the same owner, document version and source hash.
@@ -10,7 +12,19 @@ const PARALLEL_READS=4
 export async function readPackDocuments(userId:string|undefined,packId?:string) {
   const records=await CustomContent.find({userId,type:'orcbrew',...(packId?{_id:packId}:{})}).select('_id userId type data.filename data.includeDisabled data.sourceEncoding data.sourceBytes sourceHash createdAt updatedAt').sort({_id:1}).lean()
   const docs=[]
-  for(const record of records){
+  for(let start=0;start<records.length;start+=PACK_BATCH_SIZE){
+   const batch=records.slice(start,start+PACK_BATCH_SIZE)
+   const guard=(record:typeof records[number])=>({_id:record._id,userId:record.userId,type:'orcbrew',updatedAt:record.updatedAt,...(record.sourceHash?{sourceHash:record.sourceHash}:{})})
+   const source={$cond:[{$eq:[{$type:'$data.source'},'string']},'$data.source','']}
+   // One bounded first-chunk query per batch, rather than one round trip per
+   // pack. Even twelve full chunks remain below three MiB. Match every exact
+   // revision so racing replacements cannot be combined with old metadata.
+   const firstParts=await CustomContent.aggregate<{_id:unknown;part:string;length:number;valid:boolean}>([
+    {$match:{$or:batch.map(guard)}},
+    {$project:{_id:1,valid:{$eq:[{$type:'$data.source'},'string']},part:{$substrCP:[source,0,PACK_SOURCE_CHARS]},length:{$strLenCP:source}}},
+   ]).option(READ_OPTIONS)
+   const byId=new Map(firstParts.map(part=>[String(part._id),part]))
+   for(const record of batch){
     const filter={_id:record._id,userId:record.userId,type:'orcbrew',updatedAt:record.updatedAt,...(record.sourceHash?{sourceHash:record.sourceHash}:{})}
     const read=async(offset:number)=>{
       const source={$cond:[{$eq:[{$type:'$data.source'},'string']},'$data.source','']}
@@ -19,11 +33,13 @@ export async function readPackDocuments(userId:string|undefined,packId?:string) 
         {$project:{_id:0,valid:{$eq:[{$type:'$data.source'},'string']},
           part:{$substrCP:[source,offset,PACK_SOURCE_CHARS]},
           length:{$strLenCP:source}}},
-      ])
+      ]).option(READ_OPTIONS)
       if(!part)throw new Error('A homebrew pack changed while reading. Please refresh.')
       return part
     }
-    const first=await read(0),pieces=[first.part]
+    const first=byId.get(String(record._id))
+    if(!first)throw new Error('A homebrew pack changed while reading. Please refresh.')
+    const pieces=[first.part]
     if(!first.valid){docs.push({...record,data:{...(record.data as {filename:string;includeDisabled?:boolean}),source:undefined}});continue}
     for(let start=PACK_SOURCE_CHARS;start<first.length;start+=PACK_SOURCE_CHARS*PARALLEL_READS){
       const offsets=Array.from({length:PARALLEL_READS},(_,i)=>start+i*PACK_SOURCE_CHARS).filter(offset=>offset<first.length)
@@ -32,6 +48,7 @@ export async function readPackDocuments(userId:string|undefined,packId?:string) 
       pieces.push(...group.map(part=>part.part))
     }
     docs.push({...record,data:decodedPackData({...(record.data as {filename:string;includeDisabled?:boolean}),source:pieces.join('')})})
+   }
   }
   return docs
 }

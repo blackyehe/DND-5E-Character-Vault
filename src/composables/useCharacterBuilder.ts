@@ -26,6 +26,7 @@ const pretty = (name: string) => name.replace(/-/g, ' ').replace(/\b\w/g, (char)
 export function useCharacterBuilder() {
   const draft = reactive(newBuilderDraft())
   const ready = ref(false)
+  const libraryLoading = ref(false)
   const warnings = ref<string[]>([])
   const detailError = ref('')
   const raceLoading = ref(false), classLoading = ref(false), featureLoading = ref(false), subraceLoading = ref(false), subclassLoading = ref(false), backgroundLoading = ref(false)
@@ -113,7 +114,7 @@ export function useCharacterBuilder() {
   const spellProblems = computed(() => spellSelectionProblems(draft.spells, spellPolicy.value))
   const scores = computed(() => abilityTotals(draft, context.value))
   const issues = computed(() => builderIssues(draft, context.value))
-  const canCreate = computed(() => ready.value && !loadingDetails.value && !inventoryBusy.value && !issues.value.length)
+  const canCreate = computed(() => ready.value && !libraryLoading.value && !loadingDetails.value && !inventoryBusy.value && !issues.value.length)
   const stats = computed(() => ({
     hp: draft.hpOverride ?? (klass.value ? maxHP(klass.value.hit_die, scores.value.con, draft.level) : null),
     ac: armorClass(draft, scores.value), speed: subrace.value?.speed ?? race.value?.speed ?? null,
@@ -324,18 +325,32 @@ export function useCharacterBuilder() {
       const stored = localStorage.getItem(key)
       if (stored) { Object.assign(draft, restoreBuilderDraft(JSON.parse(stored))); restored.value = true }
     } catch { /* A corrupt draft must not prevent starting a new character. */ }
+    await reloadLibrary()
+  })
+  async function reloadLibrary() {
+    if(libraryLoading.value||disposed)return
+    libraryLoading.value=true
+    try {
     const results = await Promise.allSettled([
       srd.classes(), srd.races(), srd.backgrounds(), srd.equipment(), srd.languages(),
-      homebrew.classes(), homebrew.races(), homebrew.backgrounds(), homebrew.subraces(), homebrew.subclasses(), homebrew.feats(), homebrew.languages(), homebrew.spells(),
+      homebrew.creationOptions(),
     ] as const)
     if (disposed) return
     const value = <T>(result: PromiseSettledResult<T>, fallback: T): T => result.status === 'fulfilled' ? result.value : fallback
-    customClasses.value = value(results[5], []); customRaces.value = value(results[6], []); customBackgrounds.value = value(results[7], [])
-    customSubraces.value = value(results[8], []); customSubclasses.value = value(results[9], []); feats.value = value(results[10], []); customSpells.value = value(results[12], [])
-    classes.value = [...value(results[0], []), ...customClasses.value]; races.value = [...value(results[1], []), ...customRaces.value]
-    backgrounds.value = [...value(results[2], []), ...customBackgrounds.value]; equipment.value = value(results[3], [])
-    languages.value = [...new Map([...value(results[4], []), ...value(results[11], [])].map((entry) => [entry.name.toLowerCase(), entry])).values()]
-    if (results.some((result) => result.status === 'rejected')) warnings.value = ['Some content sources are unavailable. You can use the options that loaded, or reload to retry.']
+    const imported=results[5]
+    if(imported.status==='fulfilled'){
+      const options=imported.value
+      customClasses.value=options.classes;customRaces.value=options.races;customBackgrounds.value=options.backgrounds
+      customSubraces.value=options.subraces;customSubclasses.value=options.subclasses;feats.value=options.feats;customSpells.value=options.spells
+    }
+    classes.value = [...value(results[0], classes.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customClasses.value]
+    races.value = [...value(results[1], races.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customRaces.value]
+    backgrounds.value = [...value(results[2], backgrounds.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customBackgrounds.value]; equipment.value = value(results[3], equipment.value)
+    languages.value = [...new Map([...value(results[4], languages.value), ...(imported.status==='fulfilled'?imported.value.languages:[])].map((entry) => [entry.name.toLowerCase(), entry])).values()]
+    warnings.value = [
+      ...(imported.status==='rejected'?['Imported character options could not load. Retry the library to include your packs.']:[]),
+      ...(results.slice(0,5).some(result=>result.status==='rejected')?['Some SRD options could not load. Retry the library to complete the list.']:[]),
+    ]
     draft.spells = draft.spells.map((spell) => {
       const current = customSpells.value.find((entry) => entry.index === spell.index || entry.aliases?.includes(spell.index))
       return current ? { ...spell, index: current.index, name: contentLabel(current) } : spell
@@ -349,10 +364,11 @@ export function useCharacterBuilder() {
     await Promise.allSettled([loadRace(), loadClass(), loadSubrace(), loadSubclass(), loadBackground()])
     if (draft.step === 'spells') void searchSpells()
     saveDraft()
-  })
+    } finally { libraryLoading.value=false }
+  }
   onBeforeUnmount(() => { disposed = true; clearTimeout(saveTimer); clearTimeout(spellTimer); saveDraft(); ++raceSequence; ++classSequence; ++subraceSequence; ++subclassSequence; ++backgroundSequence; ++featureSequence; ++spellSequence; ++spellDetailSequence })
 
-  return { draft, ready, warnings, detailError, race, klass, subrace, subclass, background, races, classes, backgrounds, equipment, languages, feats,
+  return { draft, ready, libraryLoading, reloadLibrary, warnings, detailError, race, klass, subrace, subclass, background, races, classes, backgrounds, equipment, languages, feats,
     raceTraits, classTraits, subraceTraits, subclassTraits, subclassOptions, subraceOptions, skillChoice, fixedSkills, context, scores, issues, stats, canCreate, canCast, loadingDetails,
     spellPolicy, spellCounts, spellProblems, spellAddProblem, canPrepareSpell,
     spellQuery, spellLevel, classSpellsOnly, spellResults, spellLoading, spellError, spellDetail, spellDetailLoading, classLevel,

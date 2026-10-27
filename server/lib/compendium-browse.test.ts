@@ -1,6 +1,8 @@
 import { beforeEach,describe,it,expect,vi } from 'vitest'
 const state=vi.hoisted(()=>({revision:'one',catalog:{} as Record<string,unknown[]>,edits:[] as unknown[],chunks:[] as any[],onBuild:undefined as (()=>void)|undefined,build:vi.fn(),writes:vi.fn(),reads:vi.fn()}))
-vi.mock('../env',()=>({env:{SRD_API_URL:'https://fixture.invalid'}}))
+vi.mock('../env',()=>({env:{SRD_API_URL:'https://fixture.invalid',COMPENDIUM_READER:'legacy',COMPENDIUM_PREPARED_USERS:''}}))
+vi.mock('./compendium-prepared',()=>({preparedReaderEnabled:()=>false,readPreparedIndex:vi.fn(),readPreparedSource:vi.fn()}))
+vi.mock('./compendium-entry-source',()=>({importedCompendiumSource:vi.fn()}))
 vi.mock('./workshop-library',()=>({workshopLibrary:async(user:string)=>{state.build(user);state.onBuild?.();return {catalog:state.catalog}}}))
 vi.mock('./monster-enrichment',()=>({enrichedMonsterEntries:async(_u:string,e:unknown)=>e,enrichedStandardMonster:(e:unknown)=>e}))
 vi.mock('../models/CustomContent',()=>({CustomContent:{find:(filter:any)=>{
@@ -8,7 +10,7 @@ vi.mock('../models/CustomContent',()=>({CustomContent:{find:(filter:any)=>{
 },findOne:()=>({select:()=>({lean:async()=>null}),lean:async()=>null})}}))
 vi.mock('../models/CompendiumBrowseIndex',()=>({CompendiumBrowseIndex:{
   init:async()=>{},createCollection:async()=>{},ensureIndexes:async()=>{},
-  find:(filter:any)=>({sort:()=>({lean:async()=>{state.reads(filter);return state.chunks.filter(c=>c.userId===filter.userId&&c.revision===filter.revision&&c.kind===filter.kind)}})}),
+  find:(filter:any)=>{const q={sort:()=>q,setOptions:()=>q,lean:async()=>{state.reads(filter);return state.chunks.filter(c=>c.userId===filter.userId&&c.revision===filter.revision&&c.kind===filter.kind)}};return q},
   bulkWrite:async(ops:any[])=>{state.writes(ops);for(const op of ops)state.chunks.push({...op.updateOne.filter,...op.updateOne.update.$set})},
 }}))
 beforeEach(()=>{vi.resetModules();state.revision='one';state.catalog={other:[]};state.edits=[];state.chunks=[];state.onBuild=undefined;state.build.mockClear();state.writes.mockClear();state.reads.mockClear()})
