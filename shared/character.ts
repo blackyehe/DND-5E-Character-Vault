@@ -106,6 +106,7 @@ export interface ExternalCharacterImport {
   warnings: string[]
 }
 export interface Character {
+  compendiumRules?: import('./compendium-editing').CompendiumDefinition[]
   homebrew?: {
     bindings:{ruleId:string;revision:number;index:string;className:string;rule:import('./homebrew-workshop').WorkshopDraft}[]
     choices:Record<string,string[]>
@@ -126,7 +127,7 @@ export interface Character {
     alignment: string
     xp: number
     portrait: string
-    classLevels?: { name: string; level: number; index?:string }[]
+    classLevels?: { name: string; level: number; index?:string; subclass?:string; subclassIndex?:string }[]
     classIndex?:string
     subclassIndex?:string
     raceIndex?:string
@@ -152,6 +153,7 @@ export interface Character {
   resources?: CharacterResource[]
   equipment: EquipmentItem[]
   spellcasting: {
+    activeEffects?: string[]
     ability: AbilityKey
     limitOverride?:boolean
     slotRule?: SpellSlotRule

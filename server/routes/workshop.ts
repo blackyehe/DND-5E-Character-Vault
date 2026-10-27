@@ -1,5 +1,6 @@
 import { env } from '../env'
 import { Router } from 'express'
+import { storedPackData,MAX_PACK_BYTES } from '../lib/pack-storage'
 import { isValidObjectId } from 'mongoose'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth'
@@ -81,10 +82,10 @@ router.post('/publish',async(req,res)=>{
       const targetPack=p.lib.packs.find(pack=>pack.id===target.packId),targetOrigin=targetPack?.parsed.entries[workshopSection(draft.kind)].find(e=>e.index===p.origin?.index||((e.details as Record<string,unknown>)[':codex/workshop'] as WorkshopDraft|undefined)?.id===draft.id),hasOrigin=!!targetOrigin
       const compiled=compileWorkshopEntry(draft,hasOrigin?oldData!.source:p.source,targetOrigin??p.origin,(p.latest?.revision??0)+1,[...new Set([...p.previousIndexes,...(targetOrigin?[targetOrigin.index]:[])])],p.previousNames,p.spellReferences,p.parentKey,p.baseline)
       const source=placeWorkshopEntry(oldData?.source,compiled,draft.kind,workshopKey(draft),hasOrigin)
-      if(Buffer.byteLength(source,'utf8')>8*1024*1024)return res.status(400).json({error:'The revised pack exceeds 8 MB. Save into a new pack instead.'})
+      if(Buffer.byteLength(source,'utf8')>MAX_PACK_BYTES)return res.status(400).json({error:'The revised pack exceeds 64 MB. Save into a new pack instead.'})
       const inspected=inspectOrcbrew(source),entry=inspected.entries[workshopSection(draft.kind)].find(e=>(e.details as Record<string,unknown>)[':codex/workshop']&&( (e.details as Record<string,unknown>)[':codex/workshop'] as WorkshopDraft).id===draft.id)
       if(!entry)throw new Error('The revised pack could not be read back.')
-      const data={...oldData,filename:oldData?.filename??target.filename!,source,includeDisabled:oldData?.includeDisabled??false},hash=sourceHash(source)
+      const data=storedPackData({...oldData,filename:oldData?.filename??target.filename!,source,includeDisabled:oldData?.includeDisabled??false}),hash=sourceHash(source)
       if(entry.disabled&&!data.includeDisabled)return res.status(400).json({error:'This pack is disabled. Enable its disabled content in the Compendium or choose another pack.'})
       const duplicate=await CustomContent.findOne({userId:req.userId,type:'orcbrew',sourceHash:hash,...(targetDoc?{_id:{$ne:targetDoc._id}}:{})}).lean()
       if(duplicate)return res.status(409).json({error:'An identical pack is already in your library.'})

@@ -18,3 +18,22 @@ from the same pinned revision above. Rebuild with `scripts/update-compendium-ind
 using the server's tsx runner. Spells derive their filter index from the existing local
 spell snapshot. Each Compendium category requests only its own small index; full
 descriptions still load when an entry is selected. No private content is in this index.
+
+## Monster enrichment snapshot
+
+`5etools-monster-references.json` is a separate, source-qualified reference
+snapshot of the built-in 5etools bestiary, captured from https://5e.tools using
+its public data loader, version 2.38.0, on 2026-10-22 (Europe/Budapest).
+The upstream loader resolved monster copies, generated versions, legendary
+groups, and lore/image inheritance before conversion. It contains 4,942 source
+definitions, including reprints and forms, not 4,942 unique creatures.
+
+The local converter is `scripts/build-monster-references.ts`; the matching and
+safe supplement behavior are in `shared/monster-reference-match.ts` and
+`shared/monster-enrichment.ts`. Original account packs and their IDs stay intact.
+The snapshot is server-only. Artwork remains at its upstream URL and loads when
+the Artwork view is selected; artist metadata is retained where supplied.
+Each matched entry links to its precise upstream creature/source. Unavailable
+sources and ambiguous forms are reported and are never replaced by another
+edition. This dataset is distinct from the CC-licensed SRD snapshot above;
+individual source books and artwork retain their own attribution and rights.

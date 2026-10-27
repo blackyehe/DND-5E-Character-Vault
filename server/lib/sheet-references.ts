@@ -5,6 +5,7 @@ import { activeWorkshopEntries } from './workshop-schema'
 import type { WorkshopLibrary } from './workshop-library'
 import { coreSpell, coreSpellNamed } from './srd-snapshot'
 import { legacySrdSpellKey } from '../../src/lib/spell-reference'
+import { characterUsesDefinition } from './compendium-character'
 
 /** Only definitions used by this character cross the room's assignment boundary. */
 export function sheetReferences(c:Character,library:WorkshopLibrary) {
@@ -26,5 +27,17 @@ export function sheetReferences(c:Character,library:WorkshopLibrary) {
     const fallback=legacySrdSpellKey(id),spell=coreSpell(fallback??id)
     return spell?[{...spell,sourcePack:'SRD 2014',...(fallback?{aliases:[id],referenceFallback:true}:{})}]:[]
   })
-  return {spells:[...custom,...standard],feats:select('feats'),races:select('races'),subclasses:select('subclasses'),classes:select('classes'),backgrounds:select('backgrounds')}
+  const result={spells:[...custom,...standard],feats:select('feats'),races:select('races'),subclasses:select('subclasses'),classes:select('classes'),backgrounds:select('backgrounds')}
+  for(const definition of c.compendiumRules??[]){
+    if(!(definition.kind in result))continue
+    if(!characterUsesDefinition(c,{...definition,before:definition.entry},false))continue
+    const rows=result[definition.kind as keyof typeof result] as Record<string,unknown>[]
+    const exact=rows.findIndex(entry=>entry.index===definition.index||Array.isArray(entry.aliases)&&entry.aliases.includes(definition.index))
+    const named=rows.filter(entry=>entry.name===definition.before.name)
+    const i=exact>=0?exact:named.length===1?rows.indexOf(named[0]!):-1
+    const {details,...entry}=definition.entry
+    if(i>=0)rows[i]={...rows[i],...entry,definitionAvailable:true}
+    else rows.push({...entry,definitionAvailable:true})
+  }
+  return result
 }

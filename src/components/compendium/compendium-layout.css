@@ -12,10 +12,16 @@
 .compendium-filter-footer>button { margin-left:auto; min-height:39px; }
 .compendium-filter-note { margin:10px 0 0; font-size:12px; color:var(--cb-muted); }
 .compendium-browser { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:18px; align-items:start; }
-.compendium-browser>.panel { min-width:0; margin:0; max-height:70vh; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.compendium-browser>.panel { min-width:0; margin:0; height:clamp(420px,70dvh,800px); max-height:none; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
 .compendium-detail { min-height:200px; overflow-wrap:anywhere; }
 .compendium-detail-content { min-width:0; }
 .compendium-results button[aria-current=true] { background:var(--cb-soft); box-shadow:inset 3px 0 var(--cb-accent-text); }
+.compendium-pagination { position:sticky; bottom:-16px; margin:14px -4px -4px; padding:12px 4px 4px; border-top:1px solid var(--cb-line); background:var(--cb-paper); }
+.compendium-pagination p { margin:0 0 8px; color:var(--cb-muted); font-size:12px; }
+.compendium-pagination p span { white-space:nowrap; }
+.compendium-pagination>div { display:flex; justify-content:space-between; gap:8px; }
+.compendium-pagination button { min-height:40px; }
+.compendium-pagination button:disabled { opacity:.45; cursor:default; }
 @media(prefers-reduced-motion:no-preference) {
   .site-shell[data-motion=balanced] .compendium-results button[aria-current=true] { animation:compendium-entry-selected 190ms var(--motion-ease,ease-out); }
 }
@@ -27,13 +33,17 @@
 .compendium-pack-filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:18px; }
 .compendium-pack-filters label { display:flex; flex-direction:column; flex:1 1 180px; gap:5px; font-size:13px; min-width:0; }
 .compendium-pack-filters p { margin:0 0 10px; font-size:13px; }
+.monster-version-count { display:block; color:var(--cb-accent-text); font-size:11px; opacity:.8; }
+.monster-version-selector { display:flex; flex-direction:column; gap:6px; margin-bottom:20px; font-size:13px; min-width:0; }
+.monster-version-selector select { max-width:100%; width:100%; }
+.monster-version-selector small { opacity:.7; line-height:1.5; }
 @media(max-width:767px) {
   .compendium-page { padding-inline:14px; }
   .compendium-page,.compendium-content { gap:14px; }
   .compendium-filter-panel { padding:14px; }
   .compendium-browser { grid-template-columns:minmax(0,1fr); gap:14px; }
-  .compendium-browser>.compendium-results { max-height:38vh; }
-  .compendium-browser>.compendium-detail { max-height:70vh; }
+  .compendium-browser>.compendium-results { height:clamp(180px,30dvh,300px); max-height:none; }
+  .compendium-browser>.compendium-detail { height:clamp(360px,65dvh,700px); max-height:none; }
   .compendium-filters,.compendium-filter-panel .item-search-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .compendium-filter-footer>.compendium-filters { max-width:none; }
 }

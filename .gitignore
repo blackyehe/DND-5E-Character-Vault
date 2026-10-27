@@ -16,6 +16,17 @@ dist-ssr
 !.env.example
 .vercel
 backups/
+output/book-of-shadows/
+output/monster-source-packs/
+output/item-source-packs/
+output/portable-orcbrew-export/
+output/combined-orcbrew-qa.json
+output/compendium-performance/
+output/compendium-code-prefetch/
+output/compendium-initial-load-options/
+output/compendium-performance-phase2/
+output/compendium-prepared-reader/
+output/All homebrew.orcbrew
 tmp/pdfs/
 
 # Editor directories and files

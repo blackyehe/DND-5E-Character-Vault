@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto'
 import { isEdnSet, readEdn, type EdnValue } from './edn'
+import { normalizeOrcbrewItem } from './orcbrew-items'
 export { readEdn } from './edn'
 
 export const ORCBREW_KINDS = [
   'spells', 'races', 'classes', 'backgrounds', 'feats', 'subclasses', 'subraces',
-  'monsters', 'languages', 'invocations', 'boons', 'selections', 'other',
+  'monsters', 'languages', 'invocations', 'boons', 'selections', 'other', 'equipment', 'magic-items',
 ] as const
 export type OrcbrewKind = typeof ORCBREW_KINDS[number]
 export interface OrcbrewEntry extends Record<string, unknown> {
@@ -247,7 +248,10 @@ const normalizers: Record<OrcbrewKind, (key: string, value: unknown) => Record<s
   backgrounds: normalizeBackground, feats: normalizeFeat, subclasses: normalizeSubclass,
   subraces: normalizeSubrace, monsters: normalizeMonster, languages: normalizeGeneric,
   invocations: normalizeGeneric, boons: normalizeGeneric, selections: normalizeGeneric, other: normalizeGeneric,
+  equipment: normalizeOrcbrewItem, 'magic-items': normalizeOrcbrewItem,
 }
+/** Rebuild presentation fields after an account edits retained source rules. */
+export function normalizeEditedOrcbrewEntry(kind:OrcbrewKind,key:string,details:unknown){return normalizers[kind](`:${key}`,details)}
 
 export function inspectOrcbrew(source: string): ParsedOrcbrew {
   let nonFiniteCount = 0

@@ -77,6 +77,12 @@ router.post('/:id/items',async(req,res)=>{
   }
   res.status(409).json({error:'This inventory is changing quickly. Try Give item again; the same delivery will not be duplicated.'})
 })
+router.get('/:id/advancement-options',async(req,res)=>{
+  const character=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
+  if(!character)return res.status(404).json({error:'Character not found'})
+  const library=await workshopLibrary(req.userId)
+  res.set('Cache-Control','no-store').json({character:savedCharacterOutput(await resolveWorkshopCharacter(character,req.userId,library)),libraryRevision:await workshopRevision(req.userId),rules:library.rules.map(r=>({index:r.index,name:r.draft.name,url:'',workshop:r.draft})),classes:library.catalog.classes.map(({details,...entry})=>entry),subclasses:library.catalog.subclasses.map(({details,...entry})=>entry),feats:library.catalog.feats.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases})=>({index,name,displayName,sourcePack,level,contentKey,aliases,url:''}))})
+})
 router.get('/:id/editor-options',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
   const library=await workshopLibrary(req.userId)
@@ -91,6 +97,7 @@ router.get('/:id/spell-definition/:index',async(req,res)=>{
 })
 
 router.patch('/:id', async (req, res) => {
+  if(req.body.expectedLibraryRevision&&req.body.expectedLibraryRevision!==await workshopRevision(req.userId))return res.status(409).json({error:'Saved rules changed during this advancement. Reload the latest character and restart.'})
   const library=await workshopLibrary(req.userId)
   const fields=['companionKind','meta','combat','abilities','saves','skills','attacks','equipment','spellcasting','personality','features','resources','proficiencies','homebrew']
   const patch=Object.fromEntries(fields.filter(key=>Object.hasOwn(req.body,key)).map(key=>[key,req.body[key]]))

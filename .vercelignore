@@ -12,3 +12,5 @@ server/scripts
 dist
 tmp
 output
+docs
+scripts

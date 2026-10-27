@@ -1,0 +1,5362 @@
+{
+  "auditDate": "2026-10-22",
+  "mode": "read-only",
+  "accountScope": "Current signed-in production account; no account identifiers retained",
+  "normalization": {
+    "names": "NFKC, lowercase, trim, collapse whitespace; no fuzzy matching or punctuation stripping in exact-name overlap counts",
+    "statSourcePairs": "Explicit seven-source mapping; apostrophe normalization for source-pair comparison; skill hyphens/spaces normalized; signed numbers compared numerically"
+  },
+  "basicStats": {
+    "diffCounts": {
+      "AC": 1,
+      "CR": 5,
+      "HP": 8,
+      "ability scores": 10,
+      "saves": 16,
+      "skills": 24
+    },
+    "differentSelectedFields": 53,
+    "noDetectedSelectedFieldDifference": 470,
+    "pairs": 523,
+    "sourceMap": {
+      "Eberron - Rising from the Last War": "ERLW",
+      "Fizban's Treasury of Dragons": "FTD",
+      "Guildmasters' Guide to Ravnica": "GGR",
+      "Monster Manual": "MM",
+      "Mordenkainen's Tome of Foes": "MTF",
+      "Tasha's Cauldron of Everything": "TCE",
+      "Volo's Guide to Monsters": "VGM"
+    },
+    "specialAC": 11,
+    "specialHP": 15,
+    "unmappedSources": [
+      "UA - Spells and Magic Tattoos",
+      "UA - The Artificer Returns",
+      "UA - The Artificer Revisited",
+      "UA - Subclasses, Part 2",
+      "UA-2022_Giant_Options",
+      "UA - Cleric, Druid, and Wizard"
+    ]
+  },
+  "counts": {
+    "baseNameMatches": 828,
+    "distinctCombined": 996,
+    "distinctImported": 666,
+    "expandedNameMatches": 840,
+    "imported": 680,
+    "siteBase": 4574,
+    "siteExpanded": 4942,
+    "siteMatchingEntries": 1466,
+    "srd": 334,
+    "standardImportedOverlap": 4,
+    "xmm": 503,
+    "xmmMatchingEither": 365,
+    "xmmMatchingImported": 88,
+    "xmmMatchingSrd": 277,
+    "xmmUnmatched": 138
+  },
+  "creatureReferences": {
+    "missingSiteNameSourceCandidates": [],
+    "targets": 163
+  },
+  "duplicates": [
+    {
+      "entries": [
+        {
+          "ac": 15,
+          "cr": null,
+          "hp": 43,
+          "name": "ABERRANT SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Aberrant Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "aberrant spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 13,
+          "cr": null,
+          "hp": 3,
+          "name": "Alchemical Homunculus",
+          "source": "UA - The Artificer Returns"
+        },
+        {
+          "ac": 13,
+          "cr": null,
+          "hp": 3,
+          "name": "Alchemical Homunculus",
+          "source": "UA - The Artificer Revisited"
+        }
+      ],
+      "name": "alchemical homunculus"
+    },
+    {
+      "entries": [
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 38,
+          "name": "BESTIAL SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Bestial Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "bestial spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 43,
+          "name": "CELESTIAL SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Celestial Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "celestial spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 16,
+          "cr": null,
+          "hp": 65,
+          "name": "DANCING ITEM",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 16,
+          "cr": null,
+          "hp": 2,
+          "name": "Dancing Item",
+          "source": "UA - Subclasses, Part 2"
+        }
+      ],
+      "name": "dancing item"
+    },
+    {
+      "entries": [
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 54,
+          "name": "ELEMENTAL SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Elemental Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "elemental spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 12,
+          "cr": null,
+          "hp": 32,
+          "name": "FEY SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Fey Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "fey spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 12,
+          "cr": null,
+          "hp": 46,
+          "name": "FIENDISH SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Fiendish Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "fiendish spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 13,
+          "cr": null,
+          "hp": 3,
+          "name": "Homunculus Servant",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "ac": 13,
+          "cr": null,
+          "hp": 3,
+          "name": "Homunculus Servant",
+          "source": "Tasha's Cauldron of Everything"
+        }
+      ],
+      "name": "homunculus servant"
+    },
+    {
+      "entries": [
+        {
+          "ac": 17,
+          "cr": 1,
+          "hp": 30,
+          "name": "Iron Defender",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "ac": 15,
+          "cr": null,
+          "hp": 3,
+          "name": "Iron Defender",
+          "source": "UA - The Artificer Returns"
+        }
+      ],
+      "name": "iron defender"
+    },
+    {
+      "entries": [
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 42,
+          "name": "SHADOW SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Shadow Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "shadow spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 15,
+          "cr": null,
+          "hp": 3,
+          "name": "Steel Defender",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "ac": 15,
+          "cr": null,
+          "hp": 3,
+          "name": "STEEL DEFENDER",
+          "source": "Tasha's Cauldron of Everything"
+        }
+      ],
+      "name": "steel defender"
+    },
+    {
+      "entries": [
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 32,
+          "name": "UNDEAD SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 11,
+          "cr": null,
+          "hp": 2,
+          "name": "Undead Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "name": "undead spirit"
+    },
+    {
+      "entries": [
+        {
+          "ac": 13,
+          "cr": null,
+          "hp": 10,
+          "name": "WILDFIRE SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "ac": 13,
+          "cr": null,
+          "hp": 2,
+          "name": "Wildfire Spirit",
+          "source": "UA - Cleric, Druid, and Wizard"
+        }
+      ],
+      "name": "wildfire spirit"
+    }
+  ],
+  "missingRawCR": [
+    {
+      "name": "ABERRANT SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Aberrant Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "Alchemical Homunculus",
+      "source": "UA - The Artificer Returns"
+    },
+    {
+      "name": "Alchemical Homunculus",
+      "source": "UA - The Artificer Revisited"
+    },
+    {
+      "name": "BESTIAL SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Bestial Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "CELESTIAL SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Celestial Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "CONSTRUCT SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Cranium Rat",
+      "source": "Volo's Guide to Monsters"
+    },
+    {
+      "name": "Crawling Claw",
+      "source": "Monster Manual"
+    },
+    {
+      "name": "DANCING ITEM",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Dancing Item",
+      "source": "UA - Subclasses, Part 2"
+    },
+    {
+      "name": "Diviner",
+      "source": "Volo's Guide to Monsters"
+    },
+    {
+      "name": "Draconic Spirit",
+      "source": "Fizban's Treasury of Dragons"
+    },
+    {
+      "name": "Drake Companion",
+      "source": "Fizban's Treasury of Dragons"
+    },
+    {
+      "name": "ELEMENTAL SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Elemental Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "FEY SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Fey Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "FIENDISH SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Fiendish Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "Homunculus Servant",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Homunculus Servant",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Iron Defender",
+      "source": "UA - The Artificer Returns"
+    },
+    {
+      "name": "Magewright",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Artisan)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Entertainer)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Healer)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Lamplighter)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Locksmith)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Mediator)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Medium)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Magewright (Oracle)",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "Myconid Sprout",
+      "source": "Monster Manual"
+    },
+    {
+      "name": "SHADOW SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Shadow Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "Steel Defender",
+      "source": "Eberron - Rising from the Last War"
+    },
+    {
+      "name": "STEEL DEFENDER",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "UNDEAD SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Undead Spirit",
+      "source": "UA - Spells and Magic Tattoos"
+    },
+    {
+      "name": "WILDFIRE SPIRIT",
+      "source": "Tasha's Cauldron of Everything"
+    },
+    {
+      "name": "Wildfire Spirit",
+      "source": "UA - Cleric, Druid, and Wizard"
+    }
+  ],
+  "spells": {
+    "aliases": [
+      {
+        "aliases": [
+          "Black Tentacles"
+        ],
+        "exactLocalName": false,
+        "name": "Evard's black tentacles",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Resilient Sphere"
+        ],
+        "exactLocalName": false,
+        "name": "Otiluke's Resilient Sphere",
+        "source": "XPHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Arcanist's Magic Aura"
+        ],
+        "exactLocalName": false,
+        "name": "Nystul's Magic Aura",
+        "source": "XPHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Floating Disk"
+        ],
+        "exactLocalName": false,
+        "name": "Tenser's floating disk",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Hideous Laughter"
+        ],
+        "exactLocalName": false,
+        "name": "Tasha's hideous laughter",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Irresistible Dance"
+        ],
+        "exactLocalName": false,
+        "name": "Otto's irresistible dance",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Instant Summons"
+        ],
+        "exactLocalName": false,
+        "name": "Drawmij's instant summons",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Telepathic Bond"
+        ],
+        "exactLocalName": false,
+        "name": "Rary's telepathic bond",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Faithful Hound"
+        ],
+        "exactLocalName": false,
+        "name": "Mordenkainen's faithful hound",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Arcane Hand"
+        ],
+        "exactLocalName": false,
+        "name": "Bigby's hand",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Magnificent Mansion"
+        ],
+        "exactLocalName": false,
+        "name": "Mordenkainen's magnificent mansion",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Acid Arrow"
+        ],
+        "exactLocalName": false,
+        "name": "Melf's acid arrow",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Resilient Sphere"
+        ],
+        "exactLocalName": false,
+        "name": "Otiluke's resilient sphere",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Tiny Hut"
+        ],
+        "exactLocalName": false,
+        "name": "Leomund's tiny hut",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Arcanist's Magic Aura"
+        ],
+        "exactLocalName": false,
+        "name": "Nystul's magic aura",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Freezing Sphere"
+        ],
+        "exactLocalName": false,
+        "name": "otiluke's freezing sphere",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Arcane Sword"
+        ],
+        "exactLocalName": false,
+        "name": "Mordenkainen's sword",
+        "source": "PHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Acid Arrow"
+        ],
+        "exactLocalName": false,
+        "name": "Melf's Acid Arrow",
+        "source": "XPHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [
+          "Hideous Laughter"
+        ],
+        "exactLocalName": false,
+        "name": "Tasha's Hideous Laughter",
+        "source": "XPHB",
+        "sourceTargetPresent": true
+      }
+    ],
+    "imported": 316,
+    "missingAfterAliases": [
+      {
+        "aliases": [],
+        "exactLocalName": false,
+        "name": "Jallarzi's Storm of Radiance",
+        "source": "XPHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [],
+        "exactLocalName": false,
+        "name": "Befuddlement",
+        "source": "XPHB",
+        "sourceTargetPresent": true
+      },
+      {
+        "aliases": [],
+        "exactLocalName": false,
+        "name": "Elementalism",
+        "source": "XPHB",
+        "sourceTargetPresent": true
+      }
+    ],
+    "missingSourceDefinitions": [],
+    "modernTargets": 206,
+    "noExactName": 22,
+    "srd": 319,
+    "targets": 580
+  },
+  "publicCoverage": {
+    "all": {
+      "actionSpellcasting": 672,
+      "anyScoreAbove50": 0,
+      "conditionalLairUses": 46,
+      "entries": 4574,
+      "gear": 1601,
+      "habitat": 1461,
+      "initiativeExplicit": 314,
+      "lairXP": 62,
+      "legendaryActions": 460,
+      "legendaryGroup": 248,
+      "legendarySpellcasting": 13,
+      "missingCR": 106,
+      "multipleAC": 235,
+      "multipleSizes": 158,
+      "reactionSpellcasting": 41,
+      "specialAC": 35,
+      "specialHP": 67,
+      "spellcasting": 1441,
+      "structuredSpeeds": 388,
+      "summoned": 42,
+      "treasure": 393,
+      "variants": 217
+    },
+    "xmm": {
+      "actionSpellcasting": 124,
+      "anyScoreAbove50": 0,
+      "conditionalLairUses": 34,
+      "entries": 503,
+      "gear": 72,
+      "habitat": 503,
+      "initiativeExplicit": 187,
+      "lairXP": 34,
+      "legendaryActions": 43,
+      "legendaryGroup": 35,
+      "legendarySpellcasting": 6,
+      "missingCR": 0,
+      "multipleAC": 0,
+      "multipleSizes": 62,
+      "reactionSpellcasting": 15,
+      "specialAC": 0,
+      "specialHP": 0,
+      "spellcasting": 132,
+      "structuredSpeeds": 52,
+      "summoned": 0,
+      "treasure": 299,
+      "variants": 0
+    }
+  },
+  "dependencyChecks": {
+    "sourceFiles": 112,
+    "failedSourceFiles": 0,
+    "rawCopies": 1144,
+    "unresolvedCopyParents": 0,
+    "legendaryGroupsFromFile": 188,
+    "unresolvedLegendaryGroupsConfirmed": 0,
+    "runtimeGeneratedGroupVerified": "Umbraxakar WDMM -> Shadow Dragon (Bronze Dragon) MM",
+    "spellFiles": 18,
+    "failedSpellFiles": 0,
+    "spellDefinitions": 969
+  },
+  "packs": [
+    {
+      "filename": "Blacky's Book of Shadows2.orcbrew",
+      "monsters": 0,
+      "includeDisabled": false,
+      "errors": []
+    },
+    {
+      "filename": "all-content.orcbrew",
+      "monsters": 680,
+      "includeDisabled": false,
+      "disabledEntriesAllKinds": 42,
+      "duplicateReportAllKinds": 10,
+      "nonFiniteReportAllKinds": 2,
+      "errors": [],
+      "warning": "2 non-finite numeric values are shown as unspecified; their source text is preserved.",
+      "monsterScopeProof": "Live normalized source hash equals October 18 backup; that parsed source contains 680 raw monsters, zero disabled monsters."
+    }
+  ],
+  "nativeWorkshopMonsters": 0,
+  "directCustomSpells": 0,
+  "limitations": [
+    "Selected-stat comparison does not establish complete rules equality or identify which definition is authoritative.",
+    "Special HP/AC and missing CR are retained as distinct cases, not flattened to numbers for equality.",
+    "Six UA source labels were not mapped to a current public source ID.",
+    "Item, condition, status, disease, action, sense, skill, and variant-rule target definitions were not exhaustively resolved.",
+    "Local browser-only unsaved drafts and uninstalled homebrew were not inspected.",
+    "Monster standard index is local; full standard monster text depends on remote API. Aboleth detail GET returned 200."
+  ],
+  "statDifferenceEvidence": [
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 12,
+            "stealth": 5
+          },
+          "site": {
+            "perception": "+14",
+            "stealth": "+6"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "cha": 9,
+            "con": 11,
+            "dex": 5,
+            "wis": 7
+          },
+          "site": {
+            "cha": "+10",
+            "con": "+12",
+            "dex": "+6",
+            "wis": "+8"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Adult Blue Dracolich",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "arcana": 13,
+            "deception": 9,
+            "insight": 9,
+            "perception": 7
+          },
+          "site": {
+            "arcana": "+13",
+            "deception": "+11",
+            "insight": "+11",
+            "perception": "+7"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Arcanaloth",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "saves",
+          "local": {
+            "cha": 4,
+            "wis": 2
+          },
+          "site": {
+            "cha": "+5",
+            "wis": "+2"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Banshee",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "CR",
+          "local": 17,
+          "site": "18"
+        }
+      ],
+      "localSource": "Guildmasters' Guide to Ravnica",
+      "name": "Borborygmos",
+      "source": "GGR"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "deception": 3,
+            "perception": 1,
+            "performance": 3
+          },
+          "site": {
+            "deception": "+3",
+            "perception": "+0",
+            "performance": "+3"
+          }
+        }
+      ],
+      "localSource": "Guildmasters' Guide to Ravnica",
+      "name": "Cackler",
+      "source": "GGR"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "acrobatics": 4,
+            "deception": 5,
+            "insight": 2,
+            "perception": 2,
+            "performance": 5
+          },
+          "site": {
+            "acrobatics": "+4",
+            "deception": "+5",
+            "insight": "+2",
+            "perception": "+2",
+            "persuasion": "+5"
+          }
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Changeling",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 6,
+            "con": 14,
+            "dex": 16,
+            "int": 4,
+            "str": 12,
+            "wis": 12
+          },
+          "site": {
+            "cha": 10,
+            "con": 14,
+            "dex": 16,
+            "int": 4,
+            "str": 12,
+            "wis": 12
+          }
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Clawfoot",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "saves",
+          "local": {
+            "cha": 7,
+            "con": 10,
+            "int": 6
+          },
+          "site": {
+            "con": "+10",
+            "int": "+6",
+            "wis": "+7"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Cloud Giant Smiling One",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "CR",
+          "local": 19,
+          "site": {
+            "cr": "18",
+            "lair": "20"
+          }
+        },
+        {
+          "field": "HP",
+          "local": 50,
+          "site": {
+            "average": 80,
+            "formula": "32d4"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Demilich",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "saves",
+          "local": {
+            "dex": 1,
+            "wis": 1
+          },
+          "site": {
+            "dex": "+1 + PB",
+            "wis": "+2 + PB"
+          }
+        }
+      ],
+      "localSource": "Fizban's Treasury of Dragons",
+      "name": "Drake Companion",
+      "source": "FTD"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "arcana": 6,
+            "deception": 5,
+            "perception": 4,
+            "stealth": 5
+          },
+          "site": {
+            "arcana": "+6",
+            "deception": "+4",
+            "perception": "+4",
+            "stealth": "+5"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Drow Mage",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "saves",
+          "local": {},
+          "site": {
+            "cha": "+8",
+            "int": "+10"
+          }
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Elder Oblex",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": null,
+            "stealth": null
+          },
+          "site": {}
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Fastieth",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 10,
+            "con": 10,
+            "dex": 10,
+            "int": 10,
+            "str": 13,
+            "wis": 10
+          },
+          "site": {
+            "cha": 10,
+            "con": 15,
+            "dex": 18,
+            "int": 9,
+            "str": 13,
+            "wis": 10
+          }
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Fire Elemental Myrmidon",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 4
+          },
+          "site": {
+            "perception": "+5"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Gauth",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "saves",
+          "local": {
+            "dex": 3,
+            "int": 3,
+            "str": 3,
+            "wis": 4
+          },
+          "site": {
+            "dex": "+4",
+            "int": "+3",
+            "str": "+3",
+            "wis": "+4"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Githzerai Monk",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "arcana": 5,
+            "perception": 6
+          },
+          "site": {
+            "arcana": "+5",
+            "perception": "+7"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Gray Slaad",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "AC",
+          "local": 8,
+          "site": [
+            {
+              "ac": 16,
+              "from": [
+                "natural armor"
+              ]
+            }
+          ]
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Green Slaad",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {},
+          "site": {
+            "perception": "+0 plus PB × 2",
+            "stealth": "+2 plus PB"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "dex": 2
+          },
+          "site": {
+            "dex": "+2 plus PB"
+          }
+        }
+      ],
+      "localSource": "Tasha's Cauldron of Everything",
+      "name": "Homunculus Servant",
+      "source": "TCE"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 3,
+            "stealth": 4
+          },
+          "site": {
+            "perception": "+4",
+            "stealth": "+4"
+          }
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Iron Defender",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {},
+          "site": {
+            "perception": "+0"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Kobold Inventor",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 10,
+            "con": 10,
+            "dex": 10,
+            "int": 10,
+            "str": 10,
+            "wis": 10
+          },
+          "site": {
+            "cha": 8,
+            "con": 13,
+            "dex": 12,
+            "int": 10,
+            "str": 15,
+            "wis": 11
+          }
+        }
+      ],
+      "localSource": "Guildmasters' Guide to Ravnica",
+      "name": "Kraul Warrior",
+      "source": "GGR"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 9,
+            "religion": 6
+          },
+          "site": {
+            "perception": "+9",
+            "religion": "+7"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Kuo-toa Archpriest",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 6,
+            "religion": 4
+          },
+          "site": {
+            "perception": "+6",
+            "religion": "+5"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Kuo-toa Monitor",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 6,
+            "religion": 4
+          },
+          "site": {
+            "perception": "+6",
+            "religion": "+5"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Kuo-toa Whip",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 6,
+            "con": 14,
+            "dex": 15,
+            "int": 3,
+            "str": 10,
+            "wis": 11
+          },
+          "site": {
+            "cha": 6,
+            "con": 20,
+            "dex": 15,
+            "int": 3,
+            "str": 10,
+            "wis": 11
+          }
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Living Cloudkill",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "HP",
+          "local": 84,
+          "site": {
+            "average": 83,
+            "formula": "13d8 + 26"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Master Thief",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "HP",
+          "local": 89,
+          "site": {
+            "average": 71,
+            "formula": "13d8 + 13"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Mind Flayer Psion",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 20
+          },
+          "site": {
+            "perception": "+21"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "cha": 14,
+            "con": 14,
+            "int": 14,
+            "str": 16
+          },
+          "site": {
+            "cha": "+14",
+            "con": "+14",
+            "str": "+16",
+            "wis": "+14"
+          }
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Molydeus",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "athletics": 10,
+            "insight": 8,
+            "persuasion": 10
+          },
+          "site": {
+            "athletics": "+10",
+            "insight": "+8",
+            "perception": "+8",
+            "persuasion": "+10"
+          }
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Mordakhesh",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "CR",
+          "local": 24,
+          "site": "26"
+        },
+        {
+          "field": "saves",
+          "local": {
+            "con": 17,
+            "int": 17,
+            "wis": 11
+          },
+          "site": {
+            "con": "+17",
+            "int": "+18",
+            "wis": "+11"
+          }
+        }
+      ],
+      "localSource": "Guildmasters' Guide to Ravnica",
+      "name": "Niv-Mizzet",
+      "source": "GGR"
+    },
+    {
+      "differences": [
+        {
+          "field": "HP",
+          "local": 35,
+          "site": {
+            "average": 45,
+            "formula": "6d8 + 18"
+          }
+        },
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 12,
+            "con": 16,
+            "dex": 12,
+            "int": 9,
+            "str": 16,
+            "wis": 13
+          },
+          "site": {
+            "cha": 12,
+            "con": 17,
+            "dex": 12,
+            "int": 9,
+            "str": 16,
+            "wis": 13
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Orc Eye of Gruumsh",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "HP",
+          "local": 53,
+          "site": {
+            "average": 93,
+            "formula": "11d8 + 44"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Orc War Chief",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "arcana": 12,
+            "perception": 12
+          },
+          "site": {
+            "arcana": "+13",
+            "perception": "+13"
+          }
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Orcus",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "saves",
+          "local": {},
+          "site": {
+            "int": "+6",
+            "wis": "+3"
+          }
+        }
+      ],
+      "localSource": "Guildmasters' Guide to Ravnica",
+      "name": "Precognitive Mage",
+      "source": "GGR"
+    },
+    {
+      "differences": [
+        {
+          "field": "HP",
+          "local": 396,
+          "site": {
+            "average": 300,
+            "formula": "24d12 + 144"
+          }
+        }
+      ],
+      "localSource": "Guildmasters' Guide to Ravnica",
+      "name": "Rakdos",
+      "source": "GGR"
+    },
+    {
+      "differences": [
+        {
+          "field": "CR",
+          "local": 12
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Sacred Statue",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 7
+          },
+          "site": {
+            "perception": "+6"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "cha": 5,
+            "dex": 7,
+            "wis": 7
+          },
+          "site": {
+            "cha": "+5",
+            "dex": "+7",
+            "wis": "+6"
+          }
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Soul Monger",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "athletics": 2
+          },
+          "site": {
+            "athletics": "+2 plus PB",
+            "perception": "+0 plus PB × 2"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "con": 2,
+            "dex": 1
+          },
+          "site": {
+            "con": "+2 plus PB",
+            "dex": "+1 plus PB"
+          }
+        }
+      ],
+      "localSource": "Tasha's Cauldron of Everything",
+      "name": "STEEL DEFENDER",
+      "source": "TCE"
+    },
+    {
+      "differences": [
+        {
+          "field": "HP",
+          "local": 17,
+          "site": {
+            "average": 19,
+            "formula": "3d8 + 4"
+          }
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Stone Cursed",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "HP",
+          "local": 452,
+          "site": {
+            "average": 475,
+            "formula": "50d10 + 200"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "cha": 15,
+            "con": 12,
+            "int": 17,
+            "wis": 14
+          },
+          "site": {
+            "cha": "+15",
+            "con": "+12",
+            "int": "+18",
+            "wis": "+14"
+          }
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Sul Khatesh",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 11,
+            "con": 11,
+            "dex": 12,
+            "int": 17,
+            "str": 9,
+            "wis": 12
+          },
+          "site": {
+            "cha": 11,
+            "con": 11,
+            "dex": 14,
+            "int": 17,
+            "str": 9,
+            "wis": 12
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Transmuter",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "CR",
+          "local": 17,
+          "site": "18"
+        }
+      ],
+      "localSource": "Guildmasters' Guide to Ravnica",
+      "name": "Trostani",
+      "source": "GGR"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 8,
+            "con": 10,
+            "dex": 11,
+            "int": 3,
+            "str": 30,
+            "wis": 11
+          },
+          "site": {
+            "cha": 8,
+            "con": 30,
+            "dex": 11,
+            "int": 3,
+            "str": 30,
+            "wis": 11
+          }
+        }
+      ],
+      "localSource": "Eberron - Rising from the Last War",
+      "name": "Warforged Colossus",
+      "source": "ERLW"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "arcana": 2,
+            "deception": 6,
+            "nature": 2,
+            "perception": 6
+          },
+          "site": {
+            "arcana": "+2",
+            "deception": "+6",
+            "nature": "+2",
+            "persuasion": "+6"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Warlock of the Archfey",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "arcana": 4,
+            "deception": 7,
+            "perception": 7,
+            "religion": 4
+          },
+          "site": {
+            "arcana": "+4",
+            "deception": "+7",
+            "persuasion": "+7",
+            "religion": "+4"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Warlock of the Fiend",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 10,
+            "con": 13,
+            "dex": 16,
+            "int": 10,
+            "str": 17,
+            "wis": 10
+          },
+          "site": {
+            "cha": 10,
+            "con": 13,
+            "dex": 16,
+            "int": 11,
+            "str": 17,
+            "wis": 10
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Water Weird",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "stealth": 3
+          },
+          "site": {
+            "stealth": "+4"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Xvart Warlock of Raxivort",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 15,
+            "con": 23,
+            "dex": 16,
+            "int": 15,
+            "str": 29,
+            "wis": 24
+          },
+          "site": {
+            "cha": 15,
+            "con": 26,
+            "dex": 16,
+            "int": 15,
+            "str": 29,
+            "wis": 24
+          }
+        }
+      ],
+      "localSource": "Mordenkainen's Tome of Foes",
+      "name": "Yeenoghu",
+      "source": "MTF"
+    },
+    {
+      "differences": [
+        {
+          "field": "saves",
+          "local": {
+            "cha": 6,
+            "dex": 6,
+            "int": 5,
+            "wis": 5
+          },
+          "site": {
+            "cha": "+6",
+            "dex": "+6",
+            "int": "+5",
+            "wis": "+6"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Yochlol",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "perception": 8,
+            "stealth": 8
+          },
+          "site": {
+            "perception": "+10",
+            "stealth": "+10"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "cha": 8,
+            "con": 9,
+            "dex": 4,
+            "wis": 4
+          },
+          "site": {
+            "cha": "+9",
+            "con": "+10",
+            "dex": "+5",
+            "wis": "+5"
+          }
+        }
+      ],
+      "localSource": "Monster Manual",
+      "name": "Young Red Shadow Dragon",
+      "source": "MM"
+    },
+    {
+      "differences": [
+        {
+          "field": "ability scores",
+          "local": {
+            "cha": 16,
+            "con": 13,
+            "dex": 14,
+            "int": 14,
+            "str": 16,
+            "wis": 12
+          },
+          "site": {
+            "cha": 16,
+            "con": 13,
+            "dex": 14,
+            "int": 14,
+            "str": 16,
+            "wis": 14
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Yuan-ti Mind Whisperer",
+      "source": "VGM"
+    },
+    {
+      "differences": [
+        {
+          "field": "skills",
+          "local": {
+            "deception": 5,
+            "stealth": 4
+          },
+          "site": {
+            "deception": "+6",
+            "stealth": "+5"
+          }
+        },
+        {
+          "field": "saves",
+          "local": {
+            "cha": 5,
+            "wis": 3
+          },
+          "site": {
+            "cha": "+6",
+            "wis": "+4"
+          }
+        }
+      ],
+      "localSource": "Volo's Guide to Monsters",
+      "name": "Yuan-ti Pit Master",
+      "source": "VGM"
+    }
+  ],
+  "xmmNameClashes": [
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Aboleth",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Abominable Yeti",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Black Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Blue Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Brass Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Bronze Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Copper Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Gold Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Green Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Red Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult Silver Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Adult White Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Air Elemental",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Allosaurus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Black Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Blue Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Brass Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Bronze Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Copper Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Gold Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Green Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Red Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient Silver Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ancient White Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Animated Armor",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ankheg",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Ankylosaurus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ape",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Arcanaloth",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Archmage",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Assassin",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Awakened Shrub",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Awakened Tree",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Axe Beak",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Baboon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Badger",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Balor",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Bandit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Bandit Captain",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Banshee",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Barbed Devil",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Barlgura",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Basilisk",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Bat",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Bearded Devil",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Behir",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Beholder",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Beholder Zombie",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Berserker",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Black Bear",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Black Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Black Pudding",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Blink Dog",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Blood Hawk",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Blue Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Blue Slaad",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Boar",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Bone Devil",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Bone Naga",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Brass Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Bronze Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Brown Bear",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Bulette",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Cambion",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Camel",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Carrion Crawler",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Cat",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Chain Devil",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Chasme",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Chimera",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Chuul",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Clay Golem",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Cloaker",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Cloud Giant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Cockatrice",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Commoner",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Constrictor Snake",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Copper Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Couatl",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Crab",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Crawling Claw",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Crocodile",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Cultist",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Dao",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Darkmantle",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Death Dog",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Death Knight",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Death Slaad",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Death Tyrant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Deer",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Demilich",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Deva",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Dire Wolf",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Displacer Beast",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Djinni",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Doppelganger",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Draft Horse",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Dragon Turtle",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Dretch",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Drider",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Druid",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Dryad",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Dust Mephit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Eagle",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Earth Elemental",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Efreeti",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Elephant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Elk",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Empyrean",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Erinyes",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ettercap",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ettin",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Fire Elemental",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Fire Giant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Flameskull",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Flesh Golem",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Flumph",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Flying Snake",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Fomorian",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Frog",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Frost Giant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Galeb Duhr",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Gargoyle",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Gelatinous Cube",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ghast",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ghost",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ghoul",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Ape",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Badger",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Bat",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Boar",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Centipede",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Constrictor Snake",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Crab",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Crocodile",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Eagle",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Elk",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Fire Beetle",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Frog",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Goat",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Hyena",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Lizard",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Octopus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Owl",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Rat",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Scorpion",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Shark",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Spider",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Toad",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Vulture",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Wasp",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Weasel",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Giant Wolf Spider",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Gibbering Mouther",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Githyanki Knight",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Githyanki Warrior",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Githzerai Monk",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Githzerai Zerth",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Glabrezu",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Gladiator",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Gnoll Fang of Yeenoghu",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Gnoll Pack Lord",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Goat",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Goblin Boss",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Gold Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Gorgon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Goristro",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Gray Ooze",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Gray Slaad",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Green Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Green Hag",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Green Slaad",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Grell",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Grick",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Griffon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Grimlock",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Guard",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Guardian Naga",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Harpy",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hawk",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hell Hound",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Helmed Horror",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hezrou",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hill Giant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hippogriff",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Hobgoblin Captain",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Hobgoblin Warlord",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Homunculus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Hook Horror",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Horned Devil",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hunter Shark",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hydra",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Hyena",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ice Devil",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ice Mephit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Imp",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Intellect Devourer",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Invisible Stalker",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Iron Golem",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Jackal",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Jackalwere",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Kenku",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Killer Whale",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Knight",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Kraken",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Kuo-toa",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Kuo-toa Archpriest",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Kuo-toa Monitor",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Kuo-toa Whip",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Lamia",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Lemure",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Lich",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Lion",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Lizard",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Mage",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Magma Mephit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Magmin",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Mammoth",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Manes",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Manticore",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Marid",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Marilith",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Mastiff",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Medusa",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Merrow",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Mezzoloth",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Mimic",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Mind Flayer",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Mind Flayer Arcanist",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Minotaur Skeleton",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Mud Mephit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Mule",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Mummy",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Mummy Lord",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Myconid Adult",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Myconid Sovereign",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Myconid Sprout",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Nalfeshnee",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Needle Blight",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Night Hag",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Nightmare",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Noble",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Nothic",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ochre Jelly",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Octopus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ogre",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Ogre Zombie",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Oni",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Otyugh",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Owl",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Owlbear",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Panther",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Pegasus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Peryton",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Phase Spider",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Piercer",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Pit Fiend",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Pixie",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Planetar",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Plesiosaurus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Polar Bear",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Poltergeist",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Pony",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Priest",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Pseudodragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Psychic Gray Ooze",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Purple Worm",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Quaggoth",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Quaggoth Thonot",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Quasit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Rakshasa",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Rat",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Raven",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Red Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Red Slaad",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Reef Shark",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Remorhaz",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Revenant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Rhinoceros",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Riding Horse",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Roc",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Roper",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Rust Monster",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Saber-Toothed Tiger",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Sahuagin Baron",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Salamander",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Satyr",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Scarecrow",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Scorpion",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Scout",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Sea Hag",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Shadow",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Shadow Demon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Shambling Mound",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Shield Guardian",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Silver Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Skeleton",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Slaad Tadpole",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Smoke Mephit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Solar",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Spectator",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Specter",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Spider",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Spined Devil",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Spirit Naga",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Sprite",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Spy",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Steam Mephit",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Stirge",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Stone Giant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Stone Golem",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Storm Giant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Swarm of Bats",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Swarm of Insects",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Swarm of Rats",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Swarm of Ravens",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Tarrasque",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Tiger",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Treant",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Triceratops",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Troglodyte",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Troll",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Twig Blight",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Tyrannosaurus Rex",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Ultroloth",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Umber Hulk",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Unicorn",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Vampire Spawn",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Vine Blight",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Violet Fungus",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Vrock",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Vulture",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Warhorse",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Warhorse Skeleton",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Water Elemental",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Water Weird",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Weasel",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "White Dragon Wyrmling",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Wight",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Will-o'-Wisp",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Winged Kobold",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Winter Wolf",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Wolf",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Worg",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Wraith",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Wyvern",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Xorn",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Yeti",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Yochlol",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Black Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Blue Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Brass Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Bronze Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Copper Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Gold Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Green Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Red Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Young Remorhaz",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young Silver Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Young White Dragon",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Yuan-ti Abomination",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Yuan-ti Malison (Type 1)",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Yuan-ti Malison (Type 2)",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "Monster Manual"
+        }
+      ],
+      "name": "Yuan-ti Malison (Type 3)",
+      "source": "XMM"
+    },
+    {
+      "existing": [
+        {
+          "source": "SRD 2014"
+        }
+      ],
+      "name": "Zombie",
+      "source": "XMM"
+    }
+  ],
+  "xmmNoExactNameMatch": [
+    "Aarakocra Aeromancer",
+    "Aarakocra Skirmisher",
+    "Aberrant Cultist",
+    "Animal Lord",
+    "Animated Broom",
+    "Animated Flying Sword",
+    "Animated Rug of Smothering",
+    "Arch-hag",
+    "Archelon",
+    "Archpriest",
+    "Azer Pyromancer",
+    "Azer Sentinel",
+    "Bandit Crime Lord",
+    "Bandit Deceiver",
+    "Berserker Commander",
+    "Blob of Annihilation",
+    "Brazen Gorgon",
+    "Bugbear Stalker",
+    "Bugbear Warrior",
+    "Bulette Pup",
+    "Bullywug Bog Sage",
+    "Bullywug Warrior",
+    "Centaur Trooper",
+    "Centaur Warden",
+    "Cockatrice Regent",
+    "Colossus",
+    "Cultist Fanatic",
+    "Cultist Hierophant",
+    "Cyclops Oracle",
+    "Cyclops Sentry",
+    "Death Cultist",
+    "Death Knight Aspirant",
+    "Dire Worg",
+    "Dracolich",
+    "Elemental Cataclysm",
+    "Elemental Cultist",
+    "Empyrean Iota",
+    "Faerie Dragon Adult",
+    "Faerie Dragon Youth",
+    "Fiend Cultist",
+    "Flaming Skeleton",
+    "Gas Spore Fungus",
+    "Ghast Gravecaller",
+    "Giant Axe Beak",
+    "Giant Seahorse",
+    "Giant Squid",
+    "Giant Venomous Snake",
+    "Githyanki Dracomancer",
+    "Githzerai Psion",
+    "Gnoll Demoniac",
+    "Gnoll Warrior",
+    "Goblin Hexer",
+    "Goblin Minion",
+    "Goblin Warrior",
+    "Graveyard Revenant",
+    "Grick Ancient",
+    "Guard Captain",
+    "Gulthias Blight",
+    "Half-Dragon",
+    "Haunting Revenant",
+    "Hippopotamus",
+    "Hobgoblin Warrior",
+    "Incubus",
+    "Juvenile Shadow Dragon",
+    "Kobold Warrior",
+    "Lacedon Ghoul",
+    "Larva",
+    "Lizardfolk Geomancer",
+    "Lizardfolk Sovereign",
+    "Mage Apprentice",
+    "Manes Vaporspawn",
+    "Merfolk Skirmisher",
+    "Merfolk Wavebender",
+    "Minotaur of Baphomet",
+    "Modron Duodrone",
+    "Modron Monodrone",
+    "Modron Pentadrone",
+    "Modron Quadrone",
+    "Modron Tridrone",
+    "Myconid Spore Servant",
+    "Noble Prodigy",
+    "Nycaloth",
+    "Ogrillon Ogre",
+    "Performer",
+    "Performer Legend",
+    "Performer Maestro",
+    "Piranha",
+    "Pirate",
+    "Pirate Admiral",
+    "Pirate Captain",
+    "Pixie Wonderbringer",
+    "Priest Acolyte",
+    "Primeval Owlbear",
+    "Pteranodon",
+    "Questing Knight",
+    "Sahuagin Priest",
+    "Sahuagin Warrior",
+    "Salamander Fire Snake",
+    "Salamander Inferno Master",
+    "Satyr Revelmaster",
+    "Scout Captain",
+    "Seahorse",
+    "Shadow Dragon",
+    "Shrieker Fungus",
+    "Sphinx of Lore",
+    "Sphinx of Secrets",
+    "Sphinx of Valor",
+    "Sphinx of Wonder",
+    "Spy Master",
+    "Succubus",
+    "Swarm of Crawling Claws",
+    "Swarm of Dretches",
+    "Swarm of Larvae",
+    "Swarm of Lemures",
+    "Swarm of Piranhas",
+    "Swarm of Stirges",
+    "Swarm of Venomous Snakes",
+    "Thri-kreen Marauder",
+    "Thri-kreen Psion",
+    "Tough",
+    "Tough Boss",
+    "Tree Blight",
+    "Troll Limb",
+    "Vampire",
+    "Vampire Familiar",
+    "Vampire Nightbringer",
+    "Vampire Umbral Lord",
+    "Venomous Snake",
+    "Violet Fungus Necrohulk",
+    "Warrior Commander",
+    "Warrior Infantry",
+    "Warrior Veteran",
+    "Werebear",
+    "Wereboar",
+    "Wererat",
+    "Weretiger",
+    "Werewolf",
+    "Yuan-ti Infiltrator"
+  ]
+}

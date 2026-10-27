@@ -2,9 +2,13 @@ import express from 'express'
 import cookieParser from 'cookie-parser'
 import { env } from './env'
 import { connectDb } from './db'
+import { databaseErrorDetails } from './lib/database-error'
 import authRoutes from './routes/auth'
 import characterRoutes from './routes/characters'
+import characterLibraryRoutes from './routes/character-library'
 import contentRoutes from './routes/content'
+import compendiumBrowseRoutes from './routes/compendium-browse'
+import compendiumRoutes from './routes/compendium'
 import characterImportRoutes from './routes/character-import'
 import workshopRoutes from './routes/workshop'
 import roomRoutes from './routes/rooms'
@@ -17,6 +21,7 @@ import { uploadRoutes, finishUpload, streamLargeResponses } from './middleware/l
 import { requireAuth } from './middleware/auth'
 import libraryRestoreRoutes from './routes/library-restore'
 import { localSrdRule } from './lib/srd-snapshot'
+import { enrichedStandardMonster } from './lib/monster-enrichment'
 
 const app = express()
 let sampledSheetReads=0
@@ -65,7 +70,7 @@ app.get('/api/2014/*path', async (req, res) => {
   const local=localSrdRule(reference)
   const data=local===undefined?await readSrdRule(env.SRD_API_URL,reference,{interactive:true}):local
   if (!data) return res.status(404).json({ error: 'Rules reference not found.' })
-  res.json(data)
+  res.json(enrichedStandardMonster(data,reference))
 })
 app.use('/api/content/orcbrew-packs', express.json({ limit: '50mb' }))
 app.use(express.json({ limit: '10mb' }))
@@ -77,7 +82,10 @@ app.use('/api/auth', authRoutes)
 app.use('/api/library-restore', libraryRestoreRoutes)
 app.use('/api/characters/import', characterImportRoutes)
 app.use('/api/characters', characterRoutes)
+app.use('/api/character-library', characterLibraryRoutes)
 app.use('/api/content', contentRoutes)
+app.use('/api/compendium-browse', compendiumBrowseRoutes)
+app.use('/api/compendium', compendiumRoutes)
 app.use('/api/workshop', workshopRoutes)
 app.use('/api/rooms/:roomId/notebook', notebookRoutes)
 app.use('/api/rooms', roomRoutes)
@@ -89,7 +97,7 @@ app.use((err: Error & { status?: number; code?: number }, _req: express.Request,
   if (err.status === 413) return res.status(413).json({ error: 'Uploaded request is too large.' })
   if (err.status === 400 || err.name === 'ValidationError' || err.name === 'CastError') return res.status(400).json({ error: 'Invalid request values.' })
   if (err.code === 11000) return res.status(409).json({ error: 'That record already exists. Refresh and try again.' })
-  console.error('API request failed', { name: err.name, code: err.code })
+  console.error('API request failed', { name: err.name, code: err.code, stage: res.locals.databaseOperation, ...databaseErrorDetails(err) })
   if (!res.headersSent) res.status(503).json({ error: 'The service is temporarily unavailable. Please try again shortly.' })
   else res.end()
 })

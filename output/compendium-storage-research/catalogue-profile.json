@@ -1,0 +1,1178 @@
+{
+  "recordedAt": "2026-10-23T19:33:37.069Z",
+  "sourcePath": ".preview.local/compendium-performance/indexes.json",
+  "fixtureSha256": "1e7e25d643f7cd0140d5ac4e017e3344c82a12e026ede9d8f222bf5c78f675c1",
+  "fixtureBytes": 11621934,
+  "fixtureParseMs": 41.796400000000006,
+  "baselineCommit": "8010a11",
+  "note": "Offline Node CPU/size profile of historical 126-pack fixture; not a fresh production snapshot, browser benchmark, DB benchmark or end-to-end loading prediction. No saved data modified. Uses baseline query code unchanged.",
+  "categories": {
+    "spells": {
+      "records": 635,
+      "groups": 635,
+      "jsonBytes": 317625,
+      "gzipBytes": 32753,
+      "pageGzipBytes": 2103,
+      "parseP50Ms": 1.0629999999999882,
+      "parseP95Ms": 1.8278999999999996,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.12810000000001764,
+          "p95Ms": 0.6347000000000094,
+          "groups": 635,
+          "matchedVersions": 635,
+          "firstNames": [
+            "Abi-Dalzim's Horrid Wilting",
+            "Absorb Elements",
+            "Acid Arrow"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.11059999999997672,
+          "p95Ms": 0.1594000000000051,
+          "groups": 533,
+          "matchedVersions": 533,
+          "firstNames": [
+            "Abi-Dalzim's Horrid Wilting",
+            "Absorb Elements",
+            "Acid Arrow"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.02600000000001046,
+          "p95Ms": 0.041200000000003456,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.01779999999996562,
+          "p95Ms": 0.024999999999977263,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.12220000000002074,
+          "p95Ms": 0.38639999999998054,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.017400000000009186,
+          "p95Ms": 0.02569999999997208,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "equipment": {
+      "records": 1402,
+      "groups": 890,
+      "jsonBytes": 875936,
+      "gzipBytes": 94600,
+      "pageGzipBytes": 3502,
+      "parseP50Ms": 2.7690000000000055,
+      "parseP95Ms": 4.374899999999968,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 1.0441000000000145,
+          "p95Ms": 1.9812000000000012,
+          "groups": 890,
+          "matchedVersions": 1402,
+          "firstNames": [
+            "Abacus",
+            "Abacus",
+            "Acid"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.8177000000000021,
+          "p95Ms": 1.9483000000000175,
+          "groups": 890,
+          "matchedVersions": 1386,
+          "firstNames": [
+            "Abacus",
+            "Abacus",
+            "Acid"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.05750000000000455,
+          "p95Ms": 0.10650000000003956,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.03890000000001237,
+          "p95Ms": 0.047200000000032105,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.18729999999999336,
+          "p95Ms": 0.6069999999999709,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.04490000000004102,
+          "p95Ms": 0.06029999999998381,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "magic-items": {
+      "records": 5800,
+      "groups": 4474,
+      "jsonBytes": 4490733,
+      "gzipBytes": 447116,
+      "pageGzipBytes": 5094,
+      "parseP50Ms": 12.644499999999994,
+      "parseP95Ms": 19.88590000000005,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 4.357300000000009,
+          "p95Ms": 7.031999999999925,
+          "groups": 4474,
+          "matchedVersions": 5800,
+          "firstNames": [
+            "+1 All-Purpose Tool",
+            "+1 Amulet of the Devout",
+            "+1 Antimatter Rifle"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 4.138500000000022,
+          "p95Ms": 4.4298,
+          "groups": 4352,
+          "matchedVersions": 5588,
+          "firstNames": [
+            "+1 All-Purpose Tool",
+            "+1 Amulet of the Devout",
+            "+1 Antimatter Rifle"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.362700000000018,
+          "p95Ms": 0.5070000000000618,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.24940000000003693,
+          "p95Ms": 0.2615000000000691,
+          "groups": 31,
+          "matchedVersions": 38,
+          "firstNames": [
+            "Flame Tongue",
+            "Flame Tongue",
+            "Flame Tongue"
+          ]
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.7542999999999438,
+          "p95Ms": 1.6806000000000267,
+          "groups": 202,
+          "matchedVersions": 202,
+          "firstNames": [
+            "Drow +1 Antimatter Rifle",
+            "Drow +1 Armor",
+            "Drow +1 Automatic Rifle"
+          ]
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.2519999999999527,
+          "p95Ms": 0.3785000000000309,
+          "groups": 1,
+          "matchedVersions": 1,
+          "firstNames": [
+            "Flame Tongue Longsword"
+          ]
+        }
+      ]
+    },
+    "classes": {
+      "records": 48,
+      "groups": 48,
+      "jsonBytes": 28805,
+      "gzipBytes": 3612,
+      "pageGzipBytes": 1983,
+      "parseP50Ms": 0.08379999999999654,
+      "parseP95Ms": 0.10090000000002419,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.021999999999934516,
+          "p95Ms": 0.03769999999997253,
+          "groups": 48,
+          "matchedVersions": 48,
+          "firstNames": [
+            "Artificer",
+            "Artificer",
+            "Artificer"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.019700000000057116,
+          "p95Ms": 0.026499999999941792,
+          "groups": 42,
+          "matchedVersions": 42,
+          "firstNames": [
+            "Artificer",
+            "Artificer",
+            "Artificer"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.002399999999965985,
+          "p95Ms": 0.004800000000045657,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.0019000000000914952,
+          "p95Ms": 0.0026000000000294676,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.0141999999999598,
+          "p95Ms": 0.07309999999995398,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.003100000000017644,
+          "p95Ms": 0.004099999999993997,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "subclasses": {
+      "records": 312,
+      "groups": 312,
+      "jsonBytes": 186015,
+      "gzipBytes": 19946,
+      "pageGzipBytes": 2951,
+      "parseP50Ms": 0.48910000000000764,
+      "parseP95Ms": 0.5207000000000335,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.08240000000000691,
+          "p95Ms": 0.1146000000001095,
+          "groups": 312,
+          "matchedVersions": 312,
+          "firstNames": [
+            "Aberrant Mind",
+            "Aberrant Mind",
+            "Aberrant Mind"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.06579999999996744,
+          "p95Ms": 0.09000000000003183,
+          "groups": 302,
+          "matchedVersions": 302,
+          "firstNames": [
+            "Aberrant Mind",
+            "Aberrant Mind",
+            "Aberrant Mind"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.017500000000040927,
+          "p95Ms": 0.027100000000018554,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.012600000000020373,
+          "p95Ms": 0.018499999999903594,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.07880000000000109,
+          "p95Ms": 0.09090000000003329,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.012499999999931788,
+          "p95Ms": 0.019700000000057116,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "races": {
+      "records": 111,
+      "groups": 111,
+      "jsonBytes": 70565,
+      "gzipBytes": 8201,
+      "pageGzipBytes": 2537,
+      "parseP50Ms": 0.21420000000000528,
+      "parseP95Ms": 0.2580000000000382,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.020800000000008367,
+          "p95Ms": 0.035399999999981446,
+          "groups": 111,
+          "matchedVersions": 111,
+          "firstNames": [
+            "Aarakocra",
+            "Aasimar",
+            "Aasimar"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.018699999999967076,
+          "p95Ms": 0.03489999999999327,
+          "groups": 93,
+          "matchedVersions": 93,
+          "firstNames": [
+            "Aarakocra",
+            "Aasimar",
+            "Aasimar"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.005300000000033833,
+          "p95Ms": 0.009700000000066211,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.004400000000032378,
+          "p95Ms": 0.00659999999993488,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.029200000000059845,
+          "p95Ms": 0.033999999999991815,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.004400000000032378,
+          "p95Ms": 0.004700000000070759,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "subraces": {
+      "records": 248,
+      "groups": 248,
+      "jsonBytes": 161542,
+      "gzipBytes": 16128,
+      "pageGzipBytes": 2733,
+      "parseP50Ms": 0.44889999999998054,
+      "parseP95Ms": 0.5787000000000262,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.035000000000081855,
+          "p95Ms": 0.054700000000025284,
+          "groups": 248,
+          "matchedVersions": 248,
+          "firstNames": [
+            "Abyssal",
+            "Air Genasi",
+            "Amethyst"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.0363999999999578,
+          "p95Ms": 0.05380000000002383,
+          "groups": 242,
+          "matchedVersions": 242,
+          "firstNames": [
+            "Abyssal",
+            "Air Genasi",
+            "Amethyst"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.012799999999970169,
+          "p95Ms": 0.019700000000057116,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.00940000000002783,
+          "p95Ms": 0.013000000000033651,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.05990000000008422,
+          "p95Ms": 0.10419999999999163,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.009299999999939246,
+          "p95Ms": 0.011500000000069122,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "monsters": {
+      "records": 5956,
+      "groups": 3833,
+      "jsonBytes": 5170820,
+      "gzipBytes": 814483,
+      "pageGzipBytes": 8457,
+      "parseP50Ms": 15.08949999999993,
+      "parseP95Ms": 16.419299999999907,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 48.489900000000034,
+          "p95Ms": 63.83970000000011,
+          "groups": 3833,
+          "matchedVersions": 5956,
+          "firstNames": [
+            "\"The Demogorgon\"",
+            "Aarakocra",
+            "Aarakroca"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 45.275300000000016,
+          "p95Ms": 52.49509999999964,
+          "groups": 3722,
+          "matchedVersions": 5580,
+          "firstNames": [
+            "Aarakocra",
+            "Aarakroca",
+            "Aarakocra Aeromancer"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.7723999999998341,
+          "p95Ms": 1.0431000000003223,
+          "groups": 4,
+          "matchedVersions": 6,
+          "firstNames": [
+            "Aboleth",
+            "Aboleth",
+            "Aboleth"
+          ]
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.48640000000023065,
+          "p95Ms": 0.5771999999997206,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 6.378900000000158,
+          "p95Ms": 7.530699999999797,
+          "groups": 451,
+          "matchedVersions": 706,
+          "firstNames": [
+            "Aarakocra",
+            "Aarakroca",
+            "Aboleth"
+          ]
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.5053000000002612,
+          "p95Ms": 0.6983000000000175,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "backgrounds": {
+      "records": 75,
+      "groups": 75,
+      "jsonBytes": 48274,
+      "gzipBytes": 6393,
+      "pageGzipBytes": 2517,
+      "parseP50Ms": 0.13140000000021246,
+      "parseP95Ms": 0.15000000000009095,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.0059000000001105946,
+          "p95Ms": 0.018799999999828287,
+          "groups": 75,
+          "matchedVersions": 75,
+          "firstNames": [
+            "Acolyte",
+            "Astral Drifter(AAG)",
+            "Athlete"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.006899999999859574,
+          "p95Ms": 0.009299999999711872,
+          "groups": 73,
+          "matchedVersions": 73,
+          "firstNames": [
+            "Acolyte",
+            "Astral Drifter(AAG)",
+            "Athlete"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.0036000000000058208,
+          "p95Ms": 0.007000000000061846,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.0027000000000043656,
+          "p95Ms": 0.004100000000107684,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.008200000000215368,
+          "p95Ms": 0.010300000000370346,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.0026000000002568413,
+          "p95Ms": 0.0030999999999039574,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "feats": {
+      "records": 229,
+      "groups": 229,
+      "jsonBytes": 137670,
+      "gzipBytes": 15162,
+      "pageGzipBytes": 2298,
+      "parseP50Ms": 0.3688999999999396,
+      "parseP95Ms": 0.7134999999998399,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.04559999999992215,
+          "p95Ms": 0.1437999999998283,
+          "groups": 229,
+          "matchedVersions": 229,
+          "firstNames": [
+            "Aberrant Dragonmark",
+            "Aberrant Dragonmark (Prerequisite: No other Dragonmark)",
+            "Acrobat"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.04350000000022192,
+          "p95Ms": 0.06530000000020664,
+          "groups": 229,
+          "matchedVersions": 229,
+          "firstNames": [
+            "Aberrant Dragonmark",
+            "Aberrant Dragonmark (Prerequisite: No other Dragonmark)",
+            "Acrobat"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.011500000000069122,
+          "p95Ms": 0.019699999999829743,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.007499999999708962,
+          "p95Ms": 0.012200000000120781,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.02419999999983702,
+          "p95Ms": 0.03170000000000073,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.007399999999961437,
+          "p95Ms": 0.007600000000365981,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "invocations": {
+      "records": 73,
+      "groups": 73,
+      "jsonBytes": 60282,
+      "gzipBytes": 6133,
+      "pageGzipBytes": 2348,
+      "parseP50Ms": 0.13369999999986248,
+      "parseP95Ms": 0.14609999999993306,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.009399999999914144,
+          "p95Ms": 0.024100000000089494,
+          "groups": 73,
+          "matchedVersions": 73,
+          "firstNames": [
+            "Arcane Gunslinger",
+            "Aspect of the Moon (Requires: Pact of the Tome)",
+            "Aspect of the Moon (Requires: The Archfey patron)"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.010200000000168075,
+          "p95Ms": 0.01290000000017244,
+          "groups": 73,
+          "matchedVersions": 73,
+          "firstNames": [
+            "Arcane Gunslinger",
+            "Aspect of the Moon (Requires: Pact of the Tome)",
+            "Aspect of the Moon (Requires: The Archfey patron)"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.005400000000008731,
+          "p95Ms": 0.009900000000016007,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.0033000000003085006,
+          "p95Ms": 0.006499999999959982,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.008100000000013097,
+          "p95Ms": 0.014599999999973079,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.003400000000056025,
+          "p95Ms": 0.003499999999803549,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "boons": {
+      "records": 4,
+      "groups": 4,
+      "jsonBytes": 3699,
+      "gzipBytes": 844,
+      "pageGzipBytes": 784,
+      "parseP50Ms": 0.010200000000168075,
+      "parseP95Ms": 0.01710000000002765,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.002399999999852298,
+          "p95Ms": 0.0072000000000116415,
+          "groups": 4,
+          "matchedVersions": 4,
+          "firstNames": [
+            "PACT OF THE TALISMAN",
+            "Pact of the Talisman",
+            "Pact of the Talisman"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.002399999999852298,
+          "p95Ms": 0.0028999999999541615,
+          "groups": 4,
+          "matchedVersions": 4,
+          "firstNames": [
+            "PACT OF THE TALISMAN",
+            "Pact of the Talisman",
+            "Pact of the Talisman"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.0009000000000014552,
+          "p95Ms": 0.0016000000000531145,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.0007000000000516593,
+          "p95Ms": 0.001299999999901047,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.0010000000002037268,
+          "p95Ms": 0.0018000000000029104,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.0007000000000516593,
+          "p95Ms": 0.0007999999997991836,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "selections": {
+      "records": 71,
+      "groups": 71,
+      "jsonBytes": 46016,
+      "gzipBytes": 5772,
+      "pageGzipBytes": 2335,
+      "parseP50Ms": 0.12439999999969586,
+      "parseP95Ms": 0.13430000000016662,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.007599999999911233,
+          "p95Ms": 0.017899999999826832,
+          "groups": 71,
+          "matchedVersions": 71,
+          "firstNames": [
+            "Additional Fighting Style",
+            "Alchemical Formula",
+            "Alchemical Formula Lv 14"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.008400000000165164,
+          "p95Ms": 0.01069999999981519,
+          "groups": 71,
+          "matchedVersions": 71,
+          "firstNames": [
+            "Additional Fighting Style",
+            "Alchemical Formula",
+            "Alchemical Formula Lv 14"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.0036000000000058208,
+          "p95Ms": 0.007100000000264117,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.0027000000000043656,
+          "p95Ms": 0.011199999999917054,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.0078000000003157766,
+          "p95Ms": 0.013100000000122236,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.0027000000000043656,
+          "p95Ms": 0.0028999999999541615,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "languages": {
+      "records": 52,
+      "groups": 52,
+      "jsonBytes": 23677,
+      "gzipBytes": 3248,
+      "pageGzipBytes": 1606,
+      "parseP50Ms": 0.07420000000001892,
+      "parseP95Ms": 0.09660000000030777,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.00680000000011205,
+          "p95Ms": 0.014599999999973079,
+          "groups": 52,
+          "matchedVersions": 52,
+          "firstNames": [
+            "Aarakocra",
+            "Abyssal",
+            "Aquan"
+          ]
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.006400000000212458,
+          "p95Ms": 0.00959999999986394,
+          "groups": 42,
+          "matchedVersions": 42,
+          "firstNames": [
+            "Aarakocra",
+            "Abyssal",
+            "Aquan"
+          ]
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.0016000000000531145,
+          "p95Ms": 0.003200000000106229,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.001299999999901047,
+          "p95Ms": 0.0018000000000029104,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.005799999999908323,
+          "p95Ms": 0.007399999999961437,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.001299999999901047,
+          "p95Ms": 0.0014000000001033186,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    },
+    "other": {
+      "records": 0,
+      "groups": 0,
+      "jsonBytes": 94,
+      "gzipBytes": 91,
+      "pageGzipBytes": 159,
+      "parseP50Ms": 0.0005000000001018634,
+      "parseP95Ms": 0.004500000000007276,
+      "queries": [
+        {
+          "label": "first page",
+          "query": "",
+          "p50Ms": 0.0005000000001018634,
+          "p95Ms": 0.03739999999970678,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "name search",
+          "query": "a",
+          "p50Ms": 0.0005000000001018634,
+          "p95Ms": 0.0007999999997991836,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific name",
+          "query": "aboleth",
+          "p50Ms": 0.0005000000001018634,
+          "p95Ms": 0.0005999999998493877,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "specific item",
+          "query": "flame tongue",
+          "p50Ms": 0.0005000000001018634,
+          "p95Ms": 0.000600000000304135,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "source filter",
+          "query": "",
+          "p50Ms": 0.0005000000001018634,
+          "p95Ms": 0.0005000000001018634,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        },
+        {
+          "label": "combined item filters",
+          "query": "flame tongue",
+          "p50Ms": 0.0005000000001018634,
+          "p95Ms": 0.0005000000001018634,
+          "groups": 0,
+          "matchedVersions": 0,
+          "firstNames": []
+        }
+      ]
+    }
+  },
+  "nameDirectory": {
+    "records": 15016,
+    "jsonBytes": 2521133,
+    "gzipBytes": 489721
+  },
+  "details": {
+    "records": 13709,
+    "jsonBytes": 116607026,
+    "parseMs": 400.0046000000002,
+    "sumIndependentGzipBytes": 29770344,
+    "medianIndependentGzipBytes": 1839,
+    "maxJsonBytes": 345653,
+    "maxGzipBytes": 27892,
+    "aboleths": [
+      {
+        "name": "Aboleth",
+        "hasDetail": false
+      },
+      {
+        "name": "Aboleth",
+        "source": "MM",
+        "hasDetail": true,
+        "detailJsonBytes": 27591,
+        "detailGzipBytes": 5724
+      },
+      {
+        "name": "Aboleth",
+        "source": "XMM",
+        "hasDetail": true,
+        "detailJsonBytes": 20924,
+        "detailGzipBytes": 5432
+      },
+      {
+        "name": "Aboleth Spawn",
+        "source": "CRCotN",
+        "hasDetail": true,
+        "detailJsonBytes": 6830,
+        "detailGzipBytes": 2418
+      },
+      {
+        "name": "Alyxian Aboleth",
+        "source": "CRCotN",
+        "hasDetail": true,
+        "detailJsonBytes": 9821,
+        "detailGzipBytes": 3004
+      },
+      {
+        "name": "Reduced-Threat Aboleth",
+        "source": "TftYP",
+        "hasDetail": true,
+        "detailJsonBytes": 11382,
+        "detailGzipBytes": 3189
+      }
+    ]
+  },
+  "processMemory": {
+    "rss": 744980480,
+    "heapTotal": 308428800,
+    "heapUsed": 244564648,
+    "external": 172081993,
+    "arrayBuffers": 32343345
+  }
+}

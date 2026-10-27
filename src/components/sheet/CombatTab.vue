@@ -8,6 +8,8 @@ import SpellbookPanel from './SpellbookPanel.vue'
 import CombatTrackers from './CombatTrackers.vue'
 import CombatFeatures from './CombatFeatures.vue'
 import HitPointsPanel from './HitPointsPanel.vue'
+import RuleBenefits from './RuleBenefits.vue'
+async function activate(index:string,active:boolean){const values=c.value.spellcasting.activeEffects??[];await save({spellcasting:{...c.value.spellcasting,activeEffects:active?[...new Set([...values,index])]:values.filter(v=>v!==index)}})}
 const emit=defineEmits<{repairSpell:[index:string]}>()
 const store = useCharactersStore(), c = computed(() => store.current!)
 const attacks=computed(()=>combatAttacks(c.value))
@@ -16,7 +18,7 @@ function combat(patch: Partial<Character['combat']>) { return save({ combat: { .
 </script>
 <template>
   <div class="sheet-section-stack sheet-combat-tab"><header class="sheet-section-title"><p class="sheet-eyebrow">READY FOR THE NEXT TURN</p><h2>Combat</h2><p>Your defenses, attacks, spells, and remaining resources in one place.</p></header>
-    <HitPointsPanel />
+    <HitPointsPanel /><RuleBenefits :character="c" :editable="true" :disabled="store.saving" @activate="activate" />
     <section v-if="c.combat.hpCurrent===0" class="sheet-panel sheet-death-saves" aria-label="Death saves">
       <h3>Death saves</h3>
       <fieldset :disabled="store.saving" class="sheet-death-save-controls">

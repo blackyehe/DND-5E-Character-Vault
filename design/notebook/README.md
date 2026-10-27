@@ -1,0 +1,67 @@
+# Revalon notebook design exploration
+
+22 October 2026. Isolated interactive prototypes. No application routes, live entries, folders or permissions are changed.
+
+Open `index.html` directly in a browser. No build, login, network requests or dependencies required. Sample text comes from approved drafts in the local notebook review. New classifications, display summaries and relationships are design suggestions, not saved campaign changes. Current sharing is preserved in the simulated player view: only Ősi Elemek Könyvei is available.
+
+The delivered HTML is self-contained. Rebuild from the local review with `node design/notebook/build.mjs`; the template contains the interaction and styling code. It includes eight approved entry samples and all twelve approved session recaps. Wren's encounter session is explicitly unconfirmed and no number is invented.
+
+## Design plan
+
+### Codex
+
+Subject-first reference for finding a name quickly. Persistent type navigation, searchable list, reader with separate description/encounters/connections tabs. Geography is an optional affiliation filter, never an assertion about current whereabouts.
+
+- Palette: navy #182b42, slate #2c4561, silver #d4dbe4, paper #f4f6f9, ink #1f2b39, blue #315d8c.
+- Type: Palatino Linotype for names; Segoe UI for navigation and reference prose.
+- Structure: `[Types | Search + list | Dossier]`; all reading left aligned.
+- Distinctive element: a spare heraldic silhouette and dossier heading. No invented character portraits.
+
+### Chronicle
+
+Time-first reference for remembering what happened. A numbered session rail, substantial narrative page and contextual character drawer. Entries can be reached through the session in which they were encountered; NPCs still have one canonical page.
+
+- Palette: white #ffffff, mist #e6e9ed, ink #293345, cranberry #87384f, muted #667180.
+- Type: Georgia for narrative prose and chapter names; Segoe UI for controls.
+- Structure: `[Session rail | Chapter + contextual links]`, with a contained overlay for linked dossiers.
+- Distinctive element: the session number is the main landmark; not a folder tree or a list of cards.
+
+### Connections
+
+Relationship-first exploration. A labelled local network with a fixed inspector, searchable focus selector and an accessible list alternative. This is a neighbourhood of a few entries, not an uncontrolled vault-wide graph.
+
+- Palette: deep pine #203b39, moss #49625a, chalk #eef2ea, brass #d8bf83, line #86a39a.
+- Type: Cambria for identity; Segoe UI for relations and controls.
+- Structure: `[Focus + graph | Inspector]` at wide sizes, graph above inspector at reply width.
+- Distinctive element: explicitly labelled relationships and focus navigation. Lines encode approved relationships, not speculation.
+
+## Pre-build critique
+
+Three reskinned sidebars would fail the brief. These concepts change the initial question: who/what, when, and connected to whom. Avoided a universal card grid, decorative parchment, fantasy fonts for body copy, fabricated portraits and arbitrary game statistics. The board uses a deliberately small network and offers a list; the journal has a search escape hatch; the codex preserves the user's geographic organization as metadata.
+
+## References
+
+- The Witcher 2 manual, Journal panel (printed page 8): https://cdn.steamstatic.com/steam/apps/20920/manuals/The%20Witcher%202%20Manual%20-%20English.pdf?t=1687959560
+- Pillars of Eternity manual, Journal (printed page 8): https://cdn.akamai.steamstatic.com/steam/apps/291650/manuals/pe-game-manual.pdf
+
+These are patterns interpreted for Revalon, not replicas of game screens or assets. The relationship board is an additional design experiment, not attributed to either manual.
+
+## Scroll findings and proposed behaviour
+
+In the current CampaignNotebook.vue, `opening` temporarily replaces the whole reader with a loading paragraph. Its intrinsic height can collapse before content returns. On narrow layouts, openEntry also sets browse=false and removes the library above the reader. Both can alter document height and trigger scroll anchoring. These are code-based likely causes, not yet a reproduction of every reported jump. The motion directive only translates by 4px; it does not itself call scrollIntoView.
+
+The prototypes reserve a constant app frame, scroll the index and reader independently, reset only reader scrolling on deliberate selection, preserve list scrolling, and restore reader position on Back. The journal drawer stays inside the frame. Production should retain content or a same-size loading shell during fetches. No automatic document scrolling.
+
+## Classification and visibility proposals
+
+One entry may appear in several views without copies: entry type, session appearance, affiliations and typed relationships. Existing geographic folders can remain the DM authoring view. Affiliation and current whereabouts are separate fields. No faction or location entries are generated by this prototype.
+
+Private entries, their names, their links and any identifying filters must be excluded before building player navigation. Real authorization must remain server-side. The switch here demonstrates the currently approved whole-entry visibility only; it cannot publish anything. Passage-level reveal is a separate feature and is not represented as available.
+
+## Verification
+
+Visually reviewed the codex, chronicle and network at reply width (728px), phone width (360px), and a wide desktop layout (1280px), including a light surrounding theme. Corrected journal flex/grid overflow and graph-label overlap after the first visual pass.
+
+Sixteen desktop interaction checks passed in the collaborative browser. Eighteen phone checks passed in the inline preview. Covered search, geographic filtering, bookmark filtering, entry and tab switching, retained keyboard focus, Back and reading-position restoration, drawer open/close and Escape, retained chapter position, graph/list navigation, unchanged frame height across entry changes, absence of horizontal overflow, and saved visibility filtering. The search test includes full-description matches, not only names. No production tests or deployment ran because application code is untouched.
+
+At 360px the codex switches between its index and reader within the same reserved frame. Linked chapter characters appear in a contained drawer. The network offers a list view. Search, bookmark and mix choices are in-memory only and reset on reload.

@@ -31,7 +31,9 @@ export function savedCharacterOutput(character:unknown,player=false):Character {
 
 export function quickSheetOutput(raw:unknown,player=false) {
   const character=savedCharacterOutput(raw,player)
-  const spells=Object.fromEntries([...new Set([...character.spellcasting.known,...character.spellcasting.prepared,...innateRaceSpells(character).map(s=>s.index)])].flatMap(index=>{
+  const spells=Object.fromEntries([...new Set([...character.spellcasting.known,...character.spellcasting.prepared,...innateRaceSpells(character).map(s=>s.index)])].flatMap((index):[string,Record<string,unknown>][]=>{
+    const approved=character.compendiumRules?.find(d=>d.kind==='spells'&&(d.index===index||Array.isArray(d.entry.aliases)&&d.entry.aliases.includes(index)||d.entry.contentKey===index))
+    if(approved)return [[index,{...approved.entry,definitionAvailable:true}]]
     const legacy=legacySrdSpellKey(index),definition=coreSpell(legacy??index)
     return definition?[[index,{...definition,sourcePack:'SRD 2014',...(legacy?{referenceFallback:true}:{} )}]]:[]
   }))

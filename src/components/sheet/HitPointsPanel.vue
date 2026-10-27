@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { DAMAGE_TYPES, benefitDamage, benefitTitle, characterBenefits } from '../../../shared/rule-benefits'
 import { useCharactersStore, type Character } from '../../stores/characters'
 import { profBonus } from '../../lib/calc'
 import { sheetAC, signed } from '../../lib/character-sheet'
 import SheetVitalsStats from './SheetVitalsStats.vue'
 import { vMotionCounter } from '../../directives/siteMotion'
 defineProps<{ compact?:boolean }>()
-const store=useCharactersStore(),c=computed(()=>store.current!),amount=ref(1)
+const store=useCharactersStore(),c=computed(()=>store.current!),amount=ref(1),damageType=ref('')
 async function combat(patch:Partial<Character['combat']>){if(store.saving)return;try{await store.update(c.value._id,{combat:{...c.value.combat,...patch}})}catch{/* The sheet displays save errors. */}}
 function hp(value:string,kind:'hpCurrent'|'hpTemp'){const n=Number(value);if(Number.isInteger(n))void combat({[kind]:Math.max(0,Math.min(kind==='hpCurrent'?c.value.combat.hpMax:9999,n))})}
 function changeHP(heal:boolean,value=amount.value){
   if(!Number.isInteger(value)||value<1)return
+  if(!heal)value=benefitDamage(value,damageType.value,characterBenefits(c.value))
   const v=c.value.combat
   if(heal)void combat({hpCurrent:Math.min(v.hpMax,v.hpCurrent+value)})
   else{const absorbed=Math.min(v.hpTemp,value);void combat({hpTemp:v.hpTemp-absorbed,hpCurrent:Math.max(0,v.hpCurrent-value+absorbed)})}
@@ -29,9 +31,9 @@ function changeHP(heal:boolean,value=amount.value){
       <component :is="compact?'details':'div'" class="sheet-hp-adjustments" :class="{'sheet-vitals-form':!compact}">
         <summary v-if="compact">Adjust HP / temporary HP</summary>
         <div class="sheet-three-columns"><label>Current HP<input v-motion-counter="c.combat.hpCurrent" :value="c.combat.hpCurrent" type="number" min="0" :max="c.combat.hpMax" @change="hp(($event.target as HTMLInputElement).value,'hpCurrent')" /></label><label>Maximum HP<output>{{c.combat.hpMax}}</output></label><label>Temporary HP<input v-motion-counter="c.combat.hpTemp" :value="c.combat.hpTemp" type="number" min="0" @change="hp(($event.target as HTMLInputElement).value,'hpTemp')" /></label></div>
-        <div class="sheet-inline sheet-hp-adjustment"><label style="flex:1">Damage / healing<input v-model.number="amount" type="number" min="1" /></label><button type="button" class="sheet-button" :disabled="!Number.isInteger(amount)||amount<1" @click="changeHP(false)">Damage</button><button type="button" class="sheet-button" :disabled="!Number.isInteger(amount)||amount<1" @click="changeHP(true)">Heal</button></div>
+        <div class="sheet-inline sheet-hp-adjustment"><label style="flex:1">Damage / healing<input v-model.number="amount" type="number" min="1" /></label><label>Damage type<select aria-label="Damage type" v-model="damageType"><option value="">Already adjusted / untyped</option><option v-for="type in DAMAGE_TYPES" :key="type" :value="type">{{benefitTitle(type)}}</option></select></label><button type="button" class="sheet-button" :disabled="!Number.isInteger(amount)||amount<1" @click="changeHP(false)">Damage</button><button type="button" class="sheet-button" :disabled="!Number.isInteger(amount)||amount<1" @click="changeHP(true)">Heal</button></div>
         <div v-if="!compact" class="sheet-vitals-extras"><label>Hit dice used · {{c.combat.hitDiceTotal}} total<input :value="c.combat.hitDiceUsed" type="number" min="0" :max="c.combat.hitDiceTotal" @change="combat({hitDiceUsed:Math.min(c.combat.hitDiceTotal,Math.max(0,Math.floor(Number(($event.target as HTMLInputElement).value)||0)))})" /></label><label class="sheet-checkbox"><input type="checkbox" :checked="c.combat.inspiration" @change="combat({inspiration:!c.combat.inspiration})" /> Inspiration</label></div>
-        <p class="sheet-small sheet-hp-hint">Damage uses temporary HP first.</p>
+        <p class="sheet-small sheet-hp-hint">Typed damage applies immunity, resistance and vulnerability before temporary HP. Use already adjusted for damage you have calculated yourself.</p>
       </component>
     </fieldset>
   </section>

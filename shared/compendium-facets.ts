@@ -1,4 +1,6 @@
 /** Search metadata only. These helpers never change a rule or a saved character. */
+import { readMonsterExtensions } from './monster-extensions'
+import sourceNames from './compendium-source-names.json'
 export type FacetValues = Record<string, string[]>
 export interface FacetDefinition { key: string; label: string; any: string; numeric?: boolean }
 export interface FacetOption { value: string; label: string }
@@ -54,7 +56,8 @@ export function compendiumFacets(value: unknown, kind: string): FacetValues {
       add('ritual', [typeof read('ritual') === 'boolean' ? read('ritual') ? 'yes' : 'no' : ''])
     }
     if (kind === 'monsters') {
-      add('type', [read('type')]); add('size', [read('size')])
+      const extended=readMonsterExtensions(get(raw,'codex/extended'))
+      add('type', [read('type')]); add('size', extended.sizes?.length?extended.sizes:[read('size')])
       const challenge = imported ? get(raw, 'challenge') ?? get(raw, 'challenge_rating') : read('challenge_rating')
       const cr = typeof challenge === 'number' ? challenge : typeof challenge === 'string' && /^\d+(?:\.\d+|\/\d+)?$/.test(challenge) ? challenge.includes('/') ? Number(challenge.split('/')[0]) / Number(challenge.split('/')[1]) : Number(challenge) : undefined
       add('crMin', [cr]); add('crMax', [cr])
@@ -104,7 +107,7 @@ export function compendiumFacets(value: unknown, kind: string): FacetValues {
     }
   }
   // Source names remain intact so different books/packs cannot collapse into one key.
-  facts.origin = [entry.workshop || entry.workshopItem ? 'workshop' : imported ? 'imported' : 'srd']
+  facts.origin = [entry.itemReference ? 'imported' : entry.workshop || entry.workshopItem ? 'workshop' : imported ? 'imported' : 'srd']
   facts.source = [...new Set(list(entry.sources).filter((v): v is string => typeof v === 'string'))]
   if (!facts.source.length) facts.source = [String(entry.sourcePack || (imported ? 'Imported content' : 'SRD 2014'))]
   return facts
@@ -113,7 +116,7 @@ export function compendiumFacets(value: unknown, kind: string): FacetValues {
 const names: Record<string, string> = { srd:'Standard rules (SRD)', imported:'Imported content', workshop:'My Workshop', str:'Strength', dex:'Dexterity', con:'Constitution', int:'Intelligence', wis:'Wisdom', cha:'Charisma', yes:'Yes', no:'No', none:'None', walk:'Walking', fly:'Flying', swim:'Swimming', climb:'Climbing', burrow:'Burrowing', 'bonus-action':'Bonus action' }
 export function facetLabel(key: string, value: string): string {
   if (value === '__unknown') return 'Not recorded'
-  if (key === 'source') return value
+  if (key === 'source') return Object.hasOwn(sourceNames,value) ? (sourceNames as Record<string,string>)[value]! : value
   if (key === 'level') return value === '0' ? 'Cantrip' : `Level ${value}`
   if (key === 'hitDie') return `d${value}`
   if (key === 'speed') return `${value} ft.`

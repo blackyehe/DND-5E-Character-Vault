@@ -1,11 +1,11 @@
 import { inspectOrcbrew, sourceHash, type ParsedOrcbrew } from './orcbrew'
+import { packSource } from './pack-storage'
 
 const cache = new Map<string, { parsed: ParsedOrcbrew; bytes: number }>()
 let cacheBytes = 0
 
 export function parsedPack(data: unknown): ParsedOrcbrew {
-  const source = (data as { source?: unknown })?.source
-  if (typeof source !== 'string') throw new Error('Saved Orcbrew file has no source text')
+  const source = packSource(data)
   const hash = sourceHash(source)
   const cached = cache.get(hash)
   if (cached) {

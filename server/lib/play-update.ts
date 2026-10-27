@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Character } from '../../shared/character'
 import { attunementError } from '../../shared/item-rules'
+import { availableBenefitSpells } from '../../shared/rule-benefits'
 
 const count = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
 export const playUpdateSchema = z.object({
@@ -10,6 +11,7 @@ export const playUpdateSchema = z.object({
   resources: z.array(z.object({ id: z.string().max(200), used: count.max(999) }).strict()).max(200).optional(),
   equipment: z.array(z.object({ id: z.string().max(100), qty: count, equipped: z.boolean(),attuned:z.boolean().optional() }).strict()).max(1000).optional(),
   prepared: z.array(z.string().max(300)).max(1000).optional(),
+  activeEffects: z.array(z.string().max(300)).max(1000).optional(),
   features: z.array(z.object({ id: z.string().max(100), pinned: z.boolean().optional(), order: count.max(10000).optional() }).strict()).max(1000).optional(),
 }).strict()
 
@@ -59,6 +61,7 @@ export function applyPlayUpdate(before: Character, update: z.infer<typeof playUp
     set['spellcasting.prepared'] = [...new Set(update.prepared)]
     set['spellcasting.known'] = [...available]
   }
+  if(update.activeEffects){const allowed=new Set(availableBenefitSpells(before).map(d=>d.index));if(update.activeEffects.some(i=>!allowed.has(i)))throw new Error('Only reviewed spells on this character can be activated.');set['spellcasting.activeEffects']=[...new Set(update.activeEffects)]}
   const features = structuredClone(before.features)
   for (const item of update.features ?? []) {
     const feature = features.find(f => String(f._id) === item.id)

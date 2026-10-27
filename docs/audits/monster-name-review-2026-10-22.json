@@ -1,0 +1,4966 @@
+{
+  "meta": {
+    "date": "2026-10-22",
+    "mode": "read-only candidate review",
+    "scope": "334 current standard index entries + 680 signed-in imported monsters, compared to the resolved built-in 5etools catalog; current name/source list rechecked unchanged",
+    "rows": 213,
+    "countsByCategory": {
+      "Spelling / naming": 8,
+      "Same stored rules": 6,
+      "Alternate labels": 7,
+      "Forms / options": 81,
+      "Renamed source version": 68,
+      "Related / replacement": 20,
+      "Same name / source": 18,
+      "Possible named reskin": 4,
+      "Keep distinct": 1
+    },
+    "note": "Rows overlap. They are review relationships, not 213 proven duplicates or 213 disjoint creature families.",
+    "method": {
+      "spelling": "Normalized/fuzzy names followed by source-qualified candidate review; no automatic correction.",
+      "storedRules": "Compared all imported raw detail fields after excluding root name, key, source, disabled flag, flavour description and edit event. Normalized self-name, case and whitespace; recursively sorted object keys. Three differently named pairs match this comparison; three more match when languages are also excluded.",
+      "forms": "Explicit current form/option names and reviewed named variants. Shared family does not imply identical rules.",
+      "sourceRenames": "Source-authored reprintedAs relationships. Distinct-role substitutions are marked separately.",
+      "partialNpc": "HP, AC, CR and six scores only; unverified rule equivalence.",
+      "sameName": "18 current groups: 14 inside imports plus four standard/import overlaps."
+    },
+    "limitations": [
+      "No automatic merge, deletion, rename, import, source switch or builder implementation.",
+      "Family grouping is a browse recommendation; preserve version, form, option and NPC differences.",
+      "No claim that every renamed NPC or thematic relative in all optional homebrew has been found.",
+      "Conclave Dryad Mount remains unassigned; no confident matching built-in creature established."
+    ]
+  },
+  "groups": [
+    {
+      "id": "g1",
+      "category": "Spelling / naming",
+      "family": "Aarakocra",
+      "current": [
+        {
+          "name": "Aarakroca",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Aarakocra",
+          "source": "MM"
+        }
+      ],
+      "reason": "Likely transcription or singular/plural difference; source-qualified candidate found.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g2",
+      "category": "Spelling / naming",
+      "family": "Nycaloth",
+      "current": [
+        {
+          "name": "Nyacaloth",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Nycaloth",
+          "source": "MM"
+        }
+      ],
+      "reason": "Likely transcription or singular/plural difference; source-qualified candidate found.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g3",
+      "category": "Spelling / naming",
+      "family": "Pteranodon",
+      "current": [
+        {
+          "name": "Pteradon",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Pteranodon",
+          "source": "MM"
+        }
+      ],
+      "reason": "Likely transcription or singular/plural difference; source-qualified candidate found.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g4",
+      "category": "Spelling / naming",
+      "family": "Storm Giant Quintessent",
+      "current": [
+        {
+          "name": "Storm Giant Quintessant",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Storm Giant Quintessent",
+          "source": "VGM"
+        }
+      ],
+      "reason": "Likely transcription or singular/plural difference; source-qualified candidate found.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g5",
+      "category": "Spelling / naming",
+      "family": "Titivilus",
+      "current": [
+        {
+          "name": "Titivllus",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Titivilus",
+          "source": "MTF"
+        }
+      ],
+      "reason": "Likely transcription or singular/plural difference; source-qualified candidate found.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g6",
+      "category": "Spelling / naming",
+      "family": "Duergar Soulblade",
+      "current": [
+        {
+          "name": "Duergar Soulblades",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Duergar Soulblade",
+          "source": "MTF"
+        }
+      ],
+      "reason": "Likely transcription or singular/plural difference; source-qualified candidate found.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g7",
+      "category": "Spelling / naming",
+      "family": "Rothé",
+      "current": [
+        {
+          "name": "Rothe",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Rothé",
+          "source": "VGM"
+        }
+      ],
+      "reason": "Accent differs.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g8",
+      "category": "Spelling / naming",
+      "family": "Deep Rothé",
+      "current": [
+        {
+          "name": "Deep Rothe",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Deep Rothé",
+          "source": "VGM"
+        }
+      ],
+      "reason": "Accent differs.",
+      "action": "One searchable name; retain the old spelling as an alias.",
+      "confidence": "High"
+    },
+    {
+      "id": "g9",
+      "category": "Same stored rules",
+      "family": "Cow",
+      "current": [
+        {
+          "name": "Cow",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Rothe",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Stored fields match after removing root name/key/source/flavour/edit metadata and normalizing self-name, case and whitespace.",
+      "action": "One base listing with named alias or reskin; preserve any language/flavour differences.",
+      "confidence": "Strong"
+    },
+    {
+      "id": "g10",
+      "category": "Same stored rules",
+      "family": "Druid of the Old Ways",
+      "current": [
+        {
+          "name": "Druid of the Old Ways",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Nikya",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Stored fields match after removing root name/key/source/flavour/edit metadata and normalizing self-name, case and whitespace.",
+      "action": "One base listing with named alias or reskin; preserve any language/flavour differences.",
+      "confidence": "Strong"
+    },
+    {
+      "id": "g11",
+      "category": "Same stored rules",
+      "family": "Galvanic Blastseeker",
+      "current": [
+        {
+          "name": "Galvanic Blastseeker",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Mizzix",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Stored fields match after removing root name/key/source/flavour/edit metadata and normalizing self-name, case and whitespace.",
+      "action": "One base listing with named alias or reskin; preserve any language/flavour differences.",
+      "confidence": "Strong"
+    },
+    {
+      "id": "g12",
+      "category": "Same stored rules",
+      "family": "Precognitive Mage",
+      "current": [
+        {
+          "name": "Geetra",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Precognitive Mage",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same comparison matches after also excluding languages; the original languages differ.",
+      "action": "One base listing with named alias or reskin; preserve any language/flavour differences.",
+      "confidence": "Strong, language difference"
+    },
+    {
+      "id": "g13",
+      "category": "Same stored rules",
+      "family": "Golgari Shaman",
+      "current": [
+        {
+          "name": "Golgari Shaman",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Izoni",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same comparison matches after also excluding languages; the original languages differ.",
+      "action": "One base listing with named alias or reskin; preserve any language/flavour differences.",
+      "confidence": "Strong, language difference"
+    },
+    {
+      "id": "g14",
+      "category": "Same stored rules",
+      "family": "Rakdos Lampooner",
+      "current": [
+        {
+          "name": "Judith",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Rakdos Lampooner",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same comparison matches after also excluding languages; the original languages differ.",
+      "action": "One base listing with named alias or reskin; preserve any language/flavour differences.",
+      "confidence": "Strong, language difference"
+    },
+    {
+      "id": "g15",
+      "category": "Alternate labels",
+      "family": "Half-ogre",
+      "current": [
+        {
+          "name": "Half-ogre",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Half-Ogre (Ogrillon)",
+          "source": "MM"
+        },
+        {
+          "name": "Ogrillon Ogre",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Short form, parenthetical synonym, and a renamed newer source version.",
+      "action": "One listing per creature/role, with aliases and explicit source versions.",
+      "confidence": "High candidate"
+    },
+    {
+      "id": "g16",
+      "category": "Alternate labels",
+      "family": "Lizard King / Queen",
+      "current": [
+        {
+          "name": "Lizard King/Queen",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Lizard King",
+          "source": "MM"
+        },
+        {
+          "name": "Lizard Queen",
+          "source": "MM"
+        },
+        {
+          "name": "Lizardfolk Sovereign",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Current combined label versus split names and a newer renamed entry.",
+      "action": "One listing per creature/role, with aliases and explicit source versions.",
+      "confidence": "High candidate"
+    },
+    {
+      "id": "g17",
+      "category": "Alternate labels",
+      "family": "Illithilich",
+      "current": [
+        {
+          "name": "Mind Flayer Lich (Illithilich)",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Illithilich",
+          "source": "VGM"
+        }
+      ],
+      "reason": "The current name includes the source creature's alternate name.",
+      "action": "One listing per creature/role, with aliases and explicit source versions.",
+      "confidence": "High candidate"
+    },
+    {
+      "id": "g18",
+      "category": "Alternate labels",
+      "family": "Flying / Winged Kraul Warrior",
+      "current": [
+        {
+          "name": "Flying Kraul Warrior",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Winged Kraul Warrior",
+          "source": "GGR"
+        }
+      ],
+      "reason": "Likely wording alias for the winged variant; compare its rules before accepting.",
+      "action": "One listing per creature/role, with aliases and explicit source versions.",
+      "confidence": "High candidate"
+    },
+    {
+      "id": "g19",
+      "category": "Alternate labels",
+      "family": "Rakdos Performer — Blade Juggler",
+      "current": [
+        {
+          "name": "Rakdos Performer (Blade Juggler)",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Rakdos Performer, Blade Juggler",
+          "source": "GGR"
+        }
+      ],
+      "reason": "Parentheses versus a comma; the performer role stays distinct.",
+      "action": "One listing per creature/role, with aliases and explicit source versions.",
+      "confidence": "High candidate"
+    },
+    {
+      "id": "g20",
+      "category": "Alternate labels",
+      "family": "Rakdos Performer — Fire Eater",
+      "current": [
+        {
+          "name": "Rakdos Performer (Fire Eater)",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Rakdos Performer, Fire Eater",
+          "source": "GGR"
+        }
+      ],
+      "reason": "Parentheses versus a comma; the performer role stays distinct.",
+      "action": "One listing per creature/role, with aliases and explicit source versions.",
+      "confidence": "High candidate"
+    },
+    {
+      "id": "g21",
+      "category": "Alternate labels",
+      "family": "Rakdos Performer — High-Wire Acrobat",
+      "current": [
+        {
+          "name": "Rakdos Performer (High-Wire Acrobat)",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Rakdos Performer, High-Wire Acrobat",
+          "source": "GGR"
+        }
+      ],
+      "reason": "Parentheses versus a comma; the performer role stays distinct.",
+      "action": "One listing per creature/role, with aliases and explicit source versions.",
+      "confidence": "High candidate"
+    },
+    {
+      "id": "g22",
+      "category": "Forms / options",
+      "family": "Balor",
+      "current": [
+        {
+          "name": "Balor",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Balor (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g23",
+      "category": "Forms / options",
+      "family": "Barbed Devil",
+      "current": [
+        {
+          "name": "Barbed Devil",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Barbed Devil (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g24",
+      "category": "Forms / options",
+      "family": "Bearded Devil",
+      "current": [
+        {
+          "name": "Bearded Devil",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Bearded Devil (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g25",
+      "category": "Forms / options",
+      "family": "Bone Devil",
+      "current": [
+        {
+          "name": "Bone Devil",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Bone Devil (Polearm Variant)",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Bone Devil (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g26",
+      "category": "Forms / options",
+      "family": "Dust Mephit",
+      "current": [
+        {
+          "name": "Dust Mephit",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Dust Mephit (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g27",
+      "category": "Forms / options",
+      "family": "Erinyes",
+      "current": [
+        {
+          "name": "Erinyes",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Erinyes (Rope of Entanglement Variant)",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Erinyes (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g28",
+      "category": "Forms / options",
+      "family": "Ettercap",
+      "current": [
+        {
+          "name": "Ettercap",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Ettercap (Garrote Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g29",
+      "category": "Forms / options",
+      "family": "Giant Rat",
+      "current": [
+        {
+          "name": "Giant Rat",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Giant Rat (Diseased)",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Diseased Giant Rat",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g30",
+      "category": "Forms / options",
+      "family": "Glabrezu",
+      "current": [
+        {
+          "name": "Glabrezu",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Glabrezu (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g31",
+      "category": "Forms / options",
+      "family": "Green Hag",
+      "current": [
+        {
+          "name": "Green Hag",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Green Hag (Coven Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g32",
+      "category": "Forms / options",
+      "family": "Hezrou",
+      "current": [
+        {
+          "name": "Hezrou",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Hezrou (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g33",
+      "category": "Forms / options",
+      "family": "Horned Devil",
+      "current": [
+        {
+          "name": "Horned Devil",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Horned Devil (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g34",
+      "category": "Forms / options",
+      "family": "Ice Devil",
+      "current": [
+        {
+          "name": "Ice Devil",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Ice Devil (Spear Variant)",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Ice Devil (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g35",
+      "category": "Forms / options",
+      "family": "Ice Mephit",
+      "current": [
+        {
+          "name": "Ice Mephit",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Ice Mephit (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g36",
+      "category": "Forms / options",
+      "family": "Magma Mephit",
+      "current": [
+        {
+          "name": "Magma Mephit",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Magma Mephit (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g37",
+      "category": "Forms / options",
+      "family": "Marilith",
+      "current": [
+        {
+          "name": "Marilith",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Marilith (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g38",
+      "category": "Forms / options",
+      "family": "Nalfeshnee",
+      "current": [
+        {
+          "name": "Nalfeshnee",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Nalfeshnee (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g39",
+      "category": "Forms / options",
+      "family": "Night Hag",
+      "current": [
+        {
+          "name": "Night Hag",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Night Hag (Coven Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g40",
+      "category": "Forms / options",
+      "family": "Pit Fiend",
+      "current": [
+        {
+          "name": "Pit Fiend",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Pit Fiend (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g41",
+      "category": "Forms / options",
+      "family": "Satyr",
+      "current": [
+        {
+          "name": "Satyr",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Satyr (Pipes Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g42",
+      "category": "Forms / options",
+      "family": "Sea Hag",
+      "current": [
+        {
+          "name": "Sea Hag",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Sea Hag (Coven Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g43",
+      "category": "Forms / options",
+      "family": "Steam Mephit",
+      "current": [
+        {
+          "name": "Steam Mephit",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Steam Mephit (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g44",
+      "category": "Forms / options",
+      "family": "Troll",
+      "current": [
+        {
+          "name": "Troll",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Troll (Loathsome Limbs Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g45",
+      "category": "Forms / options",
+      "family": "Vampire",
+      "current": [
+        {
+          "name": "Vampire, Vampire Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Vampire, Bat Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Vampire, Mist Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Vampire Spellcaster",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Vampire Warrior",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Vampire",
+          "source": "MM"
+        },
+        {
+          "name": "Vampire",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Three SRD forms plus Spellcaster/Warrior imports. Newer Vampire is a source revision; older role variants have real mechanical differences.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g46",
+      "category": "Forms / options",
+      "family": "Vrock",
+      "current": [
+        {
+          "name": "Vrock",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Vrock (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g47",
+      "category": "Forms / options",
+      "family": "Werebear",
+      "current": [
+        {
+          "name": "Werebear, Bear Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Werebear, Human Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Werebear, Hybrid Form",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g48",
+      "category": "Forms / options",
+      "family": "Wereboar",
+      "current": [
+        {
+          "name": "Wereboar, Boar Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Wereboar, Human Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Wereboar, Hybrid Form",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g49",
+      "category": "Forms / options",
+      "family": "Wererat",
+      "current": [
+        {
+          "name": "Wererat, Human Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Wererat, Hybrid Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Wererat, Rat Form",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g50",
+      "category": "Forms / options",
+      "family": "Weretiger",
+      "current": [
+        {
+          "name": "Weretiger, Human Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Weretiger, Hybrid Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Weretiger, Tiger Form",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g51",
+      "category": "Forms / options",
+      "family": "Werewolf",
+      "current": [
+        {
+          "name": "Werewolf, Human Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Werewolf, Hybrid Form",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Werewolf, Wolf Form",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g52",
+      "category": "Forms / options",
+      "family": "Adult Oblex",
+      "current": [
+        {
+          "name": "Adult Oblex (Arcana Proficiency Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Adult Oblex (History Proficiency Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Adult Oblex (Nature Proficiency Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Adult Oblex (Religion Proficiency Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g53",
+      "category": "Forms / options",
+      "family": "Amnizu",
+      "current": [
+        {
+          "name": "Amnizu",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Amnizu (Summoning Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g54",
+      "category": "Forms / options",
+      "family": "Anarch",
+      "current": [
+        {
+          "name": "Anarch (Medium Variant)",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Anarch (Small Variant)",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g55",
+      "category": "Forms / options",
+      "family": "Annis Hag",
+      "current": [
+        {
+          "name": "Annis Hag",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Annis Hag (Coven Variant)",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g56",
+      "category": "Forms / options",
+      "family": "Arcanaloth",
+      "current": [
+        {
+          "name": "Arcanaloth",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Arcanaloth (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g57",
+      "category": "Forms / options",
+      "family": "Barlgura",
+      "current": [
+        {
+          "name": "Barlgura",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Barlgura (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g58",
+      "category": "Forms / options",
+      "family": "Bheur Hag",
+      "current": [
+        {
+          "name": "Bheur Hag",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Bheur Hag (Coven Variant)",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g59",
+      "category": "Forms / options",
+      "family": "Blue Slaad",
+      "current": [
+        {
+          "name": "Blue Slaad",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Blue Slaad (Control Gem Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g60",
+      "category": "Forms / options",
+      "family": "Cambion",
+      "current": [
+        {
+          "name": "Cambion",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Cambion (Baphomet Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Cambion (Geryon/Zariel Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Cambion (Orcus Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g61",
+      "category": "Forms / options",
+      "family": "Chasme",
+      "current": [
+        {
+          "name": "Chasme",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Chasme (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g62",
+      "category": "Forms / options",
+      "family": "Death Slaad",
+      "current": [
+        {
+          "name": "Death Slaad",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Death Slaad (Control Gem Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g63",
+      "category": "Forms / options",
+      "family": "Deathlock",
+      "current": [
+        {
+          "name": "Deathlock",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Deathlock (Archfey patron)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Deathlock (Fiend patron)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Deathlock (Great Old One patron)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g64",
+      "category": "Forms / options",
+      "family": "Deathlock Mastermind",
+      "current": [
+        {
+          "name": "Deathlock Mastermind",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Deathlock Mastermind (Archfey patron)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Deathlock Mastermind (Fiend patron)",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Deathlock Mastermind (Great Old One patron)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g65",
+      "category": "Forms / options",
+      "family": "Demilich",
+      "current": [
+        {
+          "name": "Demilich",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Demilich (Acererak Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g66",
+      "category": "Forms / options",
+      "family": "Drow Inquisitor",
+      "current": [
+        {
+          "name": "Drow Inquisitor",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Drow Inquisitor (Summoning Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g67",
+      "category": "Forms / options",
+      "family": "Drow Shadowblade",
+      "current": [
+        {
+          "name": "Drow Shadowblade",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Drow Shadowblade (Summoning Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g68",
+      "category": "Forms / options",
+      "family": "Duodrone",
+      "current": [
+        {
+          "name": "Duodrone",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Duodrone (Rogue Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g69",
+      "category": "Forms / options",
+      "family": "Gazer",
+      "current": [
+        {
+          "name": "Gazer",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Gazer (Familiar Variant)",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g70",
+      "category": "Forms / options",
+      "family": "Geryon",
+      "current": [
+        {
+          "name": "Geryon",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Geryon (Summoning Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g71",
+      "category": "Forms / options",
+      "family": "Gray Slaad",
+      "current": [
+        {
+          "name": "Gray Slaad",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Gray Slaad (Control Gem Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g72",
+      "category": "Forms / options",
+      "family": "Green Slaad",
+      "current": [
+        {
+          "name": "Green Slaad",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Green Slaad (Control Gem Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g73",
+      "category": "Forms / options",
+      "family": "Inspired",
+      "current": [
+        {
+          "name": "Inspired",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Inspired (Hashalaq Vessel)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Inspired (Kalaraq Vessel)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Inspired (Tsucora Vessel)",
+          "source": "Eberron - Rising from the Last War"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g74",
+      "category": "Forms / options",
+      "family": "Magewright",
+      "current": [
+        {
+          "name": "Magewright",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Artisan)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Entertainer)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Healer)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Lamplighter)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Locksmith)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Mediator)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Medium)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Magewright (Oracle)",
+          "source": "Eberron - Rising from the Last War"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g75",
+      "category": "Forms / options",
+      "family": "Mezzoloth",
+      "current": [
+        {
+          "name": "Mezzoloth",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Mezzoloth (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g76",
+      "category": "Forms / options",
+      "family": "Molydeus",
+      "current": [
+        {
+          "name": "Molydeus",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Molydeus (Summoning Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g77",
+      "category": "Forms / options",
+      "family": "Monodrone",
+      "current": [
+        {
+          "name": "Monodrone",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Monodrone (Rogue Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g78",
+      "category": "Forms / options",
+      "family": "Mud Mephit",
+      "current": [
+        {
+          "name": "Mud Mephit",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Mud Mephit (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g79",
+      "category": "Forms / options",
+      "family": "Nycaloth",
+      "current": [
+        {
+          "name": "Nyacaloth",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Nycaloth (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g80",
+      "category": "Forms / options",
+      "family": "Pentadrone",
+      "current": [
+        {
+          "name": "Pentadrone",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Pentadrone (Rogue Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g81",
+      "category": "Forms / options",
+      "family": "Quadrone",
+      "current": [
+        {
+          "name": "Quadrone",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Quadrone (Rogue Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g82",
+      "category": "Forms / options",
+      "family": "Rakdos Performer",
+      "current": [
+        {
+          "name": "Rakdos Performer (Blade Juggler)",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Rakdos Performer (Fire Eater)",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Rakdos Performer (High-Wire Acrobat)",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Three role statblocks share a family; their names also change punctuation in the source. Keep each role's mechanics.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g83",
+      "category": "Forms / options",
+      "family": "Red Slaad",
+      "current": [
+        {
+          "name": "Red Slaad",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Red Slaad (Control Gem Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g84",
+      "category": "Forms / options",
+      "family": "Sibriex",
+      "current": [
+        {
+          "name": "Sibriex",
+          "source": "Mordenkainen's Tome of Foes"
+        },
+        {
+          "name": "Sibriex (Flesh Warping Variant)",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g85",
+      "category": "Forms / options",
+      "family": "Slaad Tadpole",
+      "current": [
+        {
+          "name": "Slaad Tadpole",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Slaad Tadpole (Control Gem Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g86",
+      "category": "Forms / options",
+      "family": "Smoke Mephit",
+      "current": [
+        {
+          "name": "Smoke Mephit",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Smoke Mephit (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g87",
+      "category": "Forms / options",
+      "family": "Tarkanan Assassin",
+      "current": [
+        {
+          "name": "Tarkanan Assassin",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Tarkanan Assassin (Enchantment)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Tarkanan Assassin (Fire)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Tarkanan Assassin (Illusion)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Tarkanan Assassin (Lightning)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Tarkanan Assassin (Poison)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Tarkanan Assassin (Sleep)",
+          "source": "Eberron - Rising from the Last War"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g88",
+      "category": "Forms / options",
+      "family": "Thri-kreen",
+      "current": [
+        {
+          "name": "Thri-kreen",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Thri-kreen (Psionics Variant)",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Thri-kreen (Weapons Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g89",
+      "category": "Forms / options",
+      "family": "Tridrone",
+      "current": [
+        {
+          "name": "Tridrone",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Tridrone (Rogue Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g90",
+      "category": "Forms / options",
+      "family": "Ultroloth",
+      "current": [
+        {
+          "name": "Ultroloth",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Ultroloth (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g91",
+      "category": "Forms / options",
+      "family": "Valenar Hawk",
+      "current": [
+        {
+          "name": "Valenar Hawk",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Bestow Luck)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Burst of Speed)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Camouflage)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Fey Ancestry)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Fey Step)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Lie Detector)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Quickness)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hawk (Shrouded Step)",
+          "source": "Eberron - Rising from the Last War"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g92",
+      "category": "Forms / options",
+      "family": "Valenar Hound",
+      "current": [
+        {
+          "name": "Valenar Hound",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Bestow Luck)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Burst of Speed)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Camouflage)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Fey Ancestry)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Fey Step)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Lie Detector)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Quickness)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Hound (Shrouded Step)",
+          "source": "Eberron - Rising from the Last War"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g93",
+      "category": "Forms / options",
+      "family": "Valenar Steed",
+      "current": [
+        {
+          "name": "Valenar Steed",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Bestow Luck)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Burst of Speed)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Camouflage)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Fey Ancestry)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Fey Step)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Lie Detector)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Quickness)",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Valenar Steed (Shrouded Step)",
+          "source": "Eberron - Rising from the Last War"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g94",
+      "category": "Forms / options",
+      "family": "Yochlol",
+      "current": [
+        {
+          "name": "Yochlol",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Yochlol (Summoning Variant)",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g95",
+      "category": "Forms / options",
+      "family": "Yuan-ti Malison",
+      "current": [
+        {
+          "name": "Yuan-ti Malison (Type 1)",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Yuan-ti Malison (Type 2)",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Yuan-ti Malison (Type 3)",
+          "source": "Monster Manual"
+        },
+        {
+          "name": "Yuan-ti Malison (Type 4)",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Yuan-ti Malison (Type 5)",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current parenthetical entries describe forms, options, loadouts or spell variants of a common family.",
+      "action": "One family listing; select the form or option inside it. Keep its rules intact.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g96",
+      "category": "Forms / options",
+      "family": "Guard Drake",
+      "current": [
+        {
+          "name": "Black Guard Drake",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Blue Guard Drake",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Green Guard Drake",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Guard Drake",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "Red Guard Drake",
+          "source": "Volo's Guide to Monsters"
+        },
+        {
+          "name": "White Guard Drake",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Guard Drake",
+          "source": "VGM"
+        },
+        {
+          "name": "Guard Drake",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "Five current colour options plus the base entry; colour affects traits.",
+      "action": "One Guard Drake listing with colour and source selections.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g97",
+      "category": "Forms / options",
+      "family": "Drider",
+      "current": [
+        {
+          "name": "Drider",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Drider Spellcaster",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drider",
+          "source": "MM"
+        },
+        {
+          "name": "Drider",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Base creature and spellcasting variant share a family.",
+      "action": "One Drider listing with the spellcaster variant and source selection.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g98",
+      "category": "Forms / options",
+      "family": "Imp",
+      "current": [
+        {
+          "name": "Imp",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Imp Familiar",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Imp",
+          "source": "MM"
+        },
+        {
+          "name": "Imp Familiar",
+          "source": "MM"
+        },
+        {
+          "name": "Imp",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Current base and Familiar entry; familiar rules are an optional modification.",
+      "action": "One family listing with a Familiar option.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g99",
+      "category": "Forms / options",
+      "family": "Pseudodragon",
+      "current": [
+        {
+          "name": "Pseudodragon",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Pseudodragon Familiar",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Pseudodragon",
+          "source": "MM"
+        },
+        {
+          "name": "Pseudodragon Familiar",
+          "source": "MM"
+        },
+        {
+          "name": "Pseudodragon",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Current base and Familiar entry; familiar rules are an optional modification.",
+      "action": "One family listing with a Familiar option.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g100",
+      "category": "Forms / options",
+      "family": "Quasit",
+      "current": [
+        {
+          "name": "Quasit",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Quasit Familiar",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Quasit",
+          "source": "MM"
+        },
+        {
+          "name": "Quasit Familiar",
+          "source": "MM"
+        },
+        {
+          "name": "Quasit",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Current base and Familiar entry; familiar rules are an optional modification.",
+      "action": "One family listing with a Familiar option.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g101",
+      "category": "Forms / options",
+      "family": "Faerie Dragon",
+      "current": [
+        {
+          "name": "Faerie Dragon",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Faerie Dragon (Blue)",
+          "source": "MM"
+        },
+        {
+          "name": "Faerie Dragon (Green)",
+          "source": "MM"
+        },
+        {
+          "name": "Faerie Dragon (Indigo)",
+          "source": "MM"
+        },
+        {
+          "name": "Faerie Dragon (Orange)",
+          "source": "MM"
+        },
+        {
+          "name": "Faerie Dragon (Red)",
+          "source": "MM"
+        },
+        {
+          "name": "Faerie Dragon (Violet)",
+          "source": "MM"
+        },
+        {
+          "name": "Faerie Dragon (Yellow)",
+          "source": "MM"
+        },
+        {
+          "name": "Faerie Dragon Adult",
+          "source": "XMM"
+        },
+        {
+          "name": "Faerie Dragon Youth",
+          "source": "XMM"
+        }
+      ],
+      "reason": "One current label, seven older colour/age entries and two newer age entries.",
+      "action": "One family listing with age/colour and edition controls; preserve age-related spell differences.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g102",
+      "category": "Forms / options",
+      "family": "Bone Naga",
+      "current": [
+        {
+          "name": "Bone Naga",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Bone Naga (Guardian)",
+          "source": "MM"
+        },
+        {
+          "name": "Bone Naga (Spirit)",
+          "source": "MM"
+        },
+        {
+          "name": "Bone Naga",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Current generic name hides the older Guardian/Spirit distinction.",
+      "action": "One family listing; choose Guardian/Spirit where applicable and preserve the source.",
+      "confidence": "Family candidate"
+    },
+    {
+      "id": "g103",
+      "category": "Renamed source version",
+      "family": "Acolyte → Priest Acolyte",
+      "current": [
+        {
+          "name": "Acolyte",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Acolyte",
+          "source": "MM"
+        },
+        {
+          "name": "Priest Acolyte",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g104",
+      "category": "Renamed source version",
+      "family": "Adult Blue Dracolich → Dracolich",
+      "current": [
+        {
+          "name": "Adult Blue Dracolich",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Adult Blue Dracolich",
+          "source": "MM"
+        },
+        {
+          "name": "Dracolich",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g105",
+      "category": "Renamed source version",
+      "family": "Androsphinx → Sphinx of Valor",
+      "current": [
+        {
+          "name": "Androsphinx",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Androsphinx",
+          "source": "MM"
+        },
+        {
+          "name": "Sphinx of Valor",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g106",
+      "category": "Renamed source version",
+      "family": "Azer → Azer Sentinel",
+      "current": [
+        {
+          "name": "Azer",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Azer",
+          "source": "MM"
+        },
+        {
+          "name": "Azer Sentinel",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g107",
+      "category": "Renamed source version",
+      "family": "Bugbear → Bugbear Warrior",
+      "current": [
+        {
+          "name": "Bugbear",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Bugbear",
+          "source": "MM"
+        },
+        {
+          "name": "Bugbear Warrior",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g108",
+      "category": "Renamed source version",
+      "family": "Bullywug → Bullywug Warrior",
+      "current": [
+        {
+          "name": "Bullywug",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Bullywug",
+          "source": "MM"
+        },
+        {
+          "name": "Bullywug Warrior",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g109",
+      "category": "Related / replacement",
+      "family": "Cave Bear → Polar Bear",
+      "current": [
+        {
+          "name": "Cave Bear",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Cave Bear",
+          "source": "MM"
+        },
+        {
+          "name": "Polar Bear",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g110",
+      "category": "Renamed source version",
+      "family": "Centaur → Centaur Trooper",
+      "current": [
+        {
+          "name": "Centaur",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Centaur",
+          "source": "MM"
+        },
+        {
+          "name": "Centaur Trooper",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g111",
+      "category": "Renamed source version",
+      "family": "Cult Fanatic → Cultist Fanatic",
+      "current": [
+        {
+          "name": "Cult Fanatic",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Cult Fanatic",
+          "source": "MM"
+        },
+        {
+          "name": "Cultist Fanatic",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g112",
+      "category": "Renamed source version",
+      "family": "Cyclops → Cyclops Sentry",
+      "current": [
+        {
+          "name": "Cyclops",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Cyclops",
+          "source": "MM"
+        },
+        {
+          "name": "Cyclops Sentry",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g113",
+      "category": "Related / replacement",
+      "family": "Deep Gnome (Svirfneblin) → Scout",
+      "current": [
+        {
+          "name": "Deep Gnome (Svirfneblin)",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Deep Gnome (Svirfneblin)",
+          "source": "MM"
+        },
+        {
+          "name": "Scout",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g114",
+      "category": "Related / replacement",
+      "family": "Drow → Priest Acolyte",
+      "current": [
+        {
+          "name": "Drow",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drow",
+          "source": "MM"
+        },
+        {
+          "name": "Priest Acolyte",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g115",
+      "category": "Renamed source version",
+      "family": "Drow → Drow of Lolth",
+      "current": [
+        {
+          "name": "Drow",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drow",
+          "source": "MM"
+        },
+        {
+          "name": "Drow of Lolth",
+          "source": "FRAiF"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g116",
+      "category": "Related / replacement",
+      "family": "Drow Elite Warrior → Gladiator",
+      "current": [
+        {
+          "name": "Drow Elite Warrior",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drow Elite Warrior",
+          "source": "MM"
+        },
+        {
+          "name": "Gladiator",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g117",
+      "category": "Renamed source version",
+      "family": "Drow Elite Warrior → Drow Elite Warrior of Lolth",
+      "current": [
+        {
+          "name": "Drow Elite Warrior",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drow Elite Warrior",
+          "source": "MM"
+        },
+        {
+          "name": "Drow Elite Warrior of Lolth",
+          "source": "FRAiF"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g118",
+      "category": "Related / replacement",
+      "family": "Drow Mage → Bandit Deceiver",
+      "current": [
+        {
+          "name": "Drow Mage",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drow Mage",
+          "source": "MM"
+        },
+        {
+          "name": "Bandit Deceiver",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g119",
+      "category": "Renamed source version",
+      "family": "Drow Mage → Drow Mage of Lolth",
+      "current": [
+        {
+          "name": "Drow Mage",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drow Mage",
+          "source": "MM"
+        },
+        {
+          "name": "Drow Mage of Lolth",
+          "source": "FRAiF"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g120",
+      "category": "Related / replacement",
+      "family": "Drow Priestess of Lolth → Fiend Cultist",
+      "current": [
+        {
+          "name": "Drow Priestess of Lolth",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Drow Priestess of Lolth",
+          "source": "MM"
+        },
+        {
+          "name": "Fiend Cultist",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g121",
+      "category": "Related / replacement",
+      "family": "Duergar → Spy",
+      "current": [
+        {
+          "name": "Duergar",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Duergar",
+          "source": "MM"
+        },
+        {
+          "name": "Spy",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g122",
+      "category": "Renamed source version",
+      "family": "Duodrone → Modron Duodrone",
+      "current": [
+        {
+          "name": "Duodrone",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Duodrone",
+          "source": "MM"
+        },
+        {
+          "name": "Modron Duodrone",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g123",
+      "category": "Renamed source version",
+      "family": "Fire Snake → Salamander Fire Snake",
+      "current": [
+        {
+          "name": "Fire Snake",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Fire Snake",
+          "source": "MM"
+        },
+        {
+          "name": "Salamander Fire Snake",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g124",
+      "category": "Renamed source version",
+      "family": "Flying Sword → Animated Flying Sword",
+      "current": [
+        {
+          "name": "Flying Sword",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Flying Sword",
+          "source": "MM"
+        },
+        {
+          "name": "Animated Flying Sword",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g125",
+      "category": "Renamed source version",
+      "family": "Gas Spore → Gas Spore Fungus",
+      "current": [
+        {
+          "name": "Gas Spore",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Gas Spore",
+          "source": "MM"
+        },
+        {
+          "name": "Gas Spore Fungus",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g126",
+      "category": "Renamed source version",
+      "family": "Giant Poisonous Snake → Giant Venomous Snake",
+      "current": [
+        {
+          "name": "Giant Poisonous Snake",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Giant Poisonous Snake",
+          "source": "MM"
+        },
+        {
+          "name": "Giant Venomous Snake",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g127",
+      "category": "Renamed source version",
+      "family": "Giant Sea Horse → Giant Seahorse",
+      "current": [
+        {
+          "name": "Giant Sea Horse",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Giant Sea Horse",
+          "source": "MM"
+        },
+        {
+          "name": "Giant Seahorse",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g128",
+      "category": "Renamed source version",
+      "family": "Gnoll → Gnoll Warrior",
+      "current": [
+        {
+          "name": "Gnoll",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Gnoll",
+          "source": "MM"
+        },
+        {
+          "name": "Gnoll Warrior",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g129",
+      "category": "Renamed source version",
+      "family": "Goblin → Goblin Warrior",
+      "current": [
+        {
+          "name": "Goblin",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Goblin",
+          "source": "MM"
+        },
+        {
+          "name": "Goblin Warrior",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g130",
+      "category": "Related / replacement",
+      "family": "Gray Ooze → Psychic Gray Ooze",
+      "current": [
+        {
+          "name": "Gray Ooze",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Gray Ooze",
+          "source": "MM"
+        },
+        {
+          "name": "Psychic Gray Ooze",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g131",
+      "category": "Renamed source version",
+      "family": "Grick Alpha → Grick Ancient",
+      "current": [
+        {
+          "name": "Grick Alpha",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Grick Alpha",
+          "source": "MM"
+        },
+        {
+          "name": "Grick Ancient",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g132",
+      "category": "Renamed source version",
+      "family": "Gynosphinx → Sphinx of Lore",
+      "current": [
+        {
+          "name": "Gynosphinx",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Gynosphinx",
+          "source": "MM"
+        },
+        {
+          "name": "Sphinx of Lore",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g133",
+      "category": "Renamed source version",
+      "family": "Half-Red Dragon Veteran → Half-Dragon",
+      "current": [
+        {
+          "name": "Half-Red Dragon Veteran",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Half-Red Dragon Veteran",
+          "source": "MM"
+        },
+        {
+          "name": "Half-Dragon",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g134",
+      "category": "Renamed source version",
+      "family": "Hobgoblin → Hobgoblin Warrior",
+      "current": [
+        {
+          "name": "Hobgoblin",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Hobgoblin",
+          "source": "MM"
+        },
+        {
+          "name": "Hobgoblin Warrior",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g135",
+      "category": "Renamed source version",
+      "family": "Kobold → Kobold Warrior",
+      "current": [
+        {
+          "name": "Kobold",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Kobold",
+          "source": "MM"
+        },
+        {
+          "name": "Kobold Warrior",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g136",
+      "category": "Related / replacement",
+      "family": "Lizardfolk → Scout",
+      "current": [
+        {
+          "name": "Lizardfolk",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Lizardfolk",
+          "source": "MM"
+        },
+        {
+          "name": "Scout",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g137",
+      "category": "Renamed source version",
+      "family": "Lizardfolk Shaman → Lizardfolk Geomancer",
+      "current": [
+        {
+          "name": "Lizardfolk Shaman",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Lizardfolk Shaman",
+          "source": "MM"
+        },
+        {
+          "name": "Lizardfolk Geomancer",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g138",
+      "category": "Renamed source version",
+      "family": "Merfolk → Merfolk Skirmisher",
+      "current": [
+        {
+          "name": "Merfolk",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Merfolk",
+          "source": "MM"
+        },
+        {
+          "name": "Merfolk Skirmisher",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g139",
+      "category": "Renamed source version",
+      "family": "Minotaur → Minotaur of Baphomet",
+      "current": [
+        {
+          "name": "Minotaur",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Minotaur",
+          "source": "MM"
+        },
+        {
+          "name": "Minotaur of Baphomet",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g140",
+      "category": "Renamed source version",
+      "family": "Monodrone → Modron Monodrone",
+      "current": [
+        {
+          "name": "Monodrone",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Monodrone",
+          "source": "MM"
+        },
+        {
+          "name": "Modron Monodrone",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g141",
+      "category": "Related / replacement",
+      "family": "Orc → Tough",
+      "current": [
+        {
+          "name": "Orc",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Orc",
+          "source": "MM"
+        },
+        {
+          "name": "Tough",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g142",
+      "category": "Related / replacement",
+      "family": "Orc Eye of Gruumsh → Cultist Fanatic",
+      "current": [
+        {
+          "name": "Orc Eye of Gruumsh",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Orc Eye of Gruumsh",
+          "source": "MM"
+        },
+        {
+          "name": "Cultist Fanatic",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g143",
+      "category": "Related / replacement",
+      "family": "Orc War Chief → Tough Boss",
+      "current": [
+        {
+          "name": "Orc War Chief",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Orc War Chief",
+          "source": "MM"
+        },
+        {
+          "name": "Tough Boss",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g144",
+      "category": "Related / replacement",
+      "family": "Orog → Berserker",
+      "current": [
+        {
+          "name": "Orog",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Orog",
+          "source": "MM"
+        },
+        {
+          "name": "Berserker",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g145",
+      "category": "Renamed source version",
+      "family": "Pentadrone → Modron Pentadrone",
+      "current": [
+        {
+          "name": "Pentadrone",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Pentadrone",
+          "source": "MM"
+        },
+        {
+          "name": "Modron Pentadrone",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g146",
+      "category": "Renamed source version",
+      "family": "Poisonous Snake → Venomous Snake",
+      "current": [
+        {
+          "name": "Poisonous Snake",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Poisonous Snake",
+          "source": "MM"
+        },
+        {
+          "name": "Venomous Snake",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g147",
+      "category": "Renamed source version",
+      "family": "Quadrone → Modron Quadrone",
+      "current": [
+        {
+          "name": "Quadrone",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Quadrone",
+          "source": "MM"
+        },
+        {
+          "name": "Modron Quadrone",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g148",
+      "category": "Related / replacement",
+      "family": "Quaggoth Spore Servant → Myconid Spore Servant",
+      "current": [
+        {
+          "name": "Quaggoth Spore Servant",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Quaggoth Spore Servant",
+          "source": "MM"
+        },
+        {
+          "name": "Myconid Spore Servant",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g149",
+      "category": "Renamed source version",
+      "family": "Quipper → Piranha",
+      "current": [
+        {
+          "name": "Quipper",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Quipper",
+          "source": "MM"
+        },
+        {
+          "name": "Piranha",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g150",
+      "category": "Renamed source version",
+      "family": "Rug of Smothering → Animated Rug of Smothering",
+      "current": [
+        {
+          "name": "Rug of Smothering",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Rug of Smothering",
+          "source": "MM"
+        },
+        {
+          "name": "Animated Rug of Smothering",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g151",
+      "category": "Renamed source version",
+      "family": "Sahuagin → Sahuagin Warrior",
+      "current": [
+        {
+          "name": "Sahuagin",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Sahuagin",
+          "source": "MM"
+        },
+        {
+          "name": "Sahuagin Warrior",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g152",
+      "category": "Renamed source version",
+      "family": "Sahuagin Priestess → Sahuagin Priest",
+      "current": [
+        {
+          "name": "Sahuagin Priestess",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Sahuagin Priestess",
+          "source": "MM"
+        },
+        {
+          "name": "Sahuagin Priest",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g153",
+      "category": "Renamed source version",
+      "family": "Sea Horse → Seahorse",
+      "current": [
+        {
+          "name": "Sea Horse",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Sea Horse",
+          "source": "MM"
+        },
+        {
+          "name": "Seahorse",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g154",
+      "category": "Renamed source version",
+      "family": "Shrieker → Shrieker Fungus",
+      "current": [
+        {
+          "name": "Shrieker",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Shrieker",
+          "source": "MM"
+        },
+        {
+          "name": "Shrieker Fungus",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g155",
+      "category": "Related / replacement",
+      "family": "Swarm of Beetles → Swarm of Insects",
+      "current": [
+        {
+          "name": "Swarm of Beetles",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Beetles",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Swarm of Beetles",
+          "source": "MM"
+        },
+        {
+          "name": "Swarm of Insects",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g156",
+      "category": "Related / replacement",
+      "family": "Swarm of Centipedes → Swarm of Insects",
+      "current": [
+        {
+          "name": "Swarm of Centipedes",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Centipedes",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Swarm of Centipedes",
+          "source": "MM"
+        },
+        {
+          "name": "Swarm of Insects",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g157",
+      "category": "Renamed source version",
+      "family": "Swarm of Poisonous Snakes → Swarm of Venomous Snakes",
+      "current": [
+        {
+          "name": "Swarm of Poisonous Snakes",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Swarm of Poisonous Snakes",
+          "source": "MM"
+        },
+        {
+          "name": "Swarm of Venomous Snakes",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g158",
+      "category": "Renamed source version",
+      "family": "Swarm of Quippers → Swarm of Piranhas",
+      "current": [
+        {
+          "name": "Swarm of Quippers",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Swarm of Quippers",
+          "source": "MM"
+        },
+        {
+          "name": "Swarm of Piranhas",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g159",
+      "category": "Related / replacement",
+      "family": "Swarm of Spiders → Swarm of Insects",
+      "current": [
+        {
+          "name": "Swarm of Spiders",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Spiders",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Swarm of Spiders",
+          "source": "MM"
+        },
+        {
+          "name": "Swarm of Insects",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g160",
+      "category": "Related / replacement",
+      "family": "Swarm of Wasps → Swarm of Insects",
+      "current": [
+        {
+          "name": "Swarm of Wasps",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Wasps",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Swarm of Wasps",
+          "source": "MM"
+        },
+        {
+          "name": "Swarm of Insects",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g161",
+      "category": "Renamed source version",
+      "family": "Thri-kreen → Thri-kreen Marauder",
+      "current": [
+        {
+          "name": "Thri-kreen",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Thri-kreen",
+          "source": "MM"
+        },
+        {
+          "name": "Thri-kreen Marauder",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g162",
+      "category": "Renamed source version",
+      "family": "Thug → Tough",
+      "current": [
+        {
+          "name": "Thug",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Thug",
+          "source": "MM"
+        },
+        {
+          "name": "Tough",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g163",
+      "category": "Renamed source version",
+      "family": "Tribal Warrior → Warrior Infantry",
+      "current": [
+        {
+          "name": "Tribal Warrior",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Tribal Warrior",
+          "source": "MM"
+        },
+        {
+          "name": "Warrior Infantry",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g164",
+      "category": "Renamed source version",
+      "family": "Tridrone → Modron Tridrone",
+      "current": [
+        {
+          "name": "Tridrone",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Tridrone",
+          "source": "MM"
+        },
+        {
+          "name": "Modron Tridrone",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g165",
+      "category": "Renamed source version",
+      "family": "Veteran → Warrior Veteran",
+      "current": [
+        {
+          "name": "Veteran",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Veteran",
+          "source": "MM"
+        },
+        {
+          "name": "Warrior Veteran",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g166",
+      "category": "Renamed source version",
+      "family": "Young Red Shadow Dragon → Shadow Dragon",
+      "current": [
+        {
+          "name": "Young Red Shadow Dragon",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Young Red Shadow Dragon",
+          "source": "MM"
+        },
+        {
+          "name": "Shadow Dragon",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g167",
+      "category": "Renamed source version",
+      "family": "Yuan-ti Pureblood → Yuan-ti Infiltrator",
+      "current": [
+        {
+          "name": "Yuan-ti Pureblood",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Yuan-ti Pureblood",
+          "source": "MM"
+        },
+        {
+          "name": "Yuan-ti Infiltrator",
+          "source": "XMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g168",
+      "category": "Renamed source version",
+      "family": "Bronze Scout → Clockwork Bronze Scout",
+      "current": [
+        {
+          "name": "Bronze Scout",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Bronze Scout",
+          "source": "MTF"
+        },
+        {
+          "name": "Clockwork Bronze Scout",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g169",
+      "category": "Renamed source version",
+      "family": "Gloom Weaver → Shadar-kai Gloom Weaver",
+      "current": [
+        {
+          "name": "Gloom Weaver",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Gloom Weaver",
+          "source": "MTF"
+        },
+        {
+          "name": "Shadar-kai Gloom Weaver",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g170",
+      "category": "Renamed source version",
+      "family": "Iron Cobra → Clockwork Iron Cobra",
+      "current": [
+        {
+          "name": "Iron Cobra",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Iron Cobra",
+          "source": "MTF"
+        },
+        {
+          "name": "Clockwork Iron Cobra",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g171",
+      "category": "Renamed source version",
+      "family": "Oaken Bolter → Clockwork Oaken Bolter",
+      "current": [
+        {
+          "name": "Oaken Bolter",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Oaken Bolter",
+          "source": "MTF"
+        },
+        {
+          "name": "Clockwork Oaken Bolter",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g172",
+      "category": "Renamed source version",
+      "family": "Shadow Dancer → Shadar-kai Shadow Dancer",
+      "current": [
+        {
+          "name": "Shadow Dancer",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Shadow Dancer",
+          "source": "MTF"
+        },
+        {
+          "name": "Shadar-kai Shadow Dancer",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g173",
+      "category": "Renamed source version",
+      "family": "Soul Monger → Shadar-kai Soul Monger",
+      "current": [
+        {
+          "name": "Soul Monger",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Soul Monger",
+          "source": "MTF"
+        },
+        {
+          "name": "Shadar-kai Soul Monger",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g174",
+      "category": "Renamed source version",
+      "family": "Stone Defender → Clockwork Stone Defender",
+      "current": [
+        {
+          "name": "Stone Defender",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Stone Defender",
+          "source": "MTF"
+        },
+        {
+          "name": "Clockwork Stone Defender",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g175",
+      "category": "Renamed source version",
+      "family": "The Angry → Angry Sorrowsworn",
+      "current": [
+        {
+          "name": "The Angry",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "The Angry",
+          "source": "MTF"
+        },
+        {
+          "name": "Angry Sorrowsworn",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g176",
+      "category": "Renamed source version",
+      "family": "The Hungry → Hungry Sorrowsworn",
+      "current": [
+        {
+          "name": "The Hungry",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "The Hungry",
+          "source": "MTF"
+        },
+        {
+          "name": "Hungry Sorrowsworn",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g177",
+      "category": "Renamed source version",
+      "family": "The Lonely → Lonely Sorrowsworn",
+      "current": [
+        {
+          "name": "The Lonely",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "The Lonely",
+          "source": "MTF"
+        },
+        {
+          "name": "Lonely Sorrowsworn",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g178",
+      "category": "Renamed source version",
+      "family": "The Lost → Lost Sorrowsworn",
+      "current": [
+        {
+          "name": "The Lost",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "The Lost",
+          "source": "MTF"
+        },
+        {
+          "name": "Lost Sorrowsworn",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g179",
+      "category": "Renamed source version",
+      "family": "The Wretched → Wretched Sorrowsworn",
+      "current": [
+        {
+          "name": "The Wretched",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "The Wretched",
+          "source": "MTF"
+        },
+        {
+          "name": "Wretched Sorrowsworn",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g180",
+      "category": "Renamed source version",
+      "family": "Abjurer → Abjurer Wizard",
+      "current": [
+        {
+          "name": "Abjurer",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Abjurer",
+          "source": "VGM"
+        },
+        {
+          "name": "Abjurer Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g181",
+      "category": "Renamed source version",
+      "family": "Conjurer → Conjurer Wizard",
+      "current": [
+        {
+          "name": "Conjurer",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Conjurer",
+          "source": "VGM"
+        },
+        {
+          "name": "Conjurer Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g182",
+      "category": "Renamed source version",
+      "family": "Diviner → Diviner Wizard",
+      "current": [
+        {
+          "name": "Diviner",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Diviner",
+          "source": "VGM"
+        },
+        {
+          "name": "Diviner Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g183",
+      "category": "Renamed source version",
+      "family": "Enchanter → Enchanter Wizard",
+      "current": [
+        {
+          "name": "Enchanter",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Enchanter",
+          "source": "VGM"
+        },
+        {
+          "name": "Enchanter Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g184",
+      "category": "Renamed source version",
+      "family": "Evoker → Evoker Wizard",
+      "current": [
+        {
+          "name": "Evoker",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Evoker",
+          "source": "VGM"
+        },
+        {
+          "name": "Evoker Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g185",
+      "category": "Renamed source version",
+      "family": "Illusionist → Illusionist Wizard",
+      "current": [
+        {
+          "name": "Illusionist",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Illusionist",
+          "source": "VGM"
+        },
+        {
+          "name": "Illusionist Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g186",
+      "category": "Renamed source version",
+      "family": "Necromancer → Necromancer Wizard",
+      "current": [
+        {
+          "name": "Necromancer",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Necromancer",
+          "source": "VGM"
+        },
+        {
+          "name": "Necromancer Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g187",
+      "category": "Related / replacement",
+      "family": "Shadow Mastiff → Shadow Mastiff Alpha",
+      "current": [
+        {
+          "name": "Shadow Mastiff",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Shadow Mastiff",
+          "source": "VGM"
+        },
+        {
+          "name": "Shadow Mastiff Alpha",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source provides a replacement/reprint link. This can substitute a generic role or introduce a real variant; it is not proof of identical identity or rules.",
+      "action": "Keep separately identifiable. Review as a suggested replacement; do not auto-merge.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g188",
+      "category": "Renamed source version",
+      "family": "Thorny → Thorny Vegepygmy",
+      "current": [
+        {
+          "name": "Thorny",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Thorny",
+          "source": "VGM"
+        },
+        {
+          "name": "Thorny Vegepygmy",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g189",
+      "category": "Renamed source version",
+      "family": "Transmuter → Transmuter Wizard",
+      "current": [
+        {
+          "name": "Transmuter",
+          "source": "Volo's Guide to Monsters"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Transmuter",
+          "source": "VGM"
+        },
+        {
+          "name": "Transmuter Wizard",
+          "source": "MPMM"
+        }
+      ],
+      "reason": "The source explicitly links these differently named entries via reprintedAs; mechanics may change between sources.",
+      "action": "One searchable creature family with old-name alias and source/version selection.",
+      "confidence": "Explicit source link"
+    },
+    {
+      "id": "g190",
+      "category": "Same name / source",
+      "family": "Swarm of Beetles",
+      "current": [
+        {
+          "name": "Swarm of Beetles",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Beetles",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same normalized name occurs in more than one current library/source.",
+      "action": "One listing with source/version selection after comparison.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g191",
+      "category": "Same name / source",
+      "family": "Swarm of Centipedes",
+      "current": [
+        {
+          "name": "Swarm of Centipedes",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Centipedes",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same normalized name occurs in more than one current library/source.",
+      "action": "One listing with source/version selection after comparison.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g192",
+      "category": "Same name / source",
+      "family": "Swarm of Spiders",
+      "current": [
+        {
+          "name": "Swarm of Spiders",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Spiders",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same normalized name occurs in more than one current library/source.",
+      "action": "One listing with source/version selection after comparison.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g193",
+      "category": "Same name / source",
+      "family": "Swarm of Wasps",
+      "current": [
+        {
+          "name": "Swarm of Wasps",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Swarm of Wasps",
+          "source": "Monster Manual"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same normalized name occurs in more than one current library/source.",
+      "action": "One listing with source/version selection after comparison.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g194",
+      "category": "Same name / source",
+      "family": "ABERRANT SPIRIT",
+      "current": [
+        {
+          "name": "ABERRANT SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Aberrant Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g195",
+      "category": "Same name / source",
+      "family": "Alchemical Homunculus",
+      "current": [
+        {
+          "name": "Alchemical Homunculus",
+          "source": "UA - The Artificer Returns"
+        },
+        {
+          "name": "Alchemical Homunculus",
+          "source": "UA - The Artificer Revisited"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g196",
+      "category": "Same name / source",
+      "family": "BESTIAL SPIRIT",
+      "current": [
+        {
+          "name": "BESTIAL SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Bestial Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g197",
+      "category": "Same name / source",
+      "family": "CELESTIAL SPIRIT",
+      "current": [
+        {
+          "name": "CELESTIAL SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Celestial Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g198",
+      "category": "Same name / source",
+      "family": "DANCING ITEM",
+      "current": [
+        {
+          "name": "DANCING ITEM",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Dancing Item",
+          "source": "UA - Subclasses, Part 2"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g199",
+      "category": "Same name / source",
+      "family": "ELEMENTAL SPIRIT",
+      "current": [
+        {
+          "name": "ELEMENTAL SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Elemental Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g200",
+      "category": "Same name / source",
+      "family": "FEY SPIRIT",
+      "current": [
+        {
+          "name": "FEY SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Fey Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g201",
+      "category": "Same name / source",
+      "family": "FIENDISH SPIRIT",
+      "current": [
+        {
+          "name": "FIENDISH SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Fiendish Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g202",
+      "category": "Same name / source",
+      "family": "Homunculus Servant",
+      "current": [
+        {
+          "name": "Homunculus Servant",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Homunculus Servant",
+          "source": "Tasha's Cauldron of Everything"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same normalized name occurs in more than one current library/source.",
+      "action": "One listing with source/version selection after comparison.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g203",
+      "category": "Same name / source",
+      "family": "Iron Defender",
+      "current": [
+        {
+          "name": "Iron Defender",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "Iron Defender",
+          "source": "UA - The Artificer Returns"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g204",
+      "category": "Same name / source",
+      "family": "SHADOW SPIRIT",
+      "current": [
+        {
+          "name": "SHADOW SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Shadow Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g205",
+      "category": "Same name / source",
+      "family": "Steel Defender",
+      "current": [
+        {
+          "name": "Steel Defender",
+          "source": "Eberron - Rising from the Last War"
+        },
+        {
+          "name": "STEEL DEFENDER",
+          "source": "Tasha's Cauldron of Everything"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Same normalized name occurs in more than one current library/source.",
+      "action": "One listing with source/version selection after comparison.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g206",
+      "category": "Same name / source",
+      "family": "UNDEAD SPIRIT",
+      "current": [
+        {
+          "name": "UNDEAD SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Undead Spirit",
+          "source": "UA - Spells and Magic Tattoos"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g207",
+      "category": "Same name / source",
+      "family": "WILDFIRE SPIRIT",
+      "current": [
+        {
+          "name": "WILDFIRE SPIRIT",
+          "source": "Tasha's Cauldron of Everything"
+        },
+        {
+          "name": "Wildfire Spirit",
+          "source": "UA - Cleric, Druid, and Wizard"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Current named entries occur in UA and/or published sources. Source is metadata; the rules may differ.",
+      "action": "One listing; use the published version by default when available, with UA in source history.",
+      "confidence": "Exact name, content review"
+    },
+    {
+      "id": "g208",
+      "category": "Possible named reskin",
+      "family": "Arrester Lavinia / Veteran",
+      "current": [
+        {
+          "name": "Veteran",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Arrester Lavinia",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Veteran",
+          "source": "MM"
+        }
+      ],
+      "reason": "The current NPC matches the older source's HP, AC, CR and all six ability scores. This alone does not prove equivalent rule text.",
+      "action": "Review the full rules before treating it as a named version of the base creature.",
+      "confidence": "Partial-stat match"
+    },
+    {
+      "id": "g209",
+      "category": "Possible named reskin",
+      "family": "Emmara Tandris / Priest",
+      "current": [
+        {
+          "name": "Priest",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Emmara Tandris",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Priest",
+          "source": "MM"
+        }
+      ],
+      "reason": "The current NPC matches the older source's HP, AC, CR and all six ability scores. This alone does not prove equivalent rule text.",
+      "action": "Review the full rules before treating it as a named version of the base creature.",
+      "confidence": "Partial-stat match"
+    },
+    {
+      "id": "g210",
+      "category": "Possible named reskin",
+      "family": "Master Chemister Grozgrox / Mage",
+      "current": [
+        {
+          "name": "Mage",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Master Chemister Grozgrox",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Mage",
+          "source": "MM"
+        }
+      ],
+      "reason": "The current NPC matches the older source's HP, AC, CR and all six ability scores. This alone does not prove equivalent rule text.",
+      "action": "Review the full rules before treating it as a named version of the base creature.",
+      "confidence": "Partial-stat match"
+    },
+    {
+      "id": "g211",
+      "category": "Possible named reskin",
+      "family": "Teysa Karlov / Mage",
+      "current": [
+        {
+          "name": "Mage",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Teysa Karlov",
+          "source": "Guildmasters' Guide to Ravnica"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Mage",
+          "source": "MM"
+        }
+      ],
+      "reason": "The current NPC matches the older source's HP, AC, CR and all six ability scores. This alone does not prove equivalent rule text.",
+      "action": "Review the full rules before treating it as a named version of the base creature.",
+      "confidence": "Partial-stat match"
+    },
+    {
+      "id": "g212",
+      "category": "Related / replacement",
+      "family": "Succubus / Incubus",
+      "current": [
+        {
+          "name": "Succubus/Incubus",
+          "source": "SRD 2014"
+        }
+      ],
+      "sourceCandidates": [
+        {
+          "name": "Succubus",
+          "source": "MM"
+        },
+        {
+          "name": "Incubus",
+          "source": "MM"
+        },
+        {
+          "name": "Succubus",
+          "source": "XMM"
+        },
+        {
+          "name": "Incubus",
+          "source": "XMM"
+        }
+      ],
+      "reason": "Current combined label versus separate creatures; newer versions can have different rules.",
+      "action": "Use a related family or explicit choice, without treating both creatures as interchangeable.",
+      "confidence": "Relationship only"
+    },
+    {
+      "id": "g213",
+      "category": "Keep distinct",
+      "family": "Vampire relatives",
+      "current": [
+        {
+          "name": "Vampire Spawn",
+          "source": "SRD 2014"
+        },
+        {
+          "name": "Blood Drinker Vampire",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Mind Drinker Vampire",
+          "source": "Guildmasters' Guide to Ravnica"
+        },
+        {
+          "name": "Vampiric Mist",
+          "source": "Mordenkainen's Tome of Foes"
+        }
+      ],
+      "sourceCandidates": [],
+      "reason": "Related names identify different creatures or encounter roles, not spelling aliases.",
+      "action": "Keep distinct creature identities and statblocks; they may share a Vampire browse family.",
+      "confidence": "Distinct roles"
+    }
+  ]
+}

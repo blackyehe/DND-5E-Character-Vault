@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
+import { characterBenefits } from '../../../shared/rule-benefits'
+import { sheetSkill } from '../../lib/character-sheet'
 import { useCharactersStore } from '../../stores/characters'
-import { SKILL_ABILITY, skillMod } from '../../lib/calc'
+import { SKILL_ABILITY, ABILITY_KEYS, abilityMod } from '../../lib/calc'
 import { pretty, signed, sheetProficiencies, XP_THRESHOLDS } from '../../lib/character-sheet'
 import SheetVitalsStats from './SheetVitalsStats.vue'
 import SheetDisclosure from './SheetDisclosure.vue'
 const store=useCharactersStore(),c=computed(()=>store.current!),xp=ref<number|''>(''),message=ref(''),xpId=useId()
 const skills=computed(()=>Object.entries(SKILL_ABILITY).map(([key,ability])=>{
-  const rank=c.value.skills[key]??'none'
-  return {key,name:pretty(key),rank,ability,modifier:skillMod(c.value.meta.level,c.value.abilities[ability],rank)}
+  const rank=characterBenefits(c.value).skills[key]??'none'
+  return {key,name:pretty(key),rank,ability,modifier:sheetSkill(c.value,key)}
 }).sort((a,b)=>a.name.localeCompare(b.name)))
 const proficiencies=computed(()=>sheetProficiencies(c.value))
 const next=computed(()=>XP_THRESHOLDS[c.value.meta.level])
@@ -18,6 +20,7 @@ async function addXP(){if(store.saving||!Number.isSafeInteger(xp.value)||Number(
 <template>
   <div class="sheet-section-stack sheet-summary-overview">
     <section class="sheet-panel sheet-summary-essentials" aria-label="Character statistics"><SheetVitalsStats include-max-hp /></section>
+    <dl class="sheet-folio-abilities" aria-label="Ability scores"><div v-for="key in ABILITY_KEYS" :key="key"><dt>{{key.toUpperCase()}}</dt><dd><span class="sheet-ability-score">{{c.abilities[key]}}</span><small>{{signed(abilityMod(c.abilities[key]))}}</small></dd></div></dl>
     <section class="sheet-panel sheet-summary-experience">
       <h3>Experience</h3>
       <div class="sheet-experience-content">

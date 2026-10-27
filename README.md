@@ -4,6 +4,9 @@ A D&D character, homebrew-content and private game-room application.
 
 ## Project documentation
 
+The saved [DM feature to-do list](docs/DM_FEATURE_TODO.md) tracks website ideas
+from the feature discussion and the separately authorised party dashboard work.
+
 For a reading copy with clickable contents and bookmarks, open the
 [PDF learning guide](output/pdf/PROJECT_HISTORY_AND_LEARNING_GUIDE.pdf).
 

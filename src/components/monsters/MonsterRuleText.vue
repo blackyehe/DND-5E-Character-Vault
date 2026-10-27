@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { monsterRuleText } from '../../../shared/monster-extensions'
 const props=defineProps<{text:string}>()
-const tokens=computed(()=>props.text.replace(/\r\n?/g,'\n').split(/(\*\*[^*\n]+\*\*|_[^_\n]+_|\*[^*\n]+\*|(?:Melee or Ranged|Melee|Ranged) (?:Weapon|Spell) Attack:|\bHit:)/g).filter(Boolean).map(value=>{
+const tokens=computed(()=>monsterRuleText(props.text).replace(/\r\n?/g,'\n').split(/(\*\*[^*\n]+\*\*|_[^_\n]+_|\*[^*\n]+\*|(?:Melee or Ranged|Melee|Ranged) (?:Weapon|Spell) Attack:|\bHit:)/g).filter(Boolean).map(value=>{
   if(value.startsWith('**')&&value.endsWith('**'))return {kind:'strong',text:value.slice(2,-2)}
   if((value.startsWith('_')&&value.endsWith('_'))||(value.startsWith('*')&&value.endsWith('*')))return {kind:'em',text:value.slice(1,-1)}
   return {kind:/Attack:$|^Hit:$/.test(value)?'em':'text',text:value}

@@ -1,7 +1,7 @@
 import type { SrdLevel } from './srd'
 
 export type RuleRecord = Record<string, unknown>
-export interface ReadingField { label: string; value: unknown }
+export interface ReadingField { label: string; value: unknown; key?: string }
 export interface ReadingRule { name: string; text: string; level?: number; value?: unknown; reference?: { kind: 'trait'|'feature'; index: string } }
 export interface ReadingDocument { text: string; facts: ReadingField[]; sections: ReadingField[]; rules: ReadingRule[] }
 export const record = (value: unknown): RuleRecord => value && typeof value === 'object' && !Array.isArray(value) ? value as RuleRecord : {}
@@ -19,10 +19,12 @@ const labels: Record<string, string> = {
   'spells-known':'Spells gained at each level','cantrips-known':'Cantrips gained at each level',
   'level-factor':'Caster level divisor','known-mode':'Spell learning','spell-list-kw':'Spell list',
   'lizardfolk-ac':'Lizardfolk natural armour','resource-list':'Available options',
+  'num-attacks':'Number of attacks','skill-prof':'Skill proficiency',save:'Saving throws',
+  'level-selections':'Choices by level','starts-at':'Starts at level','spellcasting-level':'Spellcasting starts at level',
 }
 export function readingLabel(value: string): string {
   const key = value.replace(/^:/,'').split('/').pop()!.replace(/_/g,'-').replace(/\?$/,'')
-  return labels[key] ?? key.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/-/g,' ').replace(/^./,c=>c.toUpperCase())
+  return Object.hasOwn(labels,key) ? labels[key]! : key.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/-/g,' ').trim().replace(/^./,c=>c.toUpperCase())
 }
 export function readingName(value: unknown): string {
   if (typeof value === 'string') return value.startsWith(':') ? readingLabel(value) : value
@@ -40,7 +42,7 @@ export function readingFields(value: unknown): ReadingField[] {
   return Object.entries(record(value)).filter(([key,child])=>{
     const plain=key.replace(/^:/,'').replace(/_/g,'-').replace(/([a-z])([A-Z])/g,'$1-$2').toLowerCase()
     return !metadata.has(plain)&&!plain.startsWith('codex/')&&!(typeof child==='string'&&/^\/api\//.test(child))&&hasReadingValue(child)
-  }).map(([key,child])=>({label:readingLabel(key),value:child}))
+  }).map(([key,child])=>({key,label:readingLabel(key),value:child}))
 }
 const signed = (n: unknown) => `${Number(n)>0?'+':''}${n}`
 
@@ -51,8 +53,8 @@ export function compendiumReading(entry: RuleRecord, kind: string, levels: SrdLe
   const result:ReadingDocument={text:firstText(workshop.description,entry.description,entry.desc,field(raw,'description'),field(raw,'help')),facts:[],sections:[],rules:[]}
   const canonical=(key:string)=>key.replace(/^:/,'').replace(/_/g,'-')
   const used=new Set<string>(['name','description','desc','help','traits','homebrew-traits','racial-traits','options','details'])
-  const add=(label:string,value:unknown,fact=false)=>{if(hasReadingValue(value))(fact?result.facts:result.sections).push({label,value})}
-  const take=(key:string,label:string,fact=false,transform?:(value:unknown)=>unknown)=>{used.add(canonical(key));const value=get(key);add(label,transform?transform(value):value,fact)}
+  const add=(label:string,value:unknown,fact=false,key?:string)=>{if(hasReadingValue(value))(fact?result.facts:result.sections).push({label,value,key})}
+  const take=(key:string,label:string,fact=false,transform?:(value:unknown)=>unknown)=>{used.add(canonical(key));const value=get(key);add(label,transform?transform(value):value,fact,key)}
   if(kind==='classes'){
     used.add('homebrew-subclass-title')
     take('hit_die','Hit die',true,v=>typeof v==='number'?`d${v}`:undefined)
@@ -126,6 +128,6 @@ export function compendiumReading(entry: RuleRecord, kind: string, levels: SrdLe
   for(const source of [raw,entry])for(const [key,value] of Object.entries(source))if(!used.has(canonical(key))){
     for(const row of readingFields({[key]:value}))extra.set(row.label,row)
   }
-  for(const row of extra.values())add(row.label,row.value)
+  for(const row of extra.values())add(row.label,row.value,false,row.key)
   return result
 }

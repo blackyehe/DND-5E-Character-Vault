@@ -15,6 +15,6 @@ function toggle(event:Event){if((event.target as HTMLDetailsElement).open)void l
 <template>
   <details class="reference-rule" :open="!rule.reference" @toggle="toggle">
     <summary>{{rule.name}}<small v-if="rule.level!==undefined">Level {{rule.level}}</small></summary>
-    <div class="reference-rule-body"><p v-if="loading" role="status">Loading rules…</p><p v-else-if="error" role="alert">{{error}} <button type="button" class="btn-ghost" @click="load">Retry</button></p><template v-else><FeatureText v-if="text" :text="text" /><ReferenceValue v-if="rule.value" :value="rule.value" /><p v-if="!text&&!rule.value" class="reference-muted">This entry does not include a rules description.</p><section v-for="row in additional" :key="row.label"><h4>{{row.label}}</h4><ReferenceValue :value="row.value" /></section></template></div>
+    <div class="reference-rule-body"><p v-if="loading" role="status">Loading rules…</p><p v-else-if="error" role="alert">{{error}} <button type="button" class="btn-ghost" @click="load">Retry</button></p><template v-else><FeatureText v-if="text" :text="text" /><ReferenceValue v-if="rule.value" :value="rule.value" /><p v-if="!text&&!rule.value" class="reference-muted">This entry does not include a rules description.</p><section v-for="row in additional" :key="row.label"><h4>{{row.label}}</h4><ReferenceValue :value="row.value" :field-key="row.key" /></section></template></div>
   </details>
 </template>

@@ -13,10 +13,37 @@
 .reference-rule>summary small { display:inline-block; color:var(--cb-muted); font-size:12px; font-weight:400; margin-left:10px; }
 .reference-rule-body { padding:10px 0 2px 14px; }
 .reference-nested-fields { display:grid; gap:10px; margin:0; }
+.reference-nested-fields>div { display:grid; grid-template-columns:minmax(90px,28%) minmax(0,1fr); gap:4px 14px; align-items:baseline; }
+.reference-nested-fields>div.reference-field-block { grid-template-columns:minmax(0,1fr); }
+.reference-nested-fields dd { min-width:0; margin:0; }
+.reference-nested-fields dd>p,.reference-nested-fields dd>.sheet-feature-text>p:last-child { margin-bottom:0; }
 .reference-nested-fields .reference-nested-fields { border-left:2px solid var(--cb-line); padding-left:12px; margin-top:5px; }
 .reference-value-list { list-style:disc; padding-left:20px; display:grid; gap:8px; margin:0; }
+.reference-object-list { list-style:none; padding:0; gap:0; }
+.reference-object-list>li { padding:12px 0; border-bottom:1px solid var(--cb-line); min-width:0; }
+.reference-object-list>li:first-child { padding-top:0; }
+.reference-object-name { display:block; margin-bottom:6px; }
+.reference-table { width:100%; table-layout:fixed; border-collapse:collapse; margin:4px 0 10px; text-align:left; font:inherit; }
+.reference-table th,.reference-table td { padding:9px 12px; vertical-align:top; border-bottom:1px solid var(--cb-line); overflow-wrap:anywhere; }
+.reference-table thead th { font-size:13px; font-weight:500; color:var(--cb-muted); background:var(--cb-soft); }
+.reference-table th:first-child,.reference-table td:first-child { width:85px; padding-left:10px; }
+.reference-table tbody th { font-weight:400; }
+.reference-table td>p,.reference-table td>.sheet-feature-text>p:last-child { margin:0; }
+.reference-table strong { font-weight:600; }
+.reference-unspecified { display:block; font-size:12px; line-height:1.4; }
+.reference-benefit-details { margin-top:4px; font-size:.92em; gap:3px; }
+.reference-benefit-details>div { grid-template-columns:minmax(90px,30%) minmax(0,1fr); }
+.reference-benefit-details .reference-nested-fields { margin-top:0; border:0; padding:0; }
+.reference-reader .reference-table .sheet-feature-text { display:inline; }
+.reference-benefits td>.sheet-feature-text>p:only-of-type { display:inline; margin:0; }
 .reference-choice { padding:2px 0; }
 .reference-choice>.reference-value-list { margin-top:6px; }
 .reference-muted { color:var(--cb-muted); }
 .reference-rule>summary:focus-visible { outline:2px solid var(--cb-accent-mark); outline-offset:3px; }
-@media(max-width:550px) { .reference-facts { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:550px) {
+  .reference-facts { grid-template-columns:minmax(0,1fr); }
+  .reference-nested-fields>div { grid-template-columns:minmax(75px,28%) minmax(0,1fr); gap:3px 10px; }
+  .reference-table th,.reference-table td { padding:8px; }
+  .reference-table th:first-child,.reference-table td:first-child { width:65px; padding-left:8px; }
+  .reference-benefit-details>div { grid-template-columns:minmax(68px,42%) minmax(0,1fr); }
+}

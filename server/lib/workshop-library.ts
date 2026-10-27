@@ -3,11 +3,11 @@ import { Character } from '../models/Character'
 import { buildOrcbrewCatalog, sourceHash, type CatalogPack } from './orcbrew'
 import { parsedPack } from './orcbrew-library'
 import { validatedDraft } from './workshop-schema'
-import { applyWorkshopRules } from '../../shared/workshop-character'
 import type { Character as CharacterData } from '../../shared/character'
 import type { PublishedWorkshopRule, WorkshopDraft } from '../../shared/homebrew-workshop'
 import { workshopFromEntry } from '../../shared/homebrew-workshop'
 import { readPackDocuments } from './pack-source'
+import { reviewedCharacter, reviewedWorkshopRules } from './compendium-character'
 
 type LibraryData=Awaited<ReturnType<typeof buildLibrary>>
 const libraries=new Map<string,{signature:string;value:LibraryData}>()
@@ -65,13 +65,14 @@ async function buildLibrary(userId:string|undefined) {
 export type WorkshopLibrary=Awaited<ReturnType<typeof workshopLibrary>>
 export async function resolveWorkshopCharacter(character:unknown,userId:string|undefined,library?:WorkshopLibrary) {
   const data=library??await workshopLibrary(userId)
-  const resolved=applyWorkshopRules(character as CharacterData,data.rules,data.initial)
+  const resolved=reviewedCharacter(character as CharacterData,data.rules,data.initial)
+  const knownRules=reviewedWorkshopRules(resolved,data.rules,data.initial).rules
   if(resolved.homebrew){
-    const restored=(id:string)=>id.startsWith('missing-rule:')&&data.rules.some(r=>id===`missing-rule:${r.id}`)
+    const restored=(id:string)=>id.startsWith('missing-rule:')&&knownRules.some(r=>id===`missing-rule:${r.id}`)
     resolved.homebrew.conflicts=resolved.homebrew.conflicts.filter(c=>!restored(c.id))
     resolved.homebrew.acknowledged=resolved.homebrew.acknowledged.filter(id=>!restored(id))
   }
-  for(const binding of resolved.homebrew?.bindings??[])if(!data.rules.some(r=>r.id===binding.ruleId)){
+  for(const binding of resolved.homebrew?.bindings??[])if(!knownRules.some(r=>r.id===binding.ruleId)){
     const id=`missing-rule:${binding.ruleId}`
     if(!resolved.homebrew!.acknowledged.includes(id)&&!resolved.homebrew!.conflicts.some(c=>c.id===id))resolved.homebrew!.conflicts.push({id,message:`${binding.rule.name}'s source pack is unavailable. The last saved rules are still in use.`})
   }
@@ -83,7 +84,7 @@ export async function synchronizeWorkshopCharacters(userId:string|undefined,libr
   for(const original of docs){
     let current=original,saved=false
     for(let attempt=0;attempt<3;attempt++){
-      const resolved=applyWorkshopRules(current as unknown as CharacterData,library.rules,library.initial)
+      const resolved=reviewedCharacter(current as unknown as CharacterData,library.rules,library.initial)
       if(JSON.stringify(resolved)===JSON.stringify(current)){saved=true;break}
       const result=await Character.updateOne({_id:current._id,userId,updatedAt:current.updatedAt},{$set:{meta:resolved.meta,features:resolved.features,resources:resolved.resources,spellcasting:resolved.spellcasting,proficiencies:resolved.proficiencies,saves:resolved.saves,skills:resolved.skills,homebrew:resolved.homebrew,'combat.hpMax':resolved.combat.hpMax,'combat.speed':resolved.combat.speed}})
       if(result.modifiedCount){updated++;if(resolved.homebrew?.conflicts.length)review++;saved=true;break}

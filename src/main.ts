@@ -14,5 +14,6 @@ import './site-motion.css'
 import './site-scrollbars.css'
 import App from './App.vue'
 import { router } from './router'
+import { vStableLoading } from './directives/stableLoading'
 
-createApp(App).use(createPinia()).use(router).mount('#app')
+createApp(App).use(createPinia()).use(router).directive('stable-loading', vStableLoading).mount('#app')

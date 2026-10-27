@@ -1,4 +1,5 @@
 import type { Character, CharacterFeature, CharacterResource } from './character'
+import { grantedBenefitSpells } from './rule-benefits'
 import { workshopResourceAt, type PublishedWorkshopRule, type WorkshopDraft } from './homebrew-workshop'
 
 const nameKey=(value:string)=>value.trim().toLowerCase()
@@ -104,5 +105,5 @@ export function applyRaceWorkshopRules(character:Character,rules:PublishedWorksh
 }
 
 export function innateRaceSpells(c:Character) {
-  return (c.homebrew?.bindings??[]).filter(b=>b.rule.kind==='race').flatMap(b=>(b.rule.race?.spells??[]).filter(s=>s.level<=c.meta.level).map(s=>({...s,source:b.rule.name})))
+  return [...grantedBenefitSpells(c),...(c.homebrew?.bindings??[]).filter(b=>b.rule.kind==='race').flatMap(b=>(b.rule.race?.spells??[]).filter(s=>s.level<=c.meta.level).map(s=>({...s,source:b.rule.name})))]
 }

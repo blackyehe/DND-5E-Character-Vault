@@ -8,6 +8,7 @@ import { Upload, UploadPart } from '../models/Upload'
 const CHUNK_BYTES = 768 * 1024
 const MAX_BYTES = 50 * 1024 * 1024
 const allowed = (method: string, path: string) => method === 'POST' && ['/api/content/orcbrew-packs', '/api/characters', '/api/characters/import', '/api/characters/import/dmv/preview', '/api/library-restore', '/api/workshop/publish', '/api/workshop/export'].includes(path)
+  || method === 'POST' && /^\/api\/content\/orcbrew-packs\/[a-f0-9]{24}\/replace$/i.test(path)
   || method === 'PATCH' && /^\/api\/characters\/[a-f0-9]{24}$/i.test(path)
 export const uploadRoutes = Router()
 uploadRoutes.use(requireAuth)

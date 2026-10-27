@@ -18,6 +18,7 @@ import { sheetReferences } from '../lib/sheet-references'
 import { resolveWorkshopCharacter } from '../lib/workshop-library'
 import { isRevenantShadow } from '../../shared/class-rules'
 import { progressionClasses } from '../../shared/character-progression'
+import { partyMemberSnapshot } from '../../shared/party-dashboard'
 
 const router = Router()
 router.use(requireAuth)
@@ -56,6 +57,20 @@ router.get('/:roomId', async (req, res) => {
   const assigned = room.assignments.filter(a => dm || String(a.userId) === req.userId)
   const characters = await Character.find({ userId: room.ownerId, ...(dm ? {} : { _id: { $in: assigned.map(a => a.characterId) } }) }).select(summaryFields).sort({ 'meta.name': 1 }).lean()
   res.json({ id: String(room._id), name: room.name, role: dm ? 'dm' : 'player', memberCount: room.members.length, members: members.map(m => ({ id: String(m._id), displayName: m.displayName, ...(dm ? { email: m.email } : {}) })), characters: characters.map(c => ({ ...c, assignedTo: String(assigned.find(a => String(a.characterId) === String(c._id))?.userId ?? '') || null })), ...(dm ? { joinToken: room.joinToken } : {}) })
+})
+
+// Deliberately separate from room identity data: only a DM's explicit party is read.
+// Saved output reuses progression/equipment rules without opening packs per member.
+router.get('/:roomId/party', async (req, res) => {
+  const room = await accessible(String(req.params.roomId), req.userId)
+  if (!room) return res.status(404).json({ error: 'Room not found or access has ended.' })
+  if (String(room.ownerId) !== req.userId) return res.status(403).json({ error: 'Only the DM can open the party dashboard.' })
+  const parsed = z.string().transform(value => [...new Set(value.split(','))])
+    .pipe(z.array(z.string().refine(isValidObjectId)).min(1).max(40)).safeParse(req.query.characters)
+  if (!parsed.success) return res.status(400).json({ error: 'Choose between 1 and 40 characters per party request.' })
+  const characters = await Character.find({ userId: room.ownerId, _id: { $in: parsed.data } })
+    .select('-externalImport -personality').lean()
+  res.set('Cache-Control', 'no-store').json({ members: characters.map(c => partyMemberSnapshot(savedCharacterOutput(c))) })
 })
 
 router.patch('/:roomId', async (req, res) => {

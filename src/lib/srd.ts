@@ -6,6 +6,10 @@ export interface SrdListResponse<T> {
 }
 
 export interface SrdRef {
+  itemDetailUrl?:string
+  itemReference?:boolean
+  itemDamageTypes?:string[]
+  monsterDetailUrl?:string
   definitionAvailable?:boolean
   workshop?:import('../../shared/homebrew-workshop').WorkshopDraft
   workshopRevision?:number
@@ -190,6 +194,8 @@ export interface HomebrewReference extends SrdRef {
 }
 
 export const homebrew = {
+  equipment: () => api.get<SrdRef[]>('/api/content/homebrew/equipment?view=index',{timeoutMs:60000}),
+  'magic-items': () => api.get<SrdRef[]>('/api/content/homebrew/magic-items?view=index',{timeoutMs:60000}),
   spells: () => api.get<HomebrewSpell[]>('/api/content/homebrew/spells'),
   races: () => api.get<HomebrewRace[]>('/api/content/homebrew/races'),
   classes: () => api.get<HomebrewClass[]>('/api/content/homebrew/classes'),

@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/2014': 'http://localhost:3000',
-      '/api': 'http://localhost:4000',
+      // Preserve the browser-facing host so the API's origin check stays valid.
+      '/api': { target: 'http://localhost:4000', changeOrigin: false },
     },
   },
 })

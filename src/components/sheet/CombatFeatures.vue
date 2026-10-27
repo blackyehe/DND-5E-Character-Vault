@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useCharactersStore, type CharacterFeature } from '../../stores/characters'
 import { useSheetLibrary } from '../../composables/useSheetLibrary'
-import { featNameKey, featNames } from '../../lib/feat-references'
+import { sheetFeatFeatures } from '../../lib/feat-references'
 import { combatSuggested } from '../../lib/character-sheet'
 import CombatFeatureDescription from './CombatFeatureDescription.vue'
 import SheetDisclosure from './SheetDisclosure.vue'
@@ -11,13 +11,7 @@ import SheetChunkedList from './SheetChunkedList.vue'
 const store = useCharactersStore(), library = useSheetLibrary()
 type CombatFeature = CharacterFeature & { index:number }
 const groupOf = (feature:CharacterFeature) => feature.origin==='feat'||/^feats?$/i.test(feature.name.trim()) ? 'feats' : feature.origin==='class'||feature.origin==='subclass' ? 'class' : 'other'
-const features = computed(() => {
-  const individual = new Set(library.features.value.filter(f=>f.origin==='feat'&&!/^feats?$/i.test(f.name.trim())).map(f=>featNameKey(f.name)))
-  return library.features.value.map((feature,index) => {
-    if (/^feats?$/i.test(feature.name.trim())) return {...feature,index,description:featNames(feature.description).filter(name=>!individual.has(featNameKey(name))).join(', ')}
-    return {...feature,index}
-  }).filter(f=>combatSuggested(f)&&(!/^feats?$/i.test(f.name.trim())||f.description.trim())).sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||(a.order??a.index)-(b.order??b.index))
-})
+const features = computed(() => sheetFeatFeatures(library.features.value).filter(combatSuggested).sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||(a.order??a.index)-(b.order??b.index)))
 const classFeatures = computed(()=>features.value.filter(f=>groupOf(f)==='class'))
 const featFeatures = computed(()=>features.value.filter(f=>groupOf(f)==='feats'))
 const otherFeatures = computed(()=>features.value.filter(f=>groupOf(f)==='other'))
@@ -43,7 +37,7 @@ function move(index:number, direction:number) {
     <SheetListGroup v-for="group in groups" :key="group.key" :title="group.title" :count="group.features.length" :group-key="`${store.current!._id}:combat:${group.key}`">
       <SheetChunkedList :items="group.features"><template #default="{item:feature}">
           <SheetDisclosure :key="feature._id??feature.index" :title="feature.name" :pinned="feature.pinned" :metadata="[feature.pinned?'Pinned':'Suggested',feature.level?`Level ${feature.level}`:''].filter(Boolean).join(' · ')">
-            <CombatFeatureDescription :feature="feature" />
+            <CombatFeatureDescription :feature="feature" :catalog="library.featCatalog.value" :features="library.features.value" :loading="library.loading.value" />
             <template #actions>
               <button class="sheet-button sheet-small-button" :disabled="store.saving" :aria-label="`${feature.pinned?'Unpin':'Pin'} ${feature.name}`" @click="pin(feature.index,!feature.pinned)">{{feature.pinned?'Unpin':'Pin'}}</button>
               <template v-if="feature.pinned"><button class="sheet-button sheet-small-button" :disabled="store.saving||pinnedFor(feature)[0]?.index===feature.index" :aria-label="`Move ${feature.name} up`" @click="move(feature.index,-1)">↑</button><button class="sheet-button sheet-small-button" :disabled="store.saving||pinnedFor(feature).at(-1)?.index===feature.index" :aria-label="`Move ${feature.name} down`" @click="move(feature.index,1)">↓</button></template>

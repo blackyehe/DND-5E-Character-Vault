@@ -1,14 +1,34 @@
 import mongoose from 'mongoose'
+import {NOTEBOOK_COVER_MAX_LENGTH} from '../../shared/notebook-cover'
+import {NOTEBOOK_CLUE_BODY_LIMIT} from '../../shared/notebook-clues'
+import {NOTEBOOK_ARTWORK_MAX_LENGTH} from '../../shared/notebook-gallery'
 
 const oid = mongoose.Schema.Types.ObjectId
+const artworkSchema = new mongoose.Schema({
+  id:{type:String,required:true},image:{type:String,required:true,maxlength:NOTEBOOK_ARTWORK_MAX_LENGTH},
+  title:{type:String,default:'',maxlength:120},caption:{type:String,default:'',maxlength:1000},
+},{_id:false})
+const questClueSchema = new mongoose.Schema({
+  id: {type: String, required: true}, title: {type: String, required: true, maxlength: 120},
+  body: {type: String, default: '', maxlength: NOTEBOOK_CLUE_BODY_LIMIT},
+  sessions: {type: [Number], default: []}, audience: {type: String, enum: ['dm','room'], default: 'dm'},
+}, {_id: false})
 const notebookSchema = new mongoose.Schema({
   roomId: {type: oid, required: true},
   kind: {type: String, enum: ['entry', 'folder'], required: true},
   section: {type: String, enum: ['journal', 'story-items'], required: true},
+  codexType: {type: String, enum: ['people', 'places', 'objects', 'factions', 'sessions', 'quests', 'events'], default: null},
+  showInEvents: {type: Boolean, default: false},
+  questStatus: {type: String, enum: ['active', 'finished'], default: null},
+  questClues: {type: [questClueSchema], default: []},
+  tags: {type: [String], default: []},
   title: {type: String, required: true, maxlength: 120},
   // Keep editable Markdown as source. Future imports and map pins refer to stable entry IDs.
   body: {type: String, default: '', maxlength: 60000},
+  coverImage: {type: String, default: '', maxlength: NOTEBOOK_COVER_MAX_LENGTH},
+  gallery: {type:[artworkSchema],default:[]},
   folderId: {type: oid, default: null},
+  parentId: {type: oid, default: null},
   audience: {type: String, enum: ['room', 'characters', 'dm'], default: 'room'},
   characterIds: {type: [oid], default: []},
   relevantCharacterIds: {type: [oid], default: []},

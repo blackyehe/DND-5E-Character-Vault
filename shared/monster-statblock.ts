@@ -1,5 +1,9 @@
 /** Read-only presentation data shared by imported/SRD readers and a future editor.
  * Missing statistics stay null; descriptions never stand in for executable rules. */
+import type { MonsterExtensions } from './monster-extensions'
+import { applyMonsterRuleBenefits } from './monster-benefits'
+import { readMonsterExtensions } from './monster-extensions'
+import { enrichMonsterStatblock,type MonsterEnrichment } from './monster-enrichment'
 export const MONSTER_ABILITIES=['str','dex','con','int','wis','cha'] as const
 export type MonsterAbility=typeof MONSTER_ABILITIES[number]
 export type MonsterSectionKind='traits'|'actions'|'bonus-actions'|'reactions'|'legendary-actions'|'mythic-actions'|'lair-actions'|'regional-effects'
@@ -10,6 +14,8 @@ export interface MonsterRule {
   mechanics?:Record<string,unknown>
 }
 export interface MonsterStatblock {
+  enrichment?:{name:string;source:string;url:string;mode:'rules-and-info'|'info-only';snapshot:string}
+  extended?:MonsterExtensions
   name:string
   size:string
   type:string
@@ -54,10 +60,10 @@ function armor(value:unknown,note=''):MonsterStatblock['armorClass'] {
   const n=number(value)
   if(n!==null)return [{value:n,note}]
   if(typeof value==='string')return [{value:null,note:text(value)}]
-  const data=record(value),amount=number(get(data,'value')??get(data,'base'))
+  const data=record(value),amount=number(get(data,'value')??get(data,'base')??get(data,'ac'))
   const names=list(get(data,'armor')).map(named).filter(Boolean)
   const kind=text(get(data,'type'))
-  const description=text(get(data,'description'))||names.join(', ')||(kind==='natural'?'natural armor':kind==='dex'?'unarmored':kind&&kind!=='armor'?label(kind):'')
+  const description=text(get(data,'note'))||text(get(data,'special'))||joined(get(data,'from'))||text(get(data,'description'))||names.join(', ')||(kind==='natural'?'natural armor':kind==='dex'?'unarmored':kind&&kind!=='armor'?label(kind):'')
   return amount!==null||description?[{value:amount,note:description}]:[]
 }
 
@@ -84,11 +90,13 @@ const sectionTitles:Record<MonsterSectionKind,string>={traits:'Traits',actions:'
 const sectionOf=(value:string):MonsterSectionKind|undefined=>({trait:'traits',ability:'traits',action:'actions','bonus-action':'bonus-actions',reaction:'reactions','legendary-action':'legendary-actions','mythic-action':'mythic-actions','lair-action':'lair-actions','regional-effect':'regional-effects'} as Record<string,MonsterSectionKind>)[value.toLowerCase().replace(/^:/,'').replace(/s$/,'')]
 
 export function monsterStatblock(value:unknown):MonsterStatblock {
+  const authored=record(value);if(authored?.monsterDraft&&authored.monsterView)return applyMonsterRuleBenefits(JSON.parse(JSON.stringify(authored.monsterView)) as MonsterStatblock,value)
+
   const entry=record(value),details=record(entry.details)
   const imported=Object.keys(details).some(key=>key.startsWith(':'))
   // Old Orcbrew normalisation supplies fallback zeroes. Read original fields so
   // an absent challenge/HP is not presented as a real CR 0 / zero-HP monster.
-  const data=imported?details:entry,props=record(get(data,'props'))
+  const data=imported?details:entry,props=record(get(data,'props')),extended=readMonsterExtensions(get(data,'codex/extended'))
   const choose=(key:string,...aliases:string[])=>[key,...aliases].map(key=>get(data,key)).find(v=>v!==undefined&&v!==null)
   const abilities=Object.fromEntries(MONSTER_ABILITIES.map((key,index)=>[key,number(choose(key,['strength','dexterity','constitution','intelligence','wisdom','charisma'][index]!))])) as MonsterStatblock['abilities']
   const saves:MonsterStatblock['saves']={},skills:MonsterStatblock['skills']=[]
@@ -107,7 +115,7 @@ export function monsterStatblock(value:unknown):MonsterStatblock {
   const hp=choose('hit-points'),hpData=record(hp),count=number(get(hpData,'die-count')),die=number(get(hpData,'die')),modifier=number(get(hpData,'modifier'))??0
   const hitPoints=number(hp)??number(get(hpData,'average'))??(count!==null&&die!==null&&count>0&&die>0?Math.floor(count*(die+1)/2+modifier):null)
   const hitDice=count!==null&&die!==null&&count>0&&die>0?`${count}d${die}${modifier?` ${modifier>0?'+':'−'} ${Math.abs(modifier)}`:''}`:text(choose('hit-points-roll','hit-dice'))
-  const armorClass=armor(choose('armor-class'),text(choose('armor-notes')))
+  const armorClass=armor(choose('codex/armor-class','armor-class'),text(choose('armor-notes')))
   const speed=speeds(choose('speed'))
   const rawChallenge=choose('challenge-rating','challenge'),fraction=text(rawChallenge).match(/^(\d+)\/(\d+)$/)
   const challenge=number(rawChallenge)??(fraction&&Number(fraction[2])!==0?Number(fraction[1])/Number(fraction[2]):text(rawChallenge)||null)
@@ -133,13 +141,14 @@ export function monsterStatblock(value:unknown):MonsterStatblock {
   const senses=typeof senseData==='string'?senseData:Object.entries(record(senseData)).map(([name,value])=>`${label(name)} ${text(value)}`).filter(line=>line.trim()).join(', ')
   const missing:string[]=[]
   if(!armorClass.length)missing.push('armor class')
-  if(hitPoints===null)missing.push('hit points')
+  if(hitPoints===null&&!extended.hpText)missing.push('hit points')
   if(!speed)missing.push('speed')
   const missingAbilities=MONSTER_ABILITIES.filter(key=>abilities[key]===null)
   if(missingAbilities.length)missing.push(`${missingAbilities.map(key=>key.toUpperCase()).join(', ')} scores`)
   if(challenge===null)missing.push('challenge rating')
-  return {
-    name:text(entry.name)||text(get(data,'name'))||'Unnamed monster',size:title(text(choose('size'))),type:text(choose('type')),subtype:text(choose('subtype','tag')),
+  return applyMonsterRuleBenefits(enrichMonsterStatblock({
+    extended,
+    name:text(entry.name)||text(get(data,'name'))||'Unnamed monster',size:title(text(choose('codex/size','size'))),type:text(choose('type')),subtype:text(choose('subtype','tag')),
     alignment:text(choose('alignment')),source:text(entry.sourcePack)||text(entry.source)||text(choose('option-pack'))||(imported?'Imported content':'SRD 2014'),
     description:text(choose('description')),armorClass,hitPoints,hitDice,speed,abilities,saves,skills,
     vulnerabilities:joined(choose('damage-vulnerabilities')??get(props,'damage-vulnerability')),
@@ -148,7 +157,7 @@ export function monsterStatblock(value:unknown):MonsterStatblock {
     conditionImmunities:joined(choose('condition-immunities')??get(props,'condition-immunity')),
     senses,languages:joined(choose('languages')??get(props,'language')),challenge,
     xp:number(choose('xp')),proficiencyBonus:number(choose('proficiency-bonus')),sections:sections.filter(s=>s.entries.length||s.description),missing,
-  }
+  },entry.monsterEnrichment as MonsterEnrichment|undefined),entry)
 }
 
 export const monsterModifier=(score:number)=>Math.floor((score-10)/2)

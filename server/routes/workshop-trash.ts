@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { decodedPackData,storedPackData,packSource,MAX_PACK_BYTES } from '../lib/pack-storage'
 import { randomUUID } from 'node:crypto'
 import { isValidObjectId } from 'mongoose'
 import { z } from 'zod'
@@ -52,7 +53,7 @@ router.post('/packs/:id/delete', async (req, res) => {
   if (!isValidObjectId(req.params.id) || !parsed.success) return res.status(400).json({ error: 'Choose a saved definition and its pack.' })
   const doc = await CustomContent.findOne({ _id: req.params.id, userId: req.userId, type: 'orcbrew' }).lean()
   if (!doc) return res.status(404).json({ error: 'Pack not found.' })
-  const data = record(doc.data), source = String(data.source ?? '')
+  const data = decodedPackData(doc.data), source = data.source
   if (sourceHash(source) !== parsed.data.hash) return res.status(409).json({ error: 'This pack changed. Reload the library before deleting.' })
   const entry = inspectOrcbrew(source).entries[sections[parsed.data.kind]].find(e => e.index === parsed.data.index)
   const native = record(record(entry?.details)[parsed.data.kind === 'monster' ? ':codex/monster' : ':codex/workshop'])
@@ -64,7 +65,7 @@ router.post('/packs/:id/delete', async (req, res) => {
   const snapshot: ArchivedDefinition = { id: randomUUID(), name: entry.name, kind: parsed.data.kind, deletedAt: new Date().toISOString(), parts: archived.parts }
   if (trash.length >= 200 || Buffer.byteLength(JSON.stringify([...trash, snapshot])) > 6 * 1024 * 1024) return res.status(400).json({ error: 'This pack’s recovery storage is full. Download a backup before managing more definitions.' })
   inspectOrcbrew(archived.source)
-  const saved = await CustomContent.findOneAndUpdate({ _id: doc._id, userId: req.userId, type: 'orcbrew', updatedAt: doc.updatedAt }, { $set: { 'data.source': archived.source, sourceHash: sourceHash(archived.source), workshopTrash: [...trash, snapshot] } }, { new: true }).select('_id').lean()
+  const saved = await CustomContent.findOneAndUpdate({ _id: doc._id, userId: req.userId, type: 'orcbrew', updatedAt: doc.updatedAt }, { $set: { data:storedPackData({...data,source:archived.source}), sourceHash: sourceHash(archived.source), workshopTrash: [...trash, snapshot] } }, { new: true }).select('_id').lean()
   if (!saved) return res.status(409).json({ error: 'This pack changed while deleting. Reload the library.' })
   res.json({ message: 'Moved to Recently deleted. Characters keep their last saved rules; the missing source is flagged for review.' })
 })
@@ -76,9 +77,9 @@ router.post('/packs/:id/restore/:entryId', async (req, res) => {
   const trash = (doc.workshopTrash ?? []) as ArchivedDefinition[], entry = trash.find(e => e.id === req.params.entryId)
   if (!entry) return res.status(409).json({ error: 'This definition was already restored. Reload Recently deleted.' })
   let source: string
-  try { source = restoreDefinition(String(record(doc.data).source ?? ''), entry.parts); inspectOrcbrew(source) } catch (error) { return res.status(409).json({ error: (error as Error).message }) }
-  if (Buffer.byteLength(source) > 8 * 1024 * 1024) return res.status(400).json({ error: 'Restoring would exceed the 8 MB pack limit.' })
-  const saved = await CustomContent.findOneAndUpdate({ _id: doc._id, userId: req.userId, type: 'orcbrew', updatedAt: doc.updatedAt }, { $set: { 'data.source': source, sourceHash: sourceHash(source), workshopTrash: trash.filter(e => e.id !== entry.id) } }, { new: true }).select('_id').lean()
+  try { source = restoreDefinition(packSource(doc.data), entry.parts); inspectOrcbrew(source) } catch (error) { return res.status(409).json({ error: (error as Error).message }) }
+  if (Buffer.byteLength(source) > MAX_PACK_BYTES) return res.status(400).json({ error: 'Restoring would exceed the 64 MB pack limit.' })
+  const saved = await CustomContent.findOneAndUpdate({ _id: doc._id, userId: req.userId, type: 'orcbrew', updatedAt: doc.updatedAt }, { $set: { data:storedPackData({...record(doc.data),source,sourceEncoding:undefined,sourceBytes:undefined}), sourceHash: sourceHash(source), workshopTrash: trash.filter(e => e.id !== entry.id) } }, { new: true }).select('_id').lean()
   if (!saved) return res.status(409).json({ error: 'This pack changed while restoring. Reload Recently deleted.' })
   res.json({ message: 'Definition restored to its original pack.' })
 })

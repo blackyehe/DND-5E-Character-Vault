@@ -8,3 +8,5 @@
 @media print{.mw-two-columns .monster-statblock{column-count:2;max-width:850px;column-gap:24px}.monster-editable{outline:0!important;background:transparent!important}.monster-source{display:none}}
 
 .mw-workspace{border:0;padding:0;margin:0;min-width:0}.mw-editor[disabled],.mw-workspace[disabled]{opacity:.75}
+.mw-spell-group{min-width:0;border:1px solid var(--cb-line);border-radius:8px;margin:16px 0;padding:14px}
+.mw-spell-group legend{padding:0 6px;font-size:13px}

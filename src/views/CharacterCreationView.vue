@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { vMotionPanel } from '../directives/siteMotion'
+import { revealNavigationTarget } from '../lib/navigation-scroll'
 import WorkshopCharacterChoices from '../components/workshop/WorkshopCharacterChoices.vue'
 import { applyWorkshopRules } from '../../shared/workshop-character'
 import ShadowChampions from '../components/ShadowChampions.vue'
@@ -124,7 +125,7 @@ async function goTo(step: BuilderStep) {
   draft.step = step
   await nextTick()
   activeHeading.value?.focus({ preventScroll: true })
-  activeHeading.value?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  revealNavigationTarget(activeHeading.value)
 }
 function setMethod(method: typeof draft.method) {
   if (draft.method === method) return
@@ -207,7 +208,7 @@ async function createCharacter() {
         <button type="button" class="cb-save-link" @click="builder.saveDraft"><BuilderIcon name="save" :size="15" /> Save draft</button>
       </aside>
 
-      <main v-motion-panel="draft.step" class="cb-main">
+      <main v-stable-loading="loadingDetails" v-motion-panel="draft.step" class="cb-main">
         <div v-if="restored" class="cb-notice"><BuilderIcon name="check" :size="17" /><span>Your saved draft is ready. Pick up where you left off.</span><button type="button" aria-label="Dismiss draft message" @click="restored = false"><BuilderIcon name="close" :size="14" /></button></div>
         <p v-for="warning in warnings" :key="warning" class="cb-alert" role="alert">{{ warning }}</p><p v-if="storageError" class="cb-alert" role="alert">{{ storageError }}</p>
         <div class="cb-mobile-snapshot"><button type="button" :aria-expanded="showMobileSummary" @click="showMobileSummary = !showMobileSummary"><BuilderIcon name="shield" :size="20" /><strong>{{ draft.name || 'Your adventurer' }}</strong><span>View character summary</span></button><div v-if="showMobileSummary" class="cb-mobile-stats">{{ race?.name || 'Race not selected' }} · {{ klass?.name || 'Class not selected' }} · Level {{ draft.level }}<br />HP {{ displayNumber(stats.hp) }} · AC {{ displayNumber(stats.ac) }} · Speed {{ displayNumber(stats.speed) }} ft.</div></div>

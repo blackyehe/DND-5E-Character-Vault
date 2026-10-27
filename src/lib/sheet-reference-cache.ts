@@ -53,6 +53,7 @@ export function sheetReferenceInputs(c:Character) {
   return JSON.stringify({meta:c.meta,abilities:c.abilities,saves:c.saves,skills:c.skills,
     proficiencies:c.proficiencies,features:c.features,equipment:c.equipment,
     attacks:c.attacks,homebrew:c.homebrew,companionKind:c.companionKind,
+    compendiumRules:c.compendiumRules?.map(d=>({kind:d.kind,index:d.index,revision:d.revision,sourceHash:d.sourceHash})),
     combat:{...c.combat,hpCurrent:undefined,hpTemp:undefined,hitDiceUsed:undefined,
       deathSavesSuccess:undefined,deathSavesFailure:undefined,inspiration:undefined},
     resources:c.resources?.map(resource=>({...resource,used:undefined})),

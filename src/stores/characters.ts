@@ -113,7 +113,7 @@ export const useCharactersStore = defineStore('characters', () => {
     return created
   }
 
-  async function update(id: string, patch: Partial<Character>) {
+  async function update(id: string, patch: Partial<Character>, options: { expectedUpdatedAt?: string; expectedLibraryRevision?:string } = {}) {
     mutation.value++
     if(roomContext.value?.preview){
       if(current.value?._id!==id)throw new Error('Open a character before trying the preview.')
@@ -127,7 +127,7 @@ export const useCharactersStore = defineStore('characters', () => {
       const scope = roomContext.value
       const updated = scope?.role === 'player'
         ? await api.patch<Character>(`/api/rooms/${scope.roomId}/characters/${id}/play`, playUpdate(current.value!, patch))
-        : await api.patch<Character>(`/api/characters/${id}`, { ...patch, ...(current.value?._id === id ? { expectedUpdatedAt: current.value.updatedAt } : {}) })
+        : await api.patch<Character>(`/api/characters/${id}`, { ...patch, ...(options.expectedLibraryRevision?{expectedLibraryRevision:options.expectedLibraryRevision}:{}), ...(options.expectedUpdatedAt ? { expectedUpdatedAt: options.expectedUpdatedAt } : current.value?._id === id ? { expectedUpdatedAt: current.value.updatedAt } : {}) })
       if (current.value?._id === id) current.value = resolveCharacterProgression(updated)
       rulesPending.value=false
       return updated

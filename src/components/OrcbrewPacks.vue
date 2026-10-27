@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { api } from '../lib/api'
+import { MAX_PACK_BYTES,MAX_PACK_MIB } from '../../shared/pack-limits'
 
 interface OrcbrewPack {
   id: string
@@ -23,11 +24,12 @@ const contentKinds=computed(()=>[...new Set(packs.value.flatMap(pack=>Object.ent
 const visiblePacks=computed(()=>packs.value.filter(pack=>pack.filename.toLowerCase().includes(packSearch.value.trim().toLowerCase())&&(!contentKind.value||(pack.report?.counts[contentKind.value]??0)>0)))
 const loading = ref(false)
 const importing = ref(false)
+const exportingAll = ref(false)
 const changingPack = ref('')
 const error = ref('')
 const notice = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
-const maxFileBytes = 8 * 1024 * 1024
+const maxFileBytes = MAX_PACK_BYTES
 
 async function loadPacks() {
   loading.value = true
@@ -54,7 +56,7 @@ async function importFile(event: Event) {
     return
   }
   if (file.size > maxFileBytes) {
-    error.value = 'Files must be 8 MB or smaller.'
+    error.value = `Files must be ${MAX_PACK_MIB} MiB or smaller.`
     return
   }
 
@@ -65,7 +67,14 @@ async function importFile(event: Event) {
       error.value = 'This does not look like an Orcbrew data file.'
       return
     }
-    const result = await api.post<OrcbrewPack & { duplicate: boolean }>('/api/content/orcbrew-packs', { filename: file.name, source })
+    let payload:Record<string,unknown>={filename:file.name,source}
+    if(file.size>8*1024*1024){
+      const compressed=await new Response(new Blob([source]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()
+      const bytes=new Uint8Array(compressed);let binary=''
+      for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768))
+      payload={filename:file.name,source:btoa(binary),sourceEncoding:'gzip-base64',sourceBytes:new TextEncoder().encode(source).length}
+    }
+    const result = await api.post<OrcbrewPack & { duplicate: boolean }>('/api/content/orcbrew-packs', payload)
     notice.value = result.duplicate ? `${file.name} is already imported.` : `${file.name} imported. Identical entries are merged automatically.`
     await loadPacks()
   } catch (cause) {
@@ -75,20 +84,37 @@ async function importFile(event: Event) {
   }
 }
 
-async function exportPack(pack: OrcbrewPack) {
+async function downloadPack(path:string,filename:string) {
   error.value = ''
+  const response = await fetch(path, { credentials: 'include' })
+  if (!response.ok) {
+    const body=await response.json().catch(()=>null)
+    throw new Error(body?.error||'Could not download this file.')
+  }
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+async function exportPack(pack: OrcbrewPack) {
   try {
-    const response = await fetch(`/api/content/orcbrew-packs/${pack.id}/export`, { credentials: 'include' })
-    if (!response.ok) throw new Error('Could not download this file.')
-    const url = URL.createObjectURL(await response.blob())
-    const link = document.createElement('a')
-    link.href = url
-    link.download = pack.filename
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    await downloadPack(`/api/content/orcbrew-packs/${pack.id}/export`,pack.filename)
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : 'Could not download this file.'
   }
+}
+
+async function exportAll() {
+  exportingAll.value=true
+  notice.value=''
+  try{
+    await downloadPack('/api/content/orcbrew-packs/export-all','All homebrew.orcbrew')
+    notice.value='All saved Orcbrew files exported together. Original source labels and disabled definitions are preserved.'
+  }catch(cause){error.value=cause instanceof Error?cause.message:'Could not export your files.'}
+  finally{exportingAll.value=false}
 }
 
 function countsText(pack: OrcbrewPack) {
@@ -129,7 +155,7 @@ onMounted(loadPacks)
 </script>
 
 <template>
-  <section class="space-y-5">
+  <section v-stable-loading="loading" class="space-y-5">
     <div class="panel p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="font-display text-xl text-[var(--color-gold-soft)]">Orcbrew files</h2>
@@ -137,7 +163,7 @@ onMounted(loadPacks)
           Save and download your Orcbrew files. Supported entries also appear in character creation, spell selection, and the compendium.
         </p>
       </div>
-      <div>
+      <div class="flex flex-wrap gap-2">
         <input
           ref="fileInput"
           type="file"
@@ -148,6 +174,7 @@ onMounted(loadPacks)
         <button class="btn-primary" :disabled="importing" @click="fileInput?.click()">
           {{ importing ? 'Importing…' : 'Import .orcbrew' }}
         </button>
+        <button type="button" class="btn-ghost" title="Includes every saved file, regardless of the file filters." :disabled="loading||!packs.length||exportingAll||importing" :aria-busy="exportingAll" @click="exportAll">{{exportingAll?'Preparing export…':'Export all as one .orcbrew'}}</button>
       </div>
     </div>
 

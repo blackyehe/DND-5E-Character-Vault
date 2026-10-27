@@ -1,32 +1,36 @@
 <script lang="ts">
-import {defineComponent, h, type VNodeChild, type PropType} from 'vue'
+import {computed, defineComponent, h, type VNodeChild, type PropType} from 'vue'
+import {notebookSessionReferences, type NotebookSessionTarget} from '../../../shared/notebook-session-links'
+import {notebookLinkResolver, notebookWikiLink} from '../../../shared/notebook-links'
 
 // A deliberately small Markdown reader. All source text becomes Vue text nodes;
 // HTML, embeds and executable URLs are never evaluated.
 export default defineComponent({
-  props: {body: {type: String, required: true}, links: {type: Array as PropType<{id: string; title: string}[]>, default: () => []}},
+  props: {body: {type: String, required: true}, links: {type: Array as PropType<{id: string; title: string}[]>, default: () => []}, sessions:{type:Array as PropType<NotebookSessionTarget[]>,default:()=>[]}, interactive:{type:Boolean,default:true}},
   emits: ['open'],
   setup(props, {emit}) {
+    const resolveLink = computed(() => notebookLinkResolver(props.links))
+    const noteLink = (id:string, label:string, title?:string) => props.interactive ? h('button', {type:'button',class:'notebook-inline-link',title,onClick:()=>emit('open',id)},label) : h('span',{class:'notebook-inline-link',title:title??`Linked to ${label}`},label)
     function inline(source: string): VNodeChild[] {
       const tokens = source.split(/(\[\[[^\]\n]+\]\]|\[[^\]\n]+\]\([^\s)]+\)|==[^=\n]+==|\*\*[^*\n]+\*\*|`[^`\n]+`|\*[^*\n]+\*)/g)
       return tokens.map(token => {
         if (token.startsWith('[[') && token.endsWith(']]')) {
-          const [target = '', alias] = token.slice(2, -2).split('|'), title = target.split('#')[0]!.replace(/\.md$/i, '')
-          const matches = props.links.filter(link => link.id === title || link.title.toLocaleLowerCase() === title.toLocaleLowerCase())
-          return matches.length === 1 ? h('button', {type: 'button', class: 'notebook-inline-link', onClick: () => emit('open', matches[0]!.id)}, alias ?? title) : h('span', {class: 'notebook-unresolved', title: 'Connect this note in Edit to make the link available.'}, alias ?? title)
+          const value=token.slice(2,-2), {target,alias}=notebookWikiLink(value), matches=resolveLink.value(value)
+          const label=alias??(matches.length===1?matches[0]!.title:target)
+          return matches.length===1 ? noteLink(matches[0]!.id,label,`Open ${matches[0]!.title}`) : h('span',{class:'notebook-unresolved',title:matches.length?'Several notes share this name. Choose a link suggestion in Edit.':'No matching available note. Check the name or choose a suggestion in Edit.'},label)
         }
         const link = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
         if (link) {
           const target = props.links.find(item => link[2] === `note:${item.id}`)
-          if (target) return h('button', {type: 'button', class: 'notebook-inline-link', onClick: () => emit('open', target.id)}, link[1])
-          if (/^https?:\/\//i.test(link[2]!)) return h('a', {href: link[2], target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer'}, link[1])
+          if (target) return noteLink(target.id,link[1]!)
+          if (/^https?:\/\//i.test(link[2]!)) return props.interactive ? h('a', {href: link[2], target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer'}, link[1]) : h('span',{class:'notebook-inline-link',title:link[2]},link[1])
           return h('span', {class: 'notebook-unresolved'}, link[1])
         }
-        if (token.startsWith('==') && token.endsWith('==')) return h('mark', token.slice(2, -2))
-        if (token.startsWith('**') && token.endsWith('**')) return h('strong', token.slice(2, -2))
+        if (token.startsWith('==') && token.endsWith('==')) return h('mark', inline(token.slice(2, -2)))
+        if (token.startsWith('**') && token.endsWith('**')) return h('strong', inline(token.slice(2, -2)))
         if (token.startsWith('`') && token.endsWith('`')) return h('code', token.slice(1, -1))
-        if (token.startsWith('*') && token.endsWith('*')) return h('em', token.slice(1, -1))
-        return token
+        if (token.startsWith('*') && token.endsWith('*')) return h('em', inline(token.slice(1, -1)))
+        return props.sessions.length?notebookSessionReferences(token,props.sessions).map(part=>part.id?noteLink(part.id,part.text,`Open Session ${part.number}`):part.text):token
       })
     }
     return () => {

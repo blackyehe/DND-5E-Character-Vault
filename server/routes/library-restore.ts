@@ -6,6 +6,7 @@ import { Character } from '../models/Character'
 import { CustomContent } from '../models/CustomContent'
 import { parsedPack } from '../lib/orcbrew-library'
 import { sourceHash } from '../lib/orcbrew'
+import { packSource,storedPackData,MAX_PACK_BYTES } from '../lib/pack-storage'
 
 const router = Router()
 router.use(requireAuth)
@@ -34,9 +35,10 @@ router.post('/', requestLimit('library-restore', 5, 3600), async (req, res) => {
       const {_id, id, userId: _owner, __v, ...data} = record
       if (record.type === 'orcbrew') {
         const pack = record.data
-        if (!pack || typeof pack.source !== 'string' || Buffer.byteLength(pack.source, 'utf8') > 8 * 1024 * 1024 || typeof pack.filename !== 'string' || !/\.orcbrew$/i.test(pack.filename)) throw new Error('An Orcbrew pack is invalid or exceeds 8 MB.')
+        if (!pack || typeof pack.source !== 'string' || Buffer.byteLength(packSource(pack), 'utf8') > MAX_PACK_BYTES || typeof pack.filename !== 'string' || !/\.orcbrew$/i.test(pack.filename)) throw new Error('An Orcbrew pack is invalid or exceeds 64 MB.')
         parsedPack(pack)
-        data.sourceHash = sourceHash(pack.source)
+        data.sourceHash = sourceHash(packSource(pack))
+        data.data=storedPackData(pack)
       }
       const doc = new CustomContent({...data,_id:identity(record),userId})
       await doc.validate()

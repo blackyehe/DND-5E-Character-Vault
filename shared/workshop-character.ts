@@ -28,7 +28,7 @@ function applyClassWorkshopRules(character:Character,rules:PublishedWorkshopRule
   const conflict=(id:string,message:string)=>{if(!state.acknowledged.includes(id)&&!state.conflicts.some(v=>v.id===id))state.conflicts.push({id,message})}
   const clear=(id:string)=>{state.conflicts=state.conflicts.filter(v=>v.id!==id)}
   const candidates=new Map(state.bindings.filter(b=>{
-    const explicit=b.rule.kind==='subclass'?c.meta.subclassIndex:c.meta.classLevels?.find(e=>ruleName(e.name)===ruleName(b.className))?.index??((c.meta.classLevels?.length??0)>1?undefined:c.meta.classIndex)
+    const explicit=b.rule.kind==='subclass'?(c.meta.classLevels?.find(e=>ruleName(e.name)===ruleName(b.className))?.subclassIndex??((c.meta.classLevels?.length??0)<=1?c.meta.subclassIndex:undefined)):c.meta.classLevels?.find(e=>ruleName(e.name)===ruleName(b.className))?.index??((c.meta.classLevels?.length??0)>1?undefined:c.meta.classIndex)
     const latest=rules.find(r=>r.id===b.ruleId)
     if(!explicit||explicit===b.index||explicit===latest?.index||latest?.previousIndexes.includes(explicit))return true
     c.features=c.features.flatMap(f=>{
@@ -45,9 +45,10 @@ function applyClassWorkshopRules(character:Character,rules:PublishedWorkshopRule
     const existing=candidates.get(rule.id)
     if(existing){candidates.set(rule.id,{...existing,rule:existing.rule});continue}
     const names=[rule.draft.name,...rule.previousNames].map(ruleName)
+    const subclassEntry=c.meta.classLevels?.find(e=>e.subclassIndex===rule.index||rule.previousIndexes.includes(e.subclassIndex??'')||names.includes(ruleName(e.subclass??'')))
     const classEntry=c.meta.classLevels?.find(e=>names.includes(ruleName(e.name)))
-    const matches=rule.draft.kind==='class'?(classEntry?.name??(!c.meta.klass.includes('/')&&names.includes(ruleName(c.meta.klass))?c.meta.klass:'')):(names.includes(ruleName(c.meta.subclass))?c.meta.classLevels?.find(e=>e.index===rule.draft.parentClass||ruleName(e.name)===ruleName(rule.parentClassName??rule.draft.parentClass))?.name??(c.meta.classLevels?.length===1?c.meta.classLevels[0]!.name:!c.meta.klass.includes('/')?c.meta.klass:''):'')
-    const index=rule.draft.kind==='class'?(classEntry?.index??((c.meta.classLevels?.length??0)>1?undefined:c.meta.classIndex)):c.meta.subclassIndex
+    const matches=rule.draft.kind==='class'?(classEntry?.name??(!c.meta.klass.includes('/')&&names.includes(ruleName(c.meta.klass))?c.meta.klass:'')):(subclassEntry?.name??(names.includes(ruleName(c.meta.subclass))?c.meta.classLevels?.find(e=>e.index===rule.draft.parentClass||ruleName(e.name)===ruleName(rule.parentClassName??rule.draft.parentClass))?.name??(c.meta.classLevels?.length===1?c.meta.classLevels[0]!.name:!c.meta.klass.includes('/')?c.meta.klass:''):'') )
+    const index=rule.draft.kind==='class'?(classEntry?.index??((c.meta.classLevels?.length??0)>1?undefined:c.meta.classIndex)):subclassEntry?.subclassIndex??c.meta.subclassIndex
     if(!matches&&index!==rule.index&&!rule.previousIndexes.includes(index??''))continue
     const ambiguous=rules.filter(other=>other.id!==rule.id&&other.draft.kind===rule.draft.kind&&[other.draft.name,...other.previousNames].some(n=>names.includes(ruleName(n))))
     if(!index&&ambiguous.length||index&&index!==rule.index&&rules.filter(other=>other.index===index||other.previousIndexes.includes(index)).length>1){conflict(`ambiguous:${rule.draft.kind}:${ruleName(rule.draft.name)}`,`${rule.draft.name}: more than one saved definition matches this character. Choose the correct rule in Edit character.`);continue}
@@ -98,9 +99,10 @@ function applyClassWorkshopRules(character:Character,rules:PublishedWorkshopRule
     for(const retired of saved.filter(r=>r.ruleId===binding.ruleId&&!nextResources.some(n=>n.id===r.id))){if(retired.used){conflict(`resource-removed:${revisionKey}:${retired.id}`,`${retired.name} was removed. Its spent-use record is kept as a manual tracker.`);nextResources.push({...retired,ruleId:undefined,automatic:false,scaling:undefined})}}
     c.resources=[...saved.filter(r=>r.ruleId!==binding.ruleId&&!nextResources.some(n=>n.id===r.id||!r.ruleId&&(ruleName(n.name)===ruleName(r.name)||r.id===resourceAlias(n.name)))),...nextResources]
     if(d.kind==='class'){
-      for(const key of d.savingThrows)c.saves[key]=true
+      const primary=!c.meta.classLevels?.length||ruleName(c.meta.classLevels[0]!.name)===ruleName(binding.className)
+      if(primary)for(const key of d.savingThrows)c.saves[key]=true
       if(revision!==binding.revision){for(const key of old.savingThrows.filter(k=>!d.savingThrows.includes(k)))conflict(`save:${revisionKey}:${key}`,`${key.toUpperCase()} saving throw proficiency was removed from the class. It has been retained in case another feature grants it.`)
-        for(const group of ['armor','weapons','tools'] as const){c.proficiencies[group]=[...new Set([...c.proficiencies[group],...d[group]])];for(const removed of old[group].filter(v=>!d[group].includes(v)))if(c.proficiencies[group].includes(removed))conflict(`prof:${revisionKey}:${group}:${removed}`,`${removed} is no longer granted by the class. It has been kept for review because another source may grant it.`)}
+        for(const group of ['armor','weapons','tools'] as const){if(primary)c.proficiencies[group]=[...new Set([...c.proficiencies[group],...d[group]])];for(const removed of old[group].filter(v=>!d[group].includes(v)))if(c.proficiencies[group].includes(removed))conflict(`prof:${revisionKey}:${group}:${removed}`,`${removed} is no longer granted by the class. It has been kept for review because another source may grant it.`)}
         if(old.hitDie!==d.hitDie){const expected=old.hitDie+abilityMod(c.abilities.con)+(l-1)*(Math.floor(old.hitDie/2)+1+abilityMod(c.abilities.con));if(c.meta.classLevels?.length!==undefined&&c.meta.classLevels.length>1||c.combat.hpMax!==expected)conflict(`hp:${revisionKey}`,`${d.name}'s hit die changed to d${d.hitDie}. Review this character's custom maximum HP; current HP has been preserved.`);else c.combat.hpMax+=d.hitDie-old.hitDie+(l-1)*(Math.floor(d.hitDie/2)-Math.floor(old.hitDie/2))}
         if((old.skillCount!==d.skillCount||JSON.stringify(old.skillOptions)!==JSON.stringify(d.skillOptions)||old.expertiseCount!==d.expertiseCount)&&binding.revision!==0)conflict(`skills:${revisionKey}`,`${d.name}'s skill or expertise allowances changed. Your skill choices have been kept for review.`)
         if(JSON.stringify(old.magic)!==JSON.stringify(d.magic)&&binding.revision!==0&&c.spellcasting.known.length)conflict(`spells:${revisionKey}`,`${d.name}'s spell allowances or list changed. Your known and prepared spells have been kept; review their choices.`)
@@ -110,7 +112,7 @@ function applyClassWorkshopRules(character:Character,rules:PublishedWorkshopRule
       const entry=c.meta.classLevels?.find(e=>ruleName(e.name)===ruleName(binding.className));if(entry){entry.name=d.name;entry.index=published?.index??binding.index}
       if((c.meta.classLevels?.length??0)<=1)c.meta.classIndex=published?.index??binding.index
       for(const other of candidates.values())if(other.ruleId!==binding.ruleId&&other.rule.kind==='subclass'&&ruleName(other.className)===ruleName(binding.className))other.className=d.name
-    }else {c.meta.subclass=d.name;c.meta.subclassIndex=published?.index??binding.index}
+    }else {const entry=c.meta.classLevels?.find(e=>ruleName(e.name)===ruleName(binding.className));if(entry){entry.subclass=d.name;entry.subclassIndex=published?.index??binding.index}if((c.meta.classLevels?.length??0)<=1){c.meta.subclass=d.name;c.meta.subclassIndex=published?.index??binding.index}}
     if(d.magic.enabled){
       const castingBindings=[...candidates.values()].filter(b=>(rules.find(r=>r.id===b.ruleId)?.draft??b.rule).magic.enabled)
       if((c.meta.classLevels?.length??0)>1||castingBindings.length>1&&new Set(castingBindings.map(b=>ruleName(b.className))).size>1)conflict(`multiclass:${revisionKey}`,'This character has multiple classes. Existing combined slots have been kept; review multiclass progression in Edit character.')

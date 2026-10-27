@@ -20,6 +20,7 @@ export interface PlayUpdate {
   resources?: { id: string; used: number }[]
   equipment?: { id: string; qty: number; equipped: boolean; attuned?:boolean }[]
   prepared?: string[]
+  activeEffects?: string[]
   features?: { id: string; pinned?: boolean; order?: number }[]
 }
 
@@ -32,6 +33,7 @@ export function playUpdate(before: Character, patch: Partial<Character>): PlayUp
     }
   }
   if (patch.spellcasting) {
+    if(JSON.stringify(patch.spellcasting.activeEffects??[])!==JSON.stringify(before.spellcasting.activeEffects??[]))result.activeEffects=patch.spellcasting.activeEffects??[]
     result.slots = Object.entries(patch.spellcasting.slots).filter(([key, slot]) => slot.used !== before.spellcasting.slots[key]?.used).map(([key, slot]) => ({ key, used: slot.used }))
     if (JSON.stringify(patch.spellcasting.prepared) !== JSON.stringify(before.spellcasting.prepared)) result.prepared = patch.spellcasting.prepared
   }

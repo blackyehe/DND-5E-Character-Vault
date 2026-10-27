@@ -11,15 +11,15 @@ const props=defineProps<{active:string;tabs:{key:string;label:string}[];compactS
 defineEmits<{select:[key:string];edit:[]}>()
 const {appearance}=useBuilderAppearance(),store=useCharactersStore()
 const folio=computed(()=>appearance.sheetLayout==='folio')
-const hasRail=computed(()=>folio.value&&!['combat','edit'].includes(props.active))
+const hasRail=computed(()=>folio.value&&!['combat','edit','level-up'].includes(props.active))
 const railOpen=ref(false),railId=useId()
 </script>
 <template>
   <div class="sheet-workspace" :class="{'sheet-workspace-compact':compactSummary,'sheet-folio-workspace':folio}">
-    <CharacterSidebar v-if="!folio&&!compactSummary" @edit="$emit('edit')" />
+    <CharacterSidebar v-if="!folio&&!compactSummary&&active!=='level-up'" @edit="$emit('edit')" />
     <main class="sheet-main">
-      <CharacterHeader v-if="folio" />
-      <nav class="sheet-navigation" aria-label="Character sections"><button v-for="tab in tabs" :key="tab.key" type="button" :data-preview-tab="tab.key" :aria-current="active===tab.key?'page':undefined" :class="{active:active===tab.key}" @click="$emit('select',tab.key)">{{tab.label}}</button></nav>
+      <CharacterHeader v-if="folio&&active!=='level-up'" />
+      <nav class="sheet-navigation" aria-label="Character sections"><button v-for="tab in active==='level-up'?[{key:'combat',label:'Return to sheet'},{key:'level-up',label:'Level up'}]:tabs" :key="tab.key" type="button" :data-preview-tab="tab.key" :aria-current="active===tab.key?'page':undefined" :class="{active:active===tab.key}" @click="$emit('select',tab.key)">{{tab.label}}</button></nav>
       <slot name="status" />
       <div class="sheet-tab-layout" :class="{'sheet-tab-with-rail':hasRail}">
         <div v-motion-panel="active" class="sheet-tab-content"><slot /></div>

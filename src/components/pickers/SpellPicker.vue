@@ -50,7 +50,7 @@ onBeforeUnmount(() => { clearTimeout(timer); ++sequence })
     @click.self="emit('close')"
     @keydown.esc="emit('close')"
   >
-    <div class="panel w-full max-w-lg max-h-[80vh] flex flex-col">
+    <div class="panel spell-picker-frame w-full max-w-lg max-h-[80vh] flex flex-col">
       <div class="p-4 border-b border-[var(--cb-soft)] flex items-center gap-3">
         <input
           v-model="query"
@@ -61,7 +61,7 @@ onBeforeUnmount(() => { clearTimeout(timer); ++sequence })
         <button type="button" class="btn-ghost text-xs" aria-label="Close spell picker" @click="emit('close')">✕</button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4">
+      <div class="spell-picker-results flex-1 overflow-y-auto p-4">
         <p v-if="loading" class="text-sm text-[var(--color-ink-soft)]">Searching…</p>
         <p v-if="error" class="text-sm text-[var(--color-blood-soft)]" role="alert">{{ error }}</p>
         <p v-if="!loading && !results.length" class="text-sm text-[var(--color-ink-soft)]">

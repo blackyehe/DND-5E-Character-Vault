@@ -120,7 +120,7 @@ function createLibrary(c:ComputedRef<Character>) {
     warning.value=failed.length?'Some reference details could not refresh. Saved character details remain usable.':''
     loading.value=false
   }
-  const features=computed<CharacterFeature[]>(()=>(c.value?.features??[]).map(f=>({...metadata.value[f.name.toLowerCase()],...f})))
+  const features=computed<CharacterFeature[]>(()=>(c.value?.features??[]).map(f=>({...metadata.value[f.name.trim().toLowerCase()],...f})))
   onMounted(load)
   onUnmounted(()=>{generation++;referenceController?.abort();cache.clear()})
   watch(()=>c.value?`${scope()}:${sheetReferenceInputs(c.value)}`:'',load)

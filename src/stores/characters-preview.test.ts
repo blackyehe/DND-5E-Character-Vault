@@ -8,6 +8,13 @@ const makeCharacter=()=>({...emptyCharacter(),_id:'0123456789abcdef01234567',upd
 beforeEach(()=>{setActivePinia(createPinia());vi.clearAllMocks()})
 
 describe('player preview and progressive sheet opening',()=>{
+  it('keeps the advancement snapshot version even after a newer sheet has refreshed',async()=>{
+    const store=useCharactersStore(),character=makeCharacter(),frozen=character.updatedAt
+    store.current={...character,updatedAt:'2026-10-19T00:01:00.000Z'}
+    vi.mocked(api.patch).mockResolvedValue(store.current)
+    await store.update(character._id,{meta:{...character.meta,level:2}},{expectedUpdatedAt:frozen,expectedLibraryRevision:'frozen-rules'})
+    expect(api.patch).toHaveBeenCalledWith(`/api/characters/${character._id}`,expect.objectContaining({expectedUpdatedAt:frozen,expectedLibraryRevision:'frozen-rules'}))
+  })
   it('tries player resource controls locally without a server write',async()=>{
     const store=useCharactersStore(),character=makeCharacter()
     store.current=character;store.roomContext={roomId:'room',role:'player',preview:true}

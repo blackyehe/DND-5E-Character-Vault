@@ -16,3 +16,18 @@ html { overflow-y:scroll; scrollbar-gutter:stable; }
   .sheet-spell-repair-results,.hw-spell-picker,.hw-preview,
   .hw-schedule-rows,.hw-modal,.overflow-y-auto,textarea
 ) { scrollbar-gutter:stable; }
+
+/* Short tabs and initial requests keep a useful reading footprint. Long forms
+   continue to grow naturally; only index/detail browsers have fixed frames. */
+.site-shell :is(.sheet-tab-content,.cb-main,.hw-editor,.mw-editor,.character-sheet-view) {
+  min-height:clamp(360px,60dvh,700px);
+}
+.site-shell :is(.rooms-list,.item-workshop,.hw-trash) { min-height:180px; }
+.site-shell .workshop-publish-frame { min-height:min(520px,80dvh); }
+.site-shell .spell-picker-frame { height:min(600px,80dvh); min-height:0; }
+.site-shell .spell-picker-results { min-height:0; overscroll-behavior:contain; }
+
+/* Keep compact result lists and modal bodies from shrinking their flex parents. */
+.site-shell :is(.item-composer-body,.item-result-list,.advancement-browser) {
+  overscroll-behavior:contain;
+}

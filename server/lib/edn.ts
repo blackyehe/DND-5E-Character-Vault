@@ -29,6 +29,18 @@ export function readEdn(source: string, onNonFinite: () => void = () => {}, span
   }
 
   function string() {
+    // JSON-authored source/provenance strings can be large. Decode their slices
+    // with the native parser instead of constructing one rope node per character.
+    const start=cursor
+    let end=source.indexOf('"',start+1)
+    while(end!==-1){
+      let escapes=0
+      for(let i=end-1;i>start&&source[i]==='\\';i--)escapes++
+      if(escapes%2===0){
+        try{const value=JSON.parse(source.slice(start,end+1)) as string;cursor=end+1;return value}catch{break}
+      }
+      end=source.indexOf('"',end+1)
+    }
     cursor++
     let result = ''
     const escapes: Record<string, string> = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', '"': '"', '\\': '\\' }

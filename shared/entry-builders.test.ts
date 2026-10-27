@@ -1,0 +1,27 @@
+import {describe,it,expect} from 'vitest'
+import {BUILDER_CATEGORIES,builderExample} from './entry-builder-examples'
+import {entryRuleDraft,entryMonsterDraft,entryItemDraft,entrySpellDraft,entryOptionDraft,applyEntryBuilder} from './entry-builders'
+import {entryProblems,cloneEntry} from './compendium-editing'
+import {normalizeBuilderEntry} from '../server/lib/entry-builder-schema'
+import {workshopProblems} from './homebrew-workshop'
+import {monsterStatblock} from './monster-statblock'
+import {itemSchema} from '../server/lib/inventory'
+describe('prefilled entry builders',()=>{
+ it.each(BUILDER_CATEGORIES)('round-trips $label through its builder without losing source identity',({kind})=>{
+  const source=builderExample(kind),original=JSON.stringify(source),entry=cloneEntry(source)
+  if(['classes','subclasses','races','subraces'].includes(kind))entry.workshop=entryRuleDraft(source,kind==='classes'?'class':kind==='subclasses'?'subclass':'race')
+  else if(kind==='monsters')entry.monsterDraft=entryMonsterDraft(source)
+  else if(kind==='equipment'||kind==='magic-items')entry.workshopItem=entryItemDraft(source,kind==='magic-items')
+  else if(kind==='spells')entry.spellBuilder=entrySpellDraft(source)
+  else entry.optionBuilder=entryOptionDraft(source)
+  expect(entryProblems(source,entry)).toEqual([])
+  const saved=normalizeBuilderEntry(entry,kind);expect(saved.index).toBe(source.index);expect(saved.aliases).toEqual(source.aliases);expect(saved.details).toEqual(source.details);expect(entryProblems(source,saved)).toEqual([]);expect(normalizeBuilderEntry(saved,kind)).toEqual(saved);expect(JSON.stringify(source)).toBe(original)
+ })
+ it('preloads standard class training, complete feature text and levels with stable identities',()=>{const e={index:'fighter',name:'Fighter',hit_die:10,saving_throws:[{index:'str'},{index:'con'}],proficiencies:[{name:'All armor'},{name:'Shields'},{name:'All martial weapons'}],proficiency_choices:[{choose:2,type:'proficiencies',from:{options:[{item:{index:'skill-animal-handling'}},{item:{index:'skill-survival'}}]}}],builderFeatures:[{name:'Second Wind',desc:['Recover hit points.'],level:1}],builderLevels:[{level:5,class_specific:{extra_attacks:1}}]};const d=entryRuleDraft(e,'class');expect(d).toMatchObject({hitDie:10,savingThrows:['str','con'],skillOptions:['animalHandling','survival'],features:[{name:'Second Wind',description:'Recover hit points.'}],attacks:[{level:5,total:2}]});expect(entryRuleDraft(e,'class')).toEqual(d);expect(workshopProblems(d)).toEqual([])})
+ it('preloads existing creature numbers and written actions, and changes the compiled reader',()=>{const source=builderExample('monsters'),d=entryMonsterDraft(source);expect(d.scores.dex).toBe(14);expect(d.hp.override).toBe(27);expect(d.rules.some(r=>r.name==='Bite'&&r.description.includes('+4 to hit'))).toBe(true);d.hp.override=35;d.armor.base=16;const saved=normalizeBuilderEntry({...source,monsterDraft:d},'monsters'),m=monsterStatblock(saved);expect(m.hitPoints).toBe(35);expect(m.armorClass[0]?.value).toBe(16);expect(m.sections.flatMap(s=>s.entries).some(r=>r.name==='Bite')).toBe(true)})
+ it('keeps missing creature statistics unknown rather than inventing defaults',()=>{const d=entryMonsterDraft({index:'fragment',name:'Fragment',details:{':type':':undead'}});const m=monsterStatblock(normalizeBuilderEntry({index:'fragment',name:'Fragment',monsterDraft:d},'monsters'));expect(m.hitPoints).toBeNull();expect(m.abilities.str).toBeNull();expect(m.challenge).toBeNull()})
+ it('prefills the same normal and magical item definitions and keeps editable stats',()=>{const source=builderExample('equipment'),item=entryItemDraft(source,false);expect(item.weapon?.dice).toBe('1d6');expect(item.value?.amount).toBe(2);item.weapon!.dice='1d8';expect(itemSchema.safeParse(item).success).toBe(true);const saved=normalizeBuilderEntry({...source,workshopItem:item},'equipment');expect(saved.damage).toMatchObject({damage_dice:'1d8'});expect(saved.workshopItem).toMatchObject({weapon:{dice:'1d8'}})})
+ it('changes existing spell school, damage, casting and area fields without losing unrelated data',()=>{const source={...builderExample('spells'),unknown:{keep:true}},s=entrySpellDraft(source);s.school='illusion';s.castingTime='1 bonus action';s.damage['1']='3d6';s.areaType='cone';s.areaSize=15;const saved=normalizeBuilderEntry({...source,spellBuilder:s},'spells');expect(saved.school).toMatchObject({index:'illusion'});expect(saved.damage).toMatchObject({damage_at_slot_level:{'1':'3d6'}});expect(saved.area_of_effect).toEqual({type:'cone',size:15});expect(saved.unknown).toEqual({keep:true});expect(entryProblems(source,saved)).toEqual([])})
+ it('rejects malformed spell progressions, cross-category payloads and identity replacement',()=>{const source=builderExample('spells'),s=entrySpellDraft(source);s.damage.bad='';expect(()=>normalizeBuilderEntry({...source,spellBuilder:s},'spells')).toThrow();expect(()=>normalizeBuilderEntry({...source,spellBuilder:entrySpellDraft(source)},'feats')).toThrow();expect(entryProblems(source,{...source,index:'different'}).length).toBeGreaterThan(0)})
+ it('preserves rich prerequisites until the user changes them',()=>{const source={index:'feat',name:'Feat',prerequisites:[{ability_score:{index:'str'},minimum_score:13}]},o=entryOptionDraft(source);const normalized=applyEntryBuilder({...source,optionBuilder:o},'feats');expect(normalized.prerequisites).toEqual(source.prerequisites)})
+})
