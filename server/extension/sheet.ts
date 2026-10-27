@@ -1,17 +1,17 @@
 import type { Character } from '../../shared/character'
 import { partyMemberSnapshot } from '../../shared/party-dashboard'
-import { availableBenefitSpells, characterBenefitRows, benefitSummary, benefitTitle, characterBenefits, benefitSpellAttack, benefitSpellDC } from '../../shared/rule-benefits'
+import { availableBenefitSpells, characterBenefitRows, benefitSummary, benefitTitle, characterBenefits, benefitSpellAttack, benefitSpellDC, type CharacterBenefits } from '../../shared/rule-benefits'
 import { innateRaceSpells } from '../../shared/workshop-race'
-import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, carriedWeight } from '../../src/lib/calc'
+import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, carriedWeight } from '../../shared/calc'
 import { sheetSkill, sheetSave, sheetInitiative, sheetProficiencies, pretty } from '../../src/lib/character-sheet'
 import { combatAttacks, inventoryKind } from '../../src/lib/equipment'
 import { spellReferenceLabel } from '../../src/lib/spell-reference'
 import { sheetReferences } from '../lib/sheet-references'
-import type { WorkshopLibrary } from '../lib/workshop-library'
+import type { CharacterRuleLibrary } from '../lib/workshop-rules'
 
 export const identity = (c: { _id: unknown; meta: { name: string; klass: string; level: number; race: string } }) => ({ id: String(c._id), name: c.meta.name, klass: c.meta.klass, level: c.meta.level, ancestry: c.meta.race })
-export function vitals(c: Character) {
-  const s = partyMemberSnapshot(c)
+export function vitals(c: Character, benefits:CharacterBenefits=characterBenefits(c)) {
+  const s = partyMemberSnapshot(c,benefits)
   return { ...identity(c), updatedAt: s.updatedAt, hp: s.hp, ac: s.ac, perception: s.perception, speed: s.speed, inspiration: s.inspiration,
     ...(s.saveDC === undefined ? {} : { saveDC: s.saveDC }),
     trackers: { hitDice: { total: c.combat.hitDiceTotal, used: c.combat.hitDiceUsed }, deathSaves: { successes: c.combat.deathSavesSuccess, failures: c.combat.deathSavesFailure } },
@@ -25,7 +25,7 @@ const name = (value: unknown) => value && typeof value === 'object' ? text((valu
 /** Explicit display-only projection. No raw character, pack, account, import,
  * workshop draft, or executable HTML leaves this boundary. All rule calculations
  * call the same website helpers used by the ordinary sheet. */
-export function expandedSheet(c: Character, library: WorkshopLibrary, savedFeatureIds = c.features.map(f => String(f._id))) {
+export function expandedSheet(c: Character, library: CharacterRuleLibrary, savedFeatureIds = c.features.map(f => String(f._id))) {
   const refs = sheetReferences(c, library), benefits = characterBenefits(c)
   const benefitFacts = [
     { label: 'Condition immunities', value: benefits.conditionImmunities.map(benefitTitle).join(', ') },
@@ -55,12 +55,12 @@ export function expandedSheet(c: Character, library: WorkshopLibrary, savedFeatu
         return [{ name: text(trait.name), description: [...lines(trait.description), ...lines(trait.desc)].join('\n\n'), level: typeof trait.level === 'number' ? trait.level : null }]
       }) }
   }))
-  return { version: 1 as const, character: vitals(c),
+  return { version: 1 as const, character: vitals(c,benefits),
     benefits: { facts: benefitFacts, sources: benefitSources },
-    statistics: { initiative: sheetInitiative(c), proficiency: profBonus(c.meta.level), xp: c.meta.xp,
-      abilities: ABILITY_KEYS.map(key => ({ key, score: c.abilities[key], modifier: abilityMod(c.abilities[key]), save: sheetSave(c, key), proficient: !!benefits.saves[key] })),
-      skills: Object.entries(SKILL_ABILITY).map(([key, ability]) => ({ key, name: pretty(key), ability, rank: benefits.skills[key] ?? 'none', modifier: sheetSkill(c, key) })),
-      proficiencies: sheetProficiencies(c),
+    statistics: { initiative: sheetInitiative(c,benefits), proficiency: profBonus(c.meta.level), xp: c.meta.xp,
+      abilities: ABILITY_KEYS.map(key => ({ key, score: c.abilities[key], modifier: abilityMod(c.abilities[key]), save: sheetSave(c, key,benefits), proficient: !!benefits.saves[key] })),
+      skills: Object.entries(SKILL_ABILITY).map(([key, ability]) => ({ key, name: pretty(key), ability, rank: benefits.skills[key] ?? 'none', modifier: sheetSkill(c, key,benefits) })),
+      proficiencies: sheetProficiencies(c,benefits),
       defenses: { resistances: benefits.resistances, immunities: benefits.immunities, vulnerabilities: benefits.vulnerabilities },
       hitDice: { total: c.combat.hitDiceTotal, used: c.combat.hitDiceUsed }, deathSaves: { successes: c.combat.deathSavesSuccess, failures: c.combat.deathSavesFailure } },
     attacks: combatAttacks(c).map((a, i) => ({ id: String(a._id ?? i), name: a.name, ability: a.ability, proficient: a.proficient, toHit: a.toHit, damage: a.text, damageType: a.damageType, range: a.range, notes: a.notes })),
@@ -69,7 +69,7 @@ export function expandedSheet(c: Character, library: WorkshopLibrary, savedFeatu
       description: item.description ?? '', referenceDescription: item.referenceDescription ?? '', notes: item.notes, attunementRequirement: item.attunementRequirement ?? '',
       weapon: item.weapon ? { dice: item.weapon.dice, damageType: item.weapon.damageType, range: item.weapon.range } : null,
       armor: item.armor ? { base: item.armor.base, shield: item.armor.shield } : null })) },
-    magic: { ability: c.spellcasting.ability, attack: benefitSpellAttack(c), saveDC: benefitSpellDC(c), spells, effects: availableBenefitSpells(c).map(d => ({ id: d.index, name: text(d.entry.name) || spellReferenceLabel(d.index), active: !!c.spellcasting.activeEffects?.includes(d.index) })) },
+    magic: { ability: c.spellcasting.ability, attack: benefitSpellAttack(c,benefits), saveDC: benefitSpellDC(c,benefits), spells, effects: availableBenefitSpells(c).map(d => ({ id: d.index, name: text(d.entry.name) || spellReferenceLabel(d.index), active: !!c.spellcasting.activeEffects?.includes(d.index) })) },
     features: c.features.map((f, i) => ({ id: String(f._id ?? i), name: f.name, description: f.description, origin: f.origin ?? 'other', level: f.level ?? null, pinned: !!f.pinned, pinnable: /^[a-f0-9]{24}$/i.test(String(f._id)) && savedFeatureIds.filter(id => id === String(f._id)).length === 1 && c.features.filter(other => String(other._id) === String(f._id)).length === 1, selectedOptions: f.selectedOptions ?? [] })),
     references: referenceGroups,
     biography: { background: c.meta.background, alignment: c.meta.alignment, subclass: c.meta.subclass,

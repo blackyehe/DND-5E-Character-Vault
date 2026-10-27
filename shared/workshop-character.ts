@@ -1,5 +1,5 @@
 import type { Character, CharacterResource } from './character'
-import { abilityMod } from '../src/lib/calc'
+import { abilityMod } from './calc'
 import { scheduleAt, workshopResourceAt, workshopSlots, type PublishedWorkshopRule, type WorkshopDraft } from './homebrew-workshop'
 import { applyRaceWorkshopRules } from './workshop-race'
 

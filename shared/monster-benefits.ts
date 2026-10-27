@@ -1,5 +1,5 @@
 import type { MonsterStatblock, MonsterAbility } from './monster-statblock'
-import { SKILL_ABILITY } from '../src/lib/calc'
+import { SKILL_ABILITY } from './calc'
 import { entryBenefits, benefitField, benefitKey, benefitProblems, benefitSummary, benefitTitle } from './rule-benefits'
 export const MONSTER_BENEFIT_TYPES=['damage-resistance','damage-immunity','damage-vulnerability','condition-immunity','saving-throw-advantage','skill-prof','skill-expertise','saving-throw-prof','language','walking-speed','flying-speed','flying-speed-equals-walking-speed','swimming-speed','climbing-speed','burrowing-speed','darkvision','blindsight','truesight','ac-bonus','saving-throw-bonus','initiative-bonus']
 /** Creature statistics have their own base values; never treat CR as class level. */

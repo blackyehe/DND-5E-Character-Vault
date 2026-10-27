@@ -3,6 +3,7 @@ import type { Character } from '../../shared/character'
 import type { PlayUpdate } from '../../shared/rooms'
 import { partyMemberSnapshot, type PartyMemberSnapshot } from '../../shared/party-dashboard'
 import { api, ApiError } from '../lib/api'
+import { useVisiblePolling } from './useVisiblePolling'
 
 export function usePartyDashboard(roomId: ComputedRef<string>, ids: ComputedRef<string[]>, active: () => boolean, accessLost: () => void) {
   const members = ref<Record<string, PartyMemberSnapshot>>({})
@@ -66,9 +67,7 @@ export function usePartyDashboard(roomId: ComputedRef<string>, ids: ComputedRef<
   }, { immediate: true })
   watch(active, value => { if (value) void refresh() })
   const refreshVisible = () => { if (document.visibilityState === 'visible' && !loading.value) void refresh() }
-  const timer = setInterval(refreshVisible, 15000)
-  window.addEventListener('focus', refreshVisible)
-  document.addEventListener('visibilitychange', refreshVisible)
-  onUnmounted(() => { disposed = true; epoch++; controller?.abort(); clearInterval(timer); window.removeEventListener('focus', refreshVisible); document.removeEventListener('visibilitychange', refreshVisible) })
+  useVisiblePolling(refreshVisible, 15000)
+  onUnmounted(() => { disposed = true; epoch++; controller?.abort() })
   return { members, loading, saving, error, notice, stale, updated, refresh, save }
 }

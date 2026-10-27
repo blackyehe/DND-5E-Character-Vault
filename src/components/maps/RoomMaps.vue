@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {computed, nextTick, onMounted, onUnmounted, ref, useId, watch} from 'vue'
 import {api, ApiError} from '../../lib/api'
+import {useVisiblePolling} from '../../composables/useVisiblePolling'
 import {createdPin, pinSaveOutcome, samePinValues, type PinSaveAttempt} from '../../lib/map-pin-save'
 import {vMotionPanel} from '../../directives/siteMotion'
 import {MAP_LIMITS, pinDisplay, type MapDraft, type MapIndex, type MapPin, type MapPinDraft, type MapSummary, type MapRegion, type MapPoint, type RoomMap} from '../../../shared/room-maps'
@@ -40,7 +41,7 @@ const pinUndo = ref<{mapId:string;revision:number;kind:'restore'|'remove'|'recre
 const noteDrag = ref<{entry:NotebookSummary;x:number;y:number;moved:boolean}|null>(null), popupTitle = useId()
 let dragSource: HTMLElement|null = null, dragStart: {x:number;y:number;pointer:number}|null = null, returnFocus:HTMLElement|null=null, previousOverflow:string|undefined
 let disposed = false, indexRun = 0, openRun = 0, noteRun = 0, searchRun = 0, cityRun = 0
-let controller: AbortController | undefined, poll: ReturnType<typeof setInterval>, searchTimer: ReturnType<typeof setTimeout>
+let controller: AbortController | undefined, searchTimer: ReturnType<typeof setTimeout>
 const dirty = computed(() => !!cityPanel.value?.dirty || mode.value !== 'read' && (mode.value === 'regions' ? JSON.stringify(regionDraft.value)!==baseline.value : mode.value === 'pin' ? JSON.stringify(pinDraft.value) !== baseline.value : JSON.stringify(draft.value) !== baseline.value || mode.value === 'upload' && !!uploadImage.value))
 const saving = computed(() => busy.value || optimizing.value)
 const navigationBusy = computed(() => saving.value || interacting.value || !!cityPanel.value?.busy)
@@ -417,8 +418,9 @@ function openNotebook() {if (note.value && mayLeave()) {popupOpen.value=false;em
 function beforeUnload(event: BeforeUnloadEvent) {if (dirty.value || navigationBusy.value) {event.preventDefault(); event.returnValue = ''}}
 const refreshVisible = () => {void refresh()}
 watch(() => props.active, value => {if(value) void refresh()})
-onMounted(() => {void loadIndex(); poll = setInterval(refreshVisible,15000); window.addEventListener('focus', refreshVisible); document.addEventListener('visibilitychange',refreshVisible); window.addEventListener('beforeunload',beforeUnload)})
-onUnmounted(() => {disposed = true; indexRun++; openRun++; noteRun++; searchRun++; cancelNoteDrag();popup.value?.close();restoreScroll();releaseImage(); clearInterval(poll); clearTimeout(searchTimer); window.removeEventListener('focus',refreshVisible); document.removeEventListener('visibilitychange',refreshVisible); window.removeEventListener('beforeunload',beforeUnload)})
+useVisiblePolling(refreshVisible,15000)
+onMounted(() => {void loadIndex(); window.addEventListener('beforeunload',beforeUnload)})
+onUnmounted(() => {disposed = true; indexRun++; openRun++; noteRun++; searchRun++; cancelNoteDrag();popup.value?.close();restoreScroll();releaseImage(); clearTimeout(searchTimer); window.removeEventListener('beforeunload',beforeUnload)})
 </script>
 <template>
   <section class="room-maps" aria-label="Room maps">

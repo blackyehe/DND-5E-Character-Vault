@@ -49,6 +49,8 @@ export async function workshopLibrary(userId:string|undefined):Promise<LibraryDa
     console.info('Library revision timing',{revisionCheckMs:Math.round(checked-started),packCount:revisions.length})
     const value=await buildLibrary(userId)
     console.info('Library read timing',{cached:false,revisionCheckMs:Math.round(checked-started),assembleMs:Math.round(performance.now()-checked)})
+    // Replacing an owner consumes no extra slot and makes the rebuilt value recent.
+    libraries.delete(key)
     if(libraries.size>=4)libraries.delete(libraries.keys().next().value!)
     libraries.set(key,{signature,value});return value
   })()

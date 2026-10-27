@@ -8,7 +8,7 @@ import {
   profBonus,
   SKILL_ABILITY,
   type AbilityKey,
-} from '../src/lib/calc'
+} from './calc'
 
 export interface AdvancementOption {
   id: string

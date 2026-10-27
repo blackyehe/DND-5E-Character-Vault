@@ -1,11 +1,13 @@
 import type { Attack, Character, CharacterFeature } from '../../shared/character'
 import { abilityMod, attackBonus, skillMod, saveMod } from './calc'
-import { characterBenefits, benefitSpellAttack, benefitSpellDC } from '../../shared/rule-benefits'
+import { characterBenefits, benefitSpellAttack, benefitSpellDC, type CharacterBenefits } from '../../shared/rule-benefits'
 export { benefitSpellAttack, benefitSpellDC }
-export const sheetSkill=(c:Character,key:string)=>skillMod(c.meta.level,c.abilities[SKILL_ABILITY[key]!],characterBenefits(c).skills[key]??'none')
-export const sheetSave=(c:Character,key:AbilityKey)=>saveMod(c.meta.level,c.abilities[key],characterBenefits(c).saves[key])+itemBonuses(c).saves+characterBenefits(c).saveBonus
-export const sheetInitiative=(c:Character)=>abilityMod(c.abilities.dex)+characterBenefits(c).initiative
-export const sheetPassive=(c:Character)=>10+sheetSkill(c,'perception')
+// Callers calculating a group of statistics can share one current snapshot.
+// Existing callers still calculate fresh benefits; nothing is cached by identity.
+export const sheetSkill=(c:Character,key:string,benefits:CharacterBenefits=characterBenefits(c))=>skillMod(c.meta.level,c.abilities[SKILL_ABILITY[key]!],benefits.skills[key]??'none')
+export const sheetSave=(c:Character,key:AbilityKey,benefits:CharacterBenefits=characterBenefits(c))=>saveMod(c.meta.level,c.abilities[key],benefits.saves[key])+itemBonuses(c).saves+benefits.saveBonus
+export const sheetInitiative=(c:Character,benefits:CharacterBenefits=characterBenefits(c))=>abilityMod(c.abilities.dex)+benefits.initiative
+export const sheetPassive=(c:Character,benefits:CharacterBenefits=characterBenefits(c))=>10+sheetSkill(c,'perception',benefits)
 import { SKILL_ABILITY,type AbilityKey } from './calc'
 import { itemBonuses, itemActive } from '../../shared/item-rules'
 import { compactWeaponProficiencies } from '../../shared/weapon-proficiencies'
@@ -15,12 +17,12 @@ export const XP_THRESHOLDS = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 4800
 export const signed = (n: number) => n >= 0 ? `+${n}` : String(n)
 export const pretty = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/-/g, ' ').replace(/^./, c => c.toUpperCase())
 export const ORIGINS = { racial: 'Racial traits', class: 'Class features', subclass: 'Subclass features', background: 'Background', feat: 'Feats', other: 'Other / unclassified' } as const
-export function sheetProficiencies(c: Character) {
-  const p=characterBenefits(c).proficiencies;return { ...p, weapons: compactWeaponProficiencies(p.weapons) }
+export function sheetProficiencies(c: Character, benefits:CharacterBenefits=characterBenefits(c)) {
+  const p=benefits.proficiencies;return { ...p, weapons: compactWeaponProficiencies(p.weapons) }
 }
 export { classes, automaticResources, resourcesFor } from '../../shared/character-resources'
-export function sheetAC(c: Character) {
-  const bonus=itemBonuses(c).ac, ruleBonus=characterBenefits(c).ac
+export function sheetAC(c: Character, benefits:CharacterBenefits=characterBenefits(c)) {
+  const bonus=itemBonuses(c).ac, ruleBonus=benefits.ac
   if (c.combat.acMode !== 'equipment') return c.combat.ac + bonus - (c.combat.itemAcBaseline??bonus) + ruleBonus
   let base = 10 + abilityMod(c.abilities.dex), armor = false, shield = 0
   for (const item of c.equipment.filter(i => i.equipped && i.qty > 0 && i.armor)) {

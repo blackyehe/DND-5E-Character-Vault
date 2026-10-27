@@ -1,6 +1,6 @@
 import type { Character, CharacterResource, SpellSlots } from './character'
 import type { PlayUpdate } from './rooms'
-import { characterBenefits, benefitDamage, benefitSpellDC } from './rule-benefits'
+import { characterBenefits, benefitDamage, benefitSpellDC, type CharacterBenefits } from './rule-benefits'
 import { sheetPassive } from '../src/lib/character-sheet'
 import { resourcesFor, sheetAC } from '../src/lib/character-sheet'
 import { slotsFor } from './character-progression'
@@ -21,15 +21,15 @@ export interface PartyMemberSnapshot {
   resources: CharacterResource[]
 }
 
-export function partyMemberSnapshot(c: Character): PartyMemberSnapshot {
+export function partyMemberSnapshot(c: Character, benefits:CharacterBenefits=characterBenefits(c)): PartyMemberSnapshot {
   const slots = Object.entries(slotsFor(c)).filter(([, slot]) => slot.max > 0).map(([key, slot]) => ({ key, ...slot }))
   const hasMagic = slots.length || c.spellcasting.known.length || c.spellcasting.prepared.length || innateRaceSpells(c).length
   return {
     id: String(c._id), updatedAt: new Date(c.updatedAt).toISOString(),
     hp: { current: c.combat.hpCurrent, max: c.combat.hpMax, temp: c.combat.hpTemp },
-    ac: sheetAC(c), perception: sheetPassive(c),
-    inspiration: c.combat.inspiration, speed: characterBenefits(c).speed, defenses:{resistances:characterBenefits(c).resistances,immunities:characterBenefits(c).immunities,vulnerabilities:characterBenefits(c).vulnerabilities},
-    ...(hasMagic ? { saveDC: benefitSpellDC(c) } : {}),
+    ac: sheetAC(c,benefits), perception: sheetPassive(c,benefits),
+    inspiration: c.combat.inspiration, speed: benefits.speed, defenses:{resistances:benefits.resistances,immunities:benefits.immunities,vulnerabilities:benefits.vulnerabilities},
+    ...(hasMagic ? { saveDC: benefitSpellDC(c,benefits) } : {}),
     slots, resources: resourcesFor(c).filter(r => r.max > 0 || r.unlimited),
   }
 }

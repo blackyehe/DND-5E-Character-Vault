@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from 'vue-router'
 import { api, ApiError } from '../lib/api'
 import type { RoomDetail } from '../../shared/rooms'
@@ -9,6 +9,7 @@ import CharacterRoster from '../components/characters/CharacterRoster.vue'
 import PartyDashboard from '../components/party/PartyDashboard.vue'
 import { cancelMotionWithin, vMotionCharacter, vMotionPanel } from '../directives/siteMotion'
 import { useCharacterSwitchScroll } from '../composables/useCharacterSwitchScroll'
+import { useVisiblePolling } from '../composables/useVisiblePolling'
 import { revealNavigationTarget } from '../lib/navigation-scroll'
 import CharacterSheetView from './CharacterSheetView.vue'
 import ItemComposer from '../components/items/ItemComposer.vue'
@@ -62,8 +63,6 @@ watch([selected,rosterCollapsed],()=>{if(!room.value||room.value.role!=='dm')ret
 const selectedAssignment=computed(()=>{const character=room.value?.characters.find(c=>c._id===selected.value);return character?.assignedTo?'Assigned to '+(room.value?.members.find(m=>m.id===character.assignedTo)?.displayName??'player'):'Unassigned'})
 function selectFromMenu(event:Event){const target=event.target as HTMLSelectElement;select(target.value);target.value=selected.value}
 const joinLink = computed(() => room.value?.joinToken ? `${window.location.origin}/join#${room.value.joinToken}` : '')
-let timer: ReturnType<typeof setInterval> | undefined
-let sheetTimer:ReturnType<typeof setInterval>|undefined
 let generation = 0
 let disposed = false
 async function load(refresh = false) {
@@ -96,8 +95,9 @@ async function replaceLink() { if (!window.confirm('Replace the joining link? Th
 async function removeMember(id: string) { if (!window.confirm('Remove this player and their character assignments? They can rejoin through the current joining link.')) return; busy.value = true; try { await api.delete(`/api/rooms/${roomId.value}/members/${id}`); notice.value = 'Player access removed.' } catch (e) { error.value = e instanceof Error ? e.message : 'Could not remove the player.' } finally { busy.value = false; await load() } }
 const refresh = () => { if (document.visibilityState === 'visible') void load(true) }
 watch(roomId, () => { generation++; playerPreview.value=false;room.value = null; selected.value = '';sheetOpened.value=false;partySaving.value=false;rosterQuery.value='';animateWhenReady.value='';preferredCharacter='';rosterCollapsed.value=false;try{const saved=JSON.parse(localStorage.getItem(preferenceKey.value)??'{}');if(typeof saved.selected==='string')preferredCharacter=saved.selected;rosterCollapsed.value=saved.collapsed===true}catch{/* Opening the room does not require storage. */}if(typeof route.query.character==='string')preferredCharacter=route.query.character;roomSection.value=querySection();mapsVisited.value=roomSection.value==='maps';notebookEntry.value='';if(roomSection.value==='characters')sheetOpened.value=true;notebookCharacter.value=typeof route.query.character==='string'?route.query.character:'';void load() }, {immediate:true})
-onMounted(() => { timer = setInterval(refresh, 15000);sheetTimer=setInterval(()=>{if(roomSection.value==='characters'&&document.visibilityState==='visible'&&selected.value&&!playerPreview.value&&!sheet.value?.editDirty&&!store.saving&&store.current?._id===selected.value)void store.fetchOne(selected.value,{quick:true}).catch(()=>{})},3000); window.addEventListener('focus',refresh); document.addEventListener('visibilitychange',refresh) })
-onUnmounted(() => { disposed=true; generation++; clearInterval(timer);clearInterval(sheetTimer); window.removeEventListener('focus',refresh); document.removeEventListener('visibilitychange',refresh); store.roomContext=null; store.current=null })
+useVisiblePolling(refresh, 15000)
+useVisiblePolling(()=>{if(roomSection.value==='characters'&&document.visibilityState==='visible'&&selected.value&&!playerPreview.value&&!sheet.value?.editDirty&&!store.saving&&store.current?._id===selected.value)void store.fetchOne(selected.value,{quick:true}).catch(()=>{})},3000,{focus:false,visibility:false})
+onUnmounted(() => { disposed=true; generation++; store.roomContext=null; store.current=null })
 onBeforeRouteLeave(() => {if(!store.saving&&!partySaving.value&&!busy.value)return leaveNotebook()&&leaveMaps();notice.value='Please wait for the current save before leaving the room.';return false})
 onBeforeRouteUpdate((to,from)=>{if(to.params.roomId===from.params.roomId)return true;if(store.saving||partySaving.value||busy.value||!leaveNotebook()||!leaveMaps())return false;return !sheet.value?.editDirty||window.confirm('Discard your unsaved character edits and open another room?')})
 </script>

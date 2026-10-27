@@ -1,4 +1,4 @@
-import type { AbilityKey, Proficiency } from '../src/lib/calc'
+import type { AbilityKey, Proficiency } from './calc'
 
 export interface CharacterSummary {
   _id: string

@@ -3,7 +3,7 @@ import { resolveCharacterProgression, slotMaximums, suggestedProgression } from 
 import { automaticResources } from '../../shared/character-resources'
 import { emptyCharacter, type Character } from '../../shared/character'
 import { compactWeaponProficiencies } from '../../shared/weapon-proficiencies'
-import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, type AbilityKey } from '../../src/lib/calc'
+import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, type AbilityKey } from '../../shared/calc'
 import { readSrdRule } from './srd-client'
 import { readEdn } from './edn'
 import { resolveEquipmentItem } from './equipment-references'

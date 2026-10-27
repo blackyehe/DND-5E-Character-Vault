@@ -1,4 +1,4 @@
-import { ABILITY_KEYS, abilityMod, profBonus, type AbilityKey } from '../src/lib/calc'
+import { ABILITY_KEYS, abilityMod, profBonus, type AbilityKey } from './calc'
 import { slotMaximums } from './character-progression'
 import { classSpellDefaults, isRevenantShadow } from './class-rules'
 import type { SlotProgression } from './character'

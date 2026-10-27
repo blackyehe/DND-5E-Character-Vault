@@ -1,6 +1,6 @@
 import type { Character } from './character'
 import { itemActive } from './item-rules'
-import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, type AbilityKey, type Proficiency } from '../src/lib/calc'
+import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, type AbilityKey, type Proficiency } from './calc'
 
 export const DAMAGE_TYPES=['acid','bludgeoning','cold','fire','force','lightning','necrotic','piercing','poison','psychic','radiant','slashing','thunder'] as const
 export const CONDITIONS=['blinded','charmed','deafened','exhaustion','frightened','grappled','incapacitated','invisible','paralyzed','petrified','poisoned','prone','restrained','stunned','unconscious'] as const
@@ -107,7 +107,8 @@ export function characterBenefits(c:Character){
  const skills={...c.skills},saves={...c.saves},proficiencies={armor:[...c.proficiencies.armor],weapons:[...c.proficiencies.weapons],tools:[...c.proficiencies.tools],languages:[...c.proficiencies.languages]}
  const effects={resistances:[] as string[],immunities:[] as string[],vulnerabilities:[] as string[],conditionImmunities:[] as string[],saveAdvantage:[] as string[],skills,saves,proficiencies,speed:c.combat.speed,fly:0,swim:0,climb:0,burrow:0,darkvision:0,blindsight:0,truesight:0,attacks:1,ac:0,saveBonus:0,initiative:0,attackBonus:0,damageBonus:0,spellAttack:0,spellDC:0}
  const seen=new Set<string>()
- for(const {source,kind,index,row,active} of characterBenefitRows(c)){
+ const rows=characterBenefitRows(c)
+ for(const {source,kind,index,row,active} of rows){
   if(!active)continue
   const type=benefitKey(benefitField(row,'type')),value=benefitField(row,'value'),key=BENEFIT_TYPES[type]?.values?.find(v=>optionKey(v)===optionKey(value))??benefitKey(value),n=Number(value),id=`${kind}:${index}:${type}:${JSON.stringify(value)}`
   if(seen.has(id))continue;seen.add(id)
@@ -123,12 +124,13 @@ export function characterBenefits(c:Character){
   if(bonus)effects[bonus]+=n
   void source
  }
- if(characterBenefitRows(c).some(v=>v.active&&benefitKey(benefitField(v.row,'type'))==='flying-speed-equals-walking-speed'))effects.fly=Math.max(effects.fly,effects.speed)
+ if(rows.some(v=>v.active&&benefitKey(benefitField(v.row,'type'))==='flying-speed-equals-walking-speed'))effects.fly=Math.max(effects.fly,effects.speed)
  return effects
 }
+export type CharacterBenefits=ReturnType<typeof characterBenefits>
 export function benefitSkillRank(c:Character,key:string):Proficiency{return characterBenefits(c).skills[key]??'none'}
-export function benefitSpellAttack(c:Character){return abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+characterBenefits(c).spellAttack}
-export function benefitSpellDC(c:Character){return 8+abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+characterBenefits(c).spellDC}
+export function benefitSpellAttack(c:Character,benefits:CharacterBenefits=characterBenefits(c)){return abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+benefits.spellAttack}
+export function benefitSpellDC(c:Character,benefits:CharacterBenefits=characterBenefits(c)){return 8+abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+benefits.spellDC}
 export function benefitDamage(amount:number,type:string,defenses:Pick<ReturnType<typeof characterBenefits>,'resistances'|'immunities'|'vulnerabilities'>){
  if(defenses.immunities.includes(type))return 0
  let result=Math.max(0,Math.floor(amount))

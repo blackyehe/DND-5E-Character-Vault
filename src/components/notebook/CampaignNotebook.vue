@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import {api, ApiError} from '../../lib/api'
+import {useVisiblePolling} from '../../composables/useVisiblePolling'
 import {useAuthStore} from '../../stores/auth'
 import {vMotionPanel} from '../../directives/siteMotion'
 import {prepareNotebookCover} from '../../lib/notebook-cover'
@@ -82,7 +83,7 @@ let editOrigin: {tab:typeof dossierTab.value;scroll:number} | null = null
 const coverBusy = ref(false), galleryBusy=ref(false)
 const galleryEditor=ref<InstanceType<typeof NotebookGalleryEditor>|null>(null)
 let generation = 0, listRun = 0, openRun = 0, linkRun = 0, disposed = false
-let poll: ReturnType<typeof setInterval>, searchTimer: ReturnType<typeof setTimeout>, linkTimer: ReturnType<typeof setTimeout>
+let searchTimer: ReturnType<typeof setTimeout>, linkTimer: ReturnType<typeof setTimeout>
 const dirty = computed(() => quickSharingDirty.value || quickTagsDirty.value || editing.value && !!draft.value && (!selected.value || JSON.stringify(draft.value) !== baseline.value))
 const libraryEntryCount = computed(() => index.value?.entryCount ?? Object.values(index.value?.counts ?? {}).reduce((a,b)=>a+b,0))
 const encounterReading = computed(() => selected.value ? notebookReading(selected.value.body, index.value?.sessionEntries ?? []).encounters : '')
@@ -451,8 +452,9 @@ watch(() => [props.roomId, props.previewCharacter, previewAsCharacter.value] as 
 watch(() => props.initialCharacter, value => {if (!dirty.value) {relevant.value = value ?? ''; void loadIndex()}})
 const beforeUnload = (event: BeforeUnloadEvent) => {if (dirty.value || busy.value) {event.preventDefault(); event.returnValue = ''}}
 const visibleRefresh = () => {if (document.visibilityState === 'visible' && !busy.value) {void loadIndex(false, true); void refreshSelected()}}
-onMounted(() => {poll = setInterval(visibleRefresh, 15000); window.addEventListener('beforeunload', beforeUnload); window.addEventListener('focus', visibleRefresh)})
-onUnmounted(() => {disposed = true; generation++; targetsAbort?.abort(); clearInterval(poll); clearTimeout(searchTimer); clearTimeout(linkTimer); window.removeEventListener('beforeunload', beforeUnload); window.removeEventListener('focus', visibleRefresh)})
+useVisiblePolling(visibleRefresh, 15000, {visibility:false})
+onMounted(() => {window.addEventListener('beforeunload', beforeUnload)})
+onUnmounted(() => {disposed = true; generation++; targetsAbort?.abort(); clearTimeout(searchTimer); clearTimeout(linkTimer); window.removeEventListener('beforeunload', beforeUnload)})
 </script>
 
 <template>

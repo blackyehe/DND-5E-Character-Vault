@@ -183,17 +183,18 @@ async function loadGrants(event: Event) {
     grantBusy.value = false
   }
 }
+async function spellDefinition(index: string): Promise<SrdSpell> {
+  return index.startsWith('homebrew-')
+    ? import('../../lib/api').then(({ api }) =>
+        api.get<SrdSpell>(`/api/characters/${base.value._id}/spell-definition/${encodeURIComponent(index)}`),
+      )
+    : srd.spell(index)
+}
 async function inspectGrant(s: SrdRef) {
   grantBusy.value = true
   grantError.value = ''
   try {
-    grantDetail.value = s.index.startsWith('homebrew-')
-      ? await import('../../lib/api').then(({ api }) =>
-          api.get<SrdSpell>(
-            `/api/characters/${base.value._id}/spell-definition/${encodeURIComponent(s.index)}`,
-          ),
-        )
-      : await srd.spell(s.index)
+    grantDetail.value = await spellDefinition(s.index)
   } catch {
     grantError.value =
       'This spell has no available rule definition. Choose another definition.'
@@ -448,13 +449,7 @@ async function inspectSpell(s: SrdRef) {
   spellBusy.value = true
   spellDetail.value = null
   try {
-    spellDetail.value = s.index.startsWith('homebrew-')
-      ? await import('../../lib/api').then(({ api }) =>
-          api.get<SrdSpell>(
-            `/api/characters/${base.value._id}/spell-definition/${encodeURIComponent(s.index)}`,
-          ),
-        )
-      : await srd.spell(s.index)
+    spellDetail.value = await spellDefinition(s.index)
   } catch (e) {
     spellError.value =
       e instanceof Error ? e.message : 'Spell definition unavailable.'

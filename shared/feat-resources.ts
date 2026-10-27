@@ -1,5 +1,5 @@
 import type { Character, CharacterFeature, CharacterResource } from './character'
-import { abilityMod, profBonus } from '../src/lib/calc'
+import { abilityMod, profBonus } from './calc'
 import { featNames } from '../src/lib/feat-references'
 
 type FeatCharacter = Pick<Character, 'meta' | 'abilities'> & Partial<Pick<Character, 'features'>>

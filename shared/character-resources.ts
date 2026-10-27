@@ -1,5 +1,5 @@
 import type { Character, CharacterResource } from './character'
-import { abilityMod } from '../src/lib/calc'
+import { abilityMod } from './calc'
 import { scaledResource } from './character-progression'
 import { isRevenantShadow } from './class-rules'
 import { featResources, matchesFeatResource } from './feat-resources'

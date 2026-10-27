@@ -1,4 +1,4 @@
-import type { AbilityKey } from '../src/lib/calc'
+import type { AbilityKey } from './calc'
 import type { SlotProgression } from './character'
 
 const classKey = (name: string) => name.toLowerCase().replace(/\s*[·(—].*$/, '').replace(/[^a-z0-9]/g, '')

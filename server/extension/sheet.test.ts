@@ -1,14 +1,42 @@
 import { describe, it, expect } from 'vitest'
 import { emptyCharacter, type Character } from '../../shared/character'
-import type { WorkshopLibrary } from '../lib/workshop-library'
 import { expandedSheet, vitals } from './sheet'
 import { sheetSkill, sheetSave, sheetInitiative } from '../../src/lib/character-sheet'
 import { combatAttacks } from '../../src/lib/equipment'
+import { newWorkshopDraft, newWorkshopFeature } from '../../shared/homebrew-workshop'
+import { characterRules, CHARACTER_RULE_KINDS, type CharacterRuleLibrary } from '../lib/workshop-rules'
+import { buildOrcbrewCatalog, inspectOrcbrew, ORCBREW_KINDS } from '../lib/orcbrew'
 
 const hero = (): Character => ({ ...emptyCharacter(), _id: 'a'.repeat(24), updatedAt: '2026-10-24T00:00:00Z' })
-const library = { catalog: Object.fromEntries(['spells', 'feats', 'races', 'subclasses', 'classes', 'backgrounds'].map(k => [k, []])) } as unknown as WorkshopLibrary
+const library: CharacterRuleLibrary = { catalog: { spells: [], feats: [], races: [], subclasses: [], classes: [], backgrounds: [] }, rules: [], initial: {}, warnings: [] }
 
 describe('explicit extension sheet projection', () => {
+  it('preserves active Workshop lineage using only the six character-rule categories', () => {
+    const parsed = inspectOrcbrew('{:orcpub.dnd.e5/spells {}}'), entries = parsed.entries
+    for (const kind of ['classes', 'subclasses', 'races'] as const) {
+      const draft = newWorkshopDraft(({ classes: 'class', subclasses: 'subclass', races: 'race' } as const)[kind])
+      draft.name = `Fixture ${kind}`; draft.skillCount = 0; draft.parentClass = 'Fixture classes'
+      const oldIndex = `homebrew-${kind}-old`, newIndex = `homebrew-${kind}-new`
+      for (const revision of [1, 2]) {
+        const feature = newWorkshopFeature(); feature.name = 'Latest trait'; feature.description = `Revision ${revision}`
+        const rule = { ...draft, features: [feature] }
+        entries[kind].push({ index: revision === 1 ? oldIndex : newIndex, name: draft.name, contentKey: kind, source: 'Fixture', disabled: false, legacyKey: kind,
+          details: { ':codex/workshop': rule, ':codex/revision': revision, ':codex/previous-indexes': revision === 2 ? [oldIndex] : [] } })
+      }
+    }
+    parsed.report.entryCount = 6
+    for (const kind of ORCBREW_KINDS) parsed.report.counts[kind] = entries[kind].length
+    const catalog = buildOrcbrewCatalog([{ id: 'fixture', filename: 'fixture.orcbrew', parsed }])
+    const full = { catalog, ...characterRules(catalog), warnings: [] }
+    const focused: CharacterRuleLibrary = { ...full, catalog: Object.fromEntries(CHARACTER_RULE_KINDS.map(kind => [kind, catalog[kind]])) as CharacterRuleLibrary['catalog'] }
+    expect(focused.rules).toHaveLength(3)
+    expect(focused.rules.every(rule => rule.revision === 2 && rule.previousIndexes.length === 1)).toBe(true)
+    const c = hero(); c.meta.klass = 'Fixture classes'; c.meta.subclass = 'Fixture subclasses'; c.meta.race = 'Fixture races'
+    const projection = expandedSheet(c, focused)
+    expect(projection).toEqual(expandedSheet(c, full))
+    expect(projection.references).toHaveLength(3)
+    expect(projection.references.every(reference => reference.traits[0]?.description === 'Revision 2')).toBe(true)
+  })
   it('keeps approved spell editions character-specific and preserves unavailable references', () => {
     const c = hero(); c.spellcasting.known = ['acid-arrow', 'missing-homebrew-spell']
     c.compendiumRules = [{ kind: 'spells', index: 'acid-arrow', revision: 1, before: { index: 'acid-arrow', name: 'Acid Arrow' }, entry: { index: 'acid-arrow', name: 'Acid Arrow', desc: ['Owner approved text'], level: 2, aliases: [] } }]
