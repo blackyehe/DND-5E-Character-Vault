@@ -4,7 +4,7 @@ Repeated rule processing was the clearest performance opportunity with limited b
 
 ## Order by drawback and regression risk
 
-The order considers the consequences of a mistake and the verification required, rather than potential speed alone. Completed changes remain uncommitted for review.
+The order considers the consequences of a mistake and the verification required, rather than potential speed alone. The first four batches are committed for the authorized Git push; the clean-snapshot verification limits are recorded below. Live promotion remains held.
 
 | Order | Change | Status, impact and remaining drawback |
 | --- | --- | --- |
@@ -235,3 +235,13 @@ node node_modules/vitest/vitest.mjs run scripts/benchmarks/workshop-cache-perfor
 ```
 
 The existing labels are deliberately occupied. An after run checks all output hashes against its matching before run before writing evidence. Without the original baseline, do not compare the optimized code against itself.
+
+## Git handoff: clean-snapshot verification
+
+The user authorized pushing the reviewed work and continuing locally. Commit `8c4efaa` contains the first four optimization batches, including their tests and audit. It excludes the unrelated local authentication edits in `server/extension/approval-page.ts`, `models.ts` and `production-trial-config.ts`; the API commit includes only the focused-library import/call. A merge preserves the remote branch's newer README cleanup without rewriting history.
+
+A separate clean worktree of the exact merge candidate passes the frontend typecheck/production build. Its full website suite reports **465 passed, one failed and 55 opt-in skips**. The failure is the existing production-trial test expecting `rememberedConnections:false` while the committed runtime returns `gameSessions:false`. The pre-optimization commit `d754c5d` reproduces that same assertion failure. Server typecheck reports **12 diagnostic locations** in the clean candidate, exactly matching the original commit, for the existing mismatch between committed remembered-auth modules/tests and the older model/config/API interfaces. No new diagnostic is introduced by these optimizations.
+
+The earlier 466-pass suite and successful server typecheck describe the dirty local checkout, which includes those unfinished authentication edits; they do not describe the clean pushed snapshot. Authentication work is deliberately preserved locally rather than bundled merely to make unrelated checks green. The exact optimization tests pass in the clean snapshot. This Git handoff is not deployment approval, and the separate hosted Owlbear initialization blocker is unresolved.
+
+Ignored `.local/optimization-push-20261027/` retains the source patch, protected-file hashes, exact-candidate suite/build/typecheck logs and original-commit comparison. The initial baseline test command used an incorrect relative config path and failed at startup; its corrected run uses the absolute current Vitest config and reproduces the assertion above. No production request, deployment or database operation is part of this handoff.
