@@ -9,7 +9,7 @@ export function isTransientDatabaseError(error: unknown): error is Error {
   return error instanceof Error && transientNames.has(error.name)
 }
 
-type DatabaseStage = 'notebook-initialization' | 'notebook-transaction'
+type DatabaseStage = 'notebook-initialization' | 'notebook-transaction' | 'map-initialization' | 'map-transaction'
 const failures = new WeakMap<Error, {stage: DatabaseStage; operationMs: number}>()
 
 /** Stage names and timings only; retain no request or document data. */

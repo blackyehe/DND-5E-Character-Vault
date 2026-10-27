@@ -1,6 +1,9 @@
 /* Bestiary Night Mode reference: charcoal, grey statistics and gold section
    rules. Shared by the Compendium and Workshop preview. */
 .monster-reader { min-width:0; container-type:inline-size; }
+.monster-theme-choice { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px 10px; margin:0 0 10px; color:var(--cb-muted); font:400 12px/1.4 var(--font-body,sans-serif); }
+.monster-theme-choice select { width:auto; min-width:110px; padding:5px 8px; border:1px solid var(--cb-select-line,var(--cb-line)); border-radius:4px; background:var(--cb-select,var(--cb-field)); color:var(--cb-select-ink,var(--cb-ink)); font:inherit; }
+.monster-theme-choice select:focus-visible { outline:2px solid var(--cb-accent-text); outline-offset:2px; }
 .monster-reader .monster-statblock {
   --monster-paper:#222222;
   --monster-ink:#bbbbbb;
@@ -12,11 +15,26 @@
   --monster-physical-bonus:#80808033;
   --monster-mental:#99999933;
   --monster-mental-bonus:#b3b3b333;
+  --monster-edit-hover:#d29a3820;
   box-sizing:border-box; width:100%; max-width:760px; margin:4px auto 12px; padding:14px 16px 18px;
   background:var(--monster-paper); border:1px solid var(--monster-border); border-block:3px solid var(--monster-frame);
   color:var(--monster-ink); color-scheme:dark;
   font:400 calc(13px * var(--cb-text-scale,1))/1.5 'Noto Sans',Calibri,Arial,sans-serif;
   overflow-wrap:anywhere;
+}
+.monster-reader[data-statblock-theme=parchment] .monster-statblock {
+  --monster-paper:#fdf1dc;
+  --monster-ink:#333333;
+  --monster-heading:#822000;
+  --monster-border:#c8b58f;
+  --monster-frame:#e69a28;
+  --monster-muted:#655d50;
+  --monster-physical:#eae0c6;
+  --monster-physical-bonus:#eae0c6;
+  --monster-mental:#dce2e4;
+  --monster-mental-bonus:#dce2e4;
+  --monster-edit-hover:#e69a2820;
+  color-scheme:light;
 }
 .monster-statblock :is(h2,h3,p,dl,dt,dd) { margin:0; padding:0; }
 .monster-reader .monster-heading h2 { color:var(--monster-heading); font:700 small-caps calc(24px * var(--cb-text-scale,1))/1.25 'Libre Baskerville',Georgia,serif; margin:0 0 4px; }
@@ -59,7 +77,7 @@
 .monster-artwork-panel img { display:block; max-width:100%; height:auto; margin:auto; border-radius:4px; }
 .monster-artwork-panel figcaption { margin-top:8px; font-size:12px; }
 .monster-statblock .monster-editable { cursor:pointer; }
-.monster-statblock .monster-editable:hover,.monster-statblock .monster-editable:focus-visible { outline:1px dashed var(--monster-heading); outline-offset:2px; background:#d29a3820; }
+.monster-statblock .monster-editable:hover,.monster-statblock .monster-editable:focus-visible { outline:1px dashed var(--monster-heading); outline-offset:2px; background:var(--monster-edit-hover); }
 .monster-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 .monster-source { font-size:12px; color:var(--cb-muted); text-align:center; margin:8px 0; }
 .monster-import-notice { color:var(--cb-ink); background:var(--cb-soft); border:1px solid var(--cb-line); padding:9px 11px; font-size:13px; margin-bottom:12px; border-radius:4px; }
@@ -80,7 +98,7 @@
   .monster-abilities thead th { font-size:calc(10px * var(--cb-text-scale,1)); }
 }
 @media print {
-  .monster-content-options,.monster-artwork-panel { display:none!important; }
+  .monster-theme-choice,.monster-content-options,.monster-artwork-panel { display:none!important; }
   .monster-combat-panel,.monster-info { display:block!important; }
   .monster-reader .monster-statblock { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
 }

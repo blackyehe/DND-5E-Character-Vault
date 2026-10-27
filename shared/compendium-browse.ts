@@ -1,6 +1,8 @@
 import type { EquipmentItem } from './character'
 import { availableFacets, categoryFacetDefinitions, commonFacetDefinitions, compendiumFacets, matchesFacets, type AvailableFacet, type FacetValues } from './compendium-facets'
 import { canonicalMonsterSource, groupMonsterEntries, monsterSearchText, normalizeMonsterName } from './monster-identity'
+import { groupSubclassEntries, normalizeSubclassName, subclassSearchText } from './subclass-identity'
+import { compendiumFamilySearch, groupCompendiumFamilies, normalizeFamilyName } from './compendium-family'
 import { normalizeItemName } from './item-reference'
 import { equipmentTags } from './item-classification'
 // This module is pure data/filter logic, shared with the existing item picker.
@@ -25,7 +27,7 @@ export function browseRecord(entry:BrowseEntry,kind:BrowseKind):BrowseRecord {
   const facts=compendiumFacets(entry,kind)
   if(kind==='monsters')facts.source=[...new Set((facts.source??[]).map(canonicalMonsterSource))]
   const item=entry.workshopItem??(kind==='equipment'?normalEquipmentSearch[entry.index]:undefined)
-  const search=kind==='monsters'?monsterSearchText(entry):item?itemSearchText(item):(entry.displayName??entry.name).toLowerCase()
+  const search=kind==='monsters'?monsterSearchText(entry):kind==='subclasses'?subclassSearchText(entry):item?itemSearchText(item):compendiumFamilySearch(entry,kind)
   return {entry,search,facts}
 }
 export function browseIndex(records:BrowseRecord[],kind:BrowseKind):BrowseIndex {
@@ -35,7 +37,7 @@ export function browseIndex(records:BrowseRecord[],kind:BrowseKind):BrowseIndex 
     unclassifiedMagicItems:kind==='magic-items'?records.filter(r=>!r.entry.workshopItem&&!hasMagicItemTags(r.entry.index)).length:0}
 }
 export function queryBrowseIndex(index:BrowseIndex,kind:BrowseKind,request:BrowseQuery,revision:string):BrowsePage {
-  const term=kind==='monsters'?normalizeMonsterName(request.query):request.query.trim().toLowerCase()
+  const term=kind==='monsters'?normalizeMonsterName(request.query):kind==='subclasses'?normalizeSubclassName(request.query):kind==='equipment'||kind==='magic-items'?request.query.trim().toLowerCase():normalizeFamilyName(request.query)
   const entries=index.records.filter(({entry,search,facts})=>{
     if(term&&!search.includes(term)||!matchesFacets(facts,request.facets))return false
     if(kind!=='equipment'&&kind!=='magic-items')return true
@@ -47,11 +49,12 @@ export function queryBrowseIndex(index:BrowseIndex,kind:BrowseKind,request:Brows
   // and its version selector must never be split between pages.
   let groups:BrowseEntry[][]
   if(kind==='monsters')groups=groupMonsterEntries(entries).map(g=>g.versions)
+  else if(kind==='subclasses')groups=groupSubclassEntries(entries).map(g=>g.versions)
   else if(kind==='equipment'||kind==='magic-items'){
     const byName=new Map<string,BrowseEntry[]>()
     for(const entry of entries){const key=normalizeItemName(entry.name),rows=byName.get(key)??[];rows.push(entry);byName.set(key,rows)}
     groups=[...byName.values()].sort((a,b)=>a[0]!.name.localeCompare(b[0]!.name))
-  }else groups=entries.sort((a,b)=>(a.displayName??a.name).localeCompare(b.displayName??b.name)||a.index.localeCompare(b.index)).map(e=>[e])
+  }else groups=groupCompendiumFamilies(entries,kind).map(g=>g.versions)
   const pages=Math.max(1,Math.ceil(groups.length/COMPENDIUM_PAGE_SIZE)),page=Math.max(1,Math.min(pages,Math.trunc(request.page)||1))
   return {revision,entries:groups.slice((page-1)*COMPENDIUM_PAGE_SIZE,page*COMPENDIUM_PAGE_SIZE).flat(),page,pageSize:COMPENDIUM_PAGE_SIZE,pages,
     total:groups.length,matchedEntries:entries.length,totalEntries:index.records.length,

@@ -20,6 +20,8 @@ import CompendiumCategories from '../components/compendium/CompendiumCategories.
 import { compendiumTabLabel as tabLabel, type CompendiumTab as Tab } from '../lib/compendium-navigation'
 import { facetLabel } from '../../shared/compendium-facets'
 import { groupMonsterEntries,monsterVersionLabel,monsterIdentity } from '../../shared/monster-identity'
+import { groupSubclassEntries,subclassVersionLabel } from '../../shared/subclass-identity'
+import { groupCompendiumFamilies,compendiumVersionLabel } from '../../shared/compendium-family'
 import { monsterStatblock } from '../../shared/monster-statblock'
 import '../components/sheet/sheet.css'
 import '../components/sheet/sheet-details.css'
@@ -66,6 +68,12 @@ const extraTags=computed(()=>pageInfo.value?.extraTags??[])
 const hasFilters=computed(()=>Object.values(categoryFilters.value).some(Boolean)||Object.values(filters.value).some(Boolean))
 const visibleResults=results
 const monsterGroups=computed(()=>tab.value==='monsters'?groupMonsterEntries(visibleResults.value):[])
+const subclassGroups=computed(()=>tab.value==='subclasses'?groupSubclassEntries(visibleResults.value):[])
+const selectedSubclassGroup=computed(()=>subclassGroups.value.find(g=>g.versions.some(v=>v.index===selectedDetailIndex.value))??(tab.value==='subclasses'?groupSubclassEntries(selectedEntries.value)[0]:undefined))
+function subclassOptionLabel(entry:LibraryRef){
+  const label=subclassVersionLabel(entry),siblings=selectedSubclassGroup.value?.versions.filter(v=>subclassVersionLabel(v)===label)??[]
+  return siblings.length>1?`${label} · version ${siblings.findIndex(v=>v.index===entry.index)+1}`:label
+}
 const isItemTab=computed(()=>tab.value==='equipment'||tab.value==='magic-items')
 const itemGroups=computed(()=>{
   const groups=new Map<string,LibraryRef[]>()
@@ -73,6 +81,17 @@ const itemGroups=computed(()=>{
   for(const entry of visibleResults.value){const name=normalizeItemName(entry.name);const rows=groups.get(name)??[];rows.push(entry);groups.set(name,rows)}
   return [...groups].map(([key,versions])=>({key,name:versions[0]!.name,versions})).sort((a,b)=>a.name.localeCompare(b.name))
 })
+const isFamilyTab=computed(()=>tab.value!=='homebrew'&&tab.value!=='monsters'&&tab.value!=='subclasses'&&!isItemTab.value)
+const familyGroups=computed(()=>isFamilyTab.value?groupCompendiumFamilies(visibleResults.value,tab.value):[])
+const selectedFamilyGroup=computed(()=>familyGroups.value.find(g=>g.versions.some(v=>v.index===selectedDetailIndex.value))??(isFamilyTab.value?groupCompendiumFamilies(selectedEntries.value,tab.value)[0]:undefined))
+function familyOptionLabel(entry:LibraryRef){
+  const label=compendiumVersionLabel(entry,tab.value),siblings=selectedFamilyGroup.value?.versions.filter(v=>compendiumVersionLabel(v,tab.value)===label)??[]
+  return siblings.length>1?`${label} · version ${siblings.findIndex(v=>v.index===entry.index)+1}`:label
+}
+function itemOptionLabel(entry:LibraryRef){
+  const label=`${entry.name} · ${facetLabel('source',entry.sourcePack??'SRD 2014')}`,siblings=selectedItemGroup.value?.versions.filter(v=>v.name===entry.name&&(v.sourcePack??'SRD 2014')===(entry.sourcePack??'SRD 2014'))??[]
+  return siblings.length>1?`${label} · version ${siblings.findIndex(v=>v.index===entry.index)+1}`:label
+}
 const selectedItemGroup=computed(()=>itemGroups.value.find(g=>g.versions.some(v=>v.index===selectedDetailIndex.value))??(isItemTab.value&&selectedEntries.value.length?{versions:selectedEntries.value}:undefined))
 function preferredItemIndex(entries:LibraryRef[]){return (entries.find(e=>e.index.startsWith('homebrew-')&&e.sourcePack==='DMG')??entries.find(e=>e.index.startsWith('homebrew-'))??entries[0])!.index}
 const selectedMonsterGroup=computed(()=>monsterGroups.value.find(g=>g.versions.some(v=>v.index===selectedDetailIndex.value))??(tab.value==='monsters'?groupMonsterEntries(selectedEntries.value)[0]:undefined))
@@ -156,7 +175,7 @@ onBeforeUnmount(()=>{++searchNumber;clearTimeout(searchTimer);browse.cancel();++
 
 async function openDetail(index:string) {
   const sequence=++detailNumber,kind=tab.value
-  const group=kind==='monsters'?monsterGroups.value.find(g=>g.versions.some(v=>v.index===index)):isItemTab.value?itemGroups.value.find(g=>g.versions.some(v=>v.index===index)):undefined
+  const group=kind==='monsters'?monsterGroups.value.find(g=>g.versions.some(v=>v.index===index)):kind==='subclasses'?subclassGroups.value.find(g=>g.versions.some(v=>v.index===index)):isItemTab.value?itemGroups.value.find(g=>g.versions.some(v=>v.index===index)):familyGroups.value.find(g=>g.versions.some(v=>v.index===index))
   if(group)selectedEntries.value=group.versions
   else if(!selectedEntries.value.some(e=>e.index===index))selectedEntries.value=results.value.filter(e=>e.index===index)
   selectedDetailIndex.value=index
@@ -211,7 +230,9 @@ search()
           <p v-else-if="!visibleResults.length" class="text-sm">No matching entries. Try another search or clear your filters.</p>
           <ul v-else class="space-y-1">
             <template v-if="tab==='monsters'"><li v-for="group in monsterGroups" :key="group.key"><button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="group.versions.some(v=>v.index===selectedDetailIndex)?'true':undefined" @click="openDetail(preferredMonsterIndex(group.versions))">{{group.name}}<small class="monster-version-count">{{group.choices.length}} {{group.choices.length===1?'version':'versions'}}</small></button></li></template>
+            <template v-else-if="tab==='subclasses'"><li v-for="group in subclassGroups" :key="group.key"><button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="group.versions.some(v=>v.index===selectedDetailIndex)?'true':undefined" @click="openDetail(group.versions[0]!.index)">{{group.name}}<small class="monster-version-count">{{group.classKey?facetLabel('parentClass',group.classKey):'Class unspecified'}} · {{group.versions.length}} {{group.versions.length===1?'version':'versions'}}</small></button></li></template>
             <template v-else-if="isItemTab"><li v-for="group in itemGroups" :key="group.key"><button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="group.versions.some(v=>v.index===selectedDetailIndex)?'true':undefined" @click="openDetail(preferredItemIndex(group.versions))">{{group.name}}<small v-if="group.versions.length>1" class="monster-version-count">{{group.versions.length}} versions</small></button></li></template>
+            <template v-else-if="isFamilyTab"><li v-for="group in familyGroups" :key="group.key"><button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="group.versions.some(v=>v.index===selectedDetailIndex)?'true':undefined" @click="openDetail(group.versions[0]!.index)">{{group.name}}<small class="monster-version-count"><template v-if="group.scope">{{group.scope.startsWith('unknown:')?'Parent race unspecified':facetLabel(tab==='subraces'?'parentRace':'optionType',group.scope)}} · </template>{{group.versions.length}} {{group.versions.length===1?'version':'versions'}}</small></button></li></template>
             <template v-else><li v-for="entry in visibleResults" :key="entry.index">
               <button class="w-full text-left p-2 rounded hover:bg-[var(--cb-soft)] text-sm" :aria-current="selectedDetailIndex===entry.index?'true':undefined" @click="openDetail(entry.index)">
                 {{ contentLabel(entry) }}
@@ -226,7 +247,9 @@ search()
         <div ref="detailPanel" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details" :aria-busy="detailLoading">
           <p v-if="detailError" role="alert" class="text-sm text-[var(--site-danger)] mb-3">{{detailError}}</p>
           <div v-if="detail&&!detailLoading" class="compendium-edition-actions"><span v-if="editions.has(detail.index)&&Object.keys(editions.get(detail.index)??{}).length" class="compendium-edition-label">Your personal edition</span><button type="button" class="btn-ghost" @click="editing={kind:tab as CompendiumKind,index:detail.index}">Edit entry</button></div>
-          <label v-if="isItemTab&&selectedItemGroup&&selectedItemGroup.versions.length>1" class="monster-version-selector">Source / version<select :value="selectedDetailIndex" class="input-base" @change="openDetail(($event.target as HTMLSelectElement).value)"><option v-for="entry in selectedItemGroup.versions" :key="entry.index" :value="entry.index">{{entry.name}} — {{facetLabel('source',entry.sourcePack??'SRD 2014')}}</option></select><small>Each version retains its source rules. Filters apply to individual versions.</small></label>
+          <label v-if="isFamilyTab&&selectedFamilyGroup&&selectedFamilyGroup.versions.length>1" class="monster-version-selector">Source / option / version<select :value="selectedDetailIndex" class="input-base" @change="openDetail(($event.target as HTMLSelectElement).value)"><option v-for="entry in selectedFamilyGroup.versions" :key="entry.index" :value="entry.index">{{familyOptionLabel(entry)}}</option></select><small>Each version keeps its own rules. Search and filters apply to individual versions.</small></label>
+          <label v-if="tab==='subclasses'&&selectedSubclassGroup&&selectedSubclassGroup.versions.length>1" class="monster-version-selector">Source / option / version<select :value="selectedDetailIndex" class="input-base" @change="openDetail(($event.target as HTMLSelectElement).value)"><option v-for="entry in selectedSubclassGroup.versions" :key="entry.index" :value="entry.index">{{subclassOptionLabel(entry)}}</option></select><small>Each version keeps its own features and rules. Search and filters apply to individual versions.</small></label>
+          <label v-if="isItemTab&&selectedItemGroup&&selectedItemGroup.versions.length>1" class="monster-version-selector">Source / version<select :value="selectedDetailIndex" class="input-base" @change="openDetail(($event.target as HTMLSelectElement).value)"><option v-for="entry in selectedItemGroup.versions" :key="entry.index" :value="entry.index">{{itemOptionLabel(entry)}}</option></select><small>Each version retains its source rules. Filters apply to individual versions.</small></label>
           <label v-if="tab==='monsters'&&selectedMonsterGroup" class="monster-version-selector">Source / form / version<select :value="selectedMonsterChoice" class="input-base" @change="selectMonsterVersion"><option v-for="(choice,i) in selectedMonsterGroup.choices" :key="choice.entry.index" :value="choice.entry.index">{{monsterVersionLabel(choice.entry)}}{{selectedMonsterGroup.choices.filter(c=>monsterVersionLabel(c.entry)===monsterVersionLabel(choice.entry)).length>1?` · version ${i+1}`:''}}{{choice.copies.length>1?` · ${choice.copies.length} identical source copies`:''}}</option></select><small>Each version retains its own statblock. Filters apply to individual versions.</small></label>
           <div v-motion-panel="detail ? `${tab}:${detail.index}` : null" class="compendium-detail-content">
           <p v-if="detailLoading" role="status">Loading details…</p>

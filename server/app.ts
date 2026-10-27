@@ -7,12 +7,13 @@ import authRoutes from './routes/auth'
 import characterRoutes from './routes/characters'
 import characterLibraryRoutes from './routes/character-library'
 import contentRoutes from './routes/content'
-import compendiumBrowseRoutes from './routes/compendium-browse'
 import compendiumRoutes from './routes/compendium'
+import compendiumBrowseRoutes from './routes/compendium-browse'
 import characterImportRoutes from './routes/character-import'
 import workshopRoutes from './routes/workshop'
 import roomRoutes from './routes/rooms'
 import notebookRoutes from './routes/notebook'
+import roomMapRoutes from './routes/room-maps'
 import itemRoutes from './routes/items'
 import monsterWorkshopRoutes from './routes/monster-workshop'
 import workshopTrashRoutes from './routes/workshop-trash'
@@ -22,6 +23,8 @@ import { requireAuth } from './middleware/auth'
 import libraryRestoreRoutes from './routes/library-restore'
 import { localSrdRule } from './lib/srd-snapshot'
 import { enrichedStandardMonster } from './lib/monster-enrichment'
+import { MAP_UPLOAD_JSON_BYTES } from '../shared/room-maps'
+import cityLibraryRoutes from './routes/city-libraries'
 
 const app = express()
 let sampledSheetReads=0
@@ -73,6 +76,7 @@ app.get('/api/2014/*path', async (req, res) => {
   res.json(enrichedStandardMonster(data,reference))
 })
 app.use('/api/content/orcbrew-packs', express.json({ limit: '50mb' }))
+app.use('/api/rooms/:roomId/maps', express.json({ limit: MAP_UPLOAD_JSON_BYTES }))
 app.use(express.json({ limit: '10mb' }))
 app.use(cookieParser())
 app.use('/api', async (_req, res, next) => {const started=performance.now(); await connectDb();res.locals.dbReadyMs=performance.now()-started; next() })
@@ -84,10 +88,12 @@ app.use('/api/characters/import', characterImportRoutes)
 app.use('/api/characters', characterRoutes)
 app.use('/api/character-library', characterLibraryRoutes)
 app.use('/api/content', contentRoutes)
-app.use('/api/compendium-browse', compendiumBrowseRoutes)
 app.use('/api/compendium', compendiumRoutes)
+app.use('/api/compendium-browse', compendiumBrowseRoutes)
 app.use('/api/workshop', workshopRoutes)
 app.use('/api/rooms/:roomId/notebook', notebookRoutes)
+app.use('/api/rooms/:roomId/maps', roomMapRoutes)
+app.use('/api/rooms/:roomId/cities', cityLibraryRoutes)
 app.use('/api/rooms', roomRoutes)
 app.use('/api/items', itemRoutes)
 app.use('/api/monster-workshop', monsterWorkshopRoutes)

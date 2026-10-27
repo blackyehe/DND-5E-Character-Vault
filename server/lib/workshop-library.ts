@@ -2,16 +2,35 @@ import { CustomContent } from '../models/CustomContent'
 import { Character } from '../models/Character'
 import { buildOrcbrewCatalog, sourceHash, type CatalogPack } from './orcbrew'
 import { parsedPack } from './orcbrew-library'
-import { validatedDraft } from './workshop-schema'
+import { characterRules, type CharacterRuleLibrary } from './workshop-rules'
 import type { Character as CharacterData } from '../../shared/character'
-import type { PublishedWorkshopRule, WorkshopDraft } from '../../shared/homebrew-workshop'
-import { workshopFromEntry } from '../../shared/homebrew-workshop'
 import { readPackDocuments } from './pack-source'
 import { reviewedCharacter, reviewedWorkshopRules } from './compendium-character'
 
 type LibraryData=Awaited<ReturnType<typeof buildLibrary>>
 const libraries=new Map<string,{signature:string;value:LibraryData}>()
 const pendingLibraries=new Map<string,Promise<LibraryData>>()
+type PackIdentity={_id:unknown;sourceHash?:unknown;updatedAt?:unknown;data?:{filename?:unknown;includeDisabled?:unknown}}
+/** Read-only reuse of an already resident, exact-source catalog. No query,
+ * build, LRU change, save or character synchronization is performed here. */
+export function warmWorkshopCatalog(userId:string,current:readonly PackIdentity[]){
+  const existing=libraries.get(userId)?.value
+  if(!existing||existing.docs.length!==current.length)return null
+  for(let i=0;i<current.length;i++){
+    const expected=current[i]!,actual=existing.docs[i] as unknown as PackIdentity
+    if(String(actual._id)!==String(expected._id)||actual.sourceHash!==expected.sourceHash||
+      !(actual.updatedAt instanceof Date)||!(expected.updatedAt instanceof Date)||actual.updatedAt.getTime()!==expected.updatedAt.getTime()||
+      actual.data?.filename!==expected.data?.filename||actual.data?.includeDisabled!==expected.data?.includeDisabled)return null
+  }
+  return existing.catalog
+}
+/** Exact resident full-library reuse by the scoped character reader. */
+export function warmWorkshopRules(userId:string,signature:string):CharacterRuleLibrary|null {
+  const entry=libraries.get(userId)
+  if(entry?.signature!==signature)return null
+  libraries.delete(userId);libraries.set(userId,entry)
+  return entry.value
+}
 export async function workshopRevision(userId:string|undefined) {
   const revisions=await CustomContent.find({userId,type:'orcbrew'}).select('_id updatedAt sourceHash data.includeDisabled').sort({_id:1}).lean()
   return sourceHash(JSON.stringify(revisions))
@@ -42,29 +61,12 @@ async function buildLibrary(userId:string|undefined) {
   console.info('Library source timing',{sourceReadMs:Math.round(performance.now()-readStarted),packCount:docs.length})
   const packs:CatalogPack[]=[],warnings:string[]=[]
   for(const doc of docs){try{const data=doc.data as {filename:string;includeDisabled?:boolean};packs.push({id:String(doc._id),filename:data.filename,includeDisabled:data.includeDisabled,parsed:parsedPack(data)})}catch{warnings.push(`Could not read ${(doc.data as {filename:string}).filename}.`)}}
-  const catalog=buildOrcbrewCatalog(packs),rules:PublishedWorkshopRule[]=[],initial:Record<string,WorkshopDraft>={}
-  for(const entry of [...catalog.classes,...catalog.subclasses,...catalog.races]){
-    const raw=entry.details as Record<string,unknown>,draft=validatedDraft(raw[':codex/workshop'])
-    if(!draft)continue
-    const parent=catalog.classes.find(e=>e.index===draft.parentClass||e.contentKey===String(raw[':class']).replace(/^:/,''))
-    const rule:PublishedWorkshopRule={id:draft.id,revision:Number(raw[':codex/revision'])||1,index:entry.index,previousIndexes:Array.isArray(raw[':codex/previous-indexes'])?raw[':codex/previous-indexes'] as string[]:[],previousNames:Array.isArray(raw[':codex/previous-names'])?raw[':codex/previous-names'] as string[]:[],parentClassName:parent?.name??String(raw[':class']??draft.parentClass).replace(/^:/,''),draft}
-    const prior=rules.find(r=>r.id===rule.id)
-    if(!prior||prior.revision<rule.revision){if(prior)rules.splice(rules.indexOf(prior),1);rules.push(rule);initial[rule.id]=validatedDraft(raw[':codex/baseline'])??draft}
-  }
-  // Imported races already carry readable traits and property grants. Resolve them
-  // for existing sheets too, without requiring a first manual Workshop publication.
-  for(const entry of catalog.races){
-    if(rules.some(r=>r.draft.kind==='race'&&(r.index===entry.index||r.previousIndexes.includes(entry.index))))continue
-    const draft=workshopFromEntry(entry,'race')
-    for(const spell of draft.race?.spells??[]){const candidates=catalog.spells.filter(s=>s.contentKey===spell.index),sameSource=candidates.filter(s=>s.sourcePack===entry.sourcePack);const match=sameSource.length===1?sameSource[0]:candidates.length===1?candidates[0]:undefined;if(match){spell.index=match.index;spell.name=match.name}}
-    rules.push({id:draft.id,revision:0,index:entry.index,previousIndexes:[],previousNames:[],draft})
-    initial[draft.id]=draft
-  }
+  const catalog=buildOrcbrewCatalog(packs),{rules,initial}=characterRules(catalog)
   return {docs,packs,catalog,rules,initial,warnings}
 }
 export type WorkshopLibrary=Awaited<ReturnType<typeof workshopLibrary>>
-export async function resolveWorkshopCharacter(character:unknown,userId:string|undefined,library?:WorkshopLibrary) {
-  const data=library??await workshopLibrary(userId)
+export async function resolveWorkshopCharacter(character:unknown,userId:string|undefined,library?:Pick<CharacterRuleLibrary,'rules'|'initial'>) {
+  const data=library??await (await import('./character-rule-library')).characterRuleLibrary(userId)
   const resolved=reviewedCharacter(character as CharacterData,data.rules,data.initial)
   const knownRules=reviewedWorkshopRules(resolved,data.rules,data.initial).rules
   if(resolved.homebrew){

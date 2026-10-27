@@ -7,6 +7,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production']).default('development'),
   APP_ORIGIN: z.string().optional(),
   SRD_API_URL: z.string().url().optional(),
+  // Rollback switch. Derived records do not change any source or saved character.
+  COMPENDIUM_READER: z.enum(['legacy','prepared']).default('legacy'),
+  COMPENDIUM_PREPARED_USERS: z.string().default(''),
 })
 
 const production = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL)

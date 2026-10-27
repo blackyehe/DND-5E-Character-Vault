@@ -2,10 +2,12 @@ export type EdnValue = string | number | boolean | null | EdnValue[] | { [key: s
 const ednSet = Symbol('EDN set')
 export const isEdnSet = (value: unknown[]) => Object.hasOwn(value, ednSet)
 export interface EdnSpan {start:number;end:number;fields?:Record<string,{keyStart:number;start:number;end:number}>;items?:{start:number;end:number}[]}
+interface EdnReadOptions { maxDepth?:number; rootSpanOnly?:boolean }
 
 /** Reads data only. Tags are retained as data and never executed. */
-export function readEdn(source: string, onNonFinite: () => void = () => {}, spans?:WeakMap<object,EdnSpan>): EdnValue {
+export function readEdn(source: string, onNonFinite: () => void = () => {}, spans?:WeakMap<object,EdnSpan>, options:EdnReadOptions = {}): EdnValue {
   let cursor = 0
+  const maxDepth=options.maxDepth??128
   const discard = Symbol('discard')
   const fail = (message: string): never => {
     throw new Error(`${message} at character ${cursor + 1}`)
@@ -70,7 +72,7 @@ export function readEdn(source: string, onNonFinite: () => void = () => {}, span
   }
 
   function form(depth: number): EdnValue | typeof discard {
-    if (depth > 128) fail('EDN nesting exceeds 128 levels')
+    if (depth > maxDepth) fail(`EDN nesting exceeds ${maxDepth} levels`)
     space()
     if (cursor >= source.length) fail('Unexpected end of EDN data')
     const char = source[cursor]
@@ -86,29 +88,32 @@ export function readEdn(source: string, onNonFinite: () => void = () => {}, span
       cursor += set ? 2 : 1
       const closing = set || char === '{' ? '}' : char === '[' ? ']' : ')'
       const values: EdnValue[] = []
-      const positions:{start:number;end:number}[]=[]
+      // Export needs only the root slice; avoid retaining field/item positions
+      // throughout a large source tree when its caller does not request them.
+      const capture=spans&&(!options.rootSpanOnly||depth===0)
+      const positions:{start:number;end:number}[]|undefined=capture&&!options.rootSpanOnly?[]:undefined
       while (true) {
         space()
         if (cursor >= source.length) fail('Unterminated collection')
         if (source[cursor] === closing) { cursor++; break }
         if ('}])'.includes(source[cursor])) fail('Mismatched collection delimiter')
         const childStart=cursor,value = form(depth + 1)
-        if (value !== discard) {values.push(value);positions.push({start:childStart,end:cursor})}
+        if (value !== discard) {values.push(value);positions?.push({start:childStart,end:cursor})}
       }
       if (set) Object.defineProperty(values, ednSet, { value: true })
-      if (set || char !== '{') {spans?.set(values,{start,end:cursor,items:positions});return values}
+      if (set || char !== '{') {if(capture)spans.set(values,{start,end:cursor,...(positions?{items:positions}:{})});return values}
       if (values.length % 2 !== 0) fail('EDN map requires key/value pairs')
       const result: Record<string, EdnValue> = Object.create(null)
-      const fields:NonNullable<EdnSpan['fields']>=Object.create(null)
+      const fields:NonNullable<EdnSpan['fields']>|undefined=positions?Object.create(null):undefined
       for (let index = 0; index < values.length; index += 2) {
         const key = values[index]
         if (key !== null && typeof key === 'object') fail('Collection map keys are not supported')
         const name = String(key)
         if (Object.hasOwn(result, name)) fail(`Duplicate EDN map key ${name}`)
         result[name] = values[index + 1]
-        fields[name]={keyStart:positions[index].start,...positions[index+1]}
+        if(fields&&positions)fields[name]={keyStart:positions[index].start,...positions[index+1]}
       }
-      spans?.set(result,{start,end:cursor,fields})
+      if(capture)spans.set(result,{start,end:cursor,...(fields?{fields}:{})})
       return result
     }
     if ('}])'.includes(char)) fail('Unexpected collection delimiter')
@@ -127,7 +132,7 @@ export function readEdn(source: string, onNonFinite: () => void = () => {}, span
     if (atom.startsWith('#')) {
       if (!/^#[a-zA-Z][\w./-]*$/.test(atom)) fail('Unsupported EDN dispatch')
       const tagged={ ':edn/tag': atom.slice(1), ':edn/value': nextValue(depth + 1) }
-      spans?.set(tagged,{start,end:cursor});return tagged
+      if(spans&&(!options.rootSpanOnly||depth===0))spans.set(tagged,{start,end:cursor});return tagged
     }
     if (atom === 'nil') return null
     if (atom === 'true') return true

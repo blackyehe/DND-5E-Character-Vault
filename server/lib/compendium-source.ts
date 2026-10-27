@@ -1,11 +1,10 @@
 import { CustomContent } from '../models/CustomContent'
-import { workshopLibrary } from './workshop-library'
+import { browseEntrySource } from './compendium-browse'
 import { localSrdRule } from './srd-snapshot'
 import { readSrdRule } from './srd-client'
 import { env } from '../env'
-import { enrichedMonsterEntries, enrichedStandardMonster } from './monster-enrichment'
+import { enrichedStandardMonster } from './monster-enrichment'
 import { prepareItem } from './inventory'
-import { activeWorkshopEntries } from './workshop-schema'
 import type { EquipmentItem } from '../../shared/character'
 import type { CompendiumKind, EntryData } from '../../shared/compendium-editing'
 
@@ -20,11 +19,7 @@ export async function compendiumSource(userId:string|undefined,kind:CompendiumKi
     return {index,name:item.name,displayName:`${item.name} · My Workshop`,url:'',sourcePack:'My Workshop',workshopItem:item}
   }
   if(index.startsWith('homebrew-')){
-    const catalog=(await workshopLibrary(userId)).catalog
-    const entries=kind==='classes'||kind==='subclasses'||kind==='races'?activeWorkshopEntries(catalog[kind],kind):catalog[kind]
-    const entry=entries.find(e=>e.index===index)
-    if(!entry)return null
-    return kind==='monsters'?(await enrichedMonsterEntries(userId,[entry]))[0]!:entry
+    return userId?browseEntrySource(userId,kind,index):null
   }
   if(!/^[a-z0-9-]+$/i.test(index)||!['spells','equipment','magic-items','classes','subclasses','races','subraces','monsters','backgrounds','feats','languages'].includes(kind))return null
   const path=`${kind}/${index}`,local=localSrdRule(path)

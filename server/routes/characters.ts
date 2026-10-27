@@ -3,7 +3,8 @@ import { z } from 'zod'
 import { Character } from '../models/Character'
 import { requireAuth } from '../middleware/auth'
 import { normalizeImportedCharacter } from '../../shared/weapon-proficiencies'
-import { resolveWorkshopCharacter, workshopLibrary, workshopRevision } from '../lib/workshop-library'
+import { characterRuleLibrary } from '../lib/character-rule-library'
+import { resolveWorkshopCharacter, workshopRevision } from '../lib/workshop-library'
 
 import { characterOutput as output, savedCharacterOutput, quickSheetOutput } from '../lib/character-output'
 import { sheetReferences } from '../lib/sheet-references'
@@ -48,13 +49,13 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/references',async(req,res)=>{
   const character=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
   if(!character)return res.status(404).json({error:'Character not found'})
-  const library=await workshopLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId)
   const resolved=await resolveWorkshopCharacter(character,req.userId,library)
   res.json({...sheetReferences(resolved,library),character:savedCharacterOutput(resolved)})
 })
 router.get('/:id/spell-options',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
-  const library=await workshopLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId)
   res.json(library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases,desc})=>({index,name,displayName,sourcePack,level,contentKey,aliases,definitionAvailable:Array.isArray(desc)&&desc.some(line=>typeof line==='string'&&line.trim())})))
 })
 
@@ -80,17 +81,17 @@ router.post('/:id/items',async(req,res)=>{
 router.get('/:id/advancement-options',async(req,res)=>{
   const character=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
   if(!character)return res.status(404).json({error:'Character not found'})
-  const library=await workshopLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId)
   res.set('Cache-Control','no-store').json({character:savedCharacterOutput(await resolveWorkshopCharacter(character,req.userId,library)),libraryRevision:await workshopRevision(req.userId),rules:library.rules.map(r=>({index:r.index,name:r.draft.name,url:'',workshop:r.draft})),classes:library.catalog.classes.map(({details,...entry})=>entry),subclasses:library.catalog.subclasses.map(({details,...entry})=>entry),feats:library.catalog.feats.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases})=>({index,name,displayName,sourcePack,level,contentKey,aliases,url:''}))})
 })
 router.get('/:id/editor-options',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
-  const library=await workshopLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId)
   res.json({rules:library.rules.map(r=>({index:r.index,name:r.draft.name,url:'',workshop:r.draft})),feats:library.catalog.feats.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases,desc})=>({index,name,displayName,sourcePack,level,contentKey,aliases,definitionAvailable:Array.isArray(desc)&&desc.some(line=>typeof line==='string'&&line.trim())}))})
 })
 router.get('/:id/spell-definition/:index',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
-  const library=await workshopLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId)
   const entry=library.catalog.spells.find(s=>s.index===req.params.index||(s.aliases as string[]).includes(String(req.params.index)))
   if(!entry)return res.status(404).json({error:'Spell definition not found'})
   const {details,...spell}=entry;if(!Array.isArray(spell.desc)||!spell.desc.some(line=>typeof line==='string'&&line.trim()))return res.status(404).json({error:'This imported spell has no rules definition. Choose a matching SRD or another homebrew definition.'});res.json(spell)
@@ -98,7 +99,7 @@ router.get('/:id/spell-definition/:index',async(req,res)=>{
 
 router.patch('/:id', async (req, res) => {
   if(req.body.expectedLibraryRevision&&req.body.expectedLibraryRevision!==await workshopRevision(req.userId))return res.status(409).json({error:'Saved rules changed during this advancement. Reload the latest character and restart.'})
-  const library=await workshopLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId)
   const fields=['companionKind','meta','combat','abilities','saves','skills','attacks','equipment','spellcasting','personality','features','resources','proficiencies','homebrew']
   const patch=Object.fromEntries(fields.filter(key=>Object.hasOwn(req.body,key)).map(key=>[key,req.body[key]]))
   for(let attempt=0;attempt<3;attempt++){

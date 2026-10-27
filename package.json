@@ -13,8 +13,7 @@
     "server:dev": "npm --prefix server run dev",
     "server:typecheck": "npm --prefix server run typecheck",
     "test": "vitest run",
-    "typecheck": "vue-tsc -b",
-    "preview:notebook": "node design/notebook-codex/serve.mjs"
+    "typecheck": "vue-tsc -b"
   },
   "dependencies": {
     "vue": "^3.5.42"

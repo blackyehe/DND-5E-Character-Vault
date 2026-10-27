@@ -6,10 +6,12 @@
 }
 
 @media (prefers-reduced-motion:no-preference) {
-  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item,.cb-choice,details>summary) {
+  /* Map anchors use transforms for exact image coordinates. A transform transition
+     also makes Vue's pin TransitionGroup animate dragging through FLIP offsets. */
+  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item,.cb-choice,details>summary):not(.map-pin,.map-region-name,.map-region-vertex,.map-region-midpoint) {
     transition:transform var(--motion-control) var(--motion-ease),background-color var(--motion-control) var(--motion-ease),border-color var(--motion-control) var(--motion-ease),color var(--motion-control) var(--motion-ease);
   }
-  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item):not(:disabled):not([aria-disabled="true"]):active {
+  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item):not(.map-pin,.map-region-name,.map-region-vertex,.map-region-midpoint):not(:disabled):not([aria-disabled="true"]):active {
     transform:translateY(1px) scale(.98);
   }
   /* Native disclosures retain their open state, keyboard controls and focus behavior.
@@ -33,7 +35,7 @@
 }
 
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
-  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item):not(:disabled):not([aria-disabled="true"]):hover:not(:active) {
+  .site-shell[data-motion="balanced"] :is(button,a.btn-primary,a.btn-ghost,a.sheet-button,a.cb-button,a.hw-button,nav a,.rooms-list-item):not(.map-pin,.map-region-name,.map-region-vertex,.map-region-midpoint):not(:disabled):not([aria-disabled="true"]):hover:not(:active) {
     transform:translateY(-1px);
   }
   .site-shell[data-motion="balanced"] .rooms-list-item:hover { border-color:var(--cb-accent-text); }

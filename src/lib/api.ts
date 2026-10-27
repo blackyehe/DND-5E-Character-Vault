@@ -1,3 +1,5 @@
+import {MAP_UPLOAD_JSON_BYTES} from '../../shared/room-maps'
+
 export class ApiError extends Error {
   status: number
   constructor(status: number, message: string) {
@@ -7,7 +9,12 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  if (typeof options.body === 'string' && new Blob([options.body]).size > 2 * 1024 * 1024 && !path.startsWith('/api/uploads')) return largeRequest<T>(path, options)
+  if (typeof options.body === 'string') {
+    const bytes = new Blob([options.body]).size
+    const mapUpload = options.method === 'POST' && /^\/api\/rooms\/[a-f0-9]{24}\/maps(?:\?[^#]*)?$/i.test(path)
+    if (mapUpload && bytes > MAP_UPLOAD_JSON_BYTES) throw new ApiError(413, 'Prepare this map to 3 MiB or less before uploading.')
+    if (bytes > 2 * 1024 * 1024 && !path.startsWith('/api/uploads') && !mapUpload) return largeRequest<T>(path, options)
+  }
   const res = await fetch(path, {
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

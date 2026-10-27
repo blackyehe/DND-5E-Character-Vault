@@ -8,6 +8,7 @@ export function normalizeOrcbrewItem(key:string,value:unknown) {
 }
 /** Keep provenance, descriptions and artwork off the initial list response. */
 export function itemBrowseEntry(entry:OrcbrewEntry,kind:string) {
-  const {details:_,itemView:__,description:___,desc:____,...rest}=entry
-  return {...rest,itemDetailUrl:`/api/content/homebrew/items/${kind}/${encodeURIComponent(entry.index)}`}
+  const {index,name,url,sourcePack,sources,homebrew,itemReference,itemDamageTypes,workshopItem,filterFacets}=entry
+  return {index,name,url,sourcePack,sources,homebrew,itemReference,itemDamageTypes,workshopItem,filterFacets,
+    itemDetailUrl:`/api/content/homebrew/items/${kind}/${encodeURIComponent(index)}`}
 }

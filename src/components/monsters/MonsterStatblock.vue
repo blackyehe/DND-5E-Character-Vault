@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed,ref,watch } from 'vue'
+import { computed,ref,watch,useId } from 'vue'
+import { useBuilderAppearance } from '../../composables/useBuilderAppearance'
 import { MONSTER_ABILITIES, monsterChallenge, monsterModifier, monsterSigned, type MonsterStatblock, type MonsterRule } from '../../../shared/monster-statblock'
 import MonsterRuleText from './MonsterRuleText.vue'
 import { monsterReferenceUrl } from '../../../shared/monster-extensions'
@@ -10,6 +11,8 @@ import './monster-statblock.css'
 import type { MonsterStep } from '../../../shared/monster-workshop'
 const props=defineProps<{monster:MonsterStatblock;original?:unknown;editable?:boolean}>()
 const emit=defineEmits<{edit:[step:MonsterStep]}>()
+const { appearance } = useBuilderAppearance()
+const themeId = useId()
 function editAttrs(step:MonsterStep){return props.editable?{role:'button',tabindex:0,class:'monster-editable','aria-label':`Edit ${step==='rules'?'traits and actions':step}`,onClick:()=>emit('edit',step),onKeydown:(event:KeyboardEvent)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();emit('edit',step)}}}:{}}
 const identity=computed(()=>[props.monster.size,props.monster.type+(props.monster.subtype?` (${props.monster.subtype})`:'')].filter(Boolean).join(' ')+(props.monster.alignment?`, ${props.monster.alignment}`:''))
 const abilityGroups = [['str','int'],['dex','wis'],['con','cha']] as const
@@ -41,7 +44,8 @@ function factStep(label:string|undefined):MonsterStep{return ['Challenge','Profi
 function ruleName(rule:MonsterRule){const compact=(s:string)=>s.toLowerCase().replace(/[^a-z0-9]/g,'');return rule.name+(rule.usage&&!compact(rule.name).includes(compact(rule.usage))?` (${rule.usage})`:'')}
 </script>
 <template>
-  <div class="monster-reader">
+  <div class="monster-reader" :data-statblock-theme="appearance.statblockTheme">
+    <label class="monster-theme-choice" :for="themeId">Statblock theme<select :id="themeId" v-model="appearance.statblockTheme"><option value="night">Night</option><option value="parchment">Parchment</option></select></label>
     <p v-if="monster.missing.length" class="monster-import-notice" role="note">Not recorded in this entry: {{monster.missing.join('; ')}}.</p>
     <article class="monster-statblock" :aria-label="`${monster.name} statblock`">
       <header class="monster-heading"><div class="monster-heading-identity"><div v-bind="editAttrs('identity')"><h2>{{monster.name}}</h2><p>{{identity||'Size and creature type not recorded'}}</p></div>

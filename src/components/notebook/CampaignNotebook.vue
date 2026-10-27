@@ -4,7 +4,7 @@ import {api, ApiError} from '../../lib/api'
 import {useAuthStore} from '../../stores/auth'
 import {vMotionPanel} from '../../directives/siteMotion'
 import {prepareNotebookCover} from '../../lib/notebook-cover'
-import type {NotebookDraft, NotebookEntry, NotebookFolder, NotebookFolderDraft, NotebookIndex, NotebookSection, NotebookSummary, NotebookVersion, NotebookEntryType, NotebookQuestStatus} from '../../../shared/notebook'
+import type {NotebookAudience, NotebookDraft, NotebookEntry, NotebookFolder, NotebookFolderDraft, NotebookIndex, NotebookSection, NotebookSummary, NotebookVersion, NotebookEntryType, NotebookQuestStatus} from '../../../shared/notebook'
 import {folderDescendants, notebookFolderRows, validFolderParent} from '../../../shared/notebook-folders'
 import NotebookText from './NotebookText.vue'
 import NotebookGallery from './NotebookGallery.vue'
@@ -16,9 +16,11 @@ import {notebookReading} from '../../../shared/notebook-codex'
 import NotebookConnections from './NotebookConnections.vue'
 import NotebookFolderFields from './NotebookFolderFields.vue'
 import NotebookQuestClues from './NotebookQuestClues.vue'
+import NotebookFocusReader from './NotebookFocusReader.vue'
 import NotebookQuestClueEditor from './NotebookQuestClueEditor.vue'
 import NotebookTagsEditor from './NotebookTagsEditor.vue'
 import NotebookTagFilter from './NotebookTagFilter.vue'
+import NotebookSharingFields from './NotebookSharingFields.vue'
 import {mergeNotebookTagChanges, notebookTags, notebookTagKey, NOTEBOOK_TAG_LIMIT} from '../../../shared/notebook-tags'
 import './notebook.css'
 import './codex.css'
@@ -32,6 +34,11 @@ const tagFilter = ref<string[]>([]), tagSaving = ref(false)
 const quickTags = ref<string[]|null>(null), quickTagsBase = ref<string[]>([]), quickTagsRevision = ref(0), quickTagsError = ref(''), quickTagsConflict = ref(false)
 const quickTagsEditor = ref<InstanceType<typeof NotebookTagsEditor>|null>(null), quickTagsToggle = ref<HTMLButtonElement|null>(null)
 const quickTagsDirty = computed(() => quickTags.value!==null && JSON.stringify(quickTags.value.map(notebookTagKey).sort())!==JSON.stringify(quickTagsBase.value.map(notebookTagKey).sort()))
+type SharingChoice={audience:NotebookAudience;characterIds:string[]}
+const quickSharing=ref<SharingChoice|null>(null),quickSharingBase=ref(''),quickSharingRevision=ref(0),quickSharingError=ref(''),quickSharingConflict=ref(false)
+const quickSharingToggle=ref<HTMLButtonElement|null>(null),quickSharingFields=ref<InstanceType<typeof NotebookSharingFields>|null>(null)
+const sharingKey=(value:SharingChoice)=>JSON.stringify([value.audience,value.audience==='characters'?[...value.characterIds].sort():[]])
+const quickSharingDirty=computed(()=>quickSharing.value!==null&&sharingKey(quickSharing.value)!==quickSharingBase.value)
 const previewAsCharacter = ref('')
 const navigation = ref<{id:string;tab:typeof dossierTab.value;scroll:number}[]>([])
 let returning = false
@@ -55,6 +62,20 @@ const readerLinks = computed(() => [...new Map([...(selected.value?.connections 
 let targetsLoadedAt = 0, targetsRun = 0, targetsAbort: AbortController | undefined
 const pinned = ref<string[]>([]), labels = ref<Record<string, string>>({})
 const reader = ref<HTMLElement | null>(null)
+const focused = ref(false), focusClueId = ref<string | undefined>()
+let focusOpener: HTMLElement | null = null
+function inspectEntry(clueId?: string) {
+  if (!selected.value || editing.value || busy.value || opening.value || dirty.value) return
+  focusOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  focusClueId.value = clueId; focused.value = true
+}
+async function closeFocus() {
+  focused.value = false
+  await nextTick()
+  if (focusOpener?.isConnected) focusOpener.focus({preventScroll:true})
+  else reader.value?.querySelector<HTMLElement>('[data-focus-entry]')?.focus({preventScroll:true})
+}
+watch(() => [props.roomId, props.previewCharacter, previewAsCharacter.value], () => {focused.value = false})
 const clueEditor = ref<InstanceType<typeof NotebookQuestClueEditor> | null>(null)
 const connectionsEditor = ref<HTMLDetailsElement | null>(null)
 let editOrigin: {tab:typeof dossierTab.value;scroll:number} | null = null
@@ -62,7 +83,7 @@ const coverBusy = ref(false), galleryBusy=ref(false)
 const galleryEditor=ref<InstanceType<typeof NotebookGalleryEditor>|null>(null)
 let generation = 0, listRun = 0, openRun = 0, linkRun = 0, disposed = false
 let poll: ReturnType<typeof setInterval>, searchTimer: ReturnType<typeof setTimeout>, linkTimer: ReturnType<typeof setTimeout>
-const dirty = computed(() => quickTagsDirty.value || editing.value && !!draft.value && (!selected.value || JSON.stringify(draft.value) !== baseline.value))
+const dirty = computed(() => quickSharingDirty.value || quickTagsDirty.value || editing.value && !!draft.value && (!selected.value || JSON.stringify(draft.value) !== baseline.value))
 const libraryEntryCount = computed(() => index.value?.entryCount ?? Object.values(index.value?.counts ?? {}).reduce((a,b)=>a+b,0))
 const encounterReading = computed(() => selected.value ? notebookReading(selected.value.body, index.value?.sessionEntries ?? []).encounters : '')
 const readOnly = computed(() => !!props.previewCharacter || !!previewAsCharacter.value || !!index.value?.readOnly)
@@ -82,12 +103,14 @@ const folderPath = computed(() => notebookFolderRows(index.value?.folders??[]).f
 const pinKey = computed(() => `codex:notebook-pins:v1:${auth.user?.id ?? 'anonymous'}:${props.roomId}`)
 const date = (value: string) => new Date(value).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'})
 const audienceLabel = (entry: Pick<NotebookSummary,'audience'>) => entry.audience === 'dm' ? 'DM only' : entry.audience === 'room' ? 'Whole room' : 'Selected characters'
+const sharingValid=computed(()=>!!quickSharing.value&&(quickSharing.value.audience!=='characters'||quickSharing.value.characterIds.length>0&&quickSharing.value.characterIds.every(id=>filterCharacters.value.some(c=>c.id===id))))
 function path(tail = '', query: Record<string, string> = {}) {const values = new URLSearchParams(query); if (props.previewCharacter || previewAsCharacter.value) values.set('previewCharacter', props.previewCharacter || previewAsCharacter.value); return `/api/rooms/${props.roomId}/notebook${tail}${values.size ? '?' + values : ''}`}
 function rememberLabels(values: {id: string; title: string}[]) {for (const item of values) labels.value[item.id] = item.title}
-function clearPrivate() {resetQuickTags();targetsRun++;targetsAbort?.abort();targetsBusy.value=false;linkTargets.value=[];targetsError.value='';targetsLoadedAt=0;index.value = null; selected.value = null; draft.value = null; editing.value = false; opening.value = false; remote.value = null; versions.value = []; linkResults.value = []; labels.value = {};tagFilter.value=[]}
+function clearPrivate() {focused.value=false;resetQuickSharing();resetQuickTags();targetsRun++;targetsAbort?.abort();targetsBusy.value=false;linkTargets.value=[];targetsError.value='';targetsLoadedAt=0;index.value = null; selected.value = null; draft.value = null; editing.value = false; opening.value = false; remote.value = null; versions.value = []; linkResults.value = []; labels.value = {};tagFilter.value=[]}
 function failure(value: unknown) {error.value = value instanceof Error ? value.message : 'The notebook could not be updated. Try Refresh.'; if (value instanceof ApiError && [401, 404].includes(value.status)) {clearPrivate(); notice.value = 'Notebook access changed. Refresh to check your current access.'}}
 function resetQuickTags(){quickTags.value=null;quickTagsBase.value=[];quickTagsRevision.value=0;quickTagsError.value='';quickTagsConflict.value=false}
-function discardDraft() {resetQuickTags();editing.value = false; draft.value = null; remote.value = null; error.value = ''}
+function resetQuickSharing(){quickSharing.value=null;quickSharingBase.value='';quickSharingRevision.value=0;quickSharingError.value='';quickSharingConflict.value=false}
+function discardDraft() {resetQuickSharing();resetQuickTags();editing.value = false; draft.value = null; remote.value = null; error.value = ''}
 function mayLeave() {if (busy.value || historyBusy.value) return false; if (dirty.value && !window.confirm('Discard your unsaved notebook changes?')) return false; discardDraft(); return true}
 defineExpose({dirty, busy, discardDraft})
 function asDraft(entry: NotebookEntry): NotebookDraft {return {title: entry.title, body: entry.body, coverImage: entry.coverImage ?? '', gallery:(entry.gallery??[]).map(art=>({...art})), section: entry.section, folderId: activeFolders.value.some(f => f.id === entry.folderId) ? entry.folderId : null, audience: entry.audience, characterIds: [...entry.characterIds], relevantCharacterIds: [...entry.relevantCharacterIds], relatedIds: [...entry.relatedIds], codexType:entry.codexType,showInEvents:entry.showInEvents??false,questStatus:entry.questStatus??null,questClues:(entry.questClues??[]).map(clue=>({...clue,sessions:[...clue.sessions]})),tags:[...(entry.tags??[])]}}
@@ -157,7 +180,7 @@ async function openEntry(id: string, initial = false) {
 }
 async function startEdit(target:typeof dossierTab.value=dossierTab.value, clueId?:string, addClue=false) {
   if (!selected.value || !canManage.value || selected.value.deletedAt || busy.value || opening.value) return
-  if(quickTags.value!==null&&!mayLeave())return
+  if((quickTags.value!==null||quickSharing.value!==null)&&!mayLeave())return
   editOrigin={tab:target,scroll:reader.value?.querySelector('.notebook-reader-scroll')?.scrollTop??0}
   draft.value=asDraft(selected.value);baseline.value=JSON.stringify(draft.value);editing.value=true;readerMotion.value++;remote.value=null;historyOpen.value=false;linkResults.value=[];linkQuery.value=''
   await nextTick()
@@ -267,6 +290,7 @@ function chooseTags(values:string[],all=false) {if(!mayLeave())return;tagFilter.
 async function toggleQuickTags(){
   if(!selected.value||!canManageFolders.value||selected.value.deletedAt||busy.value||opening.value)return
   if(quickTags.value!==null){await closeQuickTags();return}
+  if(quickSharing.value!==null&&!mayLeave())return
   quickTags.value=[...(selected.value.tags??[])];quickTagsBase.value=[...quickTags.value];quickTagsRevision.value=selected.value.revision;quickTagsError.value='';quickTagsConflict.value=false
   await nextTick();reader.value?.querySelector('.notebook-reader-scroll')?.scrollTo({top:0,behavior:'instant'});await quickTagsEditor.value?.focus()
 }
@@ -295,6 +319,39 @@ async function reloadQuickTags(){
     notice.value=quickTagsDirty.value?'Latest tags loaded. Your additions and removals are kept; save tags to apply them.':'The latest tags already include your changes.'
   }catch(e){if(gen===generation)failure(e)}finally{if(gen===generation)busy.value=false}
 }
+function setQuickSharing(entry:NotebookEntry){quickSharing.value={audience:entry.audience,characterIds:[...entry.characterIds]};quickSharingBase.value=sharingKey(quickSharing.value);quickSharingRevision.value=entry.revision;quickSharingError.value='';quickSharingConflict.value=false}
+async function toggleQuickSharing(){
+  if(!selected.value||!canManageFolders.value||selected.value.deletedAt||busy.value||opening.value)return
+  if(quickSharing.value!==null){await closeQuickSharing();return}
+  if(!mayLeave()||!selected.value)return
+  setQuickSharing(selected.value)
+  await nextTick();reader.value?.querySelector('.notebook-reader-scroll')?.scrollTo({top:0,behavior:'instant'});quickSharingFields.value?.focus()
+}
+async function closeQuickSharing(){if(!mayLeave())return;await nextTick();quickSharingToggle.value?.focus({preventScroll:true})}
+async function saveQuickSharing(){
+  const entry=selected.value,choice=quickSharing.value,gen=generation
+  if(!entry||!choice||!canManageFolders.value||entry.deletedAt||busy.value||quickSharingConflict.value||!quickSharingDirty.value||!sharingValid.value)return
+  busy.value=true;quickSharingError.value=''
+  try{
+    const result=await api.patch<Pick<NotebookEntry,'audience'|'characterIds'|'revision'|'updatedAt'|'editedBy'>>(path(`/entries/${entry.id}/sharing`),{expectedRevision:quickSharingRevision.value,audience:choice.audience,characterIds:choice.audience==='characters'?[...choice.characterIds]:[]})
+    if(disposed||gen!==generation||selected.value?.id!==entry.id)return
+    selected.value={...selected.value,...result};resetQuickSharing();historyOpen.value=false;targetsLoadedAt=0;notice.value='Visibility saved. '+(result.audience==='dm'?'This entry is DM only.':result.audience==='room'?'Shared with the whole room.':'Shared with the selected characters.')
+    await loadIndex(false,true);busy.value=false;await nextTick();quickSharingToggle.value?.focus({preventScroll:true})
+  }catch(e){if(gen!==generation||disposed)return;quickSharingError.value=e instanceof Error?e.message:'Visibility could not be saved. Try again.';quickSharingConflict.value=e instanceof ApiError&&e.status===409;if(e instanceof ApiError&&[401,403,404].includes(e.status)){if(e.status===403)resetQuickSharing();failure(e)}}
+  finally{if(gen===generation)busy.value=false}
+}
+async function reloadQuickSharing(){
+  const entry=selected.value,gen=generation
+  if(!entry||busy.value)return
+  busy.value=true
+  try{
+    const latest=await api.get<NotebookEntry>(path(`/entries/${entry.id}`))
+    if(disposed||gen!==generation||selected.value?.id!==entry.id)return
+    selected.value=latest
+    if(latest.deletedAt){quickSharingConflict.value=true;quickSharingError.value='This entry was deleted. Close this panel and recover it before sharing.';return}
+    setQuickSharing(latest);notice.value='Latest sharing loaded. Choose who can see the entry before saving.';await nextTick();quickSharingFields.value?.focus()
+  }catch(e){if(gen===generation)failure(e)}finally{if(gen===generation)busy.value=false}
+}
 async function createTag(name:string):Promise<boolean> {
   if(!canManageFolders.value||tagSaving.value)return false
   const gen=generation
@@ -312,7 +369,7 @@ async function createTag(name:string):Promise<boolean> {
 }
 async function changeQuestStatus() {
   const entry=selected.value
-  if(!entry||entry.codexType!=='quests'||!canManage.value||busy.value||editing.value||entry.deletedAt)return
+  if(!entry||entry.codexType!=='quests'||!canManage.value||busy.value||editing.value||quickSharing.value!==null||quickTags.value!==null||entry.deletedAt)return
   const next:NotebookQuestStatus=entry.questStatus==='finished'?'active':'finished',gen=generation,run=openRun
   busy.value=true;error.value='';notice.value=''
   try {
@@ -328,7 +385,7 @@ async function changeQuestStatus() {
 }
 async function toggleQuestVisibility() {
   const entry=selected.value
-  if(!entry||entry.codexType!=='quests'||index.value?.role!=='dm'||!canManage.value||busy.value||editing.value||entry.deletedAt)return
+  if(!entry||entry.codexType!=='quests'||index.value?.role!=='dm'||!canManage.value||busy.value||editing.value||quickSharing.value!==null||quickTags.value!==null||entry.deletedAt)return
   const audience=entry.audience==='room'?'dm':'room',gen=generation,run=openRun
   busy.value=true;error.value='';notice.value=''
   try {
@@ -343,7 +400,7 @@ async function toggleQuestVisibility() {
 }
 async function toggleQuestClue(id: string) {
   const entry=selected.value
-  if(!entry||entry.codexType!=='quests'||index.value?.role!=='dm'||!canManage.value||busy.value||editing.value||entry.deletedAt)return
+  if(!entry||entry.codexType!=='quests'||index.value?.role!=='dm'||!canManage.value||busy.value||editing.value||quickSharing.value!==null||quickTags.value!==null||entry.deletedAt)return
   const clue=entry.questClues.find(c=>c.id===id)
   if(!clue)return
   const next=clue.audience==='room'?'dm':'room',gen=generation,run=openRun
@@ -371,7 +428,7 @@ async function refreshSelected() {
     const latest = await api.get<NotebookEntry|{unchanged:true;revision:number}>(path(`/entries/${id}`,{knownRevision:String(revision)}))
     if('unchanged' in latest)return
     if (disposed || generation !== gen || run !== openRun || selected.value?.id !== id || selected.value.revision !== revision || busy.value) return
-    if (latest.revision !== selected.value.revision) {if (editing.value) remote.value = latest; else {selected.value = latest; historyOpen.value = false}}
+    if (latest.revision !== selected.value.revision) {if (editing.value) remote.value = latest; else {selected.value = latest; historyOpen.value = false;if(quickSharing.value!==null){quickSharingConflict.value=true;quickSharingError.value='This entry changed elsewhere. Load the latest sharing before saving.'}}}
   } catch (e) {if (generation === gen) failure(e)}
 }
 async function findConnections() {
@@ -461,14 +518,19 @@ onUnmounted(() => {disposed = true; generation++; targetsAbort?.abort(); clearIn
           <div class="codex-entry-header" :class="{'has-cover':selected.codexType==='places'&&selected.coverImage}">
           <img v-if="selected.codexType==='places'&&selected.coverImage" class="codex-place-cover" :src="selected.coverImage" alt="" decoding="async" />
           <div class="codex-dossier-top"><button class="sheet-button sheet-small-button" :disabled="!navigation.length" @click="goBack">← Back</button><span class="codex-eyebrow">{{kindLabel(selected.codexType)}}{{selected.codexType!=='events'&&selected.showInEvents?' · Events':''}}</span></div>
-          <header class="notebook-reader-heading"><div><h2>{{selected.title}}</h2><p class="sheet-small">{{audienceLabel(selected)}} · {{selected.editedBy}} · {{date(selected.updatedAt)}}</p></div><div class="notebook-actions"><button v-if="!selected.deletedAt" class="sheet-button sheet-small-button" :aria-pressed="pinned.includes(selected.id)" @click="togglePin(selected)">{{pinned.includes(selected.id)?'Unpin':'Pin'}}</button><button v-if="canManage&&!selected.deletedAt" class="sheet-button sheet-small-button" @click="startEdit()">Edit</button></div></header>
+          <header class="notebook-reader-heading"><div><h2>{{selected.title}}</h2><p class="sheet-small">{{audienceLabel(selected)}} · {{selected.editedBy}} · {{date(selected.updatedAt)}}</p></div><div class="notebook-actions"><button type="button" data-focus-entry class="sheet-button sheet-small-button" :disabled="busy||opening||dirty" @click="inspectEntry()">Focus view</button><button v-if="!selected.deletedAt" class="sheet-button sheet-small-button" :aria-pressed="pinned.includes(selected.id)" @click="togglePin(selected)">{{pinned.includes(selected.id)?'Unpin':'Pin'}}</button><button v-if="canManage&&!selected.deletedAt" class="sheet-button sheet-small-button" @click="startEdit()">Edit</button></div></header>
           </div>
-          <div v-if="selected.codexType==='quests'" class="codex-quest-status"><span class="codex-quest-badge" :data-status="selected.questStatus">{{selected.questStatus==='finished'?'Finished':'Active'}}</span><span class="sheet-small">{{selected.audience==='dm'?'Hidden from players':'Shared with the whole room'}}</span><button v-if="canManage&&!selected.deletedAt" class="sheet-button sheet-small-button" :disabled="busy||opening" @click="toggleQuestVisibility">{{selected.audience==='room'?'Hide from players':'Show to players'}}</button><button v-if="canManage&&!selected.deletedAt" class="sheet-button sheet-small-button" :disabled="busy||opening" @click="changeQuestStatus">{{selected.questStatus==='finished'?'Return to Active':'Mark finished'}}</button></div>
-          <div v-if="selected.tags?.length||canManageFolders&&!selected.deletedAt" class="codex-entry-tags" aria-label="Entry tags"><button v-if="canManageFolders&&!selected.deletedAt" ref="quickTagsToggle" type="button" class="sheet-button sheet-small-button codex-edit-tags" :disabled="busy||opening" :aria-expanded="quickTags!==null" aria-controls="notebook-quick-tags" @click="toggleQuickTags">{{selected.tags?.length?'Edit tags':'Add tags'}}</button><button v-for="tag in selected.tags" :key="tag" class="sheet-button sheet-small-button" :disabled="busy" :aria-label="'Filter entries tagged '+tag" @click="chooseTags([tag],true)">{{tag}}</button></div>
+          <div v-if="selected.codexType==='quests'" class="codex-quest-status"><span class="codex-quest-badge" :data-status="selected.questStatus">{{selected.questStatus==='finished'?'Finished':'Active'}}</span><span class="sheet-small">{{selected.audience==='dm'?'Hidden from players':'Shared with the whole room'}}</span><button v-if="canManage&&!selected.deletedAt" class="sheet-button sheet-small-button" :disabled="busy||opening||quickSharing!==null||quickTags!==null" @click="toggleQuestVisibility">{{selected.audience==='room'?'Hide from players':'Show to players'}}</button><button v-if="canManage&&!selected.deletedAt" class="sheet-button sheet-small-button" :disabled="busy||opening||quickSharing!==null||quickTags!==null" @click="changeQuestStatus">{{selected.questStatus==='finished'?'Return to Active':'Mark finished'}}</button></div>
+          <div v-if="selected.tags?.length||canManageFolders&&!selected.deletedAt" class="codex-entry-tags" aria-label="Entry tags"><button v-if="canManageFolders&&!selected.deletedAt" ref="quickTagsToggle" type="button" class="sheet-button sheet-small-button codex-edit-tags" :disabled="busy||opening" :aria-expanded="quickTags!==null" aria-controls="notebook-quick-tags" @click="toggleQuickTags">{{selected.tags?.length?'Edit tags':'Add tags'}}</button><button v-if="canManageFolders&&!selected.deletedAt" ref="quickSharingToggle" type="button" class="sheet-button sheet-small-button codex-edit-sharing" :disabled="busy||opening" :aria-expanded="quickSharing!==null" aria-controls="notebook-quick-sharing" @click="toggleQuickSharing">Visibility: {{audienceLabel(selected)}}</button><button v-for="tag in selected.tags" :key="tag" class="sheet-button sheet-small-button" :disabled="busy" :aria-label="'Filter entries tagged '+tag" @click="chooseTags([tag],true)">{{tag}}</button></div>
           <p v-if="selected.deletedAt" class="sheet-notice">This entry is in Recently deleted. {{canManage?'Recover it to edit again.':''}}</p>
           <div class="codex-session-strip"><span>Sources</span><button v-for="number in selected.sessions" :key="number" class="sheet-button sheet-small-button" :disabled="!index?.sessionEntries.some(e=>e.sessions.includes(number))" @click="openEntry(index!.sessionEntries.find(e=>e.sessions.includes(number))!.id)">{{number}}. session</button><small v-if="!selected.sessions.length">Session unconfirmed</small></div>
           <div class="codex-tabs" role="tablist" aria-label="Entry sections"><button v-for="tab in dossierTabs" :id="'codex-tab-'+tab" :key="tab" class="sheet-button" role="tab" :aria-selected="dossierTab===tab" :tabindex="dossierTab===tab?0:-1" aria-controls="codex-tabpanel" @click="dossierTab=tab" @keydown.right.prevent="moveTab(1)" @keydown.left.prevent="moveTab(-1)">{{tab==='description'?(selected.codexType==='places'?'Overview':'Description'):tab==='clues'?'Clues':tab==='gallery'?'Gallery':tab==='encounters'?'Encounters':'Connections'}}</button></div>
           <div id="codex-tabpanel" v-motion-panel="dossierTab" class="notebook-reader-scroll" role="tabpanel" :aria-labelledby="'codex-tab-'+dossierTab" tabindex="0">
+            <section v-if="quickSharing!==null&&canManageFolders&&!selected.deletedAt" id="notebook-quick-sharing" v-motion-panel="selected.id" class="notebook-quick-tags notebook-quick-sharing" aria-label="Entry visibility" @keydown.esc.stop.prevent="closeQuickSharing">
+              <div class="quick-tags-toolbar"><h3>Entry visibility</h3><div class="notebook-actions"><button type="button" class="sheet-button sheet-small-button" :disabled="busy" @click="closeQuickSharing">Cancel</button><button type="button" class="sheet-button sheet-button-primary sheet-small-button" :disabled="busy||quickSharingConflict||!quickSharingDirty||!sharingValid" @click="saveQuickSharing">{{busy?'Saving...':'Save visibility'}}</button></div></div>
+              <NotebookSharingFields ref="quickSharingFields" v-model="quickSharing" :characters="index?.characters??[]" :quest="selected.codexType==='quests'" :disabled="busy" folder-notice="" />
+              <p v-if="quickSharingError" class="sheet-alert" role="alert">{{quickSharingError}}</p><button v-if="quickSharingConflict" type="button" class="sheet-button sheet-small-button" :disabled="busy||!!selected.deletedAt" @click="reloadQuickSharing">Load latest sharing</button>
+            </section>
             <section v-if="quickTags!==null&&canManageFolders&&!selected.deletedAt" id="notebook-quick-tags" class="notebook-quick-tags" aria-label="Edit entry tags" @keydown.esc.stop.prevent="closeQuickTags">
               <div class="quick-tags-toolbar"><h3>Edit tags</h3><div class="notebook-actions"><button type="button" class="sheet-button sheet-small-button" :disabled="busy" @click="closeQuickTags">Cancel tags</button><button type="button" class="sheet-button sheet-button-primary sheet-small-button" :disabled="busy||quickTagsConflict||!quickTagsDirty||quickTags.length>NOTEBOOK_TAG_LIMIT||!!selected.deletedAt" @click="saveQuickTags">{{busy?'Saving...':'Save tags'}}</button></div></div><NotebookTagsEditor ref="quickTagsEditor" v-model="quickTags" :options="index?.tags??[]" :disabled="busy" />
               <p v-if="quickTagsError" class="sheet-alert" role="alert">{{quickTagsError}}</p><button v-if="quickTagsConflict" type="button" class="sheet-button sheet-small-button" :disabled="busy||!!selected.deletedAt" @click="reloadQuickTags">Load latest tags</button>
@@ -477,11 +539,11 @@ onUnmounted(() => {disposed = true; generation++; targetsAbort?.abort(); clearIn
             <template v-if="dossierTab==='description'">
               <NotebookText :body="selected.reading.description||'No description recorded.'" :links="readerLinks" @open="openEntry" />
               <NotebookConnections v-if="selected.codexType==='places'" :connections="selected.connections" @open="openEntry" />
-              <NotebookQuestClues v-if="category==='events'&&selected.codexType==='quests'" :clues="selected.questClues??[]" :links="readerLinks" :dm="canManage" :quest-hidden="selected.audience==='dm'" :disabled="busy||opening||!!selected.deletedAt" @add="startEdit('clues',undefined,true)" @edit="startEdit('clues',$event)" @toggle="toggleQuestClue" @open="openEntry" />
+              <NotebookQuestClues v-if="category==='events'&&selected.codexType==='quests'" :clues="selected.questClues??[]" :links="readerLinks" :dm="canManage" :quest-hidden="selected.audience==='dm'" :disabled="busy||opening||quickSharing!==null||quickTags!==null||!!selected.deletedAt" @add="startEdit('clues',undefined,true)" @edit="startEdit('clues',$event)" @toggle="toggleQuestClue" @inspect="inspectEntry($event)" @open="openEntry" />
             </template>
             <NotebookGallery v-else-if="dossierTab==='gallery'" :key="selected.id" :images="selected.gallery??[]" :cover="selected.coverImage" :place="selected.title" :entry-id="selected.id" :editable="canManage&&!selected.deletedAt" @edit="startEdit('gallery')" />
             <NotebookText v-else-if="dossierTab==='encounters'" :body="encounterReading||'No session encounter recorded yet.'" :links="readerLinks" :sessions="index?.sessionEntries??[]" @open="openEntry" />
-            <NotebookQuestClues v-else-if="dossierTab==='clues'" :clues="selected.questClues??[]" :links="readerLinks" :dm="canManage" :quest-hidden="selected.audience==='dm'" :disabled="busy||opening||!!selected.deletedAt" @add="startEdit('clues',undefined,true)" @edit="startEdit('clues',$event)" @toggle="toggleQuestClue" @open="openEntry" />
+            <NotebookQuestClues v-else-if="dossierTab==='clues'" :clues="selected.questClues??[]" :links="readerLinks" :dm="canManage" :quest-hidden="selected.audience==='dm'" :disabled="busy||opening||quickSharing!==null||quickTags!==null||!!selected.deletedAt" @add="startEdit('clues',undefined,true)" @edit="startEdit('clues',$event)" @toggle="toggleQuestClue" @inspect="inspectEntry($event)" @open="openEntry" />
             <template v-else><NotebookText v-if="selected.reading.relations" :body="selected.reading.relations" :links="readerLinks" @open="openEntry" /><NotebookConnections :connections="selected.connections" :empty-text="canManage?'No entries linked yet. Choose Edit connections to link an entry.':'No connected entries available.'" @open="openEntry" /></template>
           </div>
           <footer class="notebook-reader-foot"><button class="sheet-button sheet-small-button" :disabled="historyBusy" :aria-expanded="historyOpen" @click="historyOpen?historyOpen=false:loadHistory()">{{historyBusy?'Opening history…':'History & versions'}}</button><button v-if="canManage" class="sheet-button sheet-small-button" :disabled="busy" @click="entryAction(selected.deletedAt?'recover':'delete',selected)">{{selected.deletedAt?'Recover entry':'Delete entry'}}</button></footer>
@@ -490,5 +552,6 @@ onUnmounted(() => {disposed = true; generation++; targetsAbort?.abort(); clearIn
         <div v-else class="notebook-welcome"><h2>Campaign Codex</h2><p class="sheet-prose">People, places, discoveries, quests and the sessions that connect them.</p><p class="sheet-small">{{canManage?'Choose an entry or create one to begin.':'Choose an entry from the library to read it.'}}</p><button v-if="canManage" class="sheet-button sheet-button-primary" :disabled="busy" @click="newEntry">Create an entry</button></div>
       </article>
     </div>
+    <NotebookFocusReader v-if="focused&&selected&&!editing" :entry="selected" :initial-section="dossierTab" :clue-id="focusClueId" :links="readerLinks" :sessions="index?.sessionEntries??[]" :dm="index?.role==='dm'&&!readOnly" :loading="opening" :error="error" :can-go-back="navigation.length>0" @close="closeFocus" @open="openEntry" @back="goBack" />
   </section>
 </template>

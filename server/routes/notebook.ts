@@ -246,6 +246,24 @@ router.patch('/entries/:entryId/tags', async (req, res) => {
   })
   res.json(result)
 })
+router.patch('/entries/:entryId/sharing', async (req, res) => {
+  const data=parsed(z.object({expectedRevision:z.number().int().min(1),audience:z.enum(['dm','room','characters']),characterIds:ids}).strict().refine(value=>value.audience!=='characters'||value.characterIds.length>0,'Choose at least one assigned character.'),req.body),editedBy=await actor(req.userId!)
+  const result=await transaction(async session=>{
+    const ctx=await context(params(req),req.userId!,typeof req.query.previewCharacter==='string'?req.query.previewCharacter:undefined,session),entry=await entryFor(String(req.params.entryId),ctx,session)
+    if(!ctx.dm||ctx.readOnly||entry.kind!=='entry'||entry.deletedAt)return fail(403,'Only the DM can change sharing for active notebook entries.')
+    if(entry.revision!==data.expectedRevision)return fail(409,'This entry changed elsewhere. Load the latest sharing before saving.')
+    if(notebookEntryType({...entry,section:entry.section as NotebookSection})==='quests'&&data.audience==='characters')return fail(400,'Quests can be DM only or shared with the whole room.')
+    const characterIds=data.audience==='characters'?data.characterIds:[]
+    const owned=new Set(ctx.characters.map(character=>String(character._id)))
+    const assigned=new Set(ctx.room.assignments.filter(a=>ctx.room.members.some(member=>String(member)===String(a.userId))&&owned.has(String(a.characterId))).map(a=>String(a.characterId)))
+    if(characterIds.some(id=>!assigned.has(id)))return fail(400,'Choose characters currently assigned to room members. An assignment may have changed.')
+    const saved=await Notebook.findOneAndUpdate({_id:entry._id,roomId:ctx.room._id,revision:data.expectedRevision,deletedAt:null},{$set:{audience:data.audience,characterIds,editedBy},$inc:{revision:1}},{new:true,session}).lean()
+    if(!saved)return fail(409,'This entry changed elsewhere. Load the latest sharing before saving.')
+    await saveRevision(saved,session,'Sharing updated')
+    return {audience:saved.audience,characterIds:saved.characterIds.map(String),revision:saved.revision,updatedAt:saved.updatedAt.toISOString(),editedBy:saved.editedBy}
+  })
+  res.json(result)
+})
 router.patch('/entries/:entryId', async (req, res) => {
   const data = parsed(z.object({expectedRevision: z.number().int().min(1), draft: draftSchema}).strict(), req.body), editedBy = await actor(req.userId!)
   await transaction(async session => {

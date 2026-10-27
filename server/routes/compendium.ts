@@ -9,7 +9,7 @@ import { ensureContentIndexes } from '../lib/content-indexes'
 import { Character } from '../models/Character'
 import { isValidObjectId } from 'mongoose'
 import type { Character as CharacterData } from '../../shared/character'
-import { workshopLibrary } from '../lib/workshop-library'
+import { characterRuleLibrary } from '../lib/character-rule-library'
 import { characterUsesDefinition, reviewedCharacter, characterReviewChanges } from '../lib/compendium-character'
 import { savedCharacterOutput } from '../lib/character-output'
 import { workshopProblems } from '../../shared/homebrew-workshop'
@@ -90,7 +90,7 @@ router.put('/:kind/:index',async(req,res)=>{
   res.json({...state,revision:data.revision,sourceChanged:false,edited:Object.keys(changes).length>0,entry:applyEntryChanges(state.source,changes)})
 })
 async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|undefined){
-  const library=await workshopLibrary(userId),original=raw as CharacterData
+  const library=await characterRuleLibrary(userId),original=raw as CharacterData
   const before=reviewedCharacter(original,library.rules,library.initial)
   const previous=before.compendiumRules?.find(d=>d.kind===state.kind&&d.index===state.index)
   const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.source,entry:state.entry}

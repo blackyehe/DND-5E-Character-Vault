@@ -12,8 +12,7 @@ import { User } from '../models/User'
 import { characterOutput } from '../lib/character-output'
 import { workshopLibrary } from '../lib/workshop-library'
 import { identity, vitals, expandedSheet } from './sheet'
-import { ExtensionPairing, ExtensionSession, ExtensionFamily, ExtensionRenewal } from './models'
-import { connectionKind, flags, rememberedBoundary, validPublicKey, publicKeySchema } from './remembered'
+import { ExtensionPairing, ExtensionSession } from './models'
 import { approvalPage } from './approval-page'
 import { applyPlayUpdate, playUpdateSchema } from '../lib/play-update'
 import { availableBenefitSpells } from '../../shared/rule-benefits'
@@ -27,9 +26,10 @@ const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(
 const fail = (res: Response, status: number, error: string) => res.status(status).json({ error })
 
 /** Explicit HTTP boundary. Ordinary app routes and cookie/write policies stay unchanged. */
-export async function createExtensionApp(options: { websiteOrigin: string; extensionOrigins: string[]; readOnlyTrial?: { roomId: string; epoch: string }; playTrial?: { roomId: string; epoch: string }; rememberedConnections?: boolean; clock?: () => number }) {
-  if (options.readOnlyTrial && options.playTrial) throw new Error('Choose one production access mode.')
+export async function createExtensionApp(options: { websiteOrigin: string; extensionOrigins: string[]; readOnlyTrial?: { roomId: string; epoch: string }; playTrial?: { roomId: string; epoch: string }; gameSessions?: boolean; clock?: () => number }) {
   const fresh = () => new Date(options.clock?.() ?? Date.now())
+  if (options.gameSessions && options.readOnlyTrial) throw new Error('Game sessions require play scope.')
+  if (options.readOnlyTrial && options.playTrial) throw new Error('Choose one production access mode.')
   const trial = options.readOnlyTrial ?? options.playTrial
   const readOnly = !!options.readOnlyTrial
   if (trial && (!/^[a-f0-9]{24}$/.test(trial.roomId) || !/^[A-Za-z0-9_-]{16,64}$/.test(trial.epoch))) throw new Error('Invalid production connection boundary.')
@@ -41,8 +41,6 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
   const origins = new Set(options.extensionOrigins.map(value => new URL(value).origin))
   if (origins.has(websiteOrigin)) throw new Error('Website and extension origins must be distinct.')
   await Promise.all([duringInitialization('pairing-indexes', () => ExtensionPairing.init()), duringInitialization('session-indexes', () => ExtensionSession.init())])
-  if (options.rememberedConnections) await Promise.all([duringInitialization('family-indexes', () => ExtensionFamily.init()), duringInitialization('renewal-indexes', () => ExtensionRenewal.init())])
-  const remembered = rememberedBoundary({ enabled: options.rememberedConnections === true, websiteOrigin, scope: trialScope, record: trialRecord, roomId: trial?.roomId, readOnly, now: fresh })
   const app = express()
   app.disable('x-powered-by')
   app.use((_req, res, next) => {
@@ -75,14 +73,14 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
       if (!pairing) return fail(res, 410, 'This request ended. Start Connect account again in your sheet.')
     }
     const rooms = await Room.find({ ...(trial ? { _id: trial.roomId } : {}), $or: [{ ownerId: req.userId }, { members: req.userId }] }).select('name ownerId').lean()
-    res.json({ csrf: csrf(req.userId!), account: { id: String(user._id), displayName: user.displayName }, rooms: rooms.map(room => ({ id: String(room._id), name: room.name, role: String(room.ownerId) === req.userId ? 'dm' : 'player' })), ...(pairing ? { pairing: { ...(pairing.connectionKind ? { connectionKind: pairing.connectionKind } : {}), details: pairing.details === true, hpWrite: pairing.hpWrite === true, slotsWrite: pairing.slotsWrite === true, tempHpWrite: pairing.tempHpWrite === true, resourcesWrite: pairing.resourcesWrite === true, combatWrite: pairing.combatWrite === true, equipmentWrite: pairing.equipmentWrite === true, preparationWrite: pairing.preparationWrite === true, inventoryWrite: pairing.inventoryWrite === true, effectsWrite: pairing.effectsWrite === true, featuresWrite: pairing.featuresWrite === true, code: pairing.code, origin: pairing.origin, expiresAt: pairing.expiresAt } } : {}) })
+    res.json({ csrf: csrf(req.userId!), account: { id: String(user._id), displayName: user.displayName }, rooms: rooms.map(room => ({ id: String(room._id), name: room.name, role: String(room.ownerId) === req.userId ? 'dm' : 'player' })), ...(pairing ? { pairing: { gameSession: pairing.gameSession === true, details: pairing.details === true, hpWrite: pairing.hpWrite === true, slotsWrite: pairing.slotsWrite === true, tempHpWrite: pairing.tempHpWrite === true, resourcesWrite: pairing.resourcesWrite === true, combatWrite: pairing.combatWrite === true, equipmentWrite: pairing.equipmentWrite === true, preparationWrite: pairing.preparationWrite === true, inventoryWrite: pairing.inventoryWrite === true, effectsWrite: pairing.effectsWrite === true, featuresWrite: pairing.featuresWrite === true, code: pairing.code, origin: pairing.origin, expiresAt: pairing.expiresAt } } : {}) })
   })
   approval.post('/pairings/:id/approve', requestLimit('extension-approval', 30, 900), async (req, res) => {
     if (!opaque.safeParse(req.params.id).success || !isValidObjectId(req.body.roomId)) return fail(res, 400, 'Choose a valid room.')
     if (trial && req.body.roomId !== trial.roomId) return fail(res, 403, 'This connection is limited to the selected party.')
     const room = await Room.findOne({ _id: req.body.roomId, $or: [{ ownerId: req.userId }, { members: req.userId }] }).lean()
     if (!room) return fail(res, 404, 'Room access is unavailable.')
-    const updated = await ExtensionPairing.findOneAndUpdate({ _id: req.params.id, ...trialScope, state: 'pending', expiresAt: { $gt: fresh() } }, { $set: { state: 'approved', userId: req.userId, roomId: room._id, ownerId: room.ownerId } })
+    const updated = await ExtensionPairing.findOneAndUpdate({ _id: req.params.id, ...trialScope, state: 'pending', ...(options.gameSessions ? {} : { gameSession: { $ne: true } }), expiresAt: { $gt: fresh() } }, { $set: { state: 'approved', userId: req.userId, roomId: room._id, ownerId: room.ownerId } })
     if (!updated) return fail(res, 410, 'This request ended. Start Connect account again.')
     res.json({ ok: true })
   })
@@ -92,17 +90,11 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
     res.json({ ok: true })
   })
   approval.get('/connections', async (req, res) => {
-    const sessions = await ExtensionSession.find({ familyId: { $exists: false }, userId: req.userId, revokedAt: null, expiresAt: { $gt: fresh() } }).select('roomId origin expiresAt hpWrite slotsWrite tempHpWrite resourcesWrite combatWrite equipmentWrite preparationWrite inventoryWrite effectsWrite featuresWrite').sort({ createdAt: -1 }).lean()
-    const families = await ExtensionFamily.find({ userId: req.userId, revokedAt: null, expiresAt: { $gt: fresh() } }).lean()
-    const records = [...sessions, ...families.map(item => ({ ...item, family: true }))]
-    const rooms = await Room.find({ _id: { $in: records.map(item => item.roomId) }, $or: [{ ownerId: req.userId }, { members: req.userId }] }).select('name').lean()
-    res.json({ connections: records.map(item => ({ id: String(item._id), ...('family' in item ? { kind: item.kind } : {}), roomName: rooms.find(room => String(room._id) === String(item.roomId))?.name ?? 'Room access ended', origin: item.origin, hpWrite: item.hpWrite === true, slotsWrite: item.slotsWrite === true, tempHpWrite: item.tempHpWrite === true, resourcesWrite: item.resourcesWrite === true, combatWrite: item.combatWrite === true, equipmentWrite: item.equipmentWrite === true, preparationWrite: item.preparationWrite === true, inventoryWrite: item.inventoryWrite === true, effectsWrite: item.effectsWrite === true, featuresWrite: item.featuresWrite === true, expiresAt: item.expiresAt })) })
+    const sessions = await ExtensionSession.find({ userId: req.userId, revokedAt: null, expiresAt: { $gt: fresh() } }).select('roomId origin expiresAt hpWrite slotsWrite tempHpWrite resourcesWrite combatWrite equipmentWrite preparationWrite inventoryWrite effectsWrite featuresWrite').sort({ createdAt: -1 }).lean()
+    const rooms = await Room.find({ _id: { $in: sessions.map(item => item.roomId) }, $or: [{ ownerId: req.userId }, { members: req.userId }] }).select('name').lean()
+    res.json({ connections: sessions.map(item => ({ id: String(item._id), roomName: rooms.find(room => String(room._id) === String(item.roomId))?.name ?? 'Room access ended', origin: item.origin, hpWrite: item.hpWrite === true, slotsWrite: item.slotsWrite === true, tempHpWrite: item.tempHpWrite === true, resourcesWrite: item.resourcesWrite === true, combatWrite: item.combatWrite === true, equipmentWrite: item.equipmentWrite === true, preparationWrite: item.preparationWrite === true, inventoryWrite: item.inventoryWrite === true, effectsWrite: item.effectsWrite === true, featuresWrite: item.featuresWrite === true, expiresAt: item.expiresAt })) })
   })
   approval.post('/connections/:id/revoke', async (req, res) => {
-    if (opaque.safeParse(req.params.id).success) {
-      if (await ExtensionFamily.exists({ _id: req.params.id, userId: req.userId })) await remembered.revoke(req.params.id as string)
-      return res.json({ ok: true })
-    }
     if (!isValidObjectId(req.params.id)) return fail(res, 400, 'Invalid connection.')
     await ExtensionSession.updateOne({ _id: req.params.id, userId: req.userId }, { $set: { revokedAt: fresh() } })
     res.json({ ok: true })
@@ -123,17 +115,14 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
     if (!['GET', 'POST'].includes(req.method)) return fail(res, 405, 'This extension method is not allowed.')
     next()
   }, express.json({ limit: '2kb' }))
-  client.use('/connections', remembered.router)
   client.post('/pairings', requestLimit('extension-pairing', 15, 900), async (req, res) => {
-    const parsed = z.object({ connectionKind: connectionKind.optional(), publicKey: publicKeySchema.optional(), challenge: opaque, details: z.boolean().optional(), hpWrite: z.boolean().optional(), slotsWrite: z.boolean().optional(), tempHpWrite: z.boolean().optional(), resourcesWrite: z.boolean().optional(), combatWrite: z.boolean().optional(), equipmentWrite: z.boolean().optional(), preparationWrite: z.boolean().optional(), inventoryWrite: z.boolean().optional(), effectsWrite: z.boolean().optional(), featuresWrite: z.boolean().optional() }).strict().safeParse(req.body)
+    const parsed = z.object({ gameSession: z.boolean().optional(), challenge: opaque, details: z.boolean().optional(), hpWrite: z.boolean().optional(), slotsWrite: z.boolean().optional(), tempHpWrite: z.boolean().optional(), resourcesWrite: z.boolean().optional(), combatWrite: z.boolean().optional(), equipmentWrite: z.boolean().optional(), preparationWrite: z.boolean().optional(), inventoryWrite: z.boolean().optional(), effectsWrite: z.boolean().optional(), featuresWrite: z.boolean().optional() }).strict().safeParse(req.body)
     if (!parsed.success) return fail(res, 400, 'Invalid connection proof.')
-    if (parsed.data.connectionKind && !options.rememberedConnections) return fail(res, 403, 'Longer connections are unavailable in this release.')
-    const publicKey = parsed.data.publicKey ? validPublicKey(parsed.data.publicKey) : null
-    if ((parsed.data.connectionKind && parsed.data.connectionKind !== 'long-session') ? !publicKey : parsed.data.publicKey !== undefined) return fail(res, 400, 'Choose a valid browser-bound connection.')
+    if (parsed.data.gameSession === true && !options.gameSessions) return fail(res, 403, 'Game-length connections are unavailable in this release.')
     if (readOnly && hasWrites(parsed.data)) return fail(res, 403, 'Character changes are disabled for this read-only trial.')
     const id = secret(), code = randomBytes(4).toString('hex').toUpperCase()
     const expiresAt = new Date(fresh().getTime() + 5 * 60_000)
-    await ExtensionPairing.create({ ...trialRecord, ...(parsed.data.connectionKind ? { connectionKind: parsed.data.connectionKind, ...(publicKey ? { publicKey } : {}) } : {}), _id: id, challenge: parsed.data.challenge, details: parsed.data.details === true, hpWrite: parsed.data.hpWrite === true, slotsWrite: parsed.data.slotsWrite === true, tempHpWrite: parsed.data.tempHpWrite === true, resourcesWrite: parsed.data.resourcesWrite === true, combatWrite: parsed.data.combatWrite === true, equipmentWrite: parsed.data.equipmentWrite === true, preparationWrite: parsed.data.preparationWrite === true, inventoryWrite: parsed.data.inventoryWrite === true, effectsWrite: parsed.data.effectsWrite === true, featuresWrite: parsed.data.featuresWrite === true, origin: req.get('origin'), code, state: 'pending', expiresAt })
+    await ExtensionPairing.create({ ...trialRecord, gameSession: parsed.data.gameSession === true, _id: id, challenge: parsed.data.challenge, details: parsed.data.details === true, hpWrite: parsed.data.hpWrite === true, slotsWrite: parsed.data.slotsWrite === true, tempHpWrite: parsed.data.tempHpWrite === true, resourcesWrite: parsed.data.resourcesWrite === true, combatWrite: parsed.data.combatWrite === true, equipmentWrite: parsed.data.equipmentWrite === true, preparationWrite: parsed.data.preparationWrite === true, inventoryWrite: parsed.data.inventoryWrite === true, effectsWrite: parsed.data.effectsWrite === true, featuresWrite: parsed.data.featuresWrite === true, origin: req.get('origin'), code, state: 'pending', expiresAt })
     res.status(201).json({ id, code, expiresAt, approvalUrl: `${websiteOrigin}/owlbear/connect?request=${id}` })
   })
   client.post('/pairings/:id/redeem', requestLimit('extension-poll', 240, 60), async (req, res) => {
@@ -144,18 +133,14 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
     if (!pairing || pairing.state === 'consumed') return fail(res, 410, 'This request ended. Connect again.')
     if (pairing.state === 'denied') return fail(res, 403, 'Connection denied on the website.')
     if (pairing.state === 'pending') return res.status(202).json({ status: 'pending' })
+    if (pairing.gameSession === true && !options.gameSessions) return fail(res, 403, 'Game-length connections are unavailable in this release.')
     if (!pairing.userId || !pairing.roomId || !pairing.ownerId) return fail(res, 410, 'This approval is incomplete. Connect again.')
     if (trial && (String(pairing.roomId) !== trial.roomId || readOnly && hasWrites(pairing))) return fail(res, 403, 'This approval is outside the current connection scope.')
     // One atomic redemption; all racing/replayed requests lose the claim.
     const claimed = await ExtensionPairing.findOneAndUpdate({ ...query, state: 'approved' }, { $set: { state: 'consumed' } })
     if (!claimed) return fail(res, 410, 'This request has already been used.')
-    if (pairing.connectionKind && !options.rememberedConnections) return fail(res, 403, 'Longer connections are unavailable in this release.')
-    if (pairing.connectionKind && pairing.connectionKind !== 'long-session') {
-      const family = await ExtensionFamily.create({ ...trialRecord, ...flags(pairing), _id: secret(), origin: pairing.origin, userId: pairing.userId, roomId: pairing.roomId, ownerId: pairing.ownerId, publicKey: pairing.publicKey!, kind: pairing.connectionKind, expiresAt: new Date(fresh().getTime() + (pairing.connectionKind === 'remembered' ? 30 * 24 : 12) * 3600000) })
-      return res.status(201).json(await remembered.access(family.toObject()))
-    }
-    const token = secret(), expiresAt = new Date(fresh().getTime() + (pairing.connectionKind === 'long-session' ? 12 : 1) * 3600000)
-    await ExtensionSession.create({ ...trialRecord, tokenHash: proofHash(token), origin: pairing.origin, scope: 'character:read', details: pairing.details === true, hpWrite: pairing.hpWrite === true, slotsWrite: pairing.slotsWrite === true, tempHpWrite: pairing.tempHpWrite === true, resourcesWrite: pairing.resourcesWrite === true, combatWrite: pairing.combatWrite === true, equipmentWrite: pairing.equipmentWrite === true, preparationWrite: pairing.preparationWrite === true, inventoryWrite: pairing.inventoryWrite === true, effectsWrite: pairing.effectsWrite === true, featuresWrite: pairing.featuresWrite === true, userId: pairing.userId, roomId: pairing.roomId, ownerId: pairing.ownerId, expiresAt })
+    const token = secret(), expiresAt = new Date(fresh().getTime() + (pairing.gameSession === true ? 12 : 1) * 60 * 60_000)
+    await ExtensionSession.create({ ...trialRecord, gameSession: pairing.gameSession === true, tokenHash: proofHash(token), origin: pairing.origin, scope: 'character:read', details: pairing.details === true, hpWrite: pairing.hpWrite === true, slotsWrite: pairing.slotsWrite === true, tempHpWrite: pairing.tempHpWrite === true, resourcesWrite: pairing.resourcesWrite === true, combatWrite: pairing.combatWrite === true, equipmentWrite: pairing.equipmentWrite === true, preparationWrite: pairing.preparationWrite === true, inventoryWrite: pairing.inventoryWrite === true, effectsWrite: pairing.effectsWrite === true, featuresWrite: pairing.featuresWrite === true, userId: pairing.userId, roomId: pairing.roomId, ownerId: pairing.ownerId, expiresAt })
     res.status(201).json({ token, expiresAt, scope: 'character:read' })
   })
   client.post('/pairings/:id/cancel', async (req, res) => {
@@ -167,19 +152,13 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
   client.use(async (req: Request, res, next) => {
     const token = req.get('authorization')?.match(/^Bearer ([A-Za-z0-9_-]{43})$/)?.[1]
     if (!token) return fail(res, 401, 'Connect your website account first.')
-    const session = await ExtensionSession.findOne({ ...trialScope, ...(trial ? { roomId: trial.roomId } : {}), tokenHash: proofHash(token), origin: req.get('origin'), scope: 'character:read', revokedAt: null, expiresAt: { $gt: fresh() } }).lean()
+    const session = await ExtensionSession.findOne({ ...trialScope, ...(options.gameSessions ? {} : { gameSession: { $ne: true } }), ...(trial ? { roomId: trial.roomId } : {}), tokenHash: proofHash(token), origin: req.get('origin'), scope: 'character:read', revokedAt: null, expiresAt: { $gt: fresh() } }).lean()
     if (!session) return fail(res, 401, 'This connection expired or was revoked. Connect again.')
-    if (session.familyId) {
-      const family = await remembered.find(session.familyId, req.get('origin')!)
-      if (!family || ['userId', 'roomId', 'ownerId'].some(key => String(family[key as 'userId']) !== String(session[key as 'userId'])) || Object.entries(flags(family)).some(([key, value]) => value !== (session[key as 'details'] === true))) return fail(res, 401, 'This remembered connection ended. Connect again.')
-      res.locals.family = family
-    }
     if (readOnly && hasWrites(session)) return fail(res, 403, 'This connection is outside the read-only trial.')
     res.locals.extensionSession = session
     next()
   })
   client.post('/session/revoke', async (_req, res) => {
-    if (res.locals.extensionSession.familyId) await remembered.revoke(res.locals.extensionSession.familyId)
     await ExtensionSession.updateOne({ _id: res.locals.extensionSession._id }, { $set: { revokedAt: fresh() } })
     res.json({ ok: true })
   })
@@ -196,7 +175,7 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
     const { session, room, user, dm } = res.locals.connection
     const allowed = room.assignments.filter((item: { userId: unknown }) => String(item.userId) === String(user._id)).map((item: { characterId: unknown }) => item.characterId)
     const characters = await Character.find({ userId: room.ownerId, ...(dm ? {} : { _id: { $in: allowed } }) }).select('meta.name meta.klass meta.race meta.level').sort({ 'meta.name': 1 }).lean()
-    res.json({ version: 1, scope: 'character:read', ...(res.locals.family ? { connection: { id: res.locals.family._id, kind: res.locals.family.kind, expiresAt: res.locals.family.expiresAt } } : {}), capabilities: { details: session.details === true, hpWrite: session.hpWrite === true, slotsWrite: session.slotsWrite === true, tempHpWrite: session.tempHpWrite === true, resourcesWrite: session.resourcesWrite === true, combatWrite: session.combatWrite === true, equipmentWrite: session.equipmentWrite === true, preparationWrite: session.preparationWrite === true, inventoryWrite: session.inventoryWrite === true, effectsWrite: session.effectsWrite === true, featuresWrite: session.featuresWrite === true }, expiresAt: session.expiresAt, account: { id: String(user._id), displayName: user.displayName }, room: { id: String(room._id), name: room.name, role: dm ? 'dm' : 'player' }, characters: characters.map(identity) })
+    res.json({ version: 1, scope: 'character:read', capabilities: { details: session.details === true, hpWrite: session.hpWrite === true, slotsWrite: session.slotsWrite === true, tempHpWrite: session.tempHpWrite === true, resourcesWrite: session.resourcesWrite === true, combatWrite: session.combatWrite === true, equipmentWrite: session.equipmentWrite === true, preparationWrite: session.preparationWrite === true, inventoryWrite: session.inventoryWrite === true, effectsWrite: session.effectsWrite === true, featuresWrite: session.featuresWrite === true }, expiresAt: session.expiresAt, account: { id: String(user._id), displayName: user.displayName }, room: { id: String(room._id), name: room.name, role: dm ? 'dm' : 'player' }, characters: characters.map(identity) })
   })
   client.get(['/characters/:id', '/characters/:id/references'], async (req, res) => {
     const { room, user, dm } = res.locals.connection
