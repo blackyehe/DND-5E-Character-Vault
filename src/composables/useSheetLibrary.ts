@@ -56,7 +56,7 @@ function createLibrary(c:ComputedRef<Character>) {
     items.value=Object.fromEntries(character.equipment.map(i=>[i._id??i.name,i]))
     const wantedIds=new Set([...character.spellcasting.known,...character.spellcasting.prepared,...innateRaceSpells(character).map(s=>s.index)])
     spells.value=Object.fromEntries(Object.entries({...store.openingSpells,...spells.value}).filter(([id])=>wantedIds.has(id)))
-    const failed:string[]=[],jobs:Promise<unknown>[]=[]
+    const failed:string[]=[],missingClasses:string[]=[],jobs:Promise<unknown>[]=[]
     const safe=async<T>(name:string,task:Promise<T>,fallback:T)=>task.catch(()=>{failed.push(name);return fallback})
     const path=store.sheetApiPath(character._id)+'/references'
     const cacheKey=sheetReferenceCacheKey({userId:auth.user?.id,path,role:context?.role??'owner',version:character.updatedAt,revision:store.libraryRevision,preview:context?.preview})
@@ -105,9 +105,12 @@ function createLibrary(c:ComputedRef<Character>) {
     })())
     const featureMap:Record<string,{origin:FeatureOrigin;level?:number}>={},ambiguous=new Set<string>()
     const record=(name:string,origin:FeatureOrigin,level?:number)=>{const key=name.trim().toLowerCase(),old=featureMap[key];if(old&&old.origin!==origin)ambiguous.add(key);else featureMap[key]={origin,level:old&&old.level!==level?undefined:level}}
-    for(const entry of classes(character)) {
-      const custom=refs.classes.find(k=>k.name===entry.name)
+    const classEntries=classes(character)
+    for(const entry of classEntries) {
+      const selected=('index' in entry?entry.index:undefined)??(classEntries.length===1?character.meta.classIndex:undefined)
+      const custom=selected?refs.classes.find(k=>k.index===selected||k.aliases?.includes(selected)):refs.classes.find(k=>k.name.trim().toLowerCase()===entry.name.trim().toLowerCase())
       if(custom)custom.homebrew_traits.forEach(f=>record(f.name,'class',f.level))
+      else if(selected&&/^homebrew-|^hb:/.test(selected))missingClasses.push(entry.name)
       else if(character.features.some(f=>!f.origin||f.origin==='other'))jobs.push(safe('class progression',cached(`levels:${entry.name}`,()=>srd.classLevels(slug(entry.name))),[]).then(levels=>{if(run!==generation)return;levels.filter(l=>l.level<=entry.level).forEach(l=>l.features.forEach(f=>record(f.name,'class',l.level)));metadata.value={...featureMap}}))
     }
     refs.races.filter(r=>r.name===character.meta.race).forEach(r=>r.homebrew_traits.forEach(f=>record(f.name,'racial',f.level??1)))
@@ -119,9 +122,9 @@ function createLibrary(c:ComputedRef<Character>) {
     await Promise.allSettled(jobs)
     if(run!==generation)return
     lastReferenceMs.value=performance.now()-started
-    const opening=store.recordReferenceTiming(character._id,failed.length>0)
+    const opening=store.recordReferenceTiming(character._id,failed.length>0||missingClasses.length>0)
     if(opening){lastReferenceMs.value=opening.ms;referenceSource.value=opening.source}
-    warning.value=failed.length?'Some reference details could not refresh. Saved character details remain usable.':''
+    warning.value=missingClasses.length?`Imported class definitions are unavailable: ${missingClasses.join(', ')}. Saved character details remain usable. Ask the DM to restore or relink their source packs.`:failed.length?'Some reference details could not refresh. Saved character details remain usable.':''
     loading.value=false
   }
   const features=computed<CharacterFeature[]>(()=>(c.value?.features??[]).map(f=>({...metadata.value[f.name.trim().toLowerCase()],...f})))

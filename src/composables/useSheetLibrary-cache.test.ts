@@ -38,6 +38,23 @@ const referenceCalls=()=>vi.mocked(api.get).mock.calls.filter(([path])=>path.end
 const complete=async(library:ReturnType<typeof mount>)=>vi.waitFor(()=>expect(library.loading.value).toBe(false))
 
 describe('reference caching in the mounted sheet library',()=>{
+  it('uses linked imported classes after a display-name change instead of requesting SRD progression',async()=>{
+    const store=useCharactersStore();saved.meta.klass='Old label';saved.meta.classIndex='homebrew-oracle';saved.features=[{name:'Oracle Sight',description:'Imported class feature'}]
+    vi.mocked(api.get).mockImplementation(async path=>path.endsWith('/references')?{character:structuredClone(saved),spells:[],feats:[],races:[],subclasses:[],backgrounds:[],classes:[{index:'homebrew-oracle',name:'Dawn Oracle',aliases:[],homebrew_traits:[{name:'Oracle Sight',level:1,description:'Imported class feature'}]}]}:{character:structuredClone(saved),spells:{},libraryRevision:store.libraryRevision})
+    await store.fetchOne(saved._id,{quick:true});const library=mount();await complete(library)
+    expect(library.features.value[0]).toMatchObject({origin:'class',level:1});expect(library.warning.value).toBe('')
+  })
+  it('makes an unavailable imported class explicit while preserving its saved sheet',async()=>{
+    const store=useCharactersStore();saved.meta.klass='Dawn Oracle';saved.meta.classIndex='homebrew-missing';saved.features=[{name:'Oracle Sight',description:'Saved class feature',origin:'class'}]
+    await store.fetchOne(saved._id,{quick:true});const library=mount();await complete(library)
+    expect(library.warning.value).toContain('Imported class definitions are unavailable: Dawn Oracle');expect(store.current!.features[0]?.description).toBe('Saved class feature');expect(store.loadHistory[0]?.partial).toBe(true)
+  })
+  it('does not substitute a different same-name definition for a missing linked class',async()=>{
+    const store=useCharactersStore();saved.meta.klass='Dawn Oracle';saved.meta.classIndex='homebrew-missing';saved.features=[{name:'Oracle Sight',description:'Saved class feature'}]
+    vi.mocked(api.get).mockImplementation(async path=>path.endsWith('/references')?{character:structuredClone(saved),spells:[],feats:[],races:[],subclasses:[],backgrounds:[],classes:[{index:'homebrew-other-pack',name:'Dawn Oracle',aliases:[],homebrew_traits:[{name:'Oracle Sight',level:9,description:'Other source'}]}]}:{character:structuredClone(saved),spells:{},libraryRevision:store.libraryRevision})
+    await store.fetchOne(saved._id,{quick:true});const library=mount();await complete(library)
+    expect(library.warning.value).toContain('Imported class definitions are unavailable');expect(library.features.value[0]?.origin).toBeUndefined();expect(library.features.value[0]?.description).toBe('Saved class feature')
+  })
   it('classifies imported Grim Harvest with trailing whitespace as a subclass combat feature',async()=>{
     const store=useCharactersStore()
     saved.meta.klass='Sorcerer';saved.meta.subclass='Blood Magic';saved.meta.level=3

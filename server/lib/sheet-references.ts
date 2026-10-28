@@ -9,11 +9,12 @@ import { characterUsesDefinition } from './compendium-character'
 
 /** Only definitions used by this character cross the room's assignment boundary. */
 export function sheetReferences(c:Character,library:CharacterRuleLibrary) {
-  const wanted=new Set([c.meta.race,c.meta.subrace,c.meta.klass,c.meta.subclass,c.meta.background,...(c.meta.classLevels??[]).map(e=>e.name),...c.features.map(f=>f.name),...c.features.filter(f=>/^feats?$/i.test(f.name.trim())).flatMap(f=>featNames(f.description))].map(n=>n.trim().toLowerCase()))
+  const wanted=new Set([c.meta.race,c.meta.subrace,c.meta.klass,c.meta.subclass,c.meta.background,...(c.meta.classLevels??[]).flatMap(e=>[e.name,e.subclass??'']),...c.features.map(f=>f.name),...c.features.filter(f=>/^feats?$/i.test(f.name.trim())).flatMap(f=>featNames(f.description))].map(n=>n.trim().toLowerCase()))
+  const selected=new Set([c.meta.classIndex,c.meta.subclassIndex,c.meta.raceIndex,...(c.meta.classLevels??[]).flatMap(e=>[e.index,e.subclassIndex])].filter((id):id is string=>!!id))
   const spellIds=new Set([...c.spellcasting.known,...c.spellcasting.prepared,...innateRaceSpells(c).map(s=>s.index)])
   const compact=(entries:typeof library.catalog.spells)=>entries.map(({details,sourcePacks,sources,...entry})=>entry)
   const select=(kind:'classes'|'races'|'subclasses'|'backgrounds'|'feats')=>{
-    const entries=library.catalog[kind].filter(e=>wanted.has(e.name.trim().toLowerCase()))
+    const entries=library.catalog[kind].filter(e=>wanted.has(e.name.trim().toLowerCase())||selected.has(e.index)||(e.aliases as string[]??[]).some(id=>selected.has(id)))
     return compact(kind==='classes'||kind==='races'||kind==='subclasses'?activeWorkshopEntries(entries,kind):entries)
   }
   const spells=library.catalog.spells.filter(s=>spellIds.has(s.index)||(s.aliases as string[]).some(a=>spellIds.has(a))||spellIds.has(s.contentKey))
@@ -40,4 +41,13 @@ export function sheetReferences(c:Character,library:CharacterRuleLibrary) {
     else rows.push({...entry,definitionAvailable:true})
   }
   return result
+}
+
+/** Selectable imported identities without raw pack trees or full rules.
+ * Descriptive legacy imports remain descriptive; this does not publish rules. */
+export function sheetRuleOptions(library:CharacterRuleLibrary){
+  return (['classes','subclasses','races'] as const).flatMap(kind=>activeWorkshopEntries(library.catalog[kind],kind).map(entry=>({
+    index:entry.index,name:entry.name,url:'',displayName:String(entry.displayName??`${entry.name}${entry.sourcePack?' · '+entry.sourcePack:''}`),
+    ruleKind:({classes:'class',subclasses:'subclass',races:'race'} as const)[kind],workshop:entry.workshop,
+  })))
 }

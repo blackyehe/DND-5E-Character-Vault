@@ -1,4 +1,4 @@
-import {sheetReferenceCache,type SheetReferences} from './sheet-reference-cache'
+import {sheetReferenceCache,SHEET_REFERENCE_VERSION,type SheetReferences} from './sheet-reference-cache'
 
 export interface StoredSheetReferences {key:string;owner:string;expires:number;digest:string;payload:string}
 export interface SheetReferenceStorage {
@@ -13,10 +13,10 @@ const writes=new Set<IDBTransaction>()
 function identity(key:string){
  try{
   if(key.length>8192)return
-  const [owner,path,role,version,revision]=JSON.parse(key)
+  const [owner,path,role,version,revision,format]=JSON.parse(key)
   // Persist only the owner's ordinary sheet. Room access and preview responses
   // continue using the existing short session cache and live authorization.
-  return typeof owner==='string'&&owner&&typeof path==='string'&&/^\/api\/characters\/[^/]+\/references$/.test(path)&&role==='owner'&&
+  return format===SHEET_REFERENCE_VERSION&&typeof owner==='string'&&owner&&typeof path==='string'&&/^\/api\/characters\/[^/]+\/references$/.test(path)&&role==='owner'&&
    typeof version==='string'&&version&&typeof revision==='string'&&revision?{owner,id:path.split('/')[3],version}:undefined
  }catch{return undefined}
 }

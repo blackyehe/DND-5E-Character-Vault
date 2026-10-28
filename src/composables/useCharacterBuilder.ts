@@ -1,6 +1,7 @@
 import { workshopSlots } from '../../shared/homebrew-workshop'
 import { classSpellDefaults } from '../../shared/class-rules'
 import { slotMaximums } from '../../shared/character-progression'
+import { subclassMatchesClass } from '../../shared/subclass-identity'
 import { spellSelectionPolicy, spellSelectionCounts, spellSelectionProblems } from '../lib/spell-selection'
 import { featOpportunities, selectedFeatIndexes } from '../lib/advancements'
 import { equipmentFrom } from '../lib/character-sheet'
@@ -56,8 +57,7 @@ export function useCharacterBuilder() {
   }
   const loadingDetails = computed(() => raceLoading.value || classLoading.value || featureLoading.value || subraceLoading.value || subclassLoading.value || backgroundLoading.value)
   const subclassOptions = computed(() => {
-    const parent = (klass.value?.contentKey ?? draft.klass).replace(/^.*\//, '')
-    return [...(klass.value?.subclasses ?? []), ...customSubclasses.value.filter((entry) => entry.class === parent||entry.workshop?.parentClass===draft.klass)]
+    return [...(klass.value?.subclasses ?? []), ...customSubclasses.value.filter((entry) => subclassMatchesClass(entry,{...klass.value,index:draft.klass,name:klass.value?.name??draft.klass}))]
   })
   const subraceOptions = computed(() => {
     const parent = (race.value?.contentKey ?? draft.race).replace(/^.*\//, '')

@@ -24,6 +24,7 @@ import {
 import { raceFeatures } from '../../shared/workshop-race'
 import { abilityMod } from './calc'
 import { sortSpellsByLevel } from './advancement-discovery'
+import { subclassMatchesClass } from '../../shared/subclass-identity'
 
 export interface AdvancementCatalog {
   character?: Character
@@ -91,7 +92,7 @@ export async function loadAdvancementRules(
     )?.workshop ??
     (!d.classIndex || d.classIndex === saved?.index ? saved?.rule : undefined)
   const imported = catalog.classes.find((r) =>
-    d.classIndex ? r.index === d.classIndex : r.name === d.className,
+    d.classIndex ? r.index === d.classIndex||r.aliases?.includes(d.classIndex) : r.name === d.className,
   )
   // A saved imported class named like a standard class must not silently fall
   // through to SRD progression when its authored rules differ.
@@ -115,13 +116,12 @@ export async function loadAdvancementRules(
   const subclassRules = catalog.rules.filter(
     (r) =>
       r.workshop.kind === 'subclass' &&
-      (r.workshop.parentClass === d.classIndex ||
-        ruleName(r.workshop.parentClass) === ruleName(d.className)),
+      subclassMatchesClass(r,{...imported,index:d.classIndex,name:d.className}),
   )
   const subclasses = [
     ...(definition?.subclasses ?? []),
     ...catalog.subclasses
-      .filter((s) => ruleName(s.class) === ruleName(d.className))
+      .filter((s) => subclassMatchesClass(s,{...imported,index:d.classIndex,name:d.className}))
       .map((s) => ({ index: s.index, name: s.name })),
     ...subclassRules.map((s) => ({ index: s.index, name: s.name })),
   ]
@@ -333,7 +333,7 @@ export async function loadAdvancementRules(
         c.homebrew?.bindings.find(
           (b) => b.rule.kind === 'subclass' && b.index === subclassIndex,
         )?.rule,
-      custom = catalog.subclasses.find((s) => s.index === subclassIndex)
+      custom = catalog.subclasses.find((s) => s.index === subclassIndex||s.aliases?.includes(subclassIndex))
     if (workshop) {
       addWorkshop(workshop)
       ;(r.bindings ??= []).push({ index: subclassIndex, rule: workshop })

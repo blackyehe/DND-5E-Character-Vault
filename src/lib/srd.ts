@@ -6,6 +6,7 @@ export interface SrdListResponse<T> {
 }
 
 export interface SrdRef {
+  ruleKind?:'class'|'subclass'|'race'
   itemDetailUrl?:string
   itemReference?:boolean
   itemDamageTypes?:string[]

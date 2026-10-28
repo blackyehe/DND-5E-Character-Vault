@@ -15,8 +15,9 @@ export function resolveEquipmentItem(saved:EquipmentItem):EquipmentItem {
   const swordName=name.replace(/\b(longsword|shortsword|greatsword|rapier|scimitar)\b/g,'sword')
   const magicMatches=magicItems.filter(item=>inside(name,words(item.name))||inside(swordName,words(item.name))||inside(name,words(item.index))||index===words(item.index))
     .sort((a,b)=>b.name.length-a.name.length)
-  let magic=magicItems.find(item=>item.index===saved.magicIndex||item.index===saved.index)
-  if(!magic&&magicMatches.length&&(!magicMatches[1]||magicMatches[0]!.name.length>magicMatches[1].name.length))magic=magicMatches[0]
+  // An explicitly selected imported source must not become a guessed SRD item.
+  let magic=magicItems.find(item=>item.index===(saved.magicIndex??saved.index))
+  if(!magic&&!saved.magicIndex&&magicMatches.length&&(!magicMatches[1]||magicMatches[0]!.name.length>magicMatches[1].name.length))magic=magicMatches[0]
   let base=equipment.find(item=>item.index===saved.index)
   const canInferBase=!magic||['weapon','armor','staff','ammunition'].includes(magic.equipment_category.index)
   if(!base&&canInferBase){
@@ -28,7 +29,7 @@ export function resolveEquipmentItem(saved:EquipmentItem):EquipmentItem {
     if(best&&!candidates.some(other=>other!==best&&!inside(words(best.name),words(other.name))&&!inside(words(best.index),words(other.index))))base=best
   }
   const numeric=saved.name.match(/\+([1-3])\b/)??saved.name.match(/(?:weapon|armou?r|sword|bow|axe|shield)[\w\s]*\s([1-3])$/i)
-  if(!magic&&numeric&&base&&(base.damage||base.armor_class))magic=magicItems.find(item=>item.index===`${base.armor_class?(base.armor_category==='Shield'?'shield':'armor'):'weapon'}-${numeric[1]}`)
+  if(!magic&&!saved.magicIndex&&numeric&&base&&(base.damage||base.armor_class))magic=magicItems.find(item=>item.index===`${base.armor_class?(base.armor_category==='Shield'?'shield':'armor'):'weapon'}-${numeric[1]}`)
   const derived=base?equipmentFrom(base):undefined
   const reference=[magic?.desc.join('\n\n'),derived?.description].filter(Boolean).join('\n\n')
   // Only unconditional numerical weapon/armour enchantments belong in attack/AC math.

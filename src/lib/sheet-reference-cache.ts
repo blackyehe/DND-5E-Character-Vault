@@ -15,10 +15,11 @@ export interface SheetReferences {
 // markers before a response can be reused; private HTTP caching stays disabled.
 const entries=new Map<string,{expires:number;value:SheetReferences;bytes:number}>()
 const lifetime=2*60*1000,limit=24,budget=4*1024*1024
+export const SHEET_REFERENCE_VERSION='selected-rules-2'
 let epoch=0
 export function sheetReferenceCacheKey(input:{userId?:string;path:string;role:string;version:string;revision:string;preview?:boolean}) {
   return input.userId&&input.version&&input.revision&&!input.preview
-    ?JSON.stringify([input.userId,input.path,input.role,input.version,input.revision]):undefined
+    ?JSON.stringify([input.userId,input.path,input.role,input.version,input.revision,SHEET_REFERENCE_VERSION]):undefined
 }
 export const sheetReferenceCache={
   get epoch(){return epoch},

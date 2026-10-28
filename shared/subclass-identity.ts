@@ -27,6 +27,12 @@ export function subclassParent(entry:SubclassIdentityEntry){
   const raw=row(entry.details),workshop=row(entry.workshop)
   return ref(workshop.parentClass)||ref(entry.class)||ref(raw[':class'])||entry.filterFacets?.parentClass?.[0]||''
 }
+/** Pack parent keys need not equal the class's display name. */
+export function subclassMatchesClass(entry:SubclassIdentityEntry,klass:{index?:string;name:string;contentKey?:string;aliases?:string[]}){
+  const normalize=(value:string)=>normalizeSubclassName(value.replace(/^:/,'').replace(/^.*\//,'')).replace(/[\s_]+/g,'-')
+  const parent=normalize(subclassParent(entry))
+  return !!parent&&[klass.index,klass.name,klass.contentKey,...klass.aliases??[]].some(value=>!!value&&normalize(value)===parent)
+}
 export function subclassIdentity(entry:SubclassIdentityEntry){
   const raw=row(entry.details),parent=subclassParent(entry)
   const parentKey=normalizeSubclassName(parent.replace(/^:/,'').replace(/^.*\//,''))

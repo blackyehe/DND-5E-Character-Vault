@@ -5,6 +5,7 @@ import WorkshopCharacterChoices from '../components/workshop/WorkshopCharacterCh
 import { applyWorkshopRules } from '../../shared/workshop-character'
 import ShadowChampions from '../components/ShadowChampions.vue'
 import ItemRules from '../components/sheet/ItemRules.vue'
+import ItemComposer from '../components/items/DeferredItemComposer.vue'
 import { isRevenantShadow, classSpellDefaults } from '../../shared/class-rules'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -19,7 +20,7 @@ import BuilderChoices from '../components/creation/BuilderChoices.vue'
 import BuilderAdvancements from '../components/creation/BuilderAdvancements.vue'
 import SpellSlotEditor from '../components/sheet/SpellSlotEditor.vue'
 import ResourceEditor from '../components/sheet/ResourceEditor.vue'
-import { emptyCharacter, type Character } from '../../shared/character'
+import { emptyCharacter, type Character, type EquipmentItem } from '../../shared/character'
 import { resourcesFor } from '../lib/character-sheet'
 import { slotsFor } from '../../shared/character-progression'
 import { selectedFeatIndexes } from '../lib/advancements'
@@ -61,6 +62,8 @@ function changeCasting(value: Character['spellcasting']) {
 
 const spellResultsElement = ref<HTMLElement | null>(null)
 const creating = ref(false), createError = ref(''), showMobileSummary = ref(false)
+const itemCreateOpen = ref(false)
+function addComposedItem(item:EquipmentItem){draft.equipment.push({...item,index:item.index??item.magicIndex??`custom-${crypto.randomUUID()}`})}
 const activeHeading = ref<HTMLElement | null>(null)
 const languageSelection = ref(''), additionalSkill = ref(''), equipmentQuery = ref(''), customItemName = ref('')
 const equipmentLimit = ref(12)
@@ -311,6 +314,7 @@ async function createCharacter() {
             </template>
 
             <template v-else-if="draft.step === 'equipment'">
+              <button type="button" class="cb-button cb-button-secondary" :disabled="inventoryBusy" @click="itemCreateOpen=true">Choose imported or Workshop item</button>
               <div v-if="klass || background" class="cb-detail-panel cb-starter-equipment"><div class="cb-detail-heading"><div><p class="cb-eyebrow">STARTING GEAR</p><h3>Pack for your calling.</h3></div><BuilderIcon name="bag" :size="28" /></div><button v-if="hasFixedEquipment" type="button" class="cb-button cb-button-secondary" :disabled="inventoryBusy" @click="builder.addFixedEquipment">Add fixed class & background gear</button><div v-for="(choice, index) in startingChoices" :key="index" class="cb-gear-choice"><p>{{ choice.description }}</p><div class="cb-chips"><button v-for="option in choice.options" :key="option.label" type="button" :disabled="inventoryBusy" @click="addKit(option.items)"><BuilderIcon name="plus" :size="12" />{{ option.label }}</button></div><p v-if="!choice.options.length" class="cb-field-hint">Use the equipment search below to choose these items.</p></div><p v-if="!startingChoices.length && !hasFixedEquipment" class="cb-field-hint">Add your starting gear from the equipment list below.</p></div>
               <label class="cb-search cb-equipment-search"><BuilderIcon name="search" :size="18" /><input v-model="equipmentQuery" placeholder="Search weapons, armor & adventuring gear…" aria-label="Search equipment" /></label><div class="cb-equipment-catalog"><button v-for="entry in filteredEquipment.slice(0, equipmentLimit)" :key="entry.index" type="button" :disabled="inventoryBusy" @click="builder.addEquipment(entry)"><span>{{ entry.name }}</span><BuilderIcon name="plus" :size="15" /></button></div><button v-if="filteredEquipment.length > equipmentLimit" type="button" class="cb-text-button" @click="equipmentLimit += 12">Show more equipment</button>
               <div class="cb-inline-form cb-custom-equipment"><label class="cb-field cb-grow">Custom item<input v-model="customItemName" maxlength="100" placeholder="A keepsake, unusual weapon, or anything else…" @keydown.enter.prevent="addCustomItem" /></label><button type="button" class="cb-button cb-button-secondary" :disabled="!customItemName.trim()" @click="addCustomItem">Add item</button></div>
@@ -342,6 +346,7 @@ async function createCharacter() {
         <div class="cb-summary-abilities"><div v-for="key in ABILITY_KEYS" :key="key"><span>{{ key.toUpperCase() }}</span><strong>{{ scores[key] }}</strong><small>{{ signed(abilityMod(scores[key])) }}</small></div></div><div class="cb-summary-line"><span>Proficiency bonus</span><strong>{{ signed(stats.proficiency) }}</strong></div><div class="cb-summary-line"><span>Initiative</span><strong>{{ signed(stats.initiative) }}</strong></div><div class="cb-summary-line"><span>Features & traits</span><strong>{{ eligibleFeatures.length }}</strong></div><div class="cb-summary-line"><span>Spells selected</span><strong>{{ draft.spells.length }}</strong></div><div class="cb-summary-divider" /><button type="button" class="cb-summary-review" @click="goTo('review')">{{ canCreate ? 'Ready for adventure' : 'Review your character' }}<BuilderIcon name="arrow" :size="16" /></button><ShadowChampions v-if="isRevenantShadow(klass?.name??'')" :level="draft.level" /></div><p class="cb-summary-note">The details make the hero.<br />The choices are yours.</p></aside>
     </div>
   </div>
+  <ItemComposer v-if="itemCreateOpen" mode="draft" @close="itemCreateOpen=false" @add="addComposedItem" />
 </template>
 
 <script lang="ts">

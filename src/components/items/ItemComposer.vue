@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { vMotionPanel } from '../../directives/siteMotion'
-import { computed,nextTick,onMounted,reactive,ref,watch } from 'vue'
+import { computed,defineAsyncComponent,nextTick,onMounted,reactive,ref,watch } from 'vue'
 import type { EquipmentItem } from '../../../shared/character'
 import type { ItemComposerProps } from './item-composer-props'
 import { itemKind,itemKinds } from '../../../shared/item-rules'
@@ -12,6 +12,7 @@ import { api } from '../../lib/api'
 import { useCharactersStore } from '../../stores/characters'
 import ItemRules from '../sheet/ItemRules.vue'
 import ItemFilters from './ItemFilters.vue'
+const ImportedItemPicker=defineAsyncComponent(()=>import('./ImportedItemPicker.vue'))
 import '../sheet/sheet.css'
 import '../sheet/sheet-details.css'
 
@@ -21,6 +22,7 @@ const store=useCharactersStore(),dialog=ref<HTMLDialogElement|null>(null)
 const page=ref(props.mode==='library'||props.mode==='entry'?'create':'library'),source=ref('all'),query=ref(''),error=ref(''),loading=ref(false),busy=ref(false),chosen=ref(false)
 const remember=ref(props.mode!=='draft'&&props.mode!=='entry'),requestId=ref(crypto.randomUUID()),base=ref('')
 const templateId=ref(props.initial?.templateId??'')
+const importedSource=ref('')
 const magicDetail=ref<SrdMagicItem|null>(null)
 const entries=ref<(SrdRef&{source:'equipment'|'magic'|'mine';item?:EquipmentItem})[]>([])
 const filters=ref(emptyItemFilters()),customBase=ref(''),baseRequest=ref(0)
@@ -44,7 +46,8 @@ function assign(value:EquipmentItem){
   if(item.weapon?.category)item.weapon.category=item.weapon.category.toLowerCase()
   customBase.value=[...magicWeaponTypes,...magicArmourTypes].some(form=>form.index===value.index)?value.index??'':''
 }
-function create(magical:boolean){page.value='create';chosen.value=false;magicDetail.value=null;base.value='';templateId.value='';requestId.value=crypto.randomUUID();assign({...makeEmpty(),magical});remember.value=props.mode!=='draft';error.value=''}
+function create(magical:boolean){page.value='create';chosen.value=false;magicDetail.value=null;base.value='';templateId.value='';importedSource.value='';requestId.value=crypto.randomUUID();assign({...makeEmpty(),magical});remember.value=props.mode!=='draft';error.value=''}
+function chooseImported(value:EquipmentItem,source:string){page.value='create';chosen.value=true;magicDetail.value=null;base.value='';templateId.value='';importedSource.value=source;requestId.value=crypto.randomUUID();assign(value);remember.value=false;error.value=''}
 watch(()=>item.kind,kind=>{
   if(kind==='weapon')item.weapon??={dice:'1d6',damageType:'slashing',range:'Melee',finesse:false,ranged:false,category:'simple'}
   else delete item.weapon
@@ -90,7 +93,7 @@ async function load(){
   if(result.some(r=>r.status==='rejected'))error.value='Part of the library could not load. You can retry, or create an item directly.'
 }
 async function choose(entry:typeof entries.value[number]){
-  busy.value=true;error.value='';magicDetail.value=null;base.value=''
+  busy.value=true;error.value='';magicDetail.value=null;base.value='';importedSource.value=''
   try{
     if(entry.source==='mine')assign({...entry.item!,qty:1,equipped:false,attuned:false})
     else if(entry.source==='equipment')assign(equipmentFrom(await srd.equipmentItem(entry.index)))
@@ -133,10 +136,11 @@ onMounted(async()=>{await nextTick();if(props.mode!=='entry')dialog.value?.showM
 </script>
 <template>
   <Teleport to=".site-shell" :disabled="mode==='entry'"><component :is="mode==='entry'?'div':'dialog'" ref="dialog" class="item-composer hero-sheet" :class="{'entry-item-builder':mode==='entry'}" :aria-label="heading" @cancel.prevent="!busy&&emit('close')"><header v-if="mode!=='entry'"><div><p class="sheet-eyebrow">CREATE · SAVE · GIVE</p><h2>{{heading}}</h2><p class="sheet-small">{{mode==='draft'?'The item will stay in your draft until you Save character.':mode==='give'?'Giving saves immediately. The player’s open sheet updates automatically.':'Save reusable items here. Saved changes update copies already given to characters.'}}</p></div><button type="button" class="sheet-button" aria-label="Close item creator" :disabled="busy" @click="emit('close')">✕</button></header>
-  <nav v-if="mode!=='entry'" class="sheet-filter-buttons" aria-label="Item creator sections"><button type="button" :disabled="busy" class="sheet-button" :class="{active:page==='library'}" @click="page='library';error=''">Choose from library</button><button type="button" :disabled="busy" class="sheet-button" :class="{active:page==='create'&&!item.magical}" @click="create(false)">Create normal item</button><button type="button" :disabled="busy" class="sheet-button" :class="{active:page==='create'&&item.magical}" @click="create(true)">Create magic item</button></nav>
+  <nav v-if="mode!=='entry'" class="sheet-filter-buttons" aria-label="Item creator sections"><button type="button" :disabled="busy" class="sheet-button" :class="{active:page==='library'}" @click="page='library';error=''">Choose from library</button><button type="button" :disabled="busy" class="sheet-button" :class="{active:page==='imported'}" @click="page='imported';chosen=false;error=''">Imported items</button><button type="button" :disabled="busy" class="sheet-button" :class="{active:page==='create'&&!item.magical}" @click="create(false)">Create normal item</button><button type="button" :disabled="busy" class="sheet-button" :class="{active:page==='create'&&item.magical}" @click="create(true)">Create magic item</button></nav>
   <p v-if="error" class="sheet-alert" role="alert">{{error}}</p>
   <component :is="mode==='entry'?'div':'form'" v-stable-loading="loading" v-motion-panel="page + String(item.magical)" class="item-composer-body" @submit.prevent="submit"><fieldset :disabled="busy"><section v-if="page==='library'" class="item-library"><div class="sheet-two-fields"><label>Search item library<input v-model="query" type="search" placeholder="For example: Ring of Protection" /></label><label>Item source<select v-model="source"><option value="all">All items</option><option value="mine">My Workshop items</option><option value="equipment">SRD normal equipment</option><option value="magic">SRD magic items</option></select></label></div><details class="sheet-details"><summary>Filter by type, tags, rarity or attunement</summary><ItemFilters v-model="filters" :extra-tags="entries.flatMap(e=>e.item?equipmentTags(e.item):[])" /></details><p v-if="loading" class="sheet-small" role="status">Loading items…</p><div class="item-result-list"><button v-for="entry in matches.slice(0,40)" :key="`${entry.source}:${entry.index}`" type="button" @click="choose(entry)"><strong>{{entry.name}}</strong><small>{{entry.source==='mine'?'My Workshop':entry.source==='magic'?'SRD magic item':'SRD equipment'}}</small></button></div><p class="sheet-small">{{matches.length}} matches{{matches.length>40?' · Showing 40; narrow your search.':''}}</p><button v-if="error" type="button" class="sheet-button" @click="load">Retry library</button></section>
-  <section v-if="page==='create'||chosen" class="item-definition"><template v-if="page==='create'"><div class="sheet-two-fields"><label>Item name<input v-model="item.name" required maxlength="200" placeholder="Name your item" /></label><label>Item type<select v-model="item.kind" @change="changeKind"><option v-for="kind in itemKinds" :key="kind" :value="kind">{{labels[kind]}}</option></select></label></div><label class="sheet-checkbox"><input v-model="item.magical" type="checkbox" /> Magic item</label>
+  <ImportedItemPicker v-if="page==='imported'" @choose="chooseImported" @busy="busy=$event" />
+  <section v-if="page==='create'||chosen" class="item-definition"><p v-if="importedSource" class="sheet-small">Imported from {{importedSource}}. Review the item’s rules and any missing base weapon or armour details before saving.</p><template v-if="page==='create'"><div class="sheet-two-fields"><label>Item name<input v-model="item.name" required maxlength="200" placeholder="Name your item" /></label><label>Item type<select v-model="item.kind" @change="changeKind"><option v-for="kind in itemKinds" :key="kind" :value="kind">{{labels[kind]}}</option></select></label></div><label class="sheet-checkbox"><input v-model="item.magical" type="checkbox" /> Magic item</label>
   <label v-if="item.kind==='weapon'">Base weapon type<select v-model="customBase" @change="setCustomBase"><option value="">Custom weapon · enter my own stats</option><option v-for="form in magicWeaponTypes" :key="form.index" :value="form.index">{{form.name}}</option></select></label>
   <div v-if="item.kind==='armour'&&item.armor" class="sheet-two-fields"><label>Armour category<select v-model="item.armor.category" @change="changeArmourCategory"><option :value="undefined">Custom armour</option><option v-for="group in armourCategories" :key="group" :value="group">{{titleCase(group)}}{{group==='shield'?'':' armour'}}</option></select></label><label>Base armour type<select v-model="customBase" @change="setCustomBase"><option value="">Custom armour · enter my own stats</option><option v-for="form in customArmourBases" :key="form.index" :value="form.index">{{form.name}}</option></select></label></div>
   <p v-if="item.kind==='weapon'||item.kind==='armour'" class="sheet-small">Choosing a base fills its standard rules and weight. You can customise the stats below; its type stays searchable.</p>

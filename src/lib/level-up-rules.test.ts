@@ -71,6 +71,13 @@ beforeEach(() => {
 })
 
 describe('advancement rule coverage', () => {
+  it('finds an imported subclass by the parent content key instead of the display name',async()=>{
+    const c=character('Dawn Oracle',2);c.meta.classIndex='homebrew-oracle';c.meta.subclass='Star School';c.meta.subclassIndex='homebrew-stars'
+    const options=catalog();options.classes=[{index:'homebrew-oracle',name:'Dawn Oracle',contentKey:'oracle-key',aliases:[],url:'',sourcePack:'Trial',hit_die:8,homebrew_traits:[]}] as never
+    options.subclasses=[{index:'homebrew-stars',name:'Star School',class:'oracle-key',url:'',traits:[{name:'Star Sight',description:'Imported third-level feature',level:3}]}] as never
+    const rules=await loadAdvancementRules(c,newAdvancement(c),options)
+    expect(rules.subclasses).toContainEqual({index:'homebrew-stars',name:'Star School'});expect(rules.features).toContainEqual(expect.objectContaining({name:'Star Sight',origin:'subclass'}));expect(srd.class).not.toHaveBeenCalled();expect(srd.subclass).not.toHaveBeenCalled()
+  })
   it('uses class ASI schedules, including Fighter 6 and Rogue 10, without treating cumulative API bonuses as a new grant', async () => {
     for (const [klass, level, asi] of [
       ['Fighter', 5, true],

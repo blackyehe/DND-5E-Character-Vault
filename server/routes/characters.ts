@@ -7,7 +7,7 @@ import { characterRuleLibrary } from '../lib/character-rule-library'
 import { resolveWorkshopCharacter, workshopRevision } from '../lib/workshop-library'
 
 import { characterOutput as output, savedCharacterOutput, quickSheetOutput } from '../lib/character-output'
-import { sheetReferences } from '../lib/sheet-references'
+import { sheetReferences, sheetRuleOptions } from '../lib/sheet-references'
 import { grantSchema,inventoryAfterGrant } from '../lib/inventory'
 import { rememberItem } from './items'
 import { attunementError } from '../../shared/item-rules'
@@ -87,7 +87,7 @@ router.get('/:id/advancement-options',async(req,res)=>{
 router.get('/:id/editor-options',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
   const library=await characterRuleLibrary(req.userId)
-  res.json({rules:library.rules.map(r=>({index:r.index,name:r.draft.name,url:'',workshop:r.draft})),feats:library.catalog.feats.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases,desc})=>({index,name,displayName,sourcePack,level,contentKey,aliases,definitionAvailable:Array.isArray(desc)&&desc.some(line=>typeof line==='string'&&line.trim())}))})
+  res.json({rules:sheetRuleOptions(library),feats:library.catalog.feats.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases,desc})=>({index,name,displayName,sourcePack,level,contentKey,aliases,definitionAvailable:Array.isArray(desc)&&desc.some(line=>typeof line==='string'&&line.trim())}))})
 })
 router.get('/:id/spell-definition/:index',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})

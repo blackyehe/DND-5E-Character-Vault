@@ -15,6 +15,11 @@ beforeEach(()=>{
 })
 afterEach(()=>{vi.restoreAllMocks();vi.useRealTimers()})
 describe('authorized owner sheet persistence',()=>{
+ it('does not reuse references from before the selected-rule projection changed',async()=>{
+  const oldKey=JSON.stringify(JSON.parse(key).slice(0,5))
+  await persist(refs(),oldKey);expect(storage.write).not.toHaveBeenCalled()
+  expect(await readPersistedSheetReferences(oldKey,sheetReferenceCache.epoch,storage)).toBeUndefined();expect(storage.read).not.toHaveBeenCalled()
+ })
  it('reuses bounded references across a new document memory epoch without the import source',async()=>{
   const value=refs();value.character!.externalImport={provider:'dmv',sourceUrl:'',source:'private original',importedAt:'',warnings:[]}
   await persist(value);expect(saved).toBeDefined();expect(saved!.payload).not.toContain('private original')
