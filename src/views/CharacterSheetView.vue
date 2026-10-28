@@ -48,11 +48,12 @@ const editDirty = ref(false), pendingTab = ref(''),pendingRules=ref(false)
 watch(active,value=>{store.editing=value==='edit'||value==='level-up';emit('section-change',value)},{immediate:true})
 watch(()=>store.rulesPending,value=>{if(value)pendingRules.value=true})
 let refreshingRules=false,disposed=false
-async function refreshRules(){if(active.value==='level-up'||refreshingRules||store.roomContext?.preview||store.loading)return;if(editDirty.value){pendingRules.value=true;return}if(store.saving||!store.current)return;refreshingRules=true;try{await store.fetchOne(id.value,{quick:true});await library.reload();pendingRules.value=false}catch{/* Existing character stays usable. */}finally{refreshingRules=false}}
+async function refreshRules(force=true){if(active.value==='level-up'||refreshingRules||store.roomContext?.preview||store.loading)return;if(editDirty.value){pendingRules.value=true;return}if(store.saving||!store.current)return;refreshingRules=true;try{await store.fetchOne(id.value,{quick:true});if(force)await library.reload();pendingRules.value=false}catch{/* Existing character stays usable. */}finally{refreshingRules=false}}
 const storageRefresh=(event:StorageEvent)=>{if(event.key==='codex:workshop-revision')void refreshRules()}
-const focusRefresh=()=>{if(!props.roomId&&document.visibilityState==='visible')void refreshRules()}
-onMounted(()=>{window.addEventListener('codex:workshop-published',refreshRules);window.addEventListener('focus',focusRefresh);window.addEventListener('storage',storageRefresh);document.addEventListener('visibilitychange',focusRefresh)})
-onUnmounted(()=>{disposed=true;store.editing=false;window.removeEventListener('codex:workshop-published',refreshRules);window.removeEventListener('focus',focusRefresh);window.removeEventListener('storage',storageRefresh);document.removeEventListener('visibilitychange',focusRefresh)})
+const publishedRefresh=()=>{void refreshRules()}
+const focusRefresh=()=>{if(!props.roomId&&document.visibilityState==='visible')void refreshRules(false)}
+onMounted(()=>{window.addEventListener('codex:workshop-published',publishedRefresh);window.addEventListener('focus',focusRefresh);window.addEventListener('storage',storageRefresh);document.addEventListener('visibilitychange',focusRefresh)})
+onUnmounted(()=>{disposed=true;store.editing=false;window.removeEventListener('codex:workshop-published',publishedRefresh);window.removeEventListener('focus',focusRefresh);window.removeEventListener('storage',storageRefresh);document.removeEventListener('visibilitychange',focusRefresh)})
 function openSpellRepair(index=''){editSection.value='spells';repairSpell.value=index;repairOpen.value=true;switchTab('edit')}
 function showTab(key:string){active.value=key;void nextTick(()=>revealNavigationTarget(sheetMain.value?.querySelector<HTMLElement>('.sheet-tab-content')))}
 function switchTab(key: string) { if (key === active.value || key === 'level-up' && !canLevelUp.value) return; if (editDirty.value) pendingTab.value = key; else showTab(key) }

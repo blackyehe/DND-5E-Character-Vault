@@ -5,6 +5,7 @@ import { api } from '../lib/api'
 import { resolveCharacterProgression } from '../../shared/character-progression'
 import type { SrdSpell } from '../lib/srd'
 import { useAuthStore } from './auth'
+import {sheetReferenceCacheKey} from '../lib/sheet-reference-cache'
 
 import { emptyCharacter, type Character, type CharacterSummary, type EquipmentItem } from '../../shared/character'
 export * from '../../shared/character'
@@ -29,8 +30,9 @@ export const useCharactersStore = defineStore('characters', () => {
   const mutation = ref(0)
   const openingSpells=ref<Record<string,SrdSpell>>({})
   const libraryRevision=ref('')
+  const referenceValidation=ref<string|undefined>()
   const loadHistory=ref<SheetLoadMeasurement[]>([])
-  watch(()=>useAuthStore().user?.id,()=>{loadHistory.value=[];lastOpenMs.value=0})
+  watch(()=>useAuthStore().user?.id,()=>{loadHistory.value=[];lastOpenMs.value=0;referenceValidation.value=undefined})
   function startReferenceTiming(id:string,source:'network'|'cache'){
     const row=loadHistory.value[0]
     if(row?.characterId===id&&row.referenceMs===null&&row.source===null)row.source=source
@@ -64,20 +66,25 @@ export const useCharactersStore = defineStore('characters', () => {
     const pending=pendingReads.get(key)
     if(pending?.generation===fetchGeneration)return pending.promise
     const generation = ++fetchGeneration
+    const expectedUser=useAuthStore().user?.id
+    referenceValidation.value=undefined
     const initialVersion = current.value?._id === id ? current.value.updatedAt : null
     const initialMutation=mutation.value,started=performance.now()
     loading.value = true
     const promise=(async()=>{try {
       const payload = await api.get<Character|{character:Character;spells:Record<string,SrdSpell>;libraryRevision?:string}>(path+(options.quick?'?view=quick':''),{timeoutMs:12000})
       const character='character' in payload?payload.character:payload
-      if (generation === fetchGeneration && initialMutation===mutation.value && !saving.value && (initialVersion === null || current.value?._id !== id || current.value.updatedAt === initialVersion)) {
+      if (generation === fetchGeneration && expectedUser===useAuthStore().user?.id && initialMutation===mutation.value && !saving.value && (initialVersion === null || current.value?._id !== id || current.value.updatedAt === initialVersion)) {
         const data=resolveCharacterProgression(character)
         if(scope?.role==='player')delete data.externalImport
         // A quick refresh with the same saved version must not downgrade rules
         // already resolved for the displayed sheet.
         if(!options.quick||current.value?._id!==id||current.value.updatedAt!==data.updatedAt)current.value=data
         if('spells' in payload)openingSpells.value=payload.spells
-        if('libraryRevision' in payload&&payload.libraryRevision)libraryRevision.value=payload.libraryRevision
+        if(options.quick){
+          libraryRevision.value='libraryRevision' in payload&&typeof payload.libraryRevision==='string'?payload.libraryRevision:''
+          referenceValidation.value=sheetReferenceCacheKey({userId:expectedUser,path:path+'/references',role:scope?.role??'owner',version:data.updatedAt,revision:libraryRevision.value,preview:scope?.preview})
+        }
         if(options.quick&&initialVersion===null){
           lastOpenMs.value=performance.now()-started
           loadHistory.value.unshift({at:new Date().toISOString(),characterId:id,sheetMs:lastOpenMs.value,referenceMs:null,referenceStartedAt:performance.now(),source:null,partial:false})
@@ -172,7 +179,7 @@ export const useCharactersStore = defineStore('characters', () => {
     saveError,
     roomContext,
     sheetApiPath,
-    editing,rulesPending,mutation,lastOpenMs,acceptResolved,openingSpells,libraryRevision,loadHistory,startReferenceTiming,recordReferenceTiming,
+    editing,rulesPending,mutation,lastOpenMs,acceptResolved,openingSpells,libraryRevision,referenceValidation,loadHistory,startReferenceTiming,recordReferenceTiming,
     canEditPermanent,
     fetchList,
     fetchOne,

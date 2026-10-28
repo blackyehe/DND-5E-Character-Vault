@@ -17,7 +17,7 @@ const entries=new Map<string,{expires:number;value:SheetReferences;bytes:number}
 const lifetime=2*60*1000,limit=24,budget=4*1024*1024
 let epoch=0
 export function sheetReferenceCacheKey(input:{userId?:string;path:string;role:string;version:string;revision:string;preview?:boolean}) {
-  return input.userId&&input.revision&&!input.preview
+  return input.userId&&input.version&&input.revision&&!input.preview
     ?JSON.stringify([input.userId,input.path,input.role,input.version,input.revision]):undefined
 }
 export const sheetReferenceCache={

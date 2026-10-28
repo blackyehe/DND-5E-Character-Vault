@@ -8,6 +8,7 @@ import { innateRaceSpells } from '../../shared/workshop-race'
 import { legacySrdSpellKey } from '../lib/spell-reference'
 import { useAuthStore } from '../stores/auth'
 import { sheetReferenceCache, sheetReferenceCacheKey, sheetReferenceInputs, type SheetReferences } from '../lib/sheet-reference-cache'
+import {clearPersistedSheetReferences,persistSheetReferences,readPersistedSheetReferences} from '../lib/persisted-sheet-references'
 
 function createLibrary(c:ComputedRef<Character>) {
   const store=useCharactersStore(),auth=useAuthStore()
@@ -43,7 +44,7 @@ function createLibrary(c:ComputedRef<Character>) {
     finally{editorLoading.value=false}
   }
   const slug=(s:string)=>s.toLowerCase().replace(/\s*[·(].*$/,'').trim().replace(/[^a-z0-9]+/g,'-')
-  async function load() {
+  async function load(force=false) {
     const run=++generation
     referenceController?.abort()
     let character=c.value
@@ -60,12 +61,15 @@ function createLibrary(c:ComputedRef<Character>) {
     const path=store.sheetApiPath(character._id)+'/references'
     const cacheKey=sheetReferenceCacheKey({userId:auth.user?.id,path,role:context?.role??'owner',version:character.updatedAt,revision:store.libraryRevision,preview:context?.preview})
     const cacheEpoch=sheetReferenceCache.epoch
-    const cachedReferences=cacheKey?sheetReferenceCache.read(cacheKey):undefined
+    const diskKey=cacheKey&&cacheKey===store.referenceValidation&&!context?cacheKey:undefined
+    const cachedReferences=force?undefined:(cacheKey?sheetReferenceCache.read(cacheKey):undefined)??(diskKey?await readPersistedSheetReferences(diskKey,cacheEpoch):undefined)
+    if(run!==generation||cacheEpoch!==sheetReferenceCache.epoch){if(run===generation){loading.value=false;warning.value='Reference refresh was interrupted. Retry reference details.'}return}
     referenceSource.value=cachedReferences?'cache':'network'
     store.startReferenceTiming(character._id,referenceSource.value)
     const refs=cachedReferences??await safe('homebrew references',api.get<SheetReferences>(path,{timeoutMs:20000,signal:referenceController.signal}),{spells:[],feats:[],races:[],subclasses:[],classes:[],backgrounds:[]} as SheetReferences)
-    if(run!==generation)return
-    if(cacheKey&&!cachedReferences&&!failed.length)sheetReferenceCache.write(cacheKey,refs,cacheEpoch)
+    if(run!==generation||cacheEpoch!==sheetReferenceCache.epoch){if(run===generation){loading.value=false;warning.value='Reference refresh was interrupted. Retry reference details.'}return}
+    if(cacheKey&&!failed.length)sheetReferenceCache.write(cacheKey,refs,cacheEpoch)
+    if(diskKey&&!cachedReferences&&!failed.length)setTimeout(()=>{void persistSheetReferences(diskKey,refs,cacheEpoch)},0)
     lastReferenceMs.value=performance.now()-started
     if(refs.character&&store.acceptResolved(cachedReferences?{...refs.character,externalImport:character.externalImport}:refs.character,expectedMutation,expectedScope))character=c.value
     customSpellCatalog.value=refs.spells
@@ -121,10 +125,10 @@ function createLibrary(c:ComputedRef<Character>) {
     loading.value=false
   }
   const features=computed<CharacterFeature[]>(()=>(c.value?.features??[]).map(f=>({...metadata.value[f.name.trim().toLowerCase()],...f})))
-  onMounted(load)
+  onMounted(()=>load())
   onUnmounted(()=>{generation++;referenceController?.abort();cache.clear()})
-  watch(()=>c.value?`${scope()}:${sheetReferenceInputs(c.value)}`:'',load)
-  return {spells,resolveSpell,items,features,featCatalog,ruleCatalog,equipmentCatalog,magicItemCatalog,spellOptions,loadEditorCatalogs,editorLoading,loading,warning,lastReferenceMs,referenceSource,reload:async()=>{cache.clear();sheetReferenceCache.clear();editorScope='';await load()}}
+  watch(()=>c.value?`${scope()}:${sheetReferenceInputs(c.value)}`:'',()=>load())
+  return {spells,resolveSpell,items,features,featCatalog,ruleCatalog,equipmentCatalog,magicItemCatalog,spellOptions,loadEditorCatalogs,editorLoading,loading,warning,lastReferenceMs,referenceSource,reload:async()=>{cache.clear();clearPersistedSheetReferences();editorScope='';await load(true)}}
 }
  type Library=ReturnType<typeof createLibrary>
 const key:InjectionKey<Library>=Symbol('sheet-library')

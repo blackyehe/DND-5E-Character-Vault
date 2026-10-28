@@ -20,6 +20,7 @@ const REQUEST_SOURCE_BYTES=1024*1024,REQUEST_PROJECTION_BYTES=8*1024*1024,REQUES
 // MongoDB still caps each wire batch at 16 MiB; total compressed/decoded bytes
 // are checked below before retention, independently of the requested count.
 const CATALOGUE_BATCH_SIZE=128,CHUNK_BYTES=512*1024
+const checkedEmptyChunk=encodePrepared([],2)[0]!
 interface RepairBudget {deadline:number;attempts:number;sourceBytes:number;projectionBytes:number;entries:number;chunks:number}
 function remaining(deadline:number,max=1000) {
  const ms=Math.min(max,Math.floor(deadline-performance.now()))
@@ -159,7 +160,7 @@ export async function readComponentCatalogues(userId:string,kind:BrowseKind|read
  const kinds:readonly BrowseKind[]=typeof kind==='string'?[kind]:[...new Set(kind)]
  if(!kinds.length||kinds.some(k=>!ORCBREW_KINDS.includes(k)))return null
  const contexts=packs.map(componentContext);if(contexts.some(c=>!c))return null
- const manifests=await CompendiumComponent.find({userId,context:{$in:contexts}}).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean() as unknown as ReadyComponent[]
+ const manifests=await CompendiumComponent.find({userId,context:{$in:contexts}}).select(['context','generation',...kinds.flatMap(k=>['counts.'+k,'bytes.'+k])].join(' ')).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean() as unknown as ReadyComponent[]
  const byContext=new Map(manifests.map(m=>[m.context,m])),results=new Map<string,OrcbrewEntries>(),bad=new Set<string>()
  let declared=0
  for(const p of packs){const key=componentContext(p)!,m=byContext.get(key)
@@ -169,8 +170,31 @@ export async function readComponentCatalogues(userId:string,kind:BrowseKind|read
   }
  }
  const generationKeys=new Map(manifests.map(m=>[m.generation,m.context])),groups=new Map<string,StoredPreparedChunk[]>();let compressed=0,chunks=0
- const cursor=CompendiumComponentObject.find({userId,generation:{$in:manifests.map(m=>m.generation)},kind:{$in:kinds},role:'catalogue',index:COMPONENT_METADATA}).select('generation kind part parts digest payload').sort({generation:1,kind:1,part:1}).setOptions({maxTimeMS:4000,timeoutMS:remaining(deadline,15000)}).lean().cursor({batchSize:CATALOGUE_BATCH_SIZE})
- try{for await(const object of cursor){
+ // Group only actual, byte-for-byte verified empty chunks. Counts and persisted
+ // flags never prove an object exists. Missing/corrupt/extra chunks still pass
+ // through the original completeness, digest and decoded-byte checks below.
+ // Bound the grouped generation arrays well below MongoDB's BSON document cap;
+ // small libraries and oversized identities keep the original single scan.
+ const summarize=manifests.length<=4096&&manifests.every(m=>typeof m.generation==='string')&&
+  manifests.reduce((n,m)=>n+Buffer.byteLength(m.generation),0)<=512*1024&&
+  manifests.reduce((n,m)=>n+kinds.filter(k=>m.counts?.[k]===0).length,0)>=32
+ const filter={userId:new Types.ObjectId(userId),generation:{$in:manifests.map(m=>m.generation)},kind:{$in:kinds},role:'catalogue',index:COMPONENT_METADATA}
+ const empty={$and:[{$eq:['$part',0]},{$eq:['$parts',1]},{$eq:['$digest',checkedEmptyChunk.digest]},{$eq:['$payload',checkedEmptyChunk.payload]}]}
+ type CatalogueRow=StoredPreparedChunk&{generation:string;kind:BrowseKind;emptyGenerations?:string[]}
+ const cursor=summarize?CompendiumComponentObject.aggregate<CatalogueRow>([
+  {$match:{...filter,part:0,parts:1,digest:checkedEmptyChunk.digest,payload:checkedEmptyChunk.payload}},
+  {$group:{_id:'$kind',emptyGenerations:{$push:'$generation'}}},{$project:{_id:0,kind:'$_id',emptyGenerations:1}},
+  {$unionWith:{coll:CompendiumComponentObject.collection.name,pipeline:[
+   {$match:filter},{$match:{$expr:{$not:empty}}},{$project:{_id:0,generation:1,kind:1,part:1,parts:1,digest:1,payload:1}}
+  ]}}
+ ]).option({maxTimeMS:4000,timeoutMS:remaining(deadline,15000)}).cursor({batchSize:CATALOGUE_BATCH_SIZE}):
+ CompendiumComponentObject.find(filter).select('generation kind part parts digest payload').sort({generation:1,kind:1,part:1}).setOptions({maxTimeMS:4000,timeoutMS:remaining(deadline,15000)}).lean().cursor({batchSize:CATALOGUE_BATCH_SIZE})
+ const objects=(async function*(){for await(const row of cursor){
+  if(summarize&&Array.isArray((row as CatalogueRow).emptyGenerations)){
+   for(const generation of (row as CatalogueRow).emptyGenerations!)yield {generation,kind:row.kind,...checkedEmptyChunk}
+  }else yield row
+ }})()
+ try{for await(const object of objects){
   remaining(deadline)
   if(++chunks>Math.max(1,packs.length)*kinds.length*129)return null
   const context=generationKeys.get(object.generation);if(!context||!kinds.includes(object.kind as BrowseKind))return null

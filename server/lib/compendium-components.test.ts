@@ -4,7 +4,7 @@ import {encodePrepared} from './compendium-prepared-codec'
 
 const state=vi.hoisted(()=>({manifests:[] as any[],objects:[] as any[],close:vi.fn()}))
 vi.mock('../models/CompendiumComponent',()=>({
- CompendiumComponent:{find:()=>({setOptions(){return this},lean:async()=>state.manifests})},
+ CompendiumComponent:{find:()=>({select(){return this},setOptions(){return this},lean:async()=>state.manifests})},
  CompendiumComponentObject:{find:()=>({select(){return this},sort(){return this},setOptions(){return this},lean(){return this},cursor:()=>({async *[Symbol.asyncIterator](){yield* state.objects},close:state.close})})},
 }))
 import {componentContext,readComponentCatalogues,type PackMetadata} from './compendium-components'

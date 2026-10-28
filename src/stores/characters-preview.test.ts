@@ -2,12 +2,39 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { emptyCharacter, useCharactersStore, type Character } from './characters'
 import { api } from '../lib/api'
+import {useAuthStore} from './auth'
+import {sheetReferenceCacheKey} from '../lib/sheet-reference-cache'
 
 vi.mock('../lib/api',()=>({api:{get:vi.fn(),patch:vi.fn(),post:vi.fn(),delete:vi.fn()}}))
 const makeCharacter=()=>({...emptyCharacter(),_id:'0123456789abcdef01234567',updatedAt:'2026-10-19T00:00:00.000Z'})
 beforeEach(()=>{setActivePinia(createPinia());vi.clearAllMocks()})
 
 describe('player preview and progressive sheet opening',()=>{
+  it('admits persisted references only using a freshly authorized quick version and revision',async()=>{
+    const auth=useAuthStore(),store=useCharactersStore(),character=makeCharacter()
+    auth.user={id:'owner',email:'',displayName:''}
+    // Flush the account-change watcher before starting this authorized read.
+    await Promise.resolve()
+    vi.mocked(api.get).mockResolvedValue({character,spells:{},libraryRevision:'r1'})
+    await store.fetchOne(character._id,{quick:true})
+    expect(store.referenceValidation).toBe(sheetReferenceCacheKey({userId:'owner',path:`/api/characters/${character._id}/references`,role:'owner',version:character.updatedAt,revision:'r1'}))
+    vi.mocked(api.get).mockResolvedValue({character,spells:{}})
+    await store.fetchOne(character._id,{quick:true})
+    expect(store.referenceValidation).toBeUndefined();expect(store.libraryRevision).toBe('')
+    vi.mocked(api.get).mockRejectedValueOnce(Error('unauthorized'))
+    await expect(store.fetchOne(character._id,{quick:true})).rejects.toThrow('unauthorized')
+    expect(store.referenceValidation).toBeUndefined()
+  })
+  it('rejects a quick response arriving after an account change',async()=>{
+    const auth=useAuthStore(),store=useCharactersStore(),character=makeCharacter()
+    auth.user={id:'owner',email:'',displayName:''};await Promise.resolve()
+    let finish!:(value:unknown)=>void
+    vi.mocked(api.get).mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+    const pending=store.fetchOne(character._id,{quick:true})
+    auth.user={id:'other',email:'',displayName:''}
+    finish({character,spells:{},libraryRevision:'r1'});await pending
+    expect(store.current).toBeNull();expect(store.referenceValidation).toBeUndefined()
+  })
   it('keeps the advancement snapshot version even after a newer sheet has refreshed',async()=>{
     const store=useCharactersStore(),character=makeCharacter(),frozen=character.updatedAt
     store.current={...character,updatedAt:'2026-10-19T00:01:00.000Z'}

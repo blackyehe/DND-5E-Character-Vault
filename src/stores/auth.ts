@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { sheetReferenceCache } from '../lib/sheet-reference-cache'
 import { clearCreationOptionsCache } from '../lib/creation-options-cache'
 import {clearLocalCompendium} from '../lib/local-compendium-client'
+import {clearPersistedSheetReferences} from '../lib/persisted-sheet-references'
 
 export interface User {
   id: string
@@ -26,7 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
         sheetReferenceCache.clear()
         // Initial authentication must preserve this owner's persisted catalogue.
         // Its owner and revision are checked before any cached value is used.
-        if(previousUser||!user.value){clearCreationOptionsCache();clearLocalCompendium()}
+        if(previousUser||!user.value){clearCreationOptionsCache();clearLocalCompendium();clearPersistedSheetReferences()}
       }
       initialized.value = true
     }
@@ -36,6 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearLocalCompendium()
     clearCreationOptionsCache()
     sheetReferenceCache.clear()
+    clearPersistedSheetReferences()
     user.value = await api.post<User>('/api/auth/login', { email, password })
   }
 
@@ -43,6 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearLocalCompendium()
     clearCreationOptionsCache()
     sheetReferenceCache.clear()
+    clearPersistedSheetReferences()
     user.value = await api.post<User>('/api/auth/register', { email, password, displayName })
   }
 
@@ -51,6 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearLocalCompendium()
     clearCreationOptionsCache()
     sheetReferenceCache.clear()
+    clearPersistedSheetReferences()
     user.value = null
   }
 
