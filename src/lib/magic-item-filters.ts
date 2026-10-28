@@ -1,4 +1,5 @@
 import data from './magic-item-filter-data.json'
+import forms from './item-forms.json'
 import equipmentData from './equipment-filter-data.json'
 import type { EquipmentItem } from '../../shared/character'
 import { equipmentCategory, equipmentTags } from '../../shared/item-classification'
@@ -19,8 +20,8 @@ export const magicItemCategories = [
   ['potion', 'Potions'], ['ring', 'Rings'], ['rod', 'Rods'], ['scroll', 'Scrolls'],
   ['staff', 'Staves'], ['wand', 'Wands'], ['wondrous-items', 'Wondrous items'],
 ] as const
-export const magicWeaponTypes = [...data.weapons].sort((a, b) => a.name.localeCompare(b.name))
-export const magicArmourTypes = [...data.armours].sort((a, b) => a.name.localeCompare(b.name))
+export const magicWeaponTypes = [...forms.weapons].sort((a, b) => a.name.localeCompare(b.name))
+export const magicArmourTypes = [...forms.armours].sort((a, b) => a.name.localeCompare(b.name))
 export const magicDamageTypes = ['acid','bludgeoning','cold','fire','force','lightning','necrotic','piercing','poison','psychic','radiant','slashing','thunder']
 export const hasMagicItemTags = (index: string) => Boolean(tags[index])
 export const normalEquipmentSearch=equipmentData as Record<string,EquipmentItem>
@@ -38,8 +39,8 @@ export function matchesMagicItem(index: string, filters: ItemSearchFilters) {
   if (filters.tag && !tag.tags?.includes(filters.tag)) return false
   if (filters.rarity && tag.rarity!==filters.rarity) return false
   if (filters.attunement && tag.attunement!==(filters.attunement==='required'))return false
-  if (filters.armour && !data.armours.some(a=>tag.armourTypes?.includes(a.index)&&(a.index===filters.armour||`group:${a.group}`===filters.armour))) return false
-  const weapons = data.weapons.filter(w => tag.weaponTypes?.includes(w.index) && (!filters.weapon ||
+  if (filters.armour && !forms.armours.some(a=>tag.armourTypes?.includes(a.index)&&(a.index===filters.armour||`group:${a.group}`===filters.armour))) return false
+  const weapons = forms.weapons.filter(w => tag.weaponTypes?.includes(w.index) && (!filters.weapon ||
     filters.weapon === w.index || filters.weapon === `group:${w.group}` || filters.weapon === `range:${w.range}`))
   if (filters.weapon && !weapons.length) return false
   // Evaluate base damage against the selected form, so a generic +1 weapon does not
@@ -56,13 +57,13 @@ export function matchesEquipmentItem(item:EquipmentItem,filters:ItemSearchFilter
   if(filters.rarity&&item.rarity!==filters.rarity)return false
   if(filters.attunement&&!!item.requiresAttunement!==(filters.attunement==='required'))return false
   if(filters.armour){
-    const base=data.armours.find(a=>a.index===item.index)
+    const base=forms.armours.find(a=>a.index===item.index)
     const group=item.armor?.category??base?.group.toLowerCase()
     if(!item.armor||!(item.index===filters.armour||filters.armour.toLowerCase()===`group:${group}`))return false
   }
   if(filters.weapon){
     if(!item.weapon)return false
-    const group=item.weapon.category??data.weapons.find(w=>w.index===item.index)?.group
+    const group=item.weapon.category??forms.weapons.find(w=>w.index===item.index)?.group
     if(filters.weapon!==item.index&&filters.weapon.toLowerCase()!==`group:${group?.toLowerCase()}`&&filters.weapon!==`range:${item.weapon.ranged?'Ranged':'Melee'}`)return false
   }
   if(filters.damage){
@@ -72,7 +73,4 @@ export function matchesEquipmentItem(item:EquipmentItem,filters:ItemSearchFilter
   }
   return true
 }
-export function itemSearchText(item:EquipmentItem) {
-  const base=[...magicWeaponTypes,...magicArmourTypes].find(form=>form.index===item.index)
-  return [item.name,item.category,item.rarity,base?.name,item.armor?.category,item.weapon?.damageType,item.weapon?.category,...equipmentTags(item)].filter(Boolean).join(' ').toLowerCase()
-}
+export { itemSearchText } from './item-search'

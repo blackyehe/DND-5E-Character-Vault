@@ -24,6 +24,10 @@ The order considers the consequences of a mistake and the verification required,
 
 Optional persisted-index overhead is also a database measurement item. Do not move writes into an unawaited serverless promise. Persistent browser caching remains deferred under the user's earlier direction.
 
+The separate website startup investigation on 28 October discarded both the whole-dashboard split and the small link-import panel split. The sixth-batch measurements below are historical evidence; the user requested larger benefits. Item 12's broader CSS work remains deferred.
+
+The seventh batch targets the larger character-sheet download instead. Its retained local candidate reduces the sheet's compressed JavaScript by 22.7% and improves controlled constrained-network sheet readiness by approximately 200–250 ms, with an explicit first-editor/item-creator loading cost.
+
 ## First-batch measurements
 
 Machine: AMD Ryzen 7 5800X3D, Node v26.8.2. Fixed fictional characters with 0, 12 and 40 reviewed definitions; the latter two have five modifiers per definition. These are controlled workloads, not a claim about the user's actual characters or their frequency in play.
@@ -263,3 +267,119 @@ Four screenshot hashes match exactly across production/rehearsal desktop and 390
 The initial browser harness had an incorrect selector and was corrected before capturing its baseline. A broader intermediate split deferred the map too, saving more bytes but increasing local map readiness to 49.6 ms; the final candidate keeps the map eager. No deployment tool or frozen release stage was rerun.
 
 The source candidate was **local and uncommitted in the independent plugin** and has now been reverted. Its existing scaffold and other work were preserved and were not bundled into the website's Git push. Historical details are in the sibling `docs/LOCAL_PACKAGING_20261027.md`; source snapshot, before/intermediate/final builds, browser results/screenshots, click timings, comparison, restoration record and check logs remain in its ignored `.local/packaging-20261027/`. Work spanned local midnight into 28 October; the evidence directory retains its starting date. No account approval, character write, database operation or deployment was performed.
+
+## Sixth batch: website startup, 28 October, local only
+
+**Reverted at the user's request.** The 4,945-byte compressed startup saving did not demonstrate a reliable overall loading-time improvement and imposed a first-use delay. DashboardView has been restored to its original imports. The following measurements describe the discarded candidate.
+
+DashboardView previously imported CharacterLinkImport eagerly even though its panel is mounted only after clicking Import character link. The dashboard now uses Vue's async component loader for that panel, with immediate loading status and an error message. The loaded component remains mounted when the drawer closes, preserving entered URLs and previews. Dashboard routing, authentication, save/import handlers and CSS source/order are unchanged.
+
+### Download measurements
+
+Production Vite manifests define the initial closure as index.html plus recursive static imports, excluding dynamic imports. Compression below is the sum of Node's default gzipSync output per asset, also served by the local fixture server; it is not a measurement of Vercel's compression or caching.
+
+| Initial assets | Before bytes | After bytes | Reduction |
+| --- | ---: | ---: | ---: |
+| JavaScript, uncompressed | 194,197 | 181,022 | 13,175 (6.78%) |
+| JavaScript, gzip | 71,313 | 66,963 | 4,350 (6.10%) |
+| CSS, uncompressed | 145,597 | 141,822 | 3,775 (2.59%) |
+| CSS, gzip | 24,803 | 24,208 | 595 (2.40%) |
+
+Login and the unselected dashboard retain four JavaScript requests and one CSS request, and do not fetch the import panel. Direct-sheet loading also needs the shared calculation chunk: its recorded complete JavaScript download falls only from 154,698 to 153,181 gzip bytes and uses ten JavaScript requests instead of nine. No additional request latency is established in the measured sheet workload, but a smaller initial closure is not the same as the same saving on every route.
+
+All emitted JavaScript grows from 1,234,767 to 1,236,038 uncompressed bytes, or 375,863 to 377,486 gzip bytes, because of chunk boundaries and the loading/error UI. Total emitted CSS changes from 336,332 to 336,333 bytes after splitting/minification. This is deferral of optional code, with modest package overhead; it does not remove the import feature.
+
+### Controlled DOM-readiness timings
+
+Five paired fresh document navigations per build/scenario/profile, alternating before/after order, ran without concurrent tests or builds. The native preview uses Electron 44.9.3 / Chrome 152.0.7977.167 on this machine. Both builds use loopback HTTP, gzip, Cache-Control: no-store and identical fictional API responses. Samples share an incognito browser process, so this is not a cold-process/CPU-cache benchmark. There is no bandwidth or CPU throttling. The second profile adds 80 ms independently to every server response, including HTML/assets/API; it is a controlled latency model, not a mobile network simulation.
+
+The measurement starts at document navigation and stops when a MutationObserver sees the login email input, loaded dashboard browsing hint, or saved-sheet heading. These are DOM markers, not painted readiness, FCP, LCP or an authenticated production speed guarantee. The background native preview's animation/screenshot behavior was unsuitable for visual timing; painted timing is deliberately not reported.
+
+| Route | Loopback before/after median ms | +80 ms per response before/after median ms |
+| --- | ---: | ---: |
+| Signed-out login | 51.1 / 41.0 | 288.8 / 287.6 |
+| Signed-in dashboard, roster loaded | 59.3 / 56.3 | 373.3 / 377.6 |
+| Signed-in saved sheet | 87.5 / 84.9 | 573.3 / 573.9 |
+
+The ranges overlap substantially; **no reliable overall loading-time improvement is established**. The demonstrated benefit is avoiding 4,945 gzip bytes of initial JavaScript/CSS on login and the dashboard. Real benefit on constrained connections remains unmeasured.
+
+First link-import panel DOM readiness costs 2.5 / 16.8 ms median before/after locally, and 1.8 / 92.0 ms with the 80 ms response delay. The final panel fetches its JavaScript, a shared calculation chunk and scoped CSS in parallel. Reopening preserves the fictional preview and URL, restores close-button focus to the dashboard toggle, and makes zero additional requests. Thus the retained candidate explicitly trades a first-use delay on an optional panel for a smaller normal startup download. It is not drawback-free.
+
+### Discarded whole-dashboard candidate
+
+Making DashboardView a lazy route reduced initial JavaScript by 50,829 raw / 15,906 gzip bytes and CSS by 21,120 raw bytes. It added a request after the authentication guard: dashboard readiness rose from 65.4 to 81.6 ms median locally and from 385.2 to 468.7 ms with the response delay. This imposed a measurable cost on the main landing page, so the router was restored to its original source. Its separate builds and raw measurements are retained; none of that candidate remains in the application.
+
+### Behavior checks and limits
+
+- Separate isolated Edge browser contexts verify login, dashboard, open import panel and saved sheet at 1440 px and 390 px. All eight before/after full-page screenshot pairs have identical SHA-256 hashes, with no horizontal overflow, page exceptions or external requests. Reduced motion and loaded fonts make those visual comparisons deterministic. A first native screenshot attempt timed out and its viewport did not consistently match evaluation; the isolated Edge run supplies the visual evidence, not the timing table.
+- Fictional import preview, close/reopen state and focus restoration pass in both builds at both widths. Signed-out sheet URLs retain the login next parameter; signed-in login redirects to the dashboard.
+- Deliberately returning 503 for the import chunk displays the panel error and existing page-load recovery notice while leaving the roster usable. A delayed response displays the loading status. No real character creation, hosted API call, database operation or save is part of these checks.
+- Frontend typecheck/production build passes. The local suite reports **466 passed, 55 opt-in skips, zero failures**. This is the dirty local checkout containing preserved unfinished authentication work; the earlier clean-commit test/typecheck caveat still applies. No server source is changed by this batch.
+- All protected source hashes match the starting snapshot, including the four existing authentication files and global/sheet styles. The only application edit is DashboardView.vue. No commit, push, deployment or live promotion was performed; the hosted Owlbear initialization hold remains unresolved.
+
+Ignored `.local/website-loading-20261028/` retains original/candidate/final production builds, source/hash snapshots, raw paired DOM and panel-open timings, exact probe expression/method, fixture server, asset/timing summary, isolated browser verification script and sixteen screenshots, and validation logs. The fixture server binds only to loopback and supplies fictional characters/references. Run `node .local/website-loading-20261028/serve.mjs` to inspect the retained before build on port 4317 and after build on port 4319. Summary and browser verification outputs use exclusive creation to preserve evidence.
+
+## Seventh batch: smaller character-sheet loading, 28 October, local only
+
+The user requested reverting the small import-panel split and pursuing larger benefits. DashboardView is restored to its original source, verified by its empty Git diff and protected hash. The new baseline therefore includes the original eager link importer.
+
+Source maps and manifest traversal identified two sizeable costs on the ordinary sheet path: the permanent editor was imported eagerly, and the equipment tab imported the item creator even when its dialog was closed. Inventory's itemSearchText helper also imported the full filter metadata module, keeping a large catalogue in the ordinary sheet graph after an initial split attempt.
+
+The retained candidate changes these loading boundaries:
+
+- CharacterEditTab loads on its first use, with immediate loading status and a failure message. Its draft, validation, save and unsaved-change handling remain intact.
+- Both sheet entry points use DeferredItemComposer. The wrapper forwards the original props and events, shows loading/failure status, and allows cancellation while loading. An unmounted wrapper cannot open the dialog when its pending import finishes. A shared type-only props interface keeps the wrapper and actual creator aligned.
+- Inventory search uses a small item-search module backed by a separate item-forms.json containing the original weapon/armour forms. The larger per-item filter data remains with the catalogue tools. The compatibility export from magic-item-filters is preserved, and its generator now writes both metadata files. All original metadata reconstructs exactly from the two files; no item rules or catalogue entries are removed.
+
+### Download and package sizes
+
+These measurements traverse each production manifest's recursive static imports. The sheet total includes index.html's JavaScript and the CharacterSheetView dependency graph, excluding unrequested dynamic tools. Compression is Node's default gzipSync per file, also used by the local server. Fonts, HTML, API responses and HTTP headers are excluded from this table.
+
+| Ordinary sheet assets | Before bytes | After bytes | Saving |
+| --- | ---: | ---: | ---: |
+| JavaScript, uncompressed | 516,326 | 342,142 | 174,184 (33.7%) |
+| JavaScript, gzip | 154,698 | 119,629 | 35,069 (22.7%) |
+| CSS, uncompressed | 172,510 | 166,701 | 5,809 |
+| CSS, gzip | 31,479 | 30,250 | 1,229 |
+
+The ordinary sheet avoids **36,298 compressed JavaScript/CSS bytes** before either optional tool is requested. Its static graph still uses nine JavaScript and five CSS requests. The sheet editor and item creator do not appear in the ordinary-sheet static closure. API/authentication sequencing and requests are unchanged.
+
+There is a package tradeoff. All emitted JavaScript grows from 1,234,767 to 1,238,299 raw bytes, or 375,863 to 379,923 gzip bytes, because separate chunks compress less efficiently and include loading/cancellation UI. Total emitted CSS changes from 336,332 to 336,335 bytes after splitting/minification. Global CSS sources are unchanged. The dashboard/login initial closure grows by 221 raw / 97 gzip JavaScript bytes to carry chunk-preload metadata; its CSS is byte-identical. This batch targets opening sheets, with no dashboard startup speed claim.
+
+### Timed browser results
+
+Five paired samples per build, route and network profile ran in alternating before/after order, using fresh isolated Edge contexts at 1440×1000 with reduced motion. No build or test ran alongside the timings. Both builds use gzip, Cache-Control: no-store, the same loopback fixture server and the same fictional saved characters/API responses. No hosted calls or database access are involved.
+
+The constrained profile uses Chromium network emulation with 80 ms latency, 200,000 bytes/sec download (1.6 Mbit/sec) and 100,000 bytes/sec upload. CPU is unthrottled. The local profile has no artificial network limits. Values measure navigation to a DOM marker for the loaded roster or saved character heading, rather than a production web-vitals result. Reference completion and loaded fonts are awaited before collecting resources or testing first-use controls.
+
+| Navigation | Local before/after median ms | Constrained before/after median ms |
+| --- | ---: | ---: |
+| Dashboard roster | 70.8 / 73.7 | 949.3 / 963.8 |
+| Direct saved sheet | 104.2 / 103.6 | **1,590.5 / 1,391.1** |
+| Dashboard opening a requested sheet | 122.8 / 124.7 | **1,975.1 / 1,725.7** |
+
+Constrained direct-sheet readiness improves by **199.4 ms (12.5%)**, with non-overlapping sample ranges of 1,568.7–1,594.5 before and 1,381.6–1,411.7 after. The embedded sheet improves by **249.4 ms (12.6%)**, with ranges of 1,960.5–1,994.3 / 1,705.9–1,735.5 ms. Local differences overlap and provide no meaningful speed claim. Dashboard-only differences also overlap; the byte increase there is explicitly recorded above.
+
+These results establish a useful constrained-download improvement for the controlled sheet workload. They do not establish actual Vercel response times, mobile CPU performance, cold server startup, or gains for every character/account/network. The large server/database and reference-resolution costs remain separate measurement targets; fictional responses cannot establish those bottlenecks.
+
+### First-use cost and behavior verification
+
+| First tool opening, click to DOM readiness | Local before/after median ms | Constrained before/after median ms |
+| --- | ---: | ---: |
+| Character editor | 10.8 / 18.9 | 10.8 / 228.2 |
+| Item creator from Equipment | 15.1 / 21.5 | 14.7 / 227.3 |
+
+The first editor/item opening therefore costs approximately **217 / 213 ms extra** under the constrained profile, and **8 / 6 ms extra** locally. People who immediately edit or create an item may spend the initial saving on that first tool request. Loaded modules remain cached within the document. This tradeoff is retained for the larger benefit to normal sheet reading/play; it is not described as drawback-free.
+
+- Sixteen full-page screenshot pairs have identical SHA-256 hashes: dashboard, combat, equipment, editor, item dialog, embedded summary and player champion sheet at 1440 px and 390 px, plus the folio theme at both widths. All normal checks have no page exceptions, unexpected HTTP failures, external requests or horizontal overflow.
+- Inventory search still finds a renamed rapier through its physical form and excludes a nonmatching search. Player views still omit permanent edit and item-giving controls.
+- Both builds preserve draft text when a tab change is cancelled and when a route-leave prompt is dismissed. Adding an item to a draft makes no fixture write until Save character. Saving that draft and giving an item immediately both work. Before/after save request payloads match at both widths, after normalizing the deliberately random item-giving idempotency token. All writes are to in-memory fictional fixtures.
+- Delaying each deferred tool by 800 ms displays loading status; cancelling or switching back to combat prevents a later dialog/editor mount. Deliberately returning 503 shows recoverable error UI and allows returning to the sheet without a write.
+- **53,339 comparisons** against the original filter module preserve item search, magic-item bases, membership and filter outcomes across 87 filter cases and the bundled catalogues. The split metadata reconstructs the original exactly, and the updated generator reproduces the new form file from the bundled SRD.
+- Frontend typecheck, standard production build and the full local suite pass: **466 passed, 55 opt-in skips, zero failures**. The local suite still includes the preserved unfinished authentication work; the earlier clean-commit server test/typecheck caveat remains applicable. No authentication or server source was changed by this batch.
+
+The first timing harness attempt used a DOM marker that became inapplicable when the dashboard removed its character query; it was corrected before the complete retained paired run. An initial browser workflow check used the wrong Add-to-draft button label; its corrected complete run passes. A first equivalence-loader attempt scanned archived browser-profile files and was stopped; the completed run disables dependency discovery and filesystem watching. These harness issues did not require application fixes.
+
+Ignored `.local/sheet-loading-20261028/` retains baseline/intermediate/final builds with hidden source maps, source and protected-file snapshots, fixture server, 80-context timing runner and raw results, visual/workflow verifier and 32 screenshots, metadata-equivalence/generator evidence, summary, and check logs. Outputs refuse to overwrite completed measurement labels. The static server uses only 127.0.0.1 ports 4327 (before) and 4329 (after), with in-memory fictional API state. It has been stopped after verification.
+
+This candidate is local and uncommitted. No push, deployment, production request or database write was performed. The four pre-existing authentication edits retain their starting hashes, the plugin packaging work remains skipped, and the separate hosted Owlbear initialization hold remains in place.

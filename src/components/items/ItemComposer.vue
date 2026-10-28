@@ -2,6 +2,7 @@
 import { vMotionPanel } from '../../directives/siteMotion'
 import { computed,nextTick,onMounted,reactive,ref,watch } from 'vue'
 import type { EquipmentItem } from '../../../shared/character'
+import type { ItemComposerProps } from './item-composer-props'
 import { itemKind,itemKinds } from '../../../shared/item-rules'
 import { equipmentFrom,magicEquipmentFrom } from '../../../shared/equipment-definitions'
 import { srd,type SrdRef,type SrdMagicItem } from '../../lib/srd'
@@ -14,7 +15,7 @@ import ItemFilters from './ItemFilters.vue'
 import '../sheet/sheet.css'
 import '../sheet/sheet-details.css'
 
-const props=defineProps<{mode:'draft'|'give'|'library'|'entry';characterId?:string;characterName?:string;initial?:EquipmentItem;initialMagical?:boolean}>()
+const props=defineProps<ItemComposerProps>()
 const emit=defineEmits<{close:[];add:[item:EquipmentItem];saved:[message:string];change:[item:EquipmentItem]}>()
 const store=useCharactersStore(),dialog=ref<HTMLDialogElement|null>(null)
 const page=ref(props.mode==='library'||props.mode==='entry'?'create':'library'),source=ref('all'),query=ref(''),error=ref(''),loading=ref(false),busy=ref(false),chosen=ref(false)

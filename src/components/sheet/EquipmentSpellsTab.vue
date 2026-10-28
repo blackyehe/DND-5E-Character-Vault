@@ -6,9 +6,9 @@ import { armourValues, coinType, equipmentAttacks, inventoryKind, type Inventory
 import { sheetAC, signed } from '../../lib/character-sheet'
 import ItemRules from './ItemRules.vue'
 import SheetListGroup from './SheetListGroup.vue'
-import ItemComposer from '../items/ItemComposer.vue'
+import ItemComposer from '../items/DeferredItemComposer.vue'
 import { attunementError,itemActive,itemBonuses } from '../../../shared/item-rules'
-import { itemSearchText } from '../../lib/magic-item-filters'
+import { itemSearchText } from '../../lib/item-search'
 
 const store = useCharactersStore(), c = computed(() => store.current!), library = useSheetLibrary()
 const filter = ref('all'), query = ref(''), sort = ref('name')

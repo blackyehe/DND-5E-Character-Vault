@@ -17,7 +17,7 @@ import SpellReferenceRepair from './SpellReferenceRepair.vue'
 import { spellReferenceLabel } from '../../lib/spell-reference'
 import { featResourceKey } from '../../../shared/feat-resources'
 import { featNames } from '../../lib/feat-references'
-import ItemComposer from '../items/ItemComposer.vue'
+import ItemComposer from '../items/DeferredItemComposer.vue'
 import { itemBonuses } from '../../../shared/item-rules'
 import './character-editor.css'
 const props=defineProps<{initialSection?:string;repairSpell?:string;repairOpen?:boolean}>()

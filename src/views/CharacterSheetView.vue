@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { defineAsyncComponent, computed, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import WorkshopRuleReview from '../components/workshop/WorkshopRuleReview.vue'
 import { useRoute, RouterLink, onBeforeRouteLeave } from 'vue-router'
 import { useCharactersStore, type Character } from '../stores/characters'
@@ -14,7 +14,6 @@ import EquipmentSpellsTab from '../components/sheet/EquipmentSpellsTab.vue'
 import FeaturesTab from '../components/sheet/FeaturesTab.vue'
 import CoreTab from '../components/sheet/CoreTab.vue'
 import BioTab from '../components/sheet/BioTab.vue'
-import CharacterEditTab from '../components/sheet/CharacterEditTab.vue'
 import SpellbookPanel from '../components/sheet/SpellbookPanel.vue'
 import '../components/sheet/sheet.css'
 import '../components/sheet/sheet-details.css'
@@ -24,6 +23,12 @@ import { progressionClasses } from '../../shared/character-progression'
 import { isRevenantShadow } from '../../shared/class-rules'
 import { revealNavigationTarget } from '../lib/navigation-scroll'
 import { XP_THRESHOLDS } from '../lib/character-sheet'
+const CharacterEditTab=defineAsyncComponent({
+  loader:()=>import('../components/sheet/CharacterEditTab.vue'),
+  delay:0,
+  loadingComponent:{render:()=>h('p',{class:'sheet-notice',role:'status'},'Loading character editor…')},
+  errorComponent:{render:()=>h('p',{class:'sheet-alert',role:'alert'},'The character editor could not load. Reload the page to try again.')},
+})
 const LevelUpWizard=defineAsyncComponent(()=>import('../components/sheet/LevelUpWizard.vue'))
 const advancementMessage=ref('')
 function leaveAdvancement(){editDirty.value=false;showTab('combat');void nextTick(()=>(sheetMain.value?.querySelector<HTMLButtonElement>('.sheet-navigation [data-preview-tab="level-up"]')??sheetMain.value?.querySelector<HTMLButtonElement>('.sheet-navigation [data-preview-tab="combat"]'))?.focus({preventScroll:true}))}

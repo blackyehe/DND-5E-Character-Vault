@@ -41,11 +41,12 @@ const tags = Object.fromEntries(magic.map(item => {
   }
   return [item.index, tag]
 }))
-const data = {
+const forms = {
   source: 'https://github.com/5e-bits/5e-srd-api/tree/85acb251dad0b044a72c554c2d7f2d0c11e43504/packages/5e-database/src/2014/en',
   weapons: weapons.map(w => ({ index: w.index, name: w.name, group: w.weapon_category, range: w.weapon_range, damage: w.damage?.damage_type.index ?? '' })),
   armours: armours.map(a => ({ index: a.index, name: a.name, group: a.armor_category })),
-  items: tags,
 }
+const data = { source: forms.source, items: tags }
+await writeFile(new URL('../src/lib/item-forms.json', import.meta.url), JSON.stringify(forms, null, 2) + '\n')
 await writeFile(new URL('../src/lib/magic-item-filter-data.json', import.meta.url), JSON.stringify(data, null, 2) + '\n')
 console.log(`Generated filter metadata for ${magic.length} magic items.`)
