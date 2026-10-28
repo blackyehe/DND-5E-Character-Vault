@@ -16,6 +16,12 @@ Ignored `.local/cache-release-20261028/` retains the frozen source, exact source
 
 ## Next local stage
 
+## Hosted header correction
+
+The first isolated candidate (`dpl_Hs4SqWZQpF5kH4687Qct1rNA22Ph`, `dndoldal-6y68hqc0v-dndenjoyerstudio.vercel.app`) passed the 376-file source audit and preserved the public extension boundary (403 without Origin, 401 with an allowed extension Origin). An authenticated creator request returned the same 2,696,833 bytes and SHA-256 digest as production, but Vercel delivered a weak `W/` ETag. The original strong-only client validator consequently did not persist a catalogue. This candidate is not approved for promotion.
+
+The correction accepts the optional uppercase `W/` transport prefix and compares the underlying exact revision identity. If-None-Match uses weak comparison under RFC 9110 section 13.1.2. Owner scope, revision derivation, payload checksum, expiry, size limits, authentication checks and account-transition protection remain required. Regression tests cover weak persistence, both strong/weak response transitions, changed hashes and malformed tags. Corrected frozen-source checks and hosted results are recorded separately under `.local/cache-release-20261028-r2/`; the initial deployment evidence remains intact.
+
 The local Compendium candidate will synchronize compact category/search metadata and retain it on the device. Full entry definitions remain on demand. Existing server browsing remains available when local storage is blocked, over budget, corrupt or unsupported. Server copies remain in place for recovery and other devices. Character writes, room permissions and the database engine remain unchanged in this first stage.
 
 Before implementation, the expected repeat-visit opportunity is to avoid the measured category rebuild, not to improve it by a small percentage: a hosted monster miss took 11,623 ms of application time versus 488 ms on a RAM hit. Their 11,135 ms difference is an opportunity budget, not a promised local-browser saving. First synchronization still pays its real server and transfer costs, plus indexing/storage work. Measure those costs and query equivalence before retaining the candidate.

@@ -30,6 +30,7 @@ describe('character creation catalogue',()=>{
   vi.resetModules();state.reads.mockClear()
   const module=await import('./creation-catalog')
   expect(await module.creationCatalogResponse('owner',first.etag)).toEqual({etag:first.etag})
+  expect(await module.creationCatalogResponse('owner','W/'+first.etag)).toEqual({etag:first.etag})
   expect(state.reads).not.toHaveBeenCalled();expect(state.legacy).not.toHaveBeenCalled()
   expect((await module.creationCatalogResponse('stranger',first.etag)).catalog).toBeDefined()
   expect(state.reads).toHaveBeenCalledOnce()
@@ -38,7 +39,7 @@ describe('character creation catalogue',()=>{
   const module=await import('./creation-catalog'),first=await module.creationCatalogResponse('owner')
   state.metadata=[{_id:'pack',data:{filename:'rules.orcbrew',includeDisabled:true}}] as any
   state.catalog.spells=[{index:'new-spell',name:'New spell',details:{}}]
-  const next=await module.creationCatalogResponse('owner',first.etag)
+  const next=await module.creationCatalogResponse('owner','W/'+first.etag)
   expect(next.etag).not.toBe(first.etag);expect(next.catalog?.spells[0]?.index).toBe('new-spell')
  })
 })

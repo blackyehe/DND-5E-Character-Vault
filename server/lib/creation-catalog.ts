@@ -15,10 +15,10 @@ const creationTag=(userId:string,signature:string)=>`"${sourceHash(JSON.stringif
 /** A conditional hit still checks the authenticated owner's current pack set.
  * No browser value is used offline or before this authoritative check. */
 export async function creationCatalogResponse(userId:string,ifNoneMatch?:string):Promise<{etag:string;catalog?:CreationCatalog}>{
- if(ifNoneMatch&&/^"[a-f0-9]{64}"$/.test(ifNoneMatch)){
+ if(ifNoneMatch&&/^(?:W\/)?"[a-f0-9]{64}"$/.test(ifNoneMatch)){
   const metadata=await withDatabaseStage('library-metadata',()=>componentMetadata(userId,performance.now()+2000))
   const etag=creationTag(userId,sourceHash(JSON.stringify(metadata)))
-  if(etag===ifNoneMatch)return {etag}
+  if(etag===ifNoneMatch.replace(/^W\//,''))return {etag}
  }
  return creationSnapshot(userId)
 }

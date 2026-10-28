@@ -14,6 +14,21 @@ beforeEach(()=>{
 })
 afterEach(()=>vi.unstubAllGlobals())
 describe('validated persisted creation options',()=>{
+ it.each([[true,true],[true,false],[false,true]])('persists and validates transport tag variants (stored weak %s, returned weak %s)',async(storedWeak,returnedWeak)=>{
+  const stored=(storedWeak?'W/':'')+etag,returned=(returnedWeak?'W/':'')+etag
+  network.mockResolvedValueOnce(full(options(),stored))
+  await loadCreationOptions('owner',false,storage);await persisted()
+  expect(saved?.etag).toBe(stored)
+  network.mockResolvedValueOnce(new Response(null,{status:304,headers:{ETag:returned}}))
+  expect(await loadCreationOptions('owner',false,storage)).toEqual(options())
+  expect(network.mock.calls[1]?.[1].headers['If-None-Match']).toBe(stored)
+ })
+ it.each(['W/'+changedTag,'W/invalid','w/'+etag,'W/W/'+etag])('rejects a mismatched or malformed not-modified tag %s',async(tag)=>{
+  network.mockResolvedValueOnce(full(options(),'W/'+etag))
+  await loadCreationOptions('owner',false,storage);await persisted()
+  network.mockResolvedValueOnce(new Response(null,{status:304,headers:{ETag:tag}}))
+  await expect(loadCreationOptions('owner',false,storage)).rejects.toThrow()
+ })
  it('persists a first response and uses it only after an authenticated revision check',async()=>{
   const value=options();network.mockResolvedValueOnce(full(value))
   expect(await loadCreationOptions('owner',false,storage)).toEqual(value)

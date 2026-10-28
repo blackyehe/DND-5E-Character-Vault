@@ -9,6 +9,8 @@ export interface CreationOptionsStorage {
 }
 const lifetime=24*60*60*1000,maxBytes=8*1024*1024
 const kinds=['classes','races','backgrounds','subraces','subclasses','feats','languages','spells'] as const
+// Compression proxies may weaken an otherwise identical revision tag.
+const revisionTag=(tag:string|null)=>tag&&/^(?:W\/)?"[a-f0-9]{64}"$/.test(tag)?tag.replace(/^W\//,''):undefined
 let epoch=0
 const writes=new Set<IDBTransaction>()
 
@@ -75,13 +77,13 @@ export async function loadCreationOptions(owner:string|undefined,force=false,sto
  let cached:StoredOptions|undefined
  if(owner&&!force)try{
   const entry=await storage.read()
-  if(entry?.owner===owner&&entry.expires>Date.now()&&/^"[a-f0-9]{64}"$/.test(entry.etag)&&valid(entry.value)&&await checksum(entry.value)===entry.digest)cached=entry
+  if(entry?.owner===owner&&entry.expires>Date.now()&&revisionTag(entry.etag)&&valid(entry.value)&&await checksum(entry.value)===entry.digest)cached=entry
  }catch{/* Storage is optional. */}
  const response=await fetch('/api/content/creation-options',{
   credentials:'include',cache:'no-store',signal:AbortSignal.timeout(30000),
   headers:{'Content-Type':'application/json',...(cached?{'If-None-Match':cached.etag}:{})},
  })
- if(response.status===304&&cached&&response.headers.get('ETag')===cached.etag){
+ if(response.status===304&&cached&&revisionTag(response.headers.get('ETag'))===revisionTag(cached.etag)){
   if(current!==epoch)throw Error('Your account changed while loading. Please retry the library.')
   return cached.value
  }
@@ -95,6 +97,6 @@ export async function loadCreationOptions(owner:string|undefined,force=false,sto
  const etag=response.headers.get('ETag')
  if(current!==epoch)throw Error('Your account changed while loading. Please retry the library.')
  // Optional hashing and disk writes run after returning the usable response.
- if(owner&&etag&&/^"[a-f0-9]{64}"$/.test(etag))setTimeout(()=>{void persist(owner,etag,value,current,storage)},0)
+ if(owner&&etag&&revisionTag(etag))setTimeout(()=>{void persist(owner,etag,value,current,storage)},0)
  return value
 }
