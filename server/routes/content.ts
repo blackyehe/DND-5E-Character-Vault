@@ -42,7 +42,10 @@ function packSummary(doc: { _id: unknown; data: unknown }) {
 }
 
 router.get('/creation-options',async(req,res)=>{
- const result=await creationCatalogResponse(req.userId!,req.get('If-None-Match'))
+ // The hosting layer can consume HTTP conditional headers before Express.
+ // Carry the same exact revision separately so a cold instance can validate
+ // browser storage without rebuilding the catalogue. Older clients still work.
+ const result=await creationCatalogResponse(req.userId!,req.get('X-Creation-Revision')??req.get('If-None-Match'))
  res.set('ETag',result.etag)
  return result.catalog?res.json(result.catalog):res.status(304).end()
 })

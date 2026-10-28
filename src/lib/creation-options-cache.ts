@@ -81,7 +81,7 @@ export async function loadCreationOptions(owner:string|undefined,force=false,sto
  }catch{/* Storage is optional. */}
  const response=await fetch('/api/content/creation-options',{
   credentials:'include',cache:'no-store',signal:AbortSignal.timeout(30000),
-  headers:{'Content-Type':'application/json',...(cached?{'If-None-Match':cached.etag}:{})},
+  headers:{'Content-Type':'application/json',...(cached?{'X-Creation-Revision':cached.etag}:{})},
  })
  if(response.status===304&&cached&&revisionTag(response.headers.get('ETag'))===revisionTag(cached.etag)){
   if(current!==epoch)throw Error('Your account changed while loading. Please retry the library.')

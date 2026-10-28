@@ -21,7 +21,7 @@ describe('validated persisted creation options',()=>{
   expect(saved?.etag).toBe(stored)
   network.mockResolvedValueOnce(new Response(null,{status:304,headers:{ETag:returned}}))
   expect(await loadCreationOptions('owner',false,storage)).toEqual(options())
-  expect(network.mock.calls[1]?.[1].headers['If-None-Match']).toBe(stored)
+  expect(network.mock.calls[1]?.[1].headers['X-Creation-Revision']).toBe(stored)
  })
  it.each(['W/'+changedTag,'W/invalid','w/'+etag,'W/W/'+etag])('rejects a mismatched or malformed not-modified tag %s',async(tag)=>{
   network.mockResolvedValueOnce(full(options(),'W/'+etag))
@@ -35,7 +35,8 @@ describe('validated persisted creation options',()=>{
   await persisted();expect(saved?.owner).toBe('owner')
   network.mockResolvedValueOnce(new Response(null,{status:304,headers:{ETag:etag}}))
   expect(await loadCreationOptions('owner',false,storage)).toEqual(value)
-  expect(network.mock.calls[1]?.[1]).toMatchObject({credentials:'include',cache:'no-store',headers:{'If-None-Match':etag}})
+  expect(network.mock.calls[1]?.[1]).toMatchObject({credentials:'include',cache:'no-store',headers:{'X-Creation-Revision':etag}})
+  expect(network.mock.calls[1]?.[1].headers).not.toHaveProperty('If-None-Match')
  })
  it('replaces changed definitions and forces a full fetch for Retry library',async()=>{
   network.mockResolvedValueOnce(full());await loadCreationOptions('owner',false,storage);await persisted()
@@ -44,22 +45,22 @@ describe('validated persisted creation options',()=>{
   expect(await loadCreationOptions('owner',false,storage)).toEqual(changed)
   await vi.waitFor(()=>expect(saved?.etag).toBe(changedTag))
   network.mockResolvedValueOnce(full(changed,changedTag));await loadCreationOptions('owner',true,storage)
-  expect(network.mock.calls[2]?.[1].headers).not.toHaveProperty('If-None-Match')
+  expect(network.mock.calls[2]?.[1].headers).not.toHaveProperty('X-Creation-Revision')
  })
  it('does not send another account’s tag or expose its cached value',async()=>{
   network.mockResolvedValueOnce(full());await loadCreationOptions('owner',false,storage);await persisted()
   network.mockResolvedValueOnce(full());await loadCreationOptions('other-owner',false,storage)
-  expect(network.mock.calls[1]?.[1].headers).not.toHaveProperty('If-None-Match')
+  expect(network.mock.calls[1]?.[1].headers).not.toHaveProperty('X-Creation-Revision')
   await vi.waitFor(()=>expect(saved?.owner).toBe('other-owner'))
  })
  it('ignores corrupted or expired browser copies',async()=>{
   network.mockResolvedValueOnce(full());await loadCreationOptions('owner',false,storage);await persisted()
   saved!.value.spells.push({index:'tampered',name:'Changed'} as any)
   network.mockResolvedValueOnce(full());await loadCreationOptions('owner',false,storage)
-  expect(network.mock.calls[1]?.[1].headers).not.toHaveProperty('If-None-Match')
+  expect(network.mock.calls[1]?.[1].headers).not.toHaveProperty('X-Creation-Revision')
   await vi.waitFor(()=>expect(storage.write).toHaveBeenCalledTimes(2));saved!.expires=0
   network.mockResolvedValueOnce(full());await loadCreationOptions('owner',false,storage)
-  expect(network.mock.calls[2]?.[1].headers).not.toHaveProperty('If-None-Match')
+  expect(network.mock.calls[2]?.[1].headers).not.toHaveProperty('X-Creation-Revision')
  })
  it('continues without storage and never serves an offline or unauthorized cached copy',async()=>{
   vi.mocked(storage.read).mockRejectedValueOnce(Error('Blocked storage'))

@@ -1,6 +1,6 @@
 # Device Compendium prototype — 28 October 2026
 
-Status: implemented and measured locally, uncommitted application candidate, disabled unless `VITE_LOCAL_COMPENDIUM=true`. No production configuration or database engine changed. The separate creator-cache/deferred-sheet release is live; see [its release audit](cache-release-2026-10-28.md).
+Status: implemented and measured locally and on an isolated hosted diagnostic, uncommitted application candidate, disabled unless `VITE_LOCAL_COMPENDIUM=true`. No production configuration or database engine changed. The separate creator-cache/deferred-sheet release is live; see [its release audit](cache-release-2026-10-28.md).
 
 ## Scope and eligibility
 
@@ -23,7 +23,7 @@ The 126-pack replay plus repository SRD metadata produced these actual compresse
 | Equipment | 1,402 | 926,432 B | 102,022 B | 0.27 s | 3,614 B |
 | Spells | 635 | 349,748 B | 37,313 B | 0.10 s | 2,273 B |
 
-The earlier estimate of 882 KB/2.33 s referred to the bare monster index, before the exact JSON/checksum transport envelope; the actual export above is the rollout calculation. The worker is 119,099 uncompressed JavaScript bytes, fetched only after saving or on a visit with a saved hint. The server compresses the export itself and rejects compressed bodies above 2 MiB; large plain indexes do not become buffered oversized platform responses. Hosted compression/proxy compatibility of this new export is still unverified.
+The earlier estimate of 882 KB/2.33 s referred to the bare monster index, before the exact JSON/checksum transport envelope; the actual export above is the rollout calculation. The worker is 119,099 uncompressed JavaScript bytes, fetched only after saving or on a visit with a saved hint. The server compresses the export itself and rejects compressed bodies above 2 MiB; large plain indexes do not become buffered oversized platform responses. The isolated hosted monster export subsequently confirmed the same 901,673 compressed bytes and passed real browser decompression, checksum, storage and query checks.
 
 ## Measured results
 
@@ -38,7 +38,17 @@ Three fresh browser contexts per profile used the actual production UI build, re
 
 Without preparing the saved worker alongside the initial page, the constrained revisit median was 935 ms; preparation reduced it to 420 ms. Against the already-fast warm server, this is roughly neutral (21 ms slower in this small constrained sample), not a demonstrated multi-second gain. Pure monster worker queries had a 4.5 ms median in the unthrottled equivalence run.
 
-The earlier hosted category miss was 11,623 ms versus a 488 ms RAM hit, leaving an 11,135 ms opportunity budget. These local measurements demonstrate that the query/index path can be cheap; they do not demonstrate that hosted saved-category readiness is 420 ms. In particular, the live creator's metadata-only validation still occasionally took about 11 seconds after release. The proposed Compendium revision check also reads metadata and could suffer that delay. Do not enable this feature by default or claim the hosted 10–14 second problem is solved until that boundary is measured and addressed.
+The earlier hosted category miss was 11,623 ms versus a 488 ms RAM hit, leaving an 11,135 ms opportunity budget. Those local measurements demonstrated that the query/index path can be cheap; they did not establish hosted saved-category readiness. Subsequent [conditional-request diagnostics](conditional-cache-2026-10-28.md) corrected the earlier attribution of the creator's 11-second 304 to metadata: the standard conditional header was absent at the application boundary, permitting a full catalogue load. The separate Compendium revision endpoint was then measured directly.
+
+### Isolated hosted measurements
+
+On the corrected 383-file diagnostic, the actual unsaved monster UI took **12,121 ms** from category selection to rendered rows. Saved-category selection after three full document revisits took **379, 646 and 377 ms** (median **379 ms**), each using one authenticated metadata revision check and no category/definition read. The observed cold-to-saved saving is **11,742 ms, or 96.9%**. Warm server visits can already be fast; this is the gain from avoiding cold reconstruction, not a promise that every visit improves by 11 seconds.
+
+Explicit monster saving took **5,356 ms** after the normal category had warmed the server, transferring 901,673 compressed bytes. A subsequent saved search took **258 ms** including debounce, with no additional request during its validation window. Five further hosted worker/server comparisons matched complete monster page JSON, including pagination, a missing search and a facet filter. These hosted checks supplement the 172-query local equivalence run. Evidence is in `.local/conditional-profile-20261028-r2/compendium-hosted.json`.
+
+The full optional local attempt now has a **1,500 ms** bound before ordinary browsing, rather than accumulating separate worker, disk and network timeouts. A timeout aborts validation, terminates the stalled worker and skips local attempts for 30 seconds. A cancelled search releases its caller promptly. Real production-UI fixture checks cover a silent worker and a stalled revision request; both preserve server results and avoid another local timeout on subsequent searches. This exceptional path can still add up to 1.5 seconds before server browsing on a responsive browser.
+
+Six alternating hosted full-document visits also compared the initial spell page with the saved monster hint temporarily present or absent. With preparation the initial-page median was 1,239 ms, versus 1,211 ms without it (**28 ms difference**); individual samples varied widely (473–1,734 ms overall). Only the ordinary spell page was requested; preparation made no speculative revision/index request. This small warm-browser sample establishes no substantial contention regression, but cannot establish behavior under mobile memory pressure. The saved marker was restored after measurement; evidence is `initial-page-contention.json` alongside the hosted results.
 
 ## Verification and remaining risks
 
@@ -46,6 +56,6 @@ The actual built worker matched the server's complete page JSON for **172 querie
 
 An actual IndexedDB budget check saved four padded seven-MiB categories, retained three (22,023,888 bytes), evicted the oldest category, then saved another owner's category and verified that only its one record remained. Unit tests cover malformed/corrupt/oversized/expired snapshots, quota failure, exact query identity, offline/unauthorized/wrong-owner/wrong-version validation, in-flight account changes, invalidation from another tab and a worker constructor blocked by policy. Frontend/backend TypeScript checks pass; the working checkout passes **504 tests with 55 opt-in skips**. That checkout still contains unrelated unfinished extension edits; it is not the frozen live release.
 
-Remaining work before any live enablement: measure the new authenticated export/revision endpoints on an isolated hosted deployment; resolve or explicitly budget slow metadata validation; measure initial-page contention from preparing a saved index; test storage eviction/quota under real browser pressure; and decide how updated categories should be synchronized without making every initial visit expensive. Browser data remains evictable and device-specific; server originals remain the recovery path. MySQL remains a separate workload/hosting comparison, with no migration justified or performed by this prototype.
+Remaining work before any live enablement: review the measured first-download and fallback costs; test storage eviction/quota under real browser pressure; and decide how updated categories should be synchronized without making every initial visit expensive. The current working suite passes **513 tests with 55 opt-in skips**; the isolated hosted source separately passes both TypeScript checks, its build and 55 focused tests. Browser data remains evictable and device-specific; server originals remain the recovery path. MySQL remains a separate workload/hosting comparison, with no migration justified or performed by this prototype.
 
 Ignored `.local/local-compendium-20261028/` preserves the fixture tools, source hashes/candidate copy, sizes, before-preparation timings, final timings, 172-query equivalence results, failure and storage-budget checks, and the mobile screenshot. The uniquely named loopback fixture is removed after verification; its state file is evidence, not a guarantee that the database exists.
