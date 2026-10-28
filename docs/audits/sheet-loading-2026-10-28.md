@@ -37,8 +37,30 @@ Logout, login/account changes and explicit rule refresh clear memory and disk re
 
 The candidate freezes **383 runtime source files**, seven changed from live deployment `dpl_uKqeFbgbz4Ucy6znmSMYEHVCuwP8`. Diagnostic endpoints and unrelated dirty work are absent. Production build, frontend/backend typechecks, 47 focused frozen-source tests and the complete working-checkout suite passed (**534 passed / 55 existing opt-in skips**).
 
-The reviewed deployment is `dpl_9pVoeYF37sCpbVocZWBZJNyL7ZaZ`, initially unaliased. Its exact 383-file source audit passed. Hosted browser verification and promotion status are recorded below when completed.
+The reviewed deployment is `dpl_9pVoeYF37sCpbVocZWBZJNyL7ZaZ`, initially unaliased and subsequently promoted. Its exact 383-file source audit passed. Hosted browser verification and promotion are recorded below.
 
 Thirteen direct-HTTPS Edge application checks passed: first reference download; two full-document cache revisits with fresh quick reads; damaged-copy fallback; changed-character invalidation; changed-library invalidation with updated definition text; forced publication refresh; unchanged focus validation without reference refetch; blocked and stalled IndexedDB fallback; denied quick authorization with no cached sheet rendered; authorized recovery; and logout deletion. These used a small dedicated synthetic account, and all created characters/packs were removed afterward. Repeat readiness varied from 1.79 to 5.44 s despite zero reference requests, so these small-fixture observations are **not** a demonstrated multi-second 126-pack whole-page gain.
 
 Separate native IndexedDB tests verified 24-entry eviction, a 4 MiB budget (five larger records totaling 4,004,330 bytes), owner replacement and cross-tab invalidation of an older in-flight disk read. Evidence is retained under `.local/sheet-loading-release-20261028/` alongside frozen-source build/typecheck/test logs, source audit, browser checks and release guards.
+
+## Live rollout
+
+Runtime commit `d52a231` was pushed to `origin/codex/folio-sheet-rollout`. The reviewed deployment was promoted to `https://dndoldal.vercel.app`; rollback is `dpl_uKqeFbgbz4Ucy6znmSMYEHVCuwP8`. The immediate alias read still showed the prior deployment; a later read independently confirmed the new target, without repeating the promotion mutation.
+
+Public desktop Edge checks passed for explicit local magic-item saving, revision-only full-document revisit, request-free search, server detail opening and removal, with no page errors. The authenticated real owner sheet also opened without alerts: initial post-promotion saved-sheet times were 1.27 and 0.97 s, with complete references in 0.84 and 0.91 s and zero reference endpoint calls. These first two observations used the browser copy populated by the earlier isolated storage test.
+
+The disposable loopback 126-pack fixture was removed after verification. Synthetic hosted test characters/packs were removed. Production source definitions, characters and campaign data were not changed by validation.
+
+For a final same-release application check, only the selected character's browser reference copy was removed. The next full-document opening fetched references normally and the application saved them itself; the following visit reused that copy without manual seeding:
+
+| Live milestone | Without device references | Next full-document revisit |
+| --- | ---: | ---: |
+| Saved sheet | 1.19 s | 1.33 s |
+| Complete reference refresh after saved sheet | 10.86 s | 0.97 s |
+| Reference endpoint request | 9,300 ms | None |
+
+This sequential observation saves **9.89 s / 91.1%** of the measured reference-refresh phase. Other SRD requests also varied between samples, so that entire difference cannot be assigned solely to IndexedDB. It is not a claim about every character or browser, and initial uncached references remain slow. The two reported phases exclude startup before the quick-sheet request; adding them does not produce a complete navigation benchmark. No alerts appeared. Sanitized evidence is `public-sheet-results.json` in the release directory.
+
+Five durable regression cases were added after rollout for grouped proofs, missing chunks, extra/corrupt raw chunks, explicit owner scoping and the generation-byte fallback. These change tests only. The final complete suite passed **539 tests / 55 existing opt-in skips**, including all eight component-reader unit cases. Runtime source still matches the audited deployment.
+
+After measurements, the isolated diagnostic deployment `dpl_HkSebezRipjos1sEwGyy3rCTJUHW` was deleted, removing its temporary cross-owner numeric probe. The public alias was checked before and after and stayed on the reviewed release. The prior live rollback deployment was retained.
