@@ -15,7 +15,7 @@ import { readPackDocuments } from '../lib/pack-source'
 import { ensureContentIndexes } from '../lib/content-indexes'
 import { combinedOrcbrew } from '../lib/orcbrew-export'
 import { itemBrowseEntry } from '../lib/orcbrew-items'
-import { creationCatalog } from '../lib/creation-catalog'
+import { creationCatalogResponse } from '../lib/creation-catalog'
 
 const router = Router()
 router.use(requireAuth)
@@ -41,7 +41,11 @@ function packSummary(doc: { _id: unknown; data: unknown }) {
   }
 }
 
-router.get('/creation-options',async(req,res)=>res.json(await creationCatalog(req.userId!)))
+router.get('/creation-options',async(req,res)=>{
+ const result=await creationCatalogResponse(req.userId!,req.get('If-None-Match'))
+ res.set('ETag',result.etag)
+ return result.catalog?res.json(result.catalog):res.status(304).end()
+})
 
 router.get('/homebrew/:kind', async (req, res) => {
   const kind = req.params.kind as OrcbrewKind

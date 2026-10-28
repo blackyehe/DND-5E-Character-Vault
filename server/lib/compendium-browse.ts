@@ -3,6 +3,7 @@ import { compendiumFamilyContext } from '../../shared/compendium-family'
 import { CustomContent } from '../models/CustomContent'
 import { CompendiumBrowseIndex } from '../models/CompendiumBrowseIndex'
 import { recoverableModelInitialization } from './model-initialization'
+import { cacheFailureCodes } from './cache-failure-codes'
 import { localSrdRule } from './srd-snapshot'
 import { readSrdRule } from './srd-client'
 import { env } from '../env'
@@ -139,7 +140,7 @@ async function loadIndex(userId:string,kind:BrowseKind,revision:string,probes:Pr
         const preparedStored=await CompendiumBrowseIndex.find({userId,revision:preparedIndexRevision(revision),kind}).sort({part:1}).setOptions({maxTimeMS:1000,timeoutMS:1000}).lean()
         const preparedDecoded=decodeBrowseIndex(preparedStored as unknown as IndexChunk[])
         if(preparedDecoded)return {index:preparedDecoded,origin:'prepared-stored'}
-      }catch(error){console.warn('Experimental category cache unavailable',{kind,name:(error as Error).name})}
+      }catch(error){console.warn('Experimental category cache unavailable',{kind,name:(error as Error).name,...cacheFailureCodes(error)})}
       const prepared=await readPreparedIndex(userId,revision,kind,probes)
       // A shared pending load carries its origin. Every returning caller must
       // validate prepared data before returning or placing it in RAM.
@@ -154,7 +155,7 @@ async function loadIndex(userId:string,kind:BrowseKind,revision:string,probes:Pr
       const chunks=encodeBrowseIndex(index)
       await CompendiumBrowseIndex.bulkWrite(chunks.map(chunk=>({updateOne:{filter:{userId,revision,kind,part:chunk.part},update:{$set:{...chunk,expiresAt}},upsert:true}})))
       console.info('Compendium index built',{kind,entries:index.records.length,compressedBytes:chunks.reduce((n,c)=>n+c.payload.length,0),buildMs:Math.round(performance.now()-started)})
-    }catch(error){console.warn('Compendium index persistence unavailable',{kind,name:(error as Error).name})}
+    }catch(error){console.warn('Compendium index persistence unavailable',{kind,name:(error as Error).name,...cacheFailureCodes(error)})}
     return {index:remember(key,index),origin:'built'}
   })()
   pending.set(key,task)
@@ -216,7 +217,7 @@ export async function persistPreparedBrowseIndex(userId:string,kind:BrowseKind,r
     const verified=decodeBrowseIndex(stored as unknown as IndexChunk[])
     if(!verified||JSON.stringify(verified)!==JSON.stringify(index))throw Error('Prepared category storage verification failed')
    }
-  }catch(error){if(strict)throw error;console.warn('Prepared index persistence unavailable',{kind,name:(error as Error).name})}
+  }catch(error){if(strict)throw error;console.warn('Prepared index persistence unavailable',{kind,name:(error as Error).name,...cacheFailureCodes(error)})}
  })()
  pendingPreparedWrites.set(key,task);try{await task}finally{if(pendingPreparedWrites.get(key)===task)pendingPreparedWrites.delete(key)}
 }

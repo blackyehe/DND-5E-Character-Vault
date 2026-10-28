@@ -6,13 +6,14 @@ import { featOpportunities, selectedFeatIndexes } from '../lib/advancements'
 import { equipmentFrom } from '../lib/character-sheet'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { loadCreationOptions } from '../lib/creation-options-cache'
 import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, maxHP, profBonus, type AbilityKey } from '../lib/calc'
 import {
   abilityTotals, armorClass, builderIssues, composeCharacter, newBuilderDraft, restoreBuilderDraft, skillKey,
   type BuilderBackground, type BuilderContext, type BuilderTrait,
 } from '../lib/character-builder'
 import {
-  contentLabel, homebrew, srd, type HomebrewBackground, type HomebrewClass, type HomebrewFeat,
+  contentLabel, srd, type HomebrewBackground, type HomebrewClass, type HomebrewFeat,
   type HomebrewRace, type HomebrewSpell, type HomebrewSubclass, type HomebrewSubrace,
   type SrdBackground, type SrdClass, type SrdEquipment, type SrdLevel, type SrdRace, type SrdRef, type SrdSpell, type SrdSubrace,
 } from '../lib/srd'
@@ -325,15 +326,15 @@ export function useCharacterBuilder() {
       const stored = localStorage.getItem(key)
       if (stored) { Object.assign(draft, restoreBuilderDraft(JSON.parse(stored))); restored.value = true }
     } catch { /* A corrupt draft must not prevent starting a new character. */ }
-    await reloadLibrary()
+    await reloadLibrary(false)
   })
-  async function reloadLibrary() {
+  async function reloadLibrary(force=true) {
     if(libraryLoading.value||disposed)return
     libraryLoading.value=true
     try {
     const results = await Promise.allSettled([
       srd.classes(), srd.races(), srd.backgrounds(), srd.equipment(), srd.languages(),
-      homebrew.creationOptions(),
+      loadCreationOptions(useAuthStore().user?.id,force),
     ] as const)
     if (disposed) return
     const value = <T>(result: PromiseSettledResult<T>, fallback: T): T => result.status === 'fulfilled' ? result.value : fallback

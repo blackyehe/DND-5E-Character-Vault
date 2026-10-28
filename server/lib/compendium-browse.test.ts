@@ -15,6 +15,17 @@ vi.mock('../models/CompendiumBrowseIndex',()=>({CompendiumBrowseIndex:{
 }}))
 beforeEach(()=>{vi.resetModules();state.revision='one';state.catalog={other:[]};state.edits=[];state.chunks=[];state.onBuild=undefined;state.build.mockClear();state.writes.mockClear();state.reads.mockClear()})
 describe('revisioned per-account browse index',()=>{
+  it('still serves the rebuilt index when optional persistence fails and logs numeric failure codes',async()=>{
+    state.catalog.other=[{index:'local-entry',name:'Local entry',url:''}]
+    state.writes.mockImplementationOnce(()=>{throw Object.assign(Error('private database details'),{name:'MongoBulkWriteError',code:8000,writeErrors:[{code:8000,errmsg:'private document'}]})})
+    const warn=vi.spyOn(console,'warn').mockImplementation(()=>{})
+    try{
+      const result=await (await import('./compendium-browse')).compendiumBrowseIndex('owner','other')
+      expect(result.index.records[0]?.entry.name).toBe('Local entry')
+      expect(warn).toHaveBeenCalledWith('Compendium index persistence unavailable',{kind:'other',name:'MongoBulkWriteError',code:8000,writeCodes:[8000]})
+      expect(JSON.stringify(warn.mock.calls)).not.toContain('private')
+    }finally{warn.mockRestore()}
+  })
   it('uses persisted metadata after a cold module reload without assembling packs',async()=>{
     state.catalog.other=[{index:'homebrew-other-one',name:'Only source',url:'',sourcePack:'Book',details:{':description':'Full description'}}]
     const first=await (await import('./compendium-browse')).compendiumBrowseIndex('owner','other')

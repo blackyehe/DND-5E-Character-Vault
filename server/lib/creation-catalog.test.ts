@@ -1,6 +1,6 @@
 import {beforeEach,describe,expect,it,vi} from 'vitest'
 const state=vi.hoisted(()=>({metadata:[{_id:'pack',data:{filename:'rules.orcbrew'}}],catalog:{} as Record<string,any[]>,reads:vi.fn(),legacy:vi.fn(),enabled:true}))
-vi.mock('./compendium-components',()=>({componentMetadata:vi.fn(async()=>state.metadata),readComponentCatalogues:async(...args:any[])=>{state.reads(...args);return []}}))
+vi.mock('./compendium-components',()=>({COMPONENT_VERSION:'test-components-1',componentMetadata:vi.fn(async()=>state.metadata),readComponentCatalogues:async(...args:any[])=>{state.reads(...args);return []}}))
 vi.mock('./compendium-prepared',()=>({preparedReaderEnabled:()=>state.enabled}))
 vi.mock('./workshop-library',()=>({workshopLibrary:async()=>{state.legacy();return {catalog:state.catalog}}}))
 vi.mock('./orcbrew',async original=>({...await original<object>(),buildOrcbrewCatalog:()=>state.catalog}))
@@ -23,5 +23,22 @@ describe('character creation catalogue',()=>{
   await creationCatalog('owner');expect(state.reads).toHaveBeenCalledOnce()
   state.metadata=[{_id:'changed',data:{filename:'rules.orcbrew'}}];state.catalog.races=[]
   expect((await creationCatalog('owner')).races).toEqual([]);expect(state.reads).toHaveBeenCalledTimes(2)
+ })
+ it('validates an account-scoped conditional hit in a cold module without reading definitions',async()=>{
+  const first=await (await import('./creation-catalog')).creationCatalogResponse('owner')
+  expect(first.catalog).toBeDefined();expect(first.etag).toMatch(/^"[a-f0-9]{64}"$/)
+  vi.resetModules();state.reads.mockClear()
+  const module=await import('./creation-catalog')
+  expect(await module.creationCatalogResponse('owner',first.etag)).toEqual({etag:first.etag})
+  expect(state.reads).not.toHaveBeenCalled();expect(state.legacy).not.toHaveBeenCalled()
+  expect((await module.creationCatalogResponse('stranger',first.etag)).catalog).toBeDefined()
+  expect(state.reads).toHaveBeenCalledOnce()
+ })
+ it('replaces a browser copy after a pack change and never returns a not-modified hit for it',async()=>{
+  const module=await import('./creation-catalog'),first=await module.creationCatalogResponse('owner')
+  state.metadata=[{_id:'pack',data:{filename:'rules.orcbrew',includeDisabled:true}}] as any
+  state.catalog.spells=[{index:'new-spell',name:'New spell',details:{}}]
+  const next=await module.creationCatalogResponse('owner',first.etag)
+  expect(next.etag).not.toBe(first.etag);expect(next.catalog?.spells[0]?.index).toBe('new-spell')
  })
 })
