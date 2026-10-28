@@ -30,6 +30,7 @@ import '../components/compendium/compendium-layout.css'
 import { useCompendiumBrowse } from '../composables/useCompendiumBrowse'
 import { useAuthStore } from '../stores/auth'
 import type { BrowseKind } from '../../shared/compendium-browse'
+import {localCompendiumEnabled,prepareSavedCompendium,saveLocalCompendium,clearLocalCompendium,releaseLocalCompendium} from '../lib/local-compendium-client'
 type LibraryRef = SrdRef & {workshopItem?:EquipmentItem}
 type Detail = LibraryRef & Record<string, unknown> & {itemView?:ReturnType<typeof fiveToolsItemView>}
 defineProps<{embedded?:boolean}>()
@@ -54,8 +55,25 @@ function savedEdition(state:CompendiumEditState){
 }
 const tab = ref<Tab>('spells')
 const query = ref('')
-const browse=useCompendiumBrowse()
 const auth=useAuthStore()
+if(localCompendiumEnabled&&auth.user)prepareSavedCompendium(auth.user.id)
+const browse=useCompendiumBrowse(()=>auth.user?.id)
+const localSaving=ref(false),localMessage=ref('')
+const localRefreshNeeded=computed(()=>browse.localState.value==='outdated'||browse.localState.value==='missing')
+watch(localRefreshNeeded,needed=>{if(needed)localMessage.value=''})
+let localDownload:AbortController|undefined
+function cancelLocalDownload(){localDownload?.abort();localDownload=undefined;localSaving.value=false;localMessage.value=''}
+async function saveCategory(){
+ if(tab.value==='homebrew'||!auth.user||localSaving.value)return
+ const controller=new AbortController();localDownload=controller;localSaving.value=true;localMessage.value='Saving this category for faster browsing…'
+ try{
+  await saveLocalCompendium(auth.user.id,tab.value as BrowseKind,controller.signal)
+  if(controller.signal.aborted)return
+  browse.clear();localMessage.value='Category saved. Searches use this device after checking for library changes.';void search()
+ }catch(reason){if(!controller.signal.aborted)localMessage.value=reason instanceof Error?reason.message:'Could not save this category. Server browsing remains available.'}
+ finally{if(localDownload===controller){localDownload=undefined;localSaving.value=false}}
+}
+function removeLocalCategories(){cancelLocalDownload();clearLocalCompendium();browse.clear();localMessage.value='Saved categories removed from this device.';void search()}
 const results=computed(()=>browse.response.value?.entries as LibraryRef[]??[])
 const selectedEntries=ref<LibraryRef[]>([])
 const resultPanel=ref<HTMLElement|null>(null)
@@ -165,13 +183,13 @@ async function search(page=1,force=false,preserveSelection=false) {
 watch(()=>JSON.stringify([tab.value,query.value,categoryFilters.value,filters.value]),(value,previous)=>{
   const [kind,term]=JSON.parse(value),[oldKind,oldTerm]=JSON.parse(previous)
   ++searchNumber;clearTimeout(searchTimer);browse.cancel();clearSelection()
-  if(kind!==oldKind){clearFilters();customDetails.clear();editions.value.clear();detailRevision='';browse.response.value=null;if(oldKind==='homebrew')browse.clear()}
+  if(kind!==oldKind){cancelLocalDownload();clearFilters();customDetails.clear();editions.value.clear();detailRevision='';browse.response.value=null;if(oldKind==='homebrew')browse.clear()}
   if(kind==='homebrew')return
   loading.value=true
   searchTimer=setTimeout(()=>void search(),term!==oldTerm?250:0)
 })
-watch(()=>auth.user?.id,()=>{++searchNumber;clearTimeout(searchTimer);browse.clear();editions.value.clear();customDetails.clear();clearSelection();editing.value=null;if(auth.user)void search()})
-onBeforeUnmount(()=>{++searchNumber;clearTimeout(searchTimer);browse.cancel();++detailNumber})
+watch(()=>auth.user?.id,()=>{cancelLocalDownload();++searchNumber;clearTimeout(searchTimer);browse.clear();editions.value.clear();customDetails.clear();clearSelection();editing.value=null;if(auth.user)void search()})
+onBeforeUnmount(()=>{cancelLocalDownload();releaseLocalCompendium();++searchNumber;clearTimeout(searchTimer);browse.cancel();++detailNumber})
 
 async function openDetail(index:string) {
   const sequence=++detailNumber,kind=tab.value
@@ -208,6 +226,13 @@ search()
     <p v-if="embedded" class="entry-hint mb-4">Choose any source entry, then select Edit entry. Review existing characters before applying your rules to their sheets.</p>
     <CompendiumCategories v-model="tab" />
     <label v-if="tab !== 'homebrew'" class="compendium-search"><span>Search {{tabLabel(tab).toLowerCase()}}</span><input v-model="query" type="search" class="input-base" :placeholder="`Search ${tabLabel(tab).toLowerCase()}…`" /></label>
+    <div v-if="localCompendiumEnabled&&tab!=='homebrew'" class="panel p-3 mb-4">
+      <p class="text-sm">Save this category's search index for faster repeat browsing. The first download may take several seconds. Entry details still load when opened.</p>
+      <p v-if="localRefreshNeeded" role="status" class="text-sm">{{browse.localState.value==='outdated'?'Your library has changed. Refresh this saved category to browse it locally again.':'This category’s saved copy is no longer available. Save it again to restore local browsing.'}} Current results load from the server.</p>
+      <button type="button" class="btn-ghost text-sm" :disabled="localSaving||loading" @click="saveCategory">{{localSaving?'Saving category…':localRefreshNeeded?'Refresh saved category':'Save category on this device'}}</button>
+      <button type="button" class="btn-ghost text-sm" @click="removeLocalCategories">Remove saved categories</button>
+      <p v-if="localMessage" role="status" class="text-sm">{{localMessage}}</p>
+    </div>
     <div v-motion-panel="tab" class="compendium-content">
     <div v-if="tab!=='homebrew'" v-stable-loading="loading" class="panel compendium-filter-panel" role="region" aria-label="Compendium filters" :aria-busy="loading">
       <ItemFilters v-if="tab==='magic-items'||tab==='equipment'" v-model="filters" :extra-tags="extraTags" :magic-only="tab==='magic-items'" :hide-reset="true" />
