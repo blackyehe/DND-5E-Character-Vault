@@ -6,6 +6,8 @@ The retained local website rollout is live with passing public checks; unfinishe
 
 The subsequent authenticated loading investigation sampled all 14 populated Compendium categories and opened Revalon Kampány's actual continent map. The reference renderer was a small part of measured first-open time; current server/data waits dominate. The map's metadata, image decoding and normal dialog opening succeed now, so the earlier failed-fetch cause is not proven. See [timings, scope and narrow follow-ups](audits/loading-investigation-2026-10-31.md). Next candidates are server cold-path tracing and clearer map transport recovery; no speculative map change has been published.
 
+The follow-up long-wait investigation reproduces a full-library rebuild after one large pack's preparation becomes invalid, plus an interactive SRD lookup delayed by queued imports. [Controlled calculations and remaining requirements](audits/compendium-tail-latency-2026-10-31.md) distinguish these from the live samples, which did not reproduce an exceptional wait. The [queue fix is published and publicly verified](audits/srd-queue-release-2026-10-31.md). Work on imported content continues locally with a bounded read-only fallback that reuses verified unchanged catalogues and reads only one changed pack; it must pass full equivalence, timing and failure checks before release. Automatic stored preparation remains a possible later step requiring storage/job-lifecycle controls.
+
 ## Added follow-ups — 29 October 2026
 
 These items are tracked alongside the remaining performance improvements. Work started locally on 29 October; the creator scope is now published as recorded below. The subsequent Workshop UI and imported-item fixes are also published, with release evidence below.
