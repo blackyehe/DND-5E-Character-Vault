@@ -1,6 +1,6 @@
 # Exceptional Compendium waits — 31 October 2026
 
-The user accepts normal one-to-two-second entry opening and requested reproduction and reduction of the occasional much longer waits. Initial investigation and changes were local. The queue fix is now published and publicly verified; [release evidence](srd-queue-release-2026-10-31.md). Original source packs, characters, rooms and unfinished Owlbear authentication are preserved. The changed-pack fallback prototype remains local.
+The user accepts normal one-to-two-second entry opening and requested reproduction and reduction of the occasional much longer waits. Initial investigation and changes were local. The queue fix is now published and publicly verified; [release evidence](srd-queue-release-2026-10-31.md). Original source packs, characters, rooms and unfinished Owlbear authentication are preserved. The [bounded changed-pack fallback is also published and publicly verified](compendium-mixed-fallback-2026-10-31.md); its final controlled comparison and scope are recorded separately below.
 
 ## Current live sampling
 
@@ -39,9 +39,9 @@ The local fix dispatches interactive requests before queued background work, ret
 
 An initial scheduler draft accumulated Windows timer lateness and slowed the synthetic bulk batch. It was corrected to advance the scheduled cadence. The final serial replay retains background completion at about 10.002 seconds versus 10.001 seconds for the baseline; a deterministic lateness test guards against reintroducing drift.
 
-Code is retained in `server/lib/srd-client.ts`, `server/lib/srd-request-queue.ts` and `server/lib/srd-client.test.ts`, both in the original checkout and isolated verified website worktree. The original unfinished authentication edits were preserved. Validation covers priority, shared pacing, background fairness, queue expiration, cache coalescing, body deadlines, retry behavior and timer drift. The queue change is now live; the larger rebuild remedy is not yet published.
+Code is retained in `server/lib/srd-client.ts`, `server/lib/srd-request-queue.ts` and `server/lib/srd-client.test.ts`, both in the original checkout and isolated verified website worktree. The original unfinished authentication edits were preserved. Validation covers priority, shared pacing, background fairness, queue expiration, cache coalescing, body deadlines, retry behavior and timer drift. The queue change is now live. The separate bounded read-only rebuild remedy is now live as recorded in the follow-up release report.
 
-The queue release's website suite passes 662 tests with 48 existing skips; backend type checking passes. Seven dedicated queue/deadline tests pass. Both working copies contain identical queue changes. Work on the changed-pack rebuild path follows separately, with the safeguards described above. A bounded, read-only fallback is being evaluated to avoid rebuilding unchanged packs without creating automatic stored generations.
+The queue release's website suite passes 662 tests with 48 existing skips; backend type checking passes. Seven dedicated queue/deadline tests pass. Both working copies contain identical queue changes. Work on the changed-pack rebuild path follows separately, with the safeguards described above. The published bounded, read-only fallback avoids rebuilding unchanged packs without creating automatic stored generations. Its final controlled comparison is 27.896 to 7.436 seconds, with 358 to 57 database commands and identical complete response hashes. See the separate release report for all 15 category equivalence checks, the limits and hosted/public verification.
 
 ## Evidence and cleanup
 

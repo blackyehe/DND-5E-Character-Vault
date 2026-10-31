@@ -150,10 +150,15 @@ async function loadIndex(userId:string,kind:BrowseKind,revision:string,probes:Pr
         const preparedDecoded=decodeBrowseIndex(preparedStored as unknown as IndexChunk[])
         if(preparedDecoded)return {index:preparedDecoded,origin:'prepared-stored'}
       }catch(error){console.warn('Experimental category cache unavailable',{kind,name:(error as Error).name,...cacheFailureCodes(error)})}
+      probes.targetedFallbackEligible=false
       const prepared=await readPreparedIndex(userId,revision,kind,probes)
       // A shared pending load carries its origin. Every returning caller must
       // validate prepared data before returning or placing it in RAM.
       if(prepared)return {index:prepared,origin:'prepared'}
+      if(probes.targetedFallbackEligible){
+        const targeted=await readPreparedIndex(userId,revision,kind,probes,true)
+        if(targeted)return {index:targeted,origin:'prepared'}
+      }
     }
     const index=await buildIndex(userId,kind)
     // Never publish an index assembled across a concurrent edit/import/delete.

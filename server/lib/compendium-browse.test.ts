@@ -1,7 +1,7 @@
 import { beforeEach,describe,it,expect,vi } from 'vitest'
-const state=vi.hoisted(()=>({revision:'one',catalog:{} as Record<string,unknown[]>,edits:[] as unknown[],chunks:[] as any[],onBuild:undefined as (()=>void)|undefined,build:vi.fn(),writes:vi.fn(),reads:vi.fn()}))
+const state=vi.hoisted(()=>({revision:'one',catalog:{} as Record<string,unknown[]>,edits:[] as unknown[],chunks:[] as any[],onBuild:undefined as (()=>void)|undefined,build:vi.fn(),writes:vi.fn(),reads:vi.fn(),prepared:false,preparedIndex:vi.fn()}))
 vi.mock('../env',()=>({env:{SRD_API_URL:'https://fixture.invalid',COMPENDIUM_READER:'legacy',COMPENDIUM_PREPARED_USERS:''}}))
-vi.mock('./compendium-prepared',()=>({preparedReaderEnabled:()=>false,readPreparedIndex:vi.fn(),readPreparedSource:vi.fn()}))
+vi.mock('./compendium-prepared',()=>({preparedReaderEnabled:()=>state.prepared,readPreparedIndex:state.preparedIndex,readPreparedSource:vi.fn()}))
 vi.mock('./compendium-entry-source',()=>({importedCompendiumSource:vi.fn()}))
 vi.mock('./workshop-library',()=>({workshopLibrary:async(user:string)=>{state.build(user);state.onBuild?.();return {catalog:state.catalog}}}))
 vi.mock('./monster-enrichment',()=>({enrichedMonsterEntries:async(_u:string,e:unknown)=>e,enrichedStandardMonster:(e:unknown)=>e}))
@@ -13,8 +13,19 @@ vi.mock('../models/CompendiumBrowseIndex',()=>({CompendiumBrowseIndex:{
   find:(filter:any)=>{const q={sort:()=>q,setOptions:()=>q,lean:async()=>{state.reads(filter);return state.chunks.filter(c=>c.userId===filter.userId&&c.revision===filter.revision&&c.kind===filter.kind)}};return q},
   bulkWrite:async(ops:any[])=>{state.writes(ops);for(const op of ops)state.chunks.push({...op.updateOne.filter,...op.updateOne.update.$set})},
 }}))
-beforeEach(()=>{vi.resetModules();state.revision='one';state.catalog={other:[]};state.edits=[];state.chunks=[];state.onBuild=undefined;state.build.mockClear();state.writes.mockClear();state.reads.mockClear()})
+beforeEach(()=>{vi.resetModules();state.revision='one';state.catalog={other:[]};state.edits=[];state.chunks=[];state.onBuild=undefined;state.build.mockClear();state.writes.mockClear();state.reads.mockClear();state.prepared=false;state.preparedIndex.mockReset()})
 describe('revisioned per-account browse index',()=>{
+  it('does not add a targeted fallback after an unclassified prepared-reader failure',async()=>{
+    state.prepared=true;state.preparedIndex.mockResolvedValue(null)
+    await (await import('./compendium-browse')).compendiumBrowseIndex('owner','other')
+    expect(state.preparedIndex).toHaveBeenCalledTimes(1);expect(state.build).toHaveBeenCalledOnce()
+  })
+  it('uses the read-only tier only when the prepared reader marks an eligible large source',async()=>{
+    const {browseIndex,browseRecord}=await import('../../shared/compendium-browse'),index=browseIndex([browseRecord({index:'current',name:'Current',url:''},'other')],'other')
+    state.prepared=true;state.preparedIndex.mockImplementationOnce(async(_user,_revision,_kind,probes)=>{probes.targetedFallbackEligible=true;return null}).mockResolvedValueOnce(index)
+    const result=await (await import('./compendium-browse')).compendiumBrowseIndex('owner','other')
+    expect(result.index).toEqual(index);expect(state.build).not.toHaveBeenCalled();expect(state.preparedIndex).toHaveBeenCalledTimes(2);expect(state.preparedIndex.mock.calls[1]![4]).toBe(true)
+  })
   it('still serves the rebuilt index when optional persistence fails and logs numeric failure codes',async()=>{
     state.catalog.other=[{index:'local-entry',name:'Local entry',url:''}]
     state.writes.mockImplementationOnce(()=>{throw Object.assign(Error('private database details'),{name:'MongoBulkWriteError',code:8000,writeErrors:[{code:8000,errmsg:'private document'}]})})

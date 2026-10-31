@@ -4,7 +4,7 @@ import {CustomContent} from '../models/CustomContent'
 import {CompendiumEntryCache} from '../models/CompendiumEntryCache'
 import {recoverableModelInitialization} from './model-initialization'
 import {readPackDocuments} from './pack-source'
-import {parsedPack} from './orcbrew-library'
+import {parsedPack,cachedParsedPack} from './orcbrew-library'
 import {buildOrcbrewCatalog} from './orcbrew'
 import {activeWorkshopEntries} from './workshop-schema'
 import type {BrowseEntry,BrowseKind} from '../../shared/compendium-browse'
@@ -36,12 +36,15 @@ export async function targetedCompendiumSource(userId:string,kind:BrowseKind,ind
   const aliases=Array.isArray(locator.aliases)?locator.aliases:[]
   const ids=[...new Set(aliases.flatMap(a=>typeof a==='string'?a.match(/^homebrew-([a-f0-9]{24})-/i)?.[1]??[]:[]))]
   if(!names.length&&!ids.length)return null
-  const docs=await CustomContent.find({userId,type:'orcbrew',...(names.length?{'data.filename':{$in:names}}:{_id:{$in:ids}})}).select('_id').sort({_id:1}).lean()
+  const docs=await CustomContent.find({userId,type:'orcbrew',...(names.length?{'data.filename':{$in:names}}:{_id:{$in:ids}})}).select('_id sourceHash data.filename data.includeDisabled').sort({_id:1}).lean()
   for(const doc of docs){
-    const sources=await readPackDocuments(userId,String(doc._id))
-    if(!sources.length)continue
-    const pack=sources[0]!,data=pack.data as {filename:string;includeDisabled?:boolean}
-    const catalog=buildOrcbrewCatalog([{id:String(pack._id),filename:data.filename,includeDisabled:data.includeDisabled,parsed:parsedPack(pack.data)}])
+    let pack=doc,data=doc.data as {filename:string;includeDisabled?:boolean},parsed=cachedParsedPack(doc.sourceHash)
+    if(!parsed){
+      const sources=await readPackDocuments(userId,String(doc._id))
+      if(!sources.length)continue
+      pack=sources[0]!;data=pack.data as typeof data;parsed=parsedPack(pack.data)
+    }
+    const catalog=buildOrcbrewCatalog([{id:String(pack._id),filename:data.filename,includeDisabled:data.includeDisabled,parsed}])
     const entries=kind==='classes'||kind==='subclasses'||kind==='races'?activeWorkshopEntries(catalog[kind],kind):catalog[kind]
     const source=entries.find(e=>e.index===index)
     if(!source)continue

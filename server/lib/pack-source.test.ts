@@ -10,6 +10,19 @@ const record={_id:'pack',userId:'owner',type:'orcbrew',updatedAt:new Date('2026-
 function metadata(){const query={select:vi.fn().mockReturnThis(),sort:vi.fn().mockReturnThis(),lean:vi.fn().mockResolvedValue([record])};vi.mocked(CustomContent.find).mockReturnValue(query as never)}
 
 describe('bounded, consistent pack reads',()=>{
+  it('rejects stored bytes before reading further pieces when an explicit source limit is supplied',async()=>{
+    metadata()
+    vi.mocked(CustomContent.aggregate).mockReturnValue(aggregateResult([{_id:record._id,part:'first',length:PACK_SOURCE_CHARS+10,valid:true,storedBytes:4096}]))
+    await expect(readPackDocuments('owner','pack',{maxStoredBytes:1024,maxDecodedBytes:1024})).rejects.toThrow('request source limit')
+    expect(CustomContent.aggregate).toHaveBeenCalledTimes(1)
+  })
+  it('limits compressed output even when stored source bytes fit',async()=>{
+    const source='x'.repeat(4096),encoded=gzipSync(Buffer.from(source)).toString('base64')
+    const query={select:vi.fn().mockReturnThis(),sort:vi.fn().mockReturnThis(),lean:vi.fn().mockResolvedValue([{...record,data:{...record.data,sourceEncoding:'gzip-base64',sourceBytes:4096}}])}
+    vi.mocked(CustomContent.find).mockReturnValue(query as never)
+    vi.mocked(CustomContent.aggregate).mockReturnValue(aggregateResult([{_id:record._id,part:encoded,length:encoded.length,valid:true,storedBytes:Buffer.byteLength(encoded)}]))
+    await expect(readPackDocuments('owner','pack',{maxStoredBytes:1024,maxDecodedBytes:1024})).rejects.toThrow('request source limit')
+  })
   it('reads only the requested owner pack and decodes compressed storage',async()=>{
     const source='{:name "é 🗡"}',encoded=gzipSync(Buffer.from(source)).toString('base64')
     const query={select:vi.fn().mockReturnThis(),sort:vi.fn().mockReturnThis(),lean:vi.fn().mockResolvedValue([{...record,data:{...record.data,sourceEncoding:'gzip-base64',sourceBytes:Buffer.byteLength(source)}}])}
