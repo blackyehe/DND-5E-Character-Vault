@@ -4,7 +4,7 @@
 
 The retained local website rollout is live with passing public checks; unfinished Owlbear authentication remains separate. The first performance candidate was rolled back after a public extension initialization failure; the revised combined package passed the public gate. An isolated release branch now reconciles the deployed website source and its tests without overwriting the original working checkout. See [rollout status](audits/local-only-rollout-2026-10-29.md).
 
-Then investigate the user's slow Compendium index/entry values and the game-room map that fails to load. Trace category indexes, full entry retrieval, reference rendering and database/network time separately; the reference-code explanation is a hypothesis, not a confirmed cause. Reproduce loading an actual map image and metadata with authorized DM/player access; the previous empty map-workspace smoke check does not establish that an existing map loads. Record timings and verified causes before proposing a release.
+The subsequent authenticated loading investigation sampled all 14 populated Compendium categories and opened Revalon Kampány's actual continent map. The reference renderer was a small part of measured first-open time; current server/data waits dominate. The map's metadata, image decoding and normal dialog opening succeed now, so the earlier failed-fetch cause is not proven. See [timings, scope and narrow follow-ups](audits/loading-investigation-2026-10-31.md). Next candidates are server cold-path tracing and clearer map transport recovery; no speculative map change has been published.
 
 ## Added follow-ups — 29 October 2026
 
