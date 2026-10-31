@@ -4,6 +4,13 @@ import type {BrowseKind} from '../../shared/compendium-browse'
 import {LOCAL_CATEGORY_BYTES,LOCAL_CATEGORY_RECORDS,LOCAL_COMPENDIUM_VERSION,type LocalCompendiumSnapshot} from '../../shared/local-compendium'
 import {compendiumBrowseIndex} from './compendium-browse'
 
+/** Compare exact category bytes only after the cheap library revision changes.
+ * The existing server index reader retains all cross-category dependencies. */
+export async function localCompendiumIdentity(owner:string,kind:BrowseKind){
+ const {index,revision}=await compendiumBrowseIndex(owner,kind)
+ return {owner,kind,revision,version:LOCAL_COMPENDIUM_VERSION,digest:createHash('sha256').update(JSON.stringify(index)).digest('hex')}
+}
+
 /** Explicit synchronization only; normal page browsing does not call this. */
 export async function localCompendiumExport(owner:string,kind:BrowseKind){
  const {index,revision}=await compendiumBrowseIndex(owner,kind)

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Character } from '../models/Character'
 import { requireAuth } from '../middleware/auth'
 import { normalizeImportedCharacter } from '../../shared/weapon-proficiencies'
+import {characterRuleExtraKinds} from '../lib/workshop-rules'
 import { characterRuleLibrary } from '../lib/character-rule-library'
 import { resolveWorkshopCharacter, workshopRevision } from '../lib/workshop-library'
 
@@ -13,6 +14,8 @@ import { rememberItem } from './items'
 import { attunementError } from '../../shared/item-rules'
 import { resolveEquipmentItem } from '../lib/equipment-references'
 import { CustomContent } from '../models/CustomContent'
+import {pinSelectedOptions} from '../lib/selected-options'
+import type {Character as CharacterData} from '../../shared/character'
 
 const router = Router()
 router.use(requireAuth)
@@ -36,7 +39,10 @@ router.get('/champions', async (req, res) => {
 router.post('/', async (req, res) => {
   const { _id, userId, createdAt, updatedAt, __v, ...data } = req.body
   const candidate=new Character({...normalizeImportedCharacter(data),userId:req.userId})
-  const resolved=await resolveWorkshopCharacter(candidate.toObject(),req.userId)
+  const library=await characterRuleLibrary(req.userId,characterRuleExtraKinds(candidate.toObject()))
+  let selected
+  try{selected=pinSelectedOptions(candidate.toObject() as unknown as CharacterData,library)}catch(e){return res.status(400).json({error:(e as Error).message})}
+  const resolved=await resolveWorkshopCharacter(selected,req.userId,library)
   const char = await Character.create({ ...resolved, userId: req.userId })
   res.status(201).json(await output(char.toObject(),req.userId))
 })
@@ -49,13 +55,13 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/references',async(req,res)=>{
   const character=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
   if(!character)return res.status(404).json({error:'Character not found'})
-  const library=await characterRuleLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId,characterRuleExtraKinds(character))
   const resolved=await resolveWorkshopCharacter(character,req.userId,library)
   res.json({...sheetReferences(resolved,library),character:savedCharacterOutput(resolved)})
 })
 router.get('/:id/spell-options',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
-  const library=await characterRuleLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId,[])
   res.json(library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases,desc})=>({index,name,displayName,sourcePack,level,contentKey,aliases,definitionAvailable:Array.isArray(desc)&&desc.some(line=>typeof line==='string'&&line.trim())})))
 })
 
@@ -81,17 +87,17 @@ router.post('/:id/items',async(req,res)=>{
 router.get('/:id/advancement-options',async(req,res)=>{
   const character=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
   if(!character)return res.status(404).json({error:'Character not found'})
-  const library=await characterRuleLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId,characterRuleExtraKinds(character))
   res.set('Cache-Control','no-store').json({character:savedCharacterOutput(await resolveWorkshopCharacter(character,req.userId,library)),libraryRevision:await workshopRevision(req.userId),rules:library.rules.map(r=>({index:r.index,name:r.draft.name,url:'',workshop:r.draft})),classes:library.catalog.classes.map(({details,...entry})=>entry),subclasses:library.catalog.subclasses.map(({details,...entry})=>entry),feats:library.catalog.feats.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases})=>({index,name,displayName,sourcePack,level,contentKey,aliases,url:''}))})
 })
 router.get('/:id/editor-options',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
-  const library=await characterRuleLibrary(req.userId)
-  res.json({rules:sheetRuleOptions(library),feats:library.catalog.feats.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases,desc})=>({index,name,displayName,sourcePack,level,contentKey,aliases,definitionAvailable:Array.isArray(desc)&&desc.some(line=>typeof line==='string'&&line.trim())}))})
+  const library=await characterRuleLibrary(req.userId,['subraces'])
+  res.json({rules:sheetRuleOptions(library),feats:library.catalog.feats.map(({details,...entry})=>entry),subraces:(library.catalog.subraces??[]).map(({details,...entry})=>entry),backgrounds:library.catalog.backgrounds.map(({details,...entry})=>entry),spells:library.catalog.spells.map(({index,name,displayName,sourcePack,level,contentKey,aliases,desc})=>({index,name,displayName,sourcePack,level,contentKey,aliases,definitionAvailable:Array.isArray(desc)&&desc.some(line=>typeof line==='string'&&line.trim())}))})
 })
 router.get('/:id/spell-definition/:index',async(req,res)=>{
   if(!await Character.exists({_id:req.params.id,userId:req.userId}))return res.status(404).json({error:'Character not found'})
-  const library=await characterRuleLibrary(req.userId)
+  const library=await characterRuleLibrary(req.userId,[])
   const entry=library.catalog.spells.find(s=>s.index===req.params.index||(s.aliases as string[]).includes(String(req.params.index)))
   if(!entry)return res.status(404).json({error:'Spell definition not found'})
   const {details,...spell}=entry;if(!Array.isArray(spell.desc)||!spell.desc.some(line=>typeof line==='string'&&line.trim()))return res.status(404).json({error:'This imported spell has no rules definition. Choose a matching SRD or another homebrew definition.'});res.json(spell)
@@ -99,19 +105,22 @@ router.get('/:id/spell-definition/:index',async(req,res)=>{
 
 router.patch('/:id', async (req, res) => {
   if(req.body.expectedLibraryRevision&&req.body.expectedLibraryRevision!==await workshopRevision(req.userId))return res.status(409).json({error:'Saved rules changed during this advancement. Reload the latest character and restart.'})
-  const library=await characterRuleLibrary(req.userId)
+  // Read selections after loading the stored character below.
   const fields=['companionKind','meta','combat','abilities','saves','skills','attacks','equipment','spellcasting','personality','features','resources','proficiencies','homebrew']
   const patch=Object.fromEntries(fields.filter(key=>Object.hasOwn(req.body,key)).map(key=>[key,req.body[key]]))
   for(let attempt=0;attempt<3;attempt++){
     const before=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
     if(!before)return res.status(404).json({error:'Character not found'})
     if(req.body.expectedUpdatedAt && new Date(before.updatedAt).toISOString() !== req.body.expectedUpdatedAt)return res.status(409).json({error:'This sheet changed elsewhere. Refresh before repeating your changes.'})
+    const library=await characterRuleLibrary(req.userId,characterRuleExtraKinds({...before,...patch}))
     const previous=savedCharacterOutput(before)
     if(patch.equipment){patch.equipment=(patch.equipment as typeof previous.equipment).map(resolveEquipmentItem);const equipment=patch.equipment as typeof previous.equipment;if(equipment.some(i=>i.attuned&&!previous.equipment.some(old=>String(old._id)===String(i._id)&&old.attuned))){const issue=attunementError(equipment);if(issue)return res.status(400).json({error:issue})}}
     const combatPatch=patch.combat as Partial<typeof previous.combat>|undefined
-    const resolved=await resolveWorkshopCharacter({...before,...patch,combat:{...before.combat,...combatPatch,itemAcBaseline:combatPatch?.itemAcBaseline??previous.combat.itemAcBaseline}},req.userId,library)
-    const {meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew}=resolved
-    const char=await Character.findOneAndUpdate({_id:before._id,userId:req.userId,updatedAt:before.updatedAt},{$set:{...patch,meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew,...(patch.combat?{combat:resolved.combat}:{'combat.hpMax':resolved.combat.hpMax,'combat.speed':resolved.combat.speed,'combat.itemAcBaseline':resolved.combat.itemAcBaseline})}},{new:true,runValidators:true}).lean()
+    let selected
+    try{selected=pinSelectedOptions({...before,...patch,combat:{...before.combat,...combatPatch,itemAcBaseline:combatPatch?.itemAcBaseline??previous.combat.itemAcBaseline}} as unknown as CharacterData,library,before as unknown as CharacterData)}catch(e){return res.status(400).json({error:(e as Error).message})}
+    const resolved=await resolveWorkshopCharacter(selected,req.userId,library)
+    const {meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules}=resolved
+    const char=await Character.findOneAndUpdate({_id:before._id,userId:req.userId,updatedAt:before.updatedAt},{$set:{...patch,meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules,...(patch.combat?{combat:resolved.combat}:{'combat.hpMax':resolved.combat.hpMax,'combat.speed':resolved.combat.speed,'combat.itemAcBaseline':resolved.combat.itemAcBaseline})}},{new:true,runValidators:true}).lean()
     if(char)return res.json(await output(char,req.userId))
   }
   res.status(409).json({error:'This character changed while saving. Your edits have been kept; refresh the character before trying again.'})

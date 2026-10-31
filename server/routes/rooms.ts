@@ -10,12 +10,10 @@ import { characterOutput, savedCharacterOutput, quickSheetOutput } from '../lib/
 import { applyPlayUpdate, playUpdateSchema } from '../lib/play-update'
 import { workshopLibrary, workshopRevision } from '../lib/workshop-library'
 import { characterRuleLibrary } from '../lib/character-rule-library'
-import { CHARACTER_RULE_KINDS, type CharacterRuleKind } from '../lib/workshop-rules'
-import { activeWorkshopEntries } from '../lib/workshop-schema'
+import { CHARACTER_RULE_KINDS, characterRuleExtraKinds, type CharacterRuleKind } from '../lib/workshop-rules'
 import { ORCBREW_KINDS, type OrcbrewKind } from '../lib/orcbrew'
 import type { Character as CharacterData } from '../../shared/character'
 import { requestLimit } from '../middleware/request-limit'
-import { innateRaceSpells } from '../../shared/workshop-race'
 import { sheetReferences } from '../lib/sheet-references'
 import { resolveWorkshopCharacter } from '../lib/workshop-library'
 import { isRevenantShadow } from '../../shared/class-rules'
@@ -129,7 +127,7 @@ router.get('/:roomId/characters/:characterId', async (req, res) => {
 })
 router.get('/:roomId/characters/:characterId/references',async(_req,res)=>{
   const {raw,ownerId,dm}=res.locals.roomCharacter
-  const library=await characterRuleLibrary(ownerId)
+  const library=await characterRuleLibrary(ownerId,characterRuleExtraKinds(raw))
   const resolved=await resolveWorkshopCharacter(raw,ownerId,library)
   res.json({...sheetReferences(resolved,library),character:savedCharacterOutput(resolved,!dm)})
 })
@@ -154,7 +152,7 @@ router.get('/:roomId/characters/:characterId/champions/:championId',async(req,re
   res.json(req.query.view==='quick'?{...quickSheetOutput(raw,true),libraryRevision:await workshopRevision(ownerId)}:await characterOutput(raw,ownerId,true))
 })
 router.get('/:roomId/characters/:characterId/champions/:championId/references',async(_req,res)=>{
-  const {raw,ownerId}=res.locals.roomCharacter,library=await characterRuleLibrary(ownerId)
+  const {raw,ownerId}=res.locals.roomCharacter,library=await characterRuleLibrary(ownerId,characterRuleExtraKinds(raw))
   const resolved=await resolveWorkshopCharacter(raw,ownerId,library)
   res.json({...sheetReferences(resolved,library),character:savedCharacterOutput(resolved,true)})
 })
@@ -177,13 +175,16 @@ router.get('/:roomId/characters/:characterId/references/:kind', async (req, res)
   const kind = req.params.kind as OrcbrewKind
   if (!ORCBREW_KINDS.includes(kind)) return res.status(404).json({ error: 'Reference not found.' })
   const { raw, ownerId } = res.locals.roomCharacter
-  const library = CHARACTER_RULE_KINDS.includes(kind as CharacterRuleKind)?await characterRuleLibrary(ownerId):await workshopLibrary(ownerId)
+  const library = CHARACTER_RULE_KINDS.includes(kind as CharacterRuleKind)?await characterRuleLibrary(ownerId,characterRuleExtraKinds(raw)):await workshopLibrary(ownerId)
   const c = await characterOutput(raw, ownerId) as CharacterData
-  const entries = (library.catalog as Partial<import('../lib/orcbrew').OrcbrewEntries>)[kind]!
-  const wantedNames = [c.meta.race, c.meta.subrace, c.meta.klass, c.meta.subclass, c.meta.background, ...(c.meta.classLevels ?? []).map(e => e.name), ...c.features.map(f => f.name), ...c.features.filter(f => /^feats?$/i.test(f.name.trim())).flatMap(f => f.description.split(/[,;\n]/))].map(s => s.trim().toLowerCase())
-  const spellIds = new Set([...c.spellcasting.known, ...c.spellcasting.prepared,...innateRaceSpells(c).map(s=>s.index)])
-  const filtered = entries.filter(e => kind === 'spells' ? spellIds.has(e.index) || (e.aliases as string[]).some(a => spellIds.has(a)) : wantedNames.includes(e.name.toLowerCase()))
-  res.json(kind === 'classes' || kind === 'subclasses' || kind === 'races' ? activeWorkshopEntries(filtered, kind) : filtered)
+  const projected=sheetReferences(c,library)
+  if(kind in projected)return res.json(projected[kind as keyof typeof projected])
+  // Non-rule references use explicit inventory IDs, with an unambiguous legacy fallback.
+  const entries=(library.catalog as Partial<import('../lib/orcbrew').OrcbrewEntries>)[kind]??[]
+  if(kind!=='equipment'&&kind!=='magic-items')return res.json([])
+  const selected=new Map<string,typeof entries[number]>()
+  for(const item of c.equipment){const ids=[item.index,item.magicIndex,item.templateId?'workshop-item-'+item.templateId:undefined].filter(Boolean),matches=entries.filter(e=>ids.length?[e.index,e.contentKey,...(e.aliases as string[]??[])].some(id=>ids.includes(id)):e.name.trim().toLowerCase()===item.name.trim().toLowerCase());for(const entry of ids.length?matches:matches.length===1?matches:[])selected.set(entry.index,entry)}
+  return res.json([...selected.values()].map(({details,...entry})=>entry))
 })
 
 export default router

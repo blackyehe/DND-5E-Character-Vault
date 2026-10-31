@@ -1,9 +1,15 @@
 import { z } from 'zod'
+import {validWeaponDamage,MAX_ITEM_RULE_TEXT} from '../../shared/item-validation'
 import type { Character, EquipmentItem } from '../../shared/character'
 import { attunementError, itemKind } from '../../shared/item-rules'
 import { resolveEquipmentItem } from './equipment-references'
 import { armourCategories, itemRarities } from '../../shared/item-classification'
 
+const weaponSchema=z.object({dice:z.string().max(30),damageType:z.string().max(60),range:z.string().max(100),finesse:z.boolean(),ranged:z.boolean(),category:z.string().max(40).optional(),noDamage:z.boolean().optional()}).superRefine((weapon,ctx)=>{
+ if(weapon.noDamage)return // Special rules remain descriptive, without invented base damage.
+ if(!validWeaponDamage(weapon.dice))ctx.addIssue({code:'custom',path:['dice'],message:'Use ordinary dice, fixed damage, or special damage rules.'})
+ if(!weapon.damageType.trim())ctx.addIssue({code:'custom',path:['damageType'],message:'An ordinary damaging weapon needs a damage type.'})
+})
 const bonus=z.number().int().min(-20).max(20)
 /** Mixed legacy/template documents may contain BSON nulls for absent optional
  * fields. Treat them as absent, while required fields still validate normally. */
@@ -20,11 +26,11 @@ export const itemSchema=z.preprocess(omitEmpty,z.object({
   value:z.object({amount:z.number().finite().min(0).max(1000000000),currency:z.enum(['cp','sp','ep','gp','pp'])}).optional(),
   attunementRequirement:z.string().max(500).optional(),
   index:z.string().max(200).optional(),magicIndex:z.string().max(200).optional(),templateId:z.string().regex(/^[a-f0-9]{24}$/).optional(),templateRevision:z.number().int().min(0).optional(),category:z.string().max(100).optional(),
-  description:z.string().max(30000).default(''),referenceDescription:z.string().max(30000).optional(),
+  description:z.string().max(MAX_ITEM_RULE_TEXT).default(''),referenceDescription:z.string().max(MAX_ITEM_RULE_TEXT).optional(),
   armor:z.object({base:z.number().int().min(0).max(40),dex:z.boolean(),cap:z.number().int().min(0).max(20).optional(),shield:z.boolean(),category:z.enum(armourCategories).optional()}).optional(),
-  weapon:z.object({dice:z.string().max(30).regex(/^\d{1,2}d\d{1,3}(?:\s*[+-]\s*\d{1,3})?$/i),damageType:z.string().min(1).max(60),range:z.string().max(100),finesse:z.boolean(),ranged:z.boolean(),category:z.string().max(40).optional(),noDamage:z.boolean().optional()}).optional(),
+  weapon:weaponSchema.optional(),
 }).superRefine((item,ctx)=>{
-  if(item.kind==='weapon'&&!item.weapon)ctx.addIssue({code:'custom',message:'A weapon needs damage dice and a damage type.'})
+  if(item.kind==='weapon'&&!item.weapon)ctx.addIssue({code:'custom',message:'A weapon needs ordinary or special damage rules.'})
   if(item.kind==='armour'&&!item.armor)ctx.addIssue({code:'custom',message:'Armour needs its base AC or shield bonus.'})
   if(item.kind!=='treasure'&&item.qty>9999)ctx.addIssue({code:'custom',message:'Item quantity must be no greater than 9999.'})
 }))

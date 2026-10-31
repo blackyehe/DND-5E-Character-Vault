@@ -1,5 +1,20 @@
 # Follow-up priorities — 20 October 2026
 
+## Added follow-ups — 31 October 2026
+
+The retained local website rollout is live with passing public checks; unfinished Owlbear authentication remains separate. The first performance candidate was rolled back after a public extension initialization failure; the revised combined package passed the public gate. An isolated release branch now reconciles the deployed website source and its tests without overwriting the original working checkout. See [rollout status](audits/local-only-rollout-2026-10-29.md).
+
+Then investigate the user's slow Compendium index/entry values and the game-room map that fails to load. Trace category indexes, full entry retrieval, reference rendering and database/network time separately; the reference-code explanation is a hypothesis, not a confirmed cause. Reproduce loading an actual map image and metadata with authorized DM/player access; the previous empty map-workspace smoke check does not establish that an existing map loads. Record timings and verified causes before proposing a release.
+
+## Added follow-ups — 29 October 2026
+
+These items are tracked alongside the remaining performance improvements. Work started locally on 29 October; the creator scope is now published as recorded below. The subsequent Workshop UI and imported-item fixes are also published, with release evidence below.
+
+- **Character option builder — published:** Feats, backgrounds, invocations, boons, durable nested choice groups, languages, reference entries and parent-aware subraces are connected to drafts, pack persistence, recovery and their character consumers. Changed choices and mismatched parents cannot silently replace approved grants. Manual-rule and ancestry-change limits are explicit. Build, frontend/server type checks, 650 tests, 23 API scenarios and 14 desktop scenarios pass. Notes/backstory saving and the reproduced late-name creator failure are corrected in that release. See [completion evidence, payload costs and limits](audits/creator-option-completion-2026-10-29.md) and [the staged plan](CHARACTER_OPTION_BUILDER_PLAN_2026-10-29.md). Published from the exact audited source package; [release evidence and source limits](audits/creator-option-release-2026-10-29.md). Hosted owner/player checks pass. Git/live reconciliation remains; the separate special-item validation fix is also published and verified.
+- **Workshop UI consistency - published:** All six categories share aligned search, contextual New actions, type filters, headings and cards. Draft/pack save controls sit below the category tabs; account-library saving remains intact. Backup feedback is visible across categories and active drafts are flushed before export. Exact-source build/types, 12 local scenarios, nine hosted scenarios and public checks pass. See [the release and rollback evidence](audits/workshop-ui-release-2026-10-29.md). The subsequent imported-item fix is also published.
+
+Special imported-item validation is published: all 6,603 snapshot items pass, including the former 47 failures. The exact five-file change is merged onto the live Workshop release; hosted owner/player, cleanup and public checks pass. Existing inventory copies retain their saved rules. See [the release and rollback evidence](audits/imported-item-release-2026-10-29.md).
+
 ## Dashboard and DM room character workspaces
 
 **Status:** Implemented and published on 21 October 2026. See `DASHBOARD_ROOM_WORKSPACE_RELEASE_2026-10-21.md`.

@@ -12,8 +12,10 @@ import { compactDraft, compileWorkshopEntry, placeWorkshopEntry, workshopKey } f
 import { inspectOrcbrew, sourceHash } from '../lib/orcbrew'
 import { workshopFromEntry, workshopSection, type WorkshopDraft } from '../../shared/homebrew-workshop'
 import { applyWorkshopRules } from '../../shared/workshop-character'
+import optionRoutes from './option-workshop'
 
 const router=Router();router.use(requireAuth)
+router.use('/options',optionRoutes)
 const filename=z.string().min(1).max(255).regex(/^[^<>:"/\\|?*\x00-\x1f]+\.orcbrew$/i)
 const saveSchema=z.object({draft:workshopDraftSchema,target:z.object({packId:z.string().optional(),filename:filename.optional(),expectedHash:z.string().optional()}),expectedRevision:z.number().int().min(0)})
 const queues=new Map<string,Promise<unknown>>()

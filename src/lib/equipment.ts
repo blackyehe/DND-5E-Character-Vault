@@ -35,7 +35,7 @@ export function equipmentAttacks(character: Character, item: EquipmentItem) {
     }
     attacks = [attack]
   }
-  return attacks.map(attack => {const effective={...attack,magicBonus:itemActive(item)?item.magicBonus??attack.magicBonus:0};return {...effective,...attackValues(character,effective,item.weapon?.category),...(item.weapon?.noDamage?{damage:0,text:'No direct damage'}:{})}})
+  return attacks.map(attack => {const effective={...attack,magicBonus:itemActive(item)?item.magicBonus??attack.magicBonus:0};return {...effective,...attackValues(character,effective,item.weapon?.category),...(item.weapon?.noDamage?{damage:0,text:!String(item.weapon.dice??'').trim()&&!String(item.weapon.damageType??'').trim()?'Special rules · see description':'No direct damage'}:{})}})
 }
 /** Inventory weapons follow equip state; independently entered attacks remain available. */
 export function combatAttacks(character:Character) {

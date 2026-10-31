@@ -2,6 +2,8 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useBuilderAppearance } from '../../composables/useBuilderAppearance'
+import {localCompendiumEnabled} from '../../lib/local-compendium-client'
+import LocalCompendiumStatus from '../compendium/LocalCompendiumStatus.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -28,6 +30,7 @@ async function onLogout() {
       </nav>
     </div>
     <div class="flex items-center gap-4 text-sm">
+      <LocalCompendiumStatus v-if="auth.user&&localCompendiumEnabled" />
       <span v-if="auth.user" class="site-user-name text-[var(--color-ink-soft)]">{{ auth.user?.displayName }}</span>
       <button id="site-appearance-toggle" class="btn-ghost" :aria-expanded="appearanceOpen" aria-controls="builder-appearance" @click="appearanceOpen = !appearanceOpen">◐ Appearance</button>
       <button v-if="auth.user" class="btn-ghost" @click="onLogout">Log out</button>

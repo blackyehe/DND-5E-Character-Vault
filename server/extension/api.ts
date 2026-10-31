@@ -11,6 +11,7 @@ import { Character } from '../models/Character'
 import { User } from '../models/User'
 import { characterOutput } from '../lib/character-output'
 import { characterRuleLibrary } from '../lib/character-rule-library'
+import {characterRuleExtraKinds} from '../lib/workshop-rules'
 import { identity, vitals, expandedSheet } from './sheet'
 import { ExtensionPairing, ExtensionSession } from './models'
 import { approvalPage } from './approval-page'
@@ -186,7 +187,7 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
     if (expanded && res.locals.connection.session.details !== true) return fail(res, 403, 'Reconnect to approve expanded character details.')
     const started = performance.now()
     const resolved = await characterOutput(raw, String(room.ownerId), true)
-    const output = expanded ? expandedSheet(resolved, await characterRuleLibrary(String(room.ownerId)), raw.features.map(item => String(item._id))) : vitals(resolved)
+    const output = expanded ? expandedSheet(resolved, await characterRuleLibrary(String(room.ownerId),characterRuleExtraKinds(resolved)), raw.features.map(item => String(item._id))) : vitals(resolved)
     // Explicit projections exclude raw imports, catalogs, emails and admin data.
     res.set('Server-Timing', `snapshot;dur=${(performance.now() - started).toFixed(1)}`)
     res.json(output)

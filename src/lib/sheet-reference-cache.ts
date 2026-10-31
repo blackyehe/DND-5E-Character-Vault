@@ -1,5 +1,5 @@
 import type { Character } from '../../shared/character'
-import type { HomebrewBackground, HomebrewClass, HomebrewFeat, HomebrewRace, HomebrewSubclass, SrdSpell } from './srd'
+import type { HomebrewBackground, HomebrewClass, HomebrewFeat, HomebrewRace, HomebrewSubclass, HomebrewReference, SrdSpell } from './srd'
 
 export interface SheetReferences {
   character?:Character
@@ -9,13 +9,16 @@ export interface SheetReferences {
   subclasses:HomebrewSubclass[]
   classes:HomebrewClass[]
   backgrounds:HomebrewBackground[]
+  invocations?:HomebrewReference[]
+  subraces?:HomebrewReference[];selections?:HomebrewReference[];languages?:HomebrewReference[];other?:HomebrewReference[]
+  boons?:HomebrewReference[]
 }
 
 // Session memory only. A fresh authorized character read supplies both version
 // markers before a response can be reused; private HTTP caching stays disabled.
 const entries=new Map<string,{expires:number;value:SheetReferences;bytes:number}>()
 const lifetime=2*60*1000,limit=24,budget=4*1024*1024
-export const SHEET_REFERENCE_VERSION='selected-rules-2'
+export const SHEET_REFERENCE_VERSION='selected-options-5'
 let epoch=0
 export function sheetReferenceCacheKey(input:{userId?:string;path:string;role:string;version:string;revision:string;preview?:boolean}) {
   return input.userId&&input.version&&input.revision&&!input.preview

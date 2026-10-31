@@ -2,6 +2,7 @@ import { readEdn, type EdnSpan } from './edn'
 import { canonicalContent, inspectOrcbrew, type OrcbrewEntry } from './orcbrew'
 import { workshopSection, workshopSlots, type WorkshopDraft } from '../../shared/homebrew-workshop'
 import { raceFeatures } from '../../shared/workshop-race'
+import type {OptionKind} from '../../shared/option-kinds'
 
 class Literal {readonly code:string;constructor(code:string){this.code=code}}
 class Patch {readonly fields:Record<string,unknown>;constructor(fields:Record<string,unknown>){this.fields=fields}}
@@ -148,3 +149,15 @@ export function placeMonsterEntry(source:string|undefined,key:string,entry:Recor
 }
 
 export const monsterKeyword=keyword
+
+/** Author one native option without rewriting unrelated EDN forms. */
+export function placeOptionEntry(source:string|undefined,kind:OptionKind,key:string,entry:Record<string,unknown>,nativeId:string):string{
+  const section=`:orcpub.dnd.e5/${kind}`,text=writeEdn(entry)
+  if(!source)return `{${section} {${writeEdn(keyword(key))} ${text}}}\n`
+  const spans=new WeakMap<object,EdnSpan>(),root=readEdn(source,()=>{},spans),nodes:object[]=[]
+  function visit(node:unknown,depth=0){if(depth>16)return;const record=object(node);for(const [name,value]of Object.entries(object(record[section])))if(name.replace(/^:/,'')===key){if(object(object(value)[':codex/option']).id!==nativeId)throw new Error('This key belongs to another option. Choose another pack.');nodes.push(object(value))}for(const [name,value]of Object.entries(record))if(!name.startsWith(':')&&value&&typeof value==='object'&&!Array.isArray(value))visit(value,depth+1)}
+  visit(root)
+  if(nodes.length){let next=source;for(const node of nodes.sort((a,b)=>spans.get(b)!.start-spans.get(a)!.start)){const span=spans.get(node)!;next=next.slice(0,span.start)+text+next.slice(span.end)}return next}
+  const span=spans.get(root as object);if(!span)throw new Error('The target pack must be an EDN map.')
+  return source.slice(0,span.start)+applyMap(source,root,patch({[section]:patch({[`:${key}`]:new Literal(text)})}),spans)+source.slice(span.end)
+}

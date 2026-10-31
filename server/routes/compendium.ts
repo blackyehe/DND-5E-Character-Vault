@@ -9,9 +9,15 @@ import { ensureContentIndexes } from '../lib/content-indexes'
 import { Character } from '../models/Character'
 import { isValidObjectId } from 'mongoose'
 import type { Character as CharacterData } from '../../shared/character'
+import {characterRuleExtraKinds} from '../lib/workshop-rules'
 import { characterRuleLibrary } from '../lib/character-rule-library'
 import { characterUsesDefinition, reviewedCharacter, characterReviewChanges } from '../lib/compendium-character'
 import { savedCharacterOutput } from '../lib/character-output'
+import {sameOptionIdentity,optionHasId} from '../../shared/option-reference'
+import {subraceMatchesRace} from '../../shared/subrace-options'
+import {selectedOption} from '../../shared/option-reference'
+import {choiceSelectionProblem,type ChoiceGroup} from '../../shared/choice-groups'
+import {isOptionKind,isFeatureOptionKind} from '../../shared/option-kinds'
 import { workshopProblems } from '../../shared/homebrew-workshop'
 import { normalizeBuilderEntry } from '../lib/entry-builder-schema'
 import { validatedDraft } from '../lib/workshop-schema'
@@ -90,12 +96,16 @@ router.put('/:kind/:index',async(req,res)=>{
   res.json({...state,revision:data.revision,sourceChanged:false,edited:Object.keys(changes).length>0,entry:applyEntryChanges(state.source,changes)})
 })
 async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|undefined){
-  const library=await characterRuleLibrary(userId),original=raw as CharacterData
+  const library=await characterRuleLibrary(userId,characterRuleExtraKinds(raw,[state.kind])),original=raw as CharacterData
   const before=reviewedCharacter(original,library.rules,library.initial)
-  const previous=before.compendiumRules?.find(d=>d.kind===state.kind&&d.index===state.index)
+  const matches=(d:NonNullable<CharacterData['compendiumRules']>[number])=>d.kind===state.kind&&(d.index===state.index||isOptionKind(state.kind)&&sameOptionIdentity({...d.entry,index:d.index,name:String(d.entry.name)},{...state.source,index:state.index,name:String(state.source.name)}))
+  const previous=before.compendiumRules?.find(matches)
   const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.source,entry:state.entry}
-  const candidate={...before,compendiumRules:[...(before.compendiumRules??[]).filter(d=>d.kind!==state.kind||d.index!==state.index),definition]}
+  const candidate={...before,compendiumRules:[...(before.compendiumRules??[]).filter(d=>!matches(d)),definition]}
   candidate.meta=JSON.parse(JSON.stringify(candidate.meta)) as CharacterData['meta']
+  if(state.kind==='backgrounds')candidate.meta.backgroundIndex=state.index
+  if(isFeatureOptionKind(state.kind))candidate.features=candidate.features.map(f=>f.definition?.kind===state.kind&&optionHasId({...state.source,index:state.index,name:String(state.source.name)},f.definition.index)?{...f,definition:{...f.definition,index:state.index}}:f)
+  if(state.kind==='subraces')candidate.meta.subraceIndex=state.index
   if(state.kind==='races')candidate.meta.raceIndex=state.index
   if(state.kind==='classes'){
     const row=candidate.meta.classLevels?.find(c=>c.index===state.index||c.name===state.source.name||c.name===previous?.entry.name)
@@ -107,16 +117,19 @@ async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|un
     if(row)row.subclassIndex=state.index
     if(!candidate.meta.classLevels?.length||candidate.meta.classLevels.length===1)candidate.meta.subclassIndex=state.index
   }
+  const group=(state.entry.optionBuilder as {choiceGroup?:ChoiceGroup}|undefined)?.choiceGroup
+  const selectionErrors=state.kind==='selections'?candidate.features.filter(f=>f.definition?.kind==='selections'&&optionHasId({...state.entry,index:state.index,name:String(state.entry.name)},f.definition.index)).flatMap(f=>group?choiceSelectionProblem(group,f.definition?.choiceIds)??[]:f.definition?.choiceIds?.length?'This definition no longer has the saved choice tree.':[]):[]
+  if(state.kind==='subraces'&&state.entry.optionId){const parent=selectedOption(library.catalog.races,candidate.meta.raceIndex,candidate.meta.race)??{index:candidate.meta.raceIndex??candidate.meta.race.toLowerCase(),name:candidate.meta.race};if(!subraceMatchesRace(state.entry,parent))selectionErrors.push('This subrace no longer matches the character’s parent race.')}
   const after=reviewedCharacter(candidate,library.rules,library.initial)
   const changes=characterReviewChanges(before,after)
-  const warnings=[...new Set(after.homebrew?.conflicts.map(c=>c.message)??[])]
+  const warnings=[...selectionErrors.map(issue=>'Selection needs repair before applying: '+issue),...new Set(after.homebrew?.conflicts.map(c=>c.message)??[])]
   if(!['classes','subclasses','races','spells','equipment','magic-items'].includes(state.kind))warnings.push('Selected benefits appear in the comparison and apply through the shared rules. Matching saved feature text is updated. Ability-score grants, prerequisites, removed features and player choices still need manual review.')
   if(state.kind==='spells')warnings.push('The reviewed spell definition will be used on this sheet. Known and prepared spells and spent slots stay as saved.')
   if(state.kind==='equipment'||state.kind==='magic-items')warnings.push('Custom item values are kept when they differ from the source. Quantity, equipped state, attunement and personal notes stay as saved.')
   const sourceConfirmation=true
   if(sourceConfirmation)warnings.push('Confirm this is the source intended for this character. Older saved features may only record a name; similarly named versions cannot always be distinguished.')
   const reviewHash=sourceHash(JSON.stringify({changes,homebrew:after.homebrew,definition,updatedAt:original.updatedAt}))
-  return {before,after,changes,warnings,sourceConfirmation,reviewHash,alreadyReviewed:previous?.revision===state.revision&&sameEntry(previous.entry,state.entry)}
+  return {before,after,changes,warnings,blocked:selectionErrors.length>0,sourceConfirmation,reviewHash,alreadyReviewed:previous?.revision===state.revision&&sameEntry(previous.entry,state.entry)}
 }
 router.get('/:kind/:index/review',async(req,res)=>{
   const state=await compendiumEditState(req.userId,req.params.kind as CompendiumKind,String(req.params.index))
@@ -139,6 +152,7 @@ router.post('/:kind/:index/review/:characterId',async(req,res)=>{
   if(!raw)return res.status(404).json({error:'Character not found.'})
   if(state.revision!==parsed.data.expectedRevision||String(raw.updatedAt.toISOString())!==parsed.data.expectedUpdatedAt)return res.status(409).json({error:'The entry or character changed. Refresh the review before applying it.'})
   const plan=await reviewPlan(raw,state,req.userId)
+  if(plan.blocked)return res.status(409).json({error:'The saved selection no longer fits this definition. Keep the approved rules, or repair the selection and its parent before applying source changes.'})
   if(plan.reviewHash!==parsed.data.reviewHash)return res.status(409).json({error:'The proposed changes changed. Refresh the review before applying them.'})
   if(plan.sourceConfirmation&&!parsed.data.confirmedSource)return res.status(400).json({error:'Confirm this is the intended source for the character.'})
   const {meta,features,equipment,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}=plan.after

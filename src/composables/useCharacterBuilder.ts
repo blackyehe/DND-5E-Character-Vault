@@ -1,3 +1,4 @@
+import {subraceMatchesRace} from '../../shared/subrace-options'
 import { workshopSlots } from '../../shared/homebrew-workshop'
 import { classSpellDefaults } from '../../shared/class-rules'
 import { slotMaximums } from '../../shared/character-progression'
@@ -8,6 +9,7 @@ import { equipmentFrom } from '../lib/character-sheet'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { loadCreationOptions } from '../lib/creation-options-cache'
+import {manualOptionProblem} from '../../shared/manual-options'
 import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, maxHP, profBonus, type AbilityKey } from '../lib/calc'
 import {
   abilityTotals, armorClass, builderIssues, composeCharacter, newBuilderDraft, restoreBuilderDraft, skillKey,
@@ -61,7 +63,7 @@ export function useCharacterBuilder() {
   })
   const subraceOptions = computed(() => {
     const parent = (race.value?.contentKey ?? draft.race).replace(/^.*\//, '')
-    return [...(race.value?.subraces ?? []), ...customSubraces.value.filter((entry) => entry.race.replace(/^.*\//, '') === parent)]
+    return [...(race.value?.subraces ?? []), ...customSubraces.value.filter((entry) => subraceMatchesRace(entry,{...race.value,index:draft.race,contentKey:parent,name:race.value?.name??draft.race}))]
   })
   const classLevel = computed(() => levels.value.find((entry) => entry.level === draft.level))
   const skillChoice = computed(() => {
@@ -102,12 +104,13 @@ export function useCharacterBuilder() {
     const classCasting = object(klass.value?.details?.[':spellcasting'])
     const ability = String(authored?.magic.ability??defaults?.ability ?? klass.value?.spellcasting?.spellcasting_ability.index ?? classCasting[':ability'] ?? 'int').replace(/^:/, '').replace(/^.*\//, '') as AbilityKey
     return {
+      featIndexes:feats.value.map(entry=>entry.index),
       ruleDefinitions:definitions,
       spellPolicy: spellSelectionPolicy(draft, { klass: klass.value, subrace: subrace.value, subclass: subclass.value, progression: classLevel.value, scores: abilityTotals(draft, { race: race.value, subrace: subrace.value, klass: klass.value }) }),
       race: race.value, subrace: subrace.value, klass: klass.value, subclass: subclass.value, background: background.value,
       fixedSkills: fixedSkills.value, skillChoice: skillChoice.value, proficiencies, slots, spellAbility: ABILITY_KEYS.includes(ability) ? ability : 'int',
-      features: [...raceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...subraceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...classTraits.value.map(f=>({...f,origin:'class' as const})), ...subclassTraits.value.map(f=>({...f,origin:'subclass' as const})), ...(background.value?.traits ?? []).map(f=>({...f,origin:'background' as const,level:1})),
-        ...feats.value.filter((entry) => selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).includes(entry.index)).map((entry) => ({ name: contentLabel(entry), description: entry.description, origin:'feat' as const, level:featOpportunities(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).slots.find(s=>draft.advancements[s.key]?.feat===entry.index)?.level??1 }))],
+      features: [...raceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...subraceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...classTraits.value.map(f=>({...f,origin:'class' as const})), ...subclassTraits.value.map(f=>({...f,origin:'subclass' as const})), ...(background.value?.traits ?? []).map(f=>({...f,origin:'background' as const,level:1})),...draft.manualOptions.filter(f=>!manualOptionProblem(f)),
+        ...feats.value.filter((entry) => selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).includes(entry.index)).map((entry) => ({ name: contentLabel(entry), description: entry.description, origin:'feat' as const, definition:{version:1 as const,kind:'feats' as const,index:entry.index}, level:featOpportunities(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).slots.find(s=>draft.advancements[s.key]?.feat===entry.index)?.level??1 }))],
     }
   })
   const spellPolicy = computed(() => context.value.spellPolicy!)
@@ -344,6 +347,9 @@ export function useCharacterBuilder() {
       customClasses.value=options.classes;customRaces.value=options.races;customBackgrounds.value=options.backgrounds
       customSubraces.value=options.subraces;customSubclasses.value=options.subclasses;feats.value=options.feats;customSpells.value=options.spells
     }
+    const currentBackground=customBackgrounds.value.filter(e=>e.index===draft.background||e.aliases?.includes(draft.background));if(currentBackground.length===1)draft.background=currentBackground[0]!.index
+    const currentFeat=(id:string)=>{const matches=feats.value.filter(e=>e.index===id||e.aliases?.includes(id));return matches.length===1?matches[0]!.index:id}
+    draft.feats=draft.feats.map(currentFeat);for(const choice of Object.values(draft.advancements??{}))if(choice.feat)choice.feat=currentFeat(choice.feat)
     classes.value = [...value(results[0], classes.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customClasses.value]
     races.value = [...value(results[1], races.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customRaces.value]
     backgrounds.value = [...value(results[2], backgrounds.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customBackgrounds.value]; equipment.value = value(results[3], equipment.value)

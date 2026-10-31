@@ -48,7 +48,7 @@ export function personalEntry(source:BrowseEntry,changes:Record<string,unknown>|
   if(changes.name)entry.displayName=String(changes.name)
   return entry
 }
-export async function browseEntrySource(userId:string,kind:BrowseKind,index:string):Promise<BrowseEntry|null> {
+export async function browseEntrySource(userId:string,kind:BrowseKind,index:string,expectedRevision?:string):Promise<BrowseEntry|null> {
   if(index.startsWith('workshop-item-')&&(kind==='equipment'||kind==='magic-items')){
     const id=index.slice('workshop-item-'.length)
     if(!/^[a-f0-9]{24}$/i.test(id))return null
@@ -61,7 +61,7 @@ export async function browseEntrySource(userId:string,kind:BrowseKind,index:stri
   if(index.startsWith('homebrew-')){
     const probes:PreparedProbeContext={failed:new Set()}
     for(let attempt=0;attempt<3;attempt++){
-      const revision=await browseRevision(userId)
+      const revision=expectedRevision??await browseRevision(userId)
       try{
         const locate=async()=>{
           const current=await compendiumBrowseIndex(userId,kind)
@@ -69,9 +69,9 @@ export async function browseEntrySource(userId:string,kind:BrowseKind,index:stri
           return current.index.records.find(r=>r.entry.index===index)?.entry??null
         }
         const entry=await importedCompendiumSource(userId,kind,index,revision,locate,preparedReaderEnabled(userId)?()=>readPreparedSource(userId,revision,kind,index,locate,probes):undefined)
-        if(await browseRevision(userId)!==revision)continue
+        if(expectedRevision===undefined&&await browseRevision(userId)!==revision)continue
         return entry&&kind==='monsters'?(await enrichedMonsterEntries(userId,[entry]))[0]!:entry
-      }catch(error){if(!(error instanceof BrowseRevisionChanged))throw error}
+      }catch(error){if(expectedRevision!==undefined||!(error instanceof BrowseRevisionChanged))throw error}
     }
     throw new Error('Your library is changing. Please retry shortly.')
   }
@@ -82,6 +82,15 @@ export async function browseEntrySource(userId:string,kind:BrowseKind,index:stri
 }
 export async function personalBrowseEntry(userId:string,kind:BrowseKind,index:string) {
   const source=await browseEntrySource(userId,kind,index)
+  return applyPersonalEntry(userId,kind,index,source)
+}
+/** Caller must validate this revision again after the entire read, including
+ * personal edits/enrichment, before returning or caching the result. */
+export async function personalBrowseEntryAtRevision(userId:string,kind:BrowseKind,index:string,revision:string) {
+  const source=await browseEntrySource(userId,kind,index,revision)
+  return applyPersonalEntry(userId,kind,index,source)
+}
+async function applyPersonalEntry(userId:string,kind:BrowseKind,index:string,source:BrowseEntry|null) {
   if(!source)return null
   const filter:Record<string,unknown>={userId,type:'compendium-edit','data.kind':kind,'data.index':index}
   const doc=await CustomContent.findOne(filter).select('data.changes').lean()
@@ -161,7 +170,7 @@ async function loadIndex(userId:string,kind:BrowseKind,revision:string,probes:Pr
   pending.set(key,task)
   try{return await task}finally{pending.delete(key)}
 }
-class BrowseRevisionChanged extends Error {}
+export class BrowseRevisionChanged extends Error {}
 export async function compendiumBrowseIndex(userId:string,kind:BrowseKind) {
   const probes:PreparedProbeContext={failed:new Set()}
   for(let attempt=0;attempt<3;attempt++){

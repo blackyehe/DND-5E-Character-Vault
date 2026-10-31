@@ -28,7 +28,7 @@ const metaSchema = new Schema(
     alignment: { type: String, default: '' },
     xp: { type: Number, default: 0 },
     portrait: { type: String, default: '' },
-    classIndex:String,subclassIndex:String,raceIndex:String,
+    classIndex:String,subclassIndex:String,raceIndex:String,subraceIndex:{type:String,maxlength:300},backgroundIndex:{type:String,maxlength:300},
     classLevels: { type: [{ name: String, index:String, subclass:String, subclassIndex:String, level: { type: Number, min: 1, max: 20 } }], default: undefined },
   },
   { _id: false },
@@ -182,6 +182,7 @@ const personalitySchema = new Schema(
 const featureSchema = new Schema(
   {
     ruleId:String,featureId:String,selectedOptions:{type:[String],default:undefined},
+    definition:{type:new Schema({version:{type:Number,enum:[1],required:true},kind:{type:String,enum:['feats','invocations','boons','selections','other'],required:true},index:{type:String,required:true,maxlength:300},grantConfirmed:Boolean,choiceIds:{type:[String],default:undefined}},{_id:false}),default:undefined},
     name: { type: String, default: '' },
     description: { type: String, default: '' },
     origin: { type: String, enum: ['racial', 'class', 'subclass', 'background', 'feat', 'other'] },

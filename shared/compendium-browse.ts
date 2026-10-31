@@ -9,8 +9,8 @@ import { equipmentTags } from './item-classification'
 import { hasMagicItemTags, itemSearchText, matchesEquipmentItem, matchesMagicItem, normalEquipmentSearch, type ItemSearchFilters } from '../src/lib/magic-item-filters'
 
 export const COMPENDIUM_PAGE_SIZE = 25
-export const BROWSE_KINDS = ['spells','equipment','magic-items','classes','subclasses','races','subraces','monsters','backgrounds','feats','invocations','boons','selections','languages','other'] as const
-export type BrowseKind = typeof BROWSE_KINDS[number]
+import type {BrowseKind} from './compendium-kinds'
+export {BROWSE_KINDS,type BrowseKind} from './compendium-kinds'
 export interface BrowseEntry extends Record<string,unknown> {
   index:string; name:string; url:string; displayName?:string; sourcePack?:string; workshopItem?:EquipmentItem
   itemReference?:boolean; itemDamageTypes?:string[]; filterFacets?:FacetValues

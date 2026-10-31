@@ -15,7 +15,7 @@ export interface LocalCompendiumSnapshot {
  payload:string
 }
 export interface StoredCompendiumSnapshot extends LocalCompendiumSnapshot {savedAt:number;bytes:number}
-export interface LocalCompendiumRevision {owner:string;revision:string;version:typeof LOCAL_COMPENDIUM_VERSION}
+export interface LocalCompendiumRevision {owner:string;revision:string;version:typeof LOCAL_COMPENDIUM_VERSION;digest?:string}
 
 export async function localIndexDigest(payload:string){
  const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(payload))

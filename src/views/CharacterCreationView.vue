@@ -7,7 +7,7 @@ import ShadowChampions from '../components/ShadowChampions.vue'
 import ItemRules from '../components/sheet/ItemRules.vue'
 import ItemComposer from '../components/items/DeferredItemComposer.vue'
 import { isRevenantShadow, classSpellDefaults } from '../../shared/class-rules'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCharactersStore } from '../stores/characters'
 import { useCharacterBuilder } from '../composables/useCharacterBuilder'
@@ -27,6 +27,7 @@ import { selectedFeatIndexes } from '../lib/advancements'
 import { spellLevelGroups } from '../lib/spell-level-groups'
 import { useIndependentColumns } from '../composables/useIndependentColumns'
 
+const ManualOptionPicker=defineAsyncComponent(()=>import('../components/creation/ManualOptionPicker.vue'))
 const router = useRouter(), route = useRoute()
 const store = useCharactersStore()
 const builder = useCharacterBuilder()
@@ -154,6 +155,8 @@ function rollScores() {
 }
 function addLanguage() { if (languageSelection.value && !draft.extraLanguages.includes(languageSelection.value)) draft.extraLanguages.push(languageSelection.value); languageSelection.value = '' }
 function addExtraSkill() { if (additionalSkill.value && !draft.additionalSkills.includes(additionalSkill.value)) draft.additionalSkills.push(additionalSkill.value); additionalSkill.value = '' }
+const inventoryKeys=new WeakMap<object,string>()
+function inventoryKey(item:object){let key=inventoryKeys.get(item);if(!key){key=crypto.randomUUID();inventoryKeys.set(item,key)}return key}
 function addCustomItem() {
   if (!customItemName.value.trim()) return
   draft.equipment.push({ index: `custom-${crypto.randomUUID()}`, name: customItemName.value.trim(), qty: 1, weight: 0, equipped: false, notes: '' })
@@ -211,7 +214,7 @@ async function createCharacter() {
         <button type="button" class="cb-save-link" @click="builder.saveDraft"><BuilderIcon name="save" :size="15" /> Save draft</button>
       </aside>
 
-      <main v-stable-loading="loadingDetails" v-motion-panel="draft.step" class="cb-main">
+      <main :key="draft.step" v-stable-loading="loadingDetails" v-motion-panel="draft.step" class="cb-main">
         <div v-if="restored" class="cb-notice"><BuilderIcon name="check" :size="17" /><span>Your saved draft is ready. Pick up where you left off.</span><button type="button" aria-label="Dismiss draft message" @click="restored = false"><BuilderIcon name="close" :size="14" /></button></div>
         <p v-for="warning in warnings" :key="warning" class="cb-alert" role="alert">{{ warning }}</p>
         <button v-if="warnings.length" type="button" class="cb-button cb-button-subtle" :disabled="builder.libraryLoading.value" @click="builder.reloadLibrary()">{{ builder.libraryLoading.value ? 'Loading library…' : 'Retry library' }}</button>
@@ -252,7 +255,7 @@ async function createCharacter() {
               <details class="cb-advanced"><summary>Additional ability adjustments <span>Feats, higher levels & homebrew</span></summary><p class="cb-field-hint">Enter table-specific changes here. Racial bonuses and choices from Feats & advancements are already applied; do not count them twice.</p><div class="cb-adjustments"><label v-for="key in ABILITY_KEYS" :key="key" class="cb-field">{{ key.toUpperCase() }}<input v-model.number="draft.adjustments[key]" type="number" min="-20" max="20" /></label></div></details>
             </template>
 
-            <template v-else-if="draft.step === 'feats'"><BuilderAdvancements :draft="draft" :context="context" :feats="feats" /></template>
+            <template v-else-if="draft.step === 'feats'"><BuilderAdvancements :draft="draft" :context="context" :feats="feats" /><ManualOptionPicker :level="draft.level" :selected="draft.manualOptions" @add="draft.manualOptions=[...draft.manualOptions.filter(f=>!f?.definition||f.definition.kind!==$event.definition?.kind||f.definition.index!==$event.definition?.index),$event]" /><div v-if="draft.manualOptions.length" class="cb-subsection"><h3>Selected granted options</h3><div v-for="(feature,index) in draft.manualOptions" :key="index" class="cb-selected-row"><span><strong>{{feature?.name||'Unreadable saved option'}}</strong><small>{{feature?.definition?.kind}} · acquired level {{feature?.level??'unknown'}}</small></span><button type="button" :aria-label="'Remove '+(feature?.name||'unreadable saved option')" @click="draft.manualOptions.splice(index,1)">Remove</button></div></div></template>
             <template v-else-if="draft.step === 'background'">
               <BuilderChoices :entries="backgrounds" :selected="draft.background" kind="background" icon="book" :descriptions="{ acolyte: 'A life of faith, service, and the communities that shaped you.' }" @choose="builder.chooseBackground" />
               <div v-if="background" class="cb-detail-panel"><div class="cb-detail-heading"><div><p class="cb-eyebrow">BEFORE THE ADVENTURE</p><h3>{{ background.name }}</h3></div><button type="button" class="cb-text-button" @click="draft.background = ''">Clear</button></div><p class="cb-reference-copy">{{ background.description }}</p><div class="cb-fact-row"><span v-if="background.skills.length"><strong>{{ background.skills.map((key) => prettySkill(key)).join(', ') }}</strong> skills</span><span v-if="background.languages"><strong>{{ background.languages }}</strong> extra languages</span></div><details v-for="trait in background.traits" :key="trait.name" class="cb-trait"><summary>{{ trait.name }}<span>+</span></summary><p>{{ trait.description }}</p></details></div>
@@ -318,7 +321,7 @@ async function createCharacter() {
               <div v-if="klass || background" class="cb-detail-panel cb-starter-equipment"><div class="cb-detail-heading"><div><p class="cb-eyebrow">STARTING GEAR</p><h3>Pack for your calling.</h3></div><BuilderIcon name="bag" :size="28" /></div><button v-if="hasFixedEquipment" type="button" class="cb-button cb-button-secondary" :disabled="inventoryBusy" @click="builder.addFixedEquipment">Add fixed class & background gear</button><div v-for="(choice, index) in startingChoices" :key="index" class="cb-gear-choice"><p>{{ choice.description }}</p><div class="cb-chips"><button v-for="option in choice.options" :key="option.label" type="button" :disabled="inventoryBusy" @click="addKit(option.items)"><BuilderIcon name="plus" :size="12" />{{ option.label }}</button></div><p v-if="!choice.options.length" class="cb-field-hint">Use the equipment search below to choose these items.</p></div><p v-if="!startingChoices.length && !hasFixedEquipment" class="cb-field-hint">Add your starting gear from the equipment list below.</p></div>
               <label class="cb-search cb-equipment-search"><BuilderIcon name="search" :size="18" /><input v-model="equipmentQuery" placeholder="Search weapons, armor & adventuring gear…" aria-label="Search equipment" /></label><div class="cb-equipment-catalog"><button v-for="entry in filteredEquipment.slice(0, equipmentLimit)" :key="entry.index" type="button" :disabled="inventoryBusy" @click="builder.addEquipment(entry)"><span>{{ entry.name }}</span><BuilderIcon name="plus" :size="15" /></button></div><button v-if="filteredEquipment.length > equipmentLimit" type="button" class="cb-text-button" @click="equipmentLimit += 12">Show more equipment</button>
               <div class="cb-inline-form cb-custom-equipment"><label class="cb-field cb-grow">Custom item<input v-model="customItemName" maxlength="100" placeholder="A keepsake, unusual weapon, or anything else…" @keydown.enter.prevent="addCustomItem" /></label><button type="button" class="cb-button cb-button-secondary" :disabled="!customItemName.trim()" @click="addCustomItem">Add item</button></div>
-              <div class="cb-subsection"><div class="cb-detail-heading"><h3>Your inventory</h3><span class="cb-field-hint">{{ totalWeight.toFixed(1) }} lb. carried</span></div><p v-if="!draft.equipment.length" class="cb-empty">Your pack is empty. Add some essentials or come back later.</p><div v-for="(item, index) in draft.equipment" :key="item.index" class="cb-inventory-row"><div><details><summary>{{ item.name }}</summary><ItemRules :item="item" /></details><label class="cb-checkbox-label"><input type="checkbox" :checked="item.equipped" @change="equip(index)" /> Equipped</label></div><label>QTY<input v-model.number="item.qty" type="number" min="1" :aria-label="`${item.name} quantity`" /></label><label>LB. EACH<input v-model.number="item.weight" type="number" min="0" step="0.1" :aria-label="`${item.name} weight`" /></label><button type="button" :aria-label="`Remove ${item.name}`" @click="draft.equipment.splice(index, 1)"><BuilderIcon name="close" :size="16" /></button></div></div>
+              <div class="cb-subsection"><div class="cb-detail-heading"><h3>Your inventory</h3><span class="cb-field-hint">{{ totalWeight.toFixed(1) }} lb. carried</span></div><p v-if="!draft.equipment.length" class="cb-empty">Your pack is empty. Add some essentials or come back later.</p><div v-for="(item, index) in draft.equipment" :key="inventoryKey(item)" class="cb-inventory-row"><div><details><summary>{{ item.name }}</summary><ItemRules :item="item" /></details><label class="cb-checkbox-label"><input type="checkbox" :checked="item.equipped" @change="equip(index)" /> Equipped</label></div><label>QTY<input v-model.number="item.qty" type="number" min="1" :aria-label="`${item.name} quantity`" /></label><label>LB. EACH<input v-model.number="item.weight" type="number" min="0" step="0.1" :aria-label="`${item.name} weight`" /></label><button type="button" :aria-label="`Remove ${item.name}`" @click="draft.equipment.splice(index, 1)"><BuilderIcon name="close" :size="16" /></button></div></div>
             </template>
 
             <template v-else-if="draft.step === 'identity'">

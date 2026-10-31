@@ -1,0 +1,106 @@
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest'
+import {COMPENDIUM_DETAIL_VERSION,type CompendiumDetailResponse} from '../../shared/compendium-details'
+import type {CompendiumDetailStorage,StoredCompendiumDetail} from './compendium-detail-storage'
+const get=vi.hoisted(()=>vi.fn())
+vi.mock('./api',()=>({api:{get}}))
+const revision='a'.repeat(64),next='b'.repeat(64)
+let rows:Map<string,StoredCompendiumDetail>,storage:CompendiumDetailStorage,events:Map<string,(event?:any)=>void>
+let module:typeof import('./compendium-detail-cache')
+const entry=(name='Original'):CompendiumDetailResponse=>({owner:'owner',kind:'spells',index:'one',version:COMPENDIUM_DETAIL_VERSION,revision,entry:{index:'one',name,url:'',desc:['Full entry values']}})
+const load=()=>module.loadCompendiumDetail('owner','spells','one',storage)
+beforeEach(async()=>{
+ vi.resetModules();get.mockReset();rows=new Map();events=new Map()
+ const markers=new Map<string,string>()
+ vi.stubGlobal('localStorage',{getItem:(key:string)=>markers.get(key)??null,setItem:(key:string,value:string)=>markers.set(key,value),removeItem:(key:string)=>markers.delete(key)})
+ vi.stubGlobal('window',{addEventListener:(name:string,listener:(event:any)=>void)=>events.set(name,listener)})
+ vi.stubGlobal('indexedDB',undefined)
+ storage={read:vi.fn(async key=>rows.has(key)?structuredClone(rows.get(key)):undefined),write:vi.fn(async(key,value)=>{rows.set(key,structuredClone(value))}),clear:vi.fn(async()=>rows.clear())}
+ get.mockImplementation(async(path:string)=>path.endsWith('/detail-revision')?{owner:'owner',kind:'spells',version:COMPENDIUM_DETAIL_VERSION,revision}:entry())
+ module=await import('./compendium-detail-cache');module.adoptCompendiumDetails('owner')
+})
+afterEach(()=>{vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()})
+describe('persistent personal Compendium details',()=>{
+ it('stores complete opened-entry values and reuses disk after a new same-account session',async()=>{
+  expect((await load()).desc).toEqual(['Full entry values'])
+  await vi.waitFor(()=>expect(storage.write).toHaveBeenCalledOnce())
+  module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner');get.mockClear()
+  expect((await load()).desc).toEqual(['Full entry values'])
+  expect(get).toHaveBeenCalledOnce();expect(get.mock.calls[0]![0]).toMatch(/\/detail-revision$/)
+  expect(storage.write).toHaveBeenCalledOnce()
+ })
+ it('reuses a recently authorized entry without another detail response and returns isolated values',async()=>{
+  const first=await load();(first.desc as string[])[0]='Changed by caller'
+  expect((await load()).desc).toEqual(['Full entry values']);expect(get).toHaveBeenCalledOnce()
+ })
+ it('fetches new values after the current revision changes',async()=>{
+  await load();module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner')
+  get.mockImplementation(async(path:string)=>path.endsWith('/detail-revision')?{...entry(),revision:next}:{...entry('Updated'),revision:next})
+  expect((await load()).name).toBe('Updated')
+  expect(get.mock.calls.filter(([path])=>path.includes('/saved-detail/'))).toHaveLength(2)
+ })
+ it('rejects removed entries instead of falling back to saved values',async()=>{
+  await load();module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner')
+  get.mockImplementation(async(path:string)=>{if(path.endsWith('/detail-revision'))return {...entry(),revision:next};throw Error('No longer available')})
+  await expect(load()).rejects.toThrow('No longer available')
+ })
+ it.each(['owner','kind','version','payload','digest','expired','future'])('repairs invalid stored %s through the authenticated detail endpoint',async(mode)=>{
+  await load();module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner')
+  const row=[...rows.values()][0]!
+  if(mode==='owner')row.owner='stranger'
+  if(mode==='kind')row.kind='monsters'
+  if(mode==='version')(row as any).version='old'
+  if(mode==='payload')row.payload+=' '
+  if(mode==='digest')row.digest='wrong'
+  if(mode==='expired')row.savedAt=Date.now()-8*86400000
+  if(mode==='future')row.savedAt=Date.now()+86400000
+  expect((await load()).name).toBe('Original')
+  expect(get.mock.calls.filter(([path])=>path.includes('/saved-detail/'))).toHaveLength(2)
+ })
+ it.each(['owner','kind','version','index'])('rejects mismatched %s in an authenticated detail response',async(mode)=>{
+  const response=entry();(response as any)[mode]='wrong';get.mockResolvedValue(response)
+  await expect(load()).rejects.toThrow('entry changed');expect(storage.write).not.toHaveBeenCalled()
+ })
+ it('does not return disk values when authenticated validation is unavailable',async()=>{
+  await load();module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner');get.mockRejectedValue(Error('Sign in'))
+  await expect(load()).rejects.toThrow('Sign in')
+ })
+ it('invalidates recent detail authorization immediately on a local library mutation',async()=>{
+  await load();events.get('codex:library-changed')!()
+  get.mockImplementation(async(path:string)=>path.endsWith('/detail-revision')?{...entry(),revision:next}:{...entry('Updated'),revision:next})
+  expect((await load()).name).toBe('Updated')
+ })
+ it('bounds storage delays and still returns a live entry when storage is blocked',async()=>{
+  vi.useFakeTimers();vi.mocked(storage.read).mockImplementationOnce(()=>new Promise(()=>{}))
+  const pending=load();await vi.advanceTimersByTimeAsync(100)
+  expect((await pending).name).toBe('Original')
+  module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner')
+  vi.mocked(storage.read).mockRejectedValue(Error('Blocked'));vi.mocked(storage.write).mockRejectedValue(Error('Quota'))
+  expect((await load()).name).toBe('Original')
+ })
+ it('returns oversized or unhashable live values without persisting them',async()=>{
+  const huge=entry();huge.entry.desc=['x'.repeat(1024*1024)];get.mockResolvedValueOnce(huge)
+  expect((await load()).desc).toEqual(huge.entry.desc);expect(storage.write).not.toHaveBeenCalled()
+  vi.spyOn(crypto.subtle,'digest').mockRejectedValue(Error('Unavailable'))
+  expect((await load()).name).toBe('Original');expect(storage.write).not.toHaveBeenCalled()
+ })
+ it('rejects a late response after logout or account switching',async()=>{
+  let finish!:(v:unknown)=>void;get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+  const pending=load();await vi.waitFor(()=>expect(finish).toBeTypeOf('function'))
+  module.clearCompendiumDetails();module.adoptCompendiumDetails('stranger');finish(entry())
+  await expect(pending).rejects.toThrow('account changed');expect(storage.write).not.toHaveBeenCalled()
+ })
+ it('does not persist a checksum completed after logout',async()=>{
+  let finish!:(hash:ArrayBuffer)=>void
+  vi.spyOn(crypto.subtle,'digest').mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+  const pending=load();await vi.waitFor(()=>expect(finish).toBeTypeOf('function'))
+  module.clearCompendiumDetails();finish(new ArrayBuffer(32))
+  await expect(pending).rejects.toThrow('account changed');expect(storage.write).not.toHaveBeenCalled()
+ })
+ it('rejects a detail validation that finishes after cross-tab account changes',async()=>{
+  await load();module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner')
+  let finish!:(v:unknown)=>void;get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+  const pending=load();await vi.waitFor(()=>expect(finish).toBeTypeOf('function'))
+  events.get('storage')!({key:'codex:compendium-detail-owner',newValue:'stranger'});finish(entry())
+  await expect(pending).rejects.toThrow('account changed')
+ })
+})

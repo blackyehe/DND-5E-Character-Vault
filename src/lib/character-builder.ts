@@ -5,6 +5,8 @@ import { resolveCharacterProgression } from '../../shared/character-progression'
 import type { SpellSlotRule, CharacterResource } from '../../shared/character'
 import { spellSelectionProblems, type SpellPolicy } from './spell-selection'
 import { featOpportunities, type AdvancementChoice } from './advancements'
+import {manualOptionProblem} from '../../shared/manual-options'
+import {isManualOptionKind} from '../../shared/option-kinds'
 import { XP_THRESHOLDS } from './character-sheet'
 import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, maxHP, type AbilityKey } from './calc'
 import { emptyCharacter, type Character, type EquipmentItem } from '../stores/characters'
@@ -24,7 +26,7 @@ export const BUILDER_STEPS = [
 ] as const
 export type BuilderStep = typeof BUILDER_STEPS[number]['id']
 export type AbilityScores = Record<AbilityKey, number>
-export type BuilderTrait = HomebrewTrait
+export type BuilderTrait = HomebrewTrait & {definition?:Character['features'][number]['definition']}
 export interface BuilderSpell { index: string; name: string; level: number; description: string; prepared: boolean; source?: string }
 export interface BuilderEquipment extends EquipmentItem {
   index: string
@@ -32,6 +34,7 @@ export interface BuilderEquipment extends EquipmentItem {
   armor_category?: string
 }
 export interface BuilderDraft {
+  manualOptions:Character['features']
   ruleChoices:Record<string,string[]>
   version: 1
   step: BuilderStep
@@ -79,6 +82,7 @@ export interface BuilderBackground extends SrdRef {
   suggestions: Partial<Record<'traits' | 'ideals' | 'bonds' | 'flaws', string[]>>
 }
 export interface BuilderContext {
+  featIndexes?:string[]
   ruleDefinitions?:PublishedWorkshopRule[]
   spellPolicy?: SpellPolicy
   race: (SrdRace & { homebrew_traits?: BuilderTrait[] }) | null
@@ -102,7 +106,7 @@ export function newBuilderDraft(): BuilderDraft {
   return {
     version: 1, ruleChoices:{}, step: 'race', name: '', level: 1, race: '', subrace: '', klass: '', subclass: '', background: '', customBackground: '',
     method: 'standard', scores: { ...STANDARD_SCORES }, adjustments: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
-    skills: [], additionalSkills: [], expertise: [], extraLanguages: [], tools: '', feats: [], advancements: {}, featLimitOverride: false, racialFeatCountOverride: null, spells: [], equipment: [], spellLimitOverride: false, spellAbility: '', slotOverrides: {}, resources: [],
+    skills: [], additionalSkills: [], expertise: [], extraLanguages: [], tools: '', feats: [], manualOptions:[], advancements: {}, featLimitOverride: false, racialFeatCountOverride: null, spells: [], equipment: [], spellLimitOverride: false, spellAbility: '', slotOverrides: {}, resources: [],
     hpOverride: null, acOverride: null, alignment: '', age: '', pronouns: '', portrait: '', personality: emptyCharacter().personality,
   }
 }
@@ -112,6 +116,8 @@ export function restoreBuilderDraft(value: unknown): BuilderDraft {
   if (!value || typeof value !== 'object' || (value as { version?: number }).version !== 1) return fallback
   const raw = value as Record<string, unknown>
   const restored = { ...fallback }
+  // Keep malformed saved selections visible for explicit removal rather than dropping data.
+  if(raw.manualOptions!==undefined)restored.manualOptions=JSON.parse(JSON.stringify(Array.isArray(raw.manualOptions)?raw.manualOptions:[raw.manualOptions])) as Character['features']
   if(raw.ruleChoices&&typeof raw.ruleChoices==='object')restored.ruleChoices=Object.fromEntries(Object.entries(raw.ruleChoices).filter(([,v])=>Array.isArray(v)&&v.every(item=>typeof item==='string')))
   restored.spellLimitOverride = raw.spellLimitOverride === true
   restored.featLimitOverride = raw.featLimitOverride === true
@@ -218,6 +224,10 @@ export function builderIssues(draft: BuilderDraft, context: BuilderContext) {
     if(choice.kind==='feat'&&!choice.feat)issues.push({step:'feats',message:`Choose a feat for ${slot.label}, or leave it for later.`})
   }
   const assigned=opportunities.slots.flatMap(s=>{const a=draft.advancements?.[s.key];return a?.kind==='feat'&&a.feat?[a.feat]:[]})
+  for(const feature of draft.manualOptions){const problem=manualOptionProblem(feature);if(problem)issues.push({step:'feats',message:problem})}
+  const manualIds=draft.manualOptions.flatMap(f=>f?.definition?[`${f.definition.kind}:${f.definition.index}`]:[])
+  if(new Set(manualIds).size!==manualIds.length)issues.push({step:'feats',message:'The same invocation or boon is selected more than once. Remove the duplicate selection.'})
+  if(context.featIndexes&&[...assigned,...draft.feats].some(index=>!context.featIndexes!.includes(index)))issues.push({step:'feats',message:'A selected feat definition is unavailable. Restore its pack, choose another feat, or leave that opportunity for later.'})
   if(new Set(assigned).size!==assigned.length)issues.push({step:'feats',message:'The same feat is assigned to more than one opportunity. Use distinct feats.'})
   if(draft.feats.length&&!draft.featLimitOverride)issues.push({step:'feats',message:'Assign previous-draft feats to earned opportunities or enable the extra-feat override.'})
   if(!draft.featLimitOverride&&opportunities.slots.some(s=>draft.advancements?.[s.key]?.kind==='asi')&&ABILITY_KEYS.some(k=>totals[k]>20))issues.push({step:'feats',message:'An ability increase cannot raise an ability above 20. Review the increases or enable the table-rule override.'})
@@ -256,7 +266,7 @@ export function composeCharacter(draft: BuilderDraft, context: BuilderContext): 
   }
   result.meta.xp = XP_THRESHOLDS[draft.level-1]??0
   result.meta.classLevels=[{name:context.klass!.name,level:draft.level}]
-  result.meta.classIndex=context.klass!.index;result.meta.subclassIndex=context.subclass?.index;result.meta.raceIndex=context.race?.index
+  result.meta.classIndex=context.klass!.index;result.meta.subclassIndex=context.subclass?.index;result.meta.raceIndex=context.race?.index;result.meta.backgroundIndex=context.background?.index;result.meta.subraceIndex=context.subrace?.index
   result.meta.classLevels[0]!.index=context.klass!.index
   result.combat.acMode=draft.acOverride!==null?'manual':'equipment'
   result.equipment = draft.equipment.map(item => ({ ...item, armor:item.armor??(item.armor_class?{base:item.armor_class.base,dex:item.armor_class.dex_bonus,cap:item.armor_class.max_bonus,shield:item.armor_category==='Shield'}:undefined) }))
@@ -270,8 +280,8 @@ export function composeCharacter(draft: BuilderDraft, context: BuilderContext): 
   result.personality = { ...draft.personality, appearance: [draft.age ? `Age: ${draft.age}` : '', draft.pronouns ? `Pronouns: ${draft.pronouns}` : '', draft.personality.appearance].filter(Boolean).join('\n') }
   const seen = new Set<string>()
   result.features = context.features.filter((feature) => {
-    if ((feature.level ?? 1) > draft.level) return false
-    const key = `${feature.name}\u0000${feature.description}`
+    if ((feature.level ?? 1) > draft.level&&!isManualOptionKind(feature.definition?.kind)) return false
+    const key = `${feature.definition?`${feature.definition.kind}:${feature.definition.index}`:''}\u0000${feature.name}\u0000${feature.description}`
     if (seen.has(key)) return false
     seen.add(key)
     return true

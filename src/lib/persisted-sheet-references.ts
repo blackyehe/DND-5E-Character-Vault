@@ -82,7 +82,8 @@ function valid(value:unknown,key:string):value is SheetReferences{
  if(!Array.isArray(casting.known)||!Array.isArray(casting.prepared)||!record(casting.slots)||
   !['armor','weapons','tools','languages'].every(k=>Array.isArray(proficiencies[k])))return false
  if(c.homebrew!==undefined&&(!record(c.homebrew)||!Array.isArray(c.homebrew.bindings)))return false
- return ['spells','feats','races','subclasses','classes','backgrounds'].every(k=>Array.isArray(value[k])&&value[k].every((row:unknown)=>record(row)&&typeof row.index==='string'&&typeof row.name==='string'))
+ const entriesValid=(rows:unknown)=>Array.isArray(rows)&&rows.every((row:unknown)=>record(row)&&typeof row.index==='string'&&typeof row.name==='string')
+ return ['spells','feats','races','subclasses','classes','backgrounds'].every(k=>entriesValid(value[k]))&&['invocations','boons','selections','languages','other','subraces'].every(k=>value[k]===undefined||entriesValid(value[k]))
 }
 async function checksum(payload:string){
  if(payload.length>budget)return undefined

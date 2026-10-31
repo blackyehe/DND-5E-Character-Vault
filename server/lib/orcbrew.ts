@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { isEdnSet, readEdn, type EdnValue } from './edn'
 import { normalizeOrcbrewItem } from './orcbrew-items'
+import {isOptionKind} from '../../shared/option-kinds'
 export { readEdn } from './edn'
 
 export const ORCBREW_KINDS = [
@@ -287,6 +288,13 @@ export function inspectOrcbrew(source: string): ParsedOrcbrew {
         const fingerprint = createHash('sha256').update(JSON.stringify([category, contentKey, canonicalContent(value)])).digest('hex')
         const index = `homebrew-${kind}-${fingerprint.slice(0, 32)}`
         const normalized = normalizers[kind](key, value)
+        const native=get(value,'codex/option') as Record<string,unknown>|undefined
+        if(isOptionKind(kind)&&native?.version===1&&native.kind===kind&&native.body&&Array.isArray(native.benefits)){
+          Object.assign(normalized,{optionBuilder:native.body,benefits:native.benefits,optionId:native.id,optionRevision:get(value,'codex/revision')})
+          const body=native.body as Record<string,unknown>
+          if(kind==='languages')Object.assign(normalized,{script:body.script,type:body.languageType,typical_speakers:body.typicalSpeakers})
+          if(kind==='selections')Object.assign(normalized,{choose:body.choiceGroup?(body.choiceGroup as Record<string,unknown>).choose:body.choose,options:body.choiceGroup?((body.choiceGroup as {options?:{name:string}[]}).options??[]).map(n=>n.name):body.options})
+        }
         const entry: OrcbrewEntry = {
           ...normalized, name: String(normalized.name).trim(), index, contentKey,
           source: textValue(get(value, 'option-pack'), group).trim(),
@@ -334,6 +342,8 @@ export function buildOrcbrewCatalog(packs: CatalogPack[]): OrcbrewEntries {
         if (item.disabled && !pack.includeDisabled) continue
         const source = item.source || pack.filename
         const alias = `homebrew-${pack.id}-${item.legacyKey}`
+        const previousIds=(item.details as Record<string,unknown>)?.[':codex/previous-indexes']
+        const optionAliases=isOptionKind(kind)&&item.optionId&&Array.isArray(previousIds)?previousIds.filter((id):id is string=>typeof id==='string'&&id.length<=300).slice(0,200):[]
         const previous = unique.get(item.index)
         if (previous) {
           previous.sources = [...new Set([...(previous.sources as string[]), source])].sort()
@@ -341,7 +351,7 @@ export function buildOrcbrewCatalog(packs: CatalogPack[]): OrcbrewEntries {
           previous.aliases = [...new Set([...(previous.aliases as string[]), alias])].sort()
         } else {
           unique.set(item.index, {
-            ...item, sources: [source], sourcePacks: [pack.filename], aliases: [alias], sourcePack: source,
+            ...item, sources: [source], sourcePacks: [pack.filename], aliases: [...new Set([alias,...optionAliases])], sourcePack: source,
           })
         }
       }

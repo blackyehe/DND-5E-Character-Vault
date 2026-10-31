@@ -3,9 +3,9 @@ import {LOCAL_CATEGORY_BYTES,LOCAL_TOTAL_BYTES,type StoredCompendiumSnapshot} fr
 import type {LocalIndexStorage} from './local-compendium-engine'
 
 export const LOCAL_INDEX_DATABASE='codex-compendium-index-v1'
-function operation(kind:BrowseKind,value?:StoredCompendiumSnapshot):Promise<StoredCompendiumSnapshot|undefined>{
+function operation(kind:BrowseKind,value?:StoredCompendiumSnapshot):Promise<StoredCompendiumSnapshot|BrowseKind[]|undefined>{
  return new Promise((resolve,reject)=>{
-  let db:IDBDatabase|undefined,tx:IDBTransaction|undefined,settled=false,result:StoredCompendiumSnapshot|undefined
+  let db:IDBDatabase|undefined,tx:IDBTransaction|undefined,settled=false,result:StoredCompendiumSnapshot|BrowseKind[]|undefined
   const finish=(error?:unknown)=>{if(settled)return;settled=true;clearTimeout(timer);db?.close();error?reject(error):resolve(result)}
   const timer=setTimeout(()=>{try{tx?.abort()}catch{/* Complete. */}finish(Error('Local catalogue storage timed out'))},2000)
   try{
@@ -29,12 +29,14 @@ function operation(kind:BrowseKind,value?:StoredCompendiumSnapshot):Promise<Stor
        else retained.push({...old,bytes})
       }
       let bytes=retained.reduce((n,s)=>n+s.bytes,0)+value.bytes
-      for(const old of retained.sort((a,b)=>a.savedAt-b.savedAt)){if(bytes<=LOCAL_TOTAL_BYTES)break;store.delete(old.kind);bytes-=old.bytes}
+      const removed=new Set<BrowseKind>()
+      for(const old of retained.sort((a,b)=>a.savedAt-b.savedAt)){if(bytes<=LOCAL_TOTAL_BYTES)break;store.delete(old.kind);bytes-=old.bytes;removed.add(old.kind)}
       store.put(value)
+      result=[...retained.filter(old=>!removed.has(old.kind)).map(old=>old.kind),value.kind]
      }
     }catch(error){finish(error)}
    }
   }catch(error){finish(error)}
  })
 }
-export const localCompendiumStorage:LocalIndexStorage={read:kind=>operation(kind),write:async value=>{await operation(value.kind,value)}}
+export const localCompendiumStorage:LocalIndexStorage={read:async kind=>await operation(kind) as StoredCompendiumSnapshot|undefined,write:async value=>await operation(value.kind,value) as BrowseKind[]}

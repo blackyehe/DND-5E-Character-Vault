@@ -1,4 +1,5 @@
 import {MAP_UPLOAD_JSON_BYTES} from '../../shared/room-maps'
+import {beginForegroundWork} from './foreground-work'
 
 export class ApiError extends Error {
   status: number
@@ -8,12 +9,14 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, background=false): Promise<T> {
+  const finish=background?()=>{}:beginForegroundWork()
+  try {
   if (typeof options.body === 'string') {
     const bytes = new Blob([options.body]).size
     const mapUpload = options.method === 'POST' && /^\/api\/rooms\/[a-f0-9]{24}\/maps(?:\?[^#]*)?$/i.test(path)
     if (mapUpload && bytes > MAP_UPLOAD_JSON_BYTES) throw new ApiError(413, 'Prepare this map to 3 MiB or less before uploading.')
-    if (bytes > 2 * 1024 * 1024 && !path.startsWith('/api/uploads') && !mapUpload) return largeRequest<T>(path, options)
+    if (bytes > 2 * 1024 * 1024 && !path.startsWith('/api/uploads') && !mapUpload) return await largeRequest<T>(path, options)
   }
   const res = await fetch(path, {
     headers: { 'Content-Type': 'application/json' },
@@ -30,7 +33,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
     throw new ApiError(res.status, message)
   }
-  return res.json().catch(error=>{if(options.signal?.aborted)throw new Error('The connection is taking too long. Please try Refresh.');throw error}) as Promise<T>
+  const value=await res.json().catch(error=>{if(options.signal?.aborted)throw new Error('The connection is taking too long. Please try Refresh.');throw error}) as T
+  if(options.method&&options.method!=='GET'&&/^\/api\/(?:content|compendium[^/]*|workshop(?:-trash)?|monster-workshop)(?:\/|$)/.test(path)&&typeof window!=='undefined')window.dispatchEvent(new Event('codex:library-changed'))
+  return value
+  } finally {finish()}
 }
 
 async function largeRequest<T>(path: string, options: RequestInit): Promise<T> {
@@ -48,7 +54,7 @@ async function largeRequest<T>(path: string, options: RequestInit): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string,options:{timeoutMs?:number;signal?:AbortSignal}={}) => request<T>(path,{signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(options.timeoutMs??15000)]):AbortSignal.timeout(options.timeoutMs??15000)}),
+  get: <T>(path: string,options:{timeoutMs?:number;signal?:AbortSignal;background?:boolean}={}) => request<T>(path,{signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(options.timeoutMs??15000)]):AbortSignal.timeout(options.timeoutMs??15000)},options.background),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
   patch: <T>(path: string, body: unknown) =>

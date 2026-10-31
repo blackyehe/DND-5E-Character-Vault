@@ -60,6 +60,7 @@ export interface EquipmentItem {
 
 export type FeatureOrigin = 'racial' | 'class' | 'subclass' | 'background' | 'feat' | 'other'
 export interface CharacterFeature {
+  definition?: {version:1;kind:import('./option-kinds').FeatureOptionKind;index:string;grantConfirmed?:boolean;choiceIds?:string[]}
   selectedOptions?:string[]
   ruleId?:string
   featureId?:string
@@ -131,6 +132,8 @@ export interface Character {
     classIndex?:string
     subclassIndex?:string
     raceIndex?:string
+    subraceIndex?:string
+    backgroundIndex?:string
   }
   abilities: Record<AbilityKey, number>
   saves: Record<AbilityKey, boolean>

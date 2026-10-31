@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { installNavigationRecovery } from '../lib/navigation-recovery'
+import {beginForegroundWork} from '../lib/foreground-work'
 
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
@@ -30,6 +31,10 @@ export const router = createRouter({
 })
 
 installNavigationRecovery(router)
+let finishNavigation:(()=>void)|undefined
+router.beforeEach(()=>{finishNavigation?.();finishNavigation=beginForegroundWork()})
+router.afterEach(()=>{finishNavigation?.();finishNavigation=undefined})
+router.onError(()=>{finishNavigation?.();finishNavigation=undefined})
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()

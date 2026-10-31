@@ -6,7 +6,7 @@ import { createProductionTrialApp } from './production-trial-app'
 import type { ProductionTrialConfig } from './production-trial-config'
 
 const privateValue = 'mongodb+srv://user:private-password@example.invalid/private-db?token=private-token'
-const config: ProductionTrialConfig = { websiteOrigin: 'https://website.test', extensionOrigin: 'https://extension.test', roomId: 'a'.repeat(24), epoch: 'diagnostic-test-epoch', mode: 'play-controls', rememberedConnections: true }
+const config: ProductionTrialConfig = { websiteOrigin: 'https://website.test', extensionOrigin: 'https://extension.test', roomId: 'a'.repeat(24), epoch: 'diagnostic-test-epoch', mode: 'play-controls', gameSessions: true }
 
 it('reports only fixed stage, error kind and allowlisted numeric code', async () => {
   const error = Object.assign(new Error(privateValue), { name: 'MongoServerError', code: 13, stack: privateValue, reason: { password: privateValue } })

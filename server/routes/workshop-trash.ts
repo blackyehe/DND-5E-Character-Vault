@@ -10,9 +10,9 @@ import { archiveDefinition, restoreDefinition, type ArchivedDefinition } from '.
 
 const router = Router()
 router.use(requireAuth)
-const kind = z.enum(['class', 'subclass', 'race', 'monster'])
+const kind = z.enum(['class', 'subclass', 'race', 'monster','feat','background','invocation','boon','selection','language','reference','subrace'])
 const revision = z.number().int().min(0)
-const sections = { class: 'classes', subclass: 'subclasses', race: 'races', monster: 'monsters' } as const
+const sections = { class: 'classes', subclass: 'subclasses', race: 'races', monster: 'monsters',feat:'feats',background:'backgrounds',invocation:'invocations',boon:'boons',selection:'selections',language:'languages',reference:'other',subrace:'subraces' } as const
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' ? value as Record<string, unknown> : {}
 const versionFilter = (value: number) => value === 0 ? { $or: [{ __v: 0 }, { __v: { $exists: false } }] } : { __v: value }
 
@@ -56,8 +56,9 @@ router.post('/packs/:id/delete', async (req, res) => {
   const data = decodedPackData(doc.data), source = data.source
   if (sourceHash(source) !== parsed.data.hash) return res.status(409).json({ error: 'This pack changed. Reload the library before deleting.' })
   const entry = inspectOrcbrew(source).entries[sections[parsed.data.kind]].find(e => e.index === parsed.data.index)
-  const native = record(record(entry?.details)[parsed.data.kind === 'monster' ? ':codex/monster' : ':codex/workshop'])
-  if (!entry || typeof native.id !== 'string' || parsed.data.kind !== 'monster' && native.kind !== parsed.data.kind) return res.status(400).json({ error: 'Only definitions saved through the Workshop can be deleted here. Manage imported files in the Compendium.' })
+  const option=['feat','background','invocation','boon','selection','language','reference','subrace'].includes(parsed.data.kind)
+  const native = record(record(entry?.details)[parsed.data.kind === 'monster' ? ':codex/monster' : option?':codex/option':':codex/workshop'])
+  if (!entry || typeof native.id !== 'string' || parsed.data.kind !== 'monster' && native.kind !== (option?sections[parsed.data.kind]:parsed.data.kind)) return res.status(400).json({ error: 'Only definitions saved through the Workshop can be deleted here. Manage imported files in the Compendium.' })
   const archived = archiveDefinition(source, parsed.data.kind, entry), trash = (doc.workshopTrash ?? []) as ArchivedDefinition[]
   // Empty active packs must still have distinct source hashes for the unique pack index.
   const marker = `; Workshop recovery pack ${doc._id}`

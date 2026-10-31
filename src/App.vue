@@ -6,7 +6,28 @@ import NavigationRecovery from './components/ui/NavigationRecovery.vue'
 import BuilderAppearance from './components/creation/BuilderAppearance.vue'
 import { useBuilderAppearance } from './composables/useBuilderAppearance'
 import { cancelSiteMotion, vMotionPanel } from './directives/siteMotion'
+import {useAuthStore} from './stores/auth'
+import {configureCompendiumPreparation,refreshCompendiumPreparation} from './lib/compendium-preparation'
 const route = useRoute()
+const auth=useAuthStore()
+function updatePreparation(){configureCompendiumPreparation(auth.user?.id,document.hidden||!navigator.onLine||route.path.startsWith('/rooms/')||route.path==='/login')}
+watch([()=>auth.user?.id,()=>route.path],updatePreparation,{immediate:true,flush:'sync'})
+function libraryStorage(event:StorageEvent){if(event.key==='codex:workshop-revision')refreshCompendiumPreparation()}
+onMounted(()=>{
+ document.addEventListener('visibilitychange',updatePreparation)
+ window.addEventListener('online',updatePreparation);window.addEventListener('offline',updatePreparation)
+ window.addEventListener('codex:workshop-published',refreshCompendiumPreparation)
+ window.addEventListener('codex:library-changed',refreshCompendiumPreparation)
+ window.addEventListener('storage',libraryStorage)
+})
+onUnmounted(()=>{
+ configureCompendiumPreparation(undefined,true)
+ document.removeEventListener('visibilitychange',updatePreparation)
+ window.removeEventListener('online',updatePreparation);window.removeEventListener('offline',updatePreparation)
+ window.removeEventListener('codex:workshop-published',refreshCompendiumPreparation)
+ window.removeEventListener('codex:library-changed',refreshCompendiumPreparation)
+ window.removeEventListener('storage',libraryStorage)
+})
 const { appearance, appearanceStyle, appearanceOpen } = useBuilderAppearance()
 watch(() => appearance.motion, cancelSiteMotion, { flush: 'sync' })
 let motionPreference: MediaQueryList | undefined

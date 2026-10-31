@@ -1,7 +1,7 @@
 import { computed, inject, onMounted, onUnmounted, provide, ref, watch, type ComputedRef, type InjectionKey } from 'vue'
 import type { Character, CharacterFeature, EquipmentItem, FeatureOrigin } from '../../shared/character'
 import { classes, equipmentFrom } from '../lib/character-sheet'
-import { srd, type HomebrewFeat, type SrdRef, type SrdSpell } from '../lib/srd'
+import { srd, type HomebrewFeat, type HomebrewSubrace,type HomebrewBackground, type SrdRef, type SrdSpell } from '../lib/srd'
 import { api } from '../lib/api'
 import { useCharactersStore } from '../stores/characters'
 import { innateRaceSpells } from '../../shared/workshop-race'
@@ -15,7 +15,8 @@ function createLibrary(c:ComputedRef<Character>) {
   const customSpellCatalog=ref<SrdSpell[]>([]), spells=ref<Record<string,SrdSpell>>({}),items=ref<Record<string,EquipmentItem>>({})
   const metadata=ref<Record<string,{origin:FeatureOrigin;level?:number}>>({})
   const ruleCatalog=ref<SrdRef[]>([]),featCatalog=ref<HomebrewFeat[]>([]),equipmentCatalog=ref<SrdRef[]>([])
-  const magicItemCatalog=ref<SrdRef[]>([])
+  const subraceCatalog=ref<HomebrewSubrace[]>([])
+  const magicItemCatalog=ref<SrdRef[]>([]),backgroundCatalog=ref<HomebrewBackground[]>([])
   const spellOptions=ref<(SrdRef&{level?:number})[]>([]),loading=ref(false),warning=ref(''),editorLoading=ref(false)
   let generation=0,editorScope=''
   let referenceController:AbortController|undefined
@@ -35,11 +36,11 @@ function createLibrary(c:ComputedRef<Character>) {
     editorLoading.value=true
     try {
       const [data,gear,core,magic]=await Promise.all([
-        cached('editor-options',()=>api.get<{rules:SrdRef[];feats:HomebrewFeat[];spells:(SrdRef&{level?:number})[]}>(`/api/characters/${id}/editor-options`)),
+        cached('editor-options',()=>api.get<{rules:SrdRef[];feats:HomebrewFeat[];backgrounds:HomebrewBackground[];subraces?:HomebrewSubrace[];spells:(SrdRef&{level?:number})[]}>(`/api/characters/${id}/editor-options`)),
         srd.equipment().catch(()=>[]),srd.spells().catch(()=>[]),srd.magicItems().catch(()=>[]),
       ])
       if(currentScope!==scope())return
-      ruleCatalog.value=data.rules;featCatalog.value=data.feats;equipmentCatalog.value=gear;magicItemCatalog.value=magic;spellOptions.value=[...core,...data.spells];editorScope=currentScope
+      ruleCatalog.value=data.rules;featCatalog.value=data.feats;backgroundCatalog.value=data.backgrounds;subraceCatalog.value=data.subraces??[];equipmentCatalog.value=gear;magicItemCatalog.value=magic;spellOptions.value=[...core,...data.spells];editorScope=currentScope
     }catch{warning.value='Editor reference options could not load. Saved character values remain available.'}
     finally{editorLoading.value=false}
   }
@@ -124,14 +125,16 @@ function createLibrary(c:ComputedRef<Character>) {
     lastReferenceMs.value=performance.now()-started
     const opening=store.recordReferenceTiming(character._id,failed.length>0||missingClasses.length>0)
     if(opening){lastReferenceMs.value=opening.ms;referenceSource.value=opening.source}
-    warning.value=missingClasses.length?`Imported class definitions are unavailable: ${missingClasses.join(', ')}. Saved character details remain usable. Ask the DM to restore or relink their source packs.`:failed.length?'Some reference details could not refresh. Saved character details remain usable.':''
+    const optionReferences={feats:refs.feats,invocations:refs.invocations??[],boons:refs.boons??[],selections:refs.selections??[],other:refs.other??[]}
+    const missingOptions=[...refs.feats,...refs.backgrounds,...(refs.invocations??[]),...(refs.boons??[]),...(refs.selections??[]),...(refs.other??[]),...(refs.subraces??[])].some(e=>'sourceUnavailable' in e&&e.sourceUnavailable)||character.meta.subraceIndex?.startsWith('homebrew-')&&!(refs.subraces??[]).length||character.meta.backgroundIndex?.startsWith('homebrew-')&&!refs.backgrounds.length||character.features.some(f=>f.definition?.index.startsWith('homebrew-')&&!optionReferences[f.definition.kind].some(e=>e.index===f.definition!.index||e.aliases?.includes(f.definition!.index)))
+    warning.value=missingClasses.length?`Imported class definitions are unavailable: ${missingClasses.join(', ')}. Saved character details remain usable. Ask the DM to restore or relink their source packs.`:missingOptions?'Some selected option sources are unavailable. Last saved rules remain in use; restore or relink their packs.':failed.length?'Some reference details could not refresh. Saved character details remain usable.':''
     loading.value=false
   }
   const features=computed<CharacterFeature[]>(()=>(c.value?.features??[]).map(f=>({...metadata.value[f.name.trim().toLowerCase()],...f})))
   onMounted(()=>load())
   onUnmounted(()=>{generation++;referenceController?.abort();cache.clear()})
   watch(()=>c.value?`${scope()}:${sheetReferenceInputs(c.value)}`:'',()=>load())
-  return {spells,resolveSpell,items,features,featCatalog,ruleCatalog,equipmentCatalog,magicItemCatalog,spellOptions,loadEditorCatalogs,editorLoading,loading,warning,lastReferenceMs,referenceSource,reload:async()=>{cache.clear();clearPersistedSheetReferences();editorScope='';await load(true)}}
+  return {spells,resolveSpell,items,features,featCatalog,backgroundCatalog,subraceCatalog,ruleCatalog,equipmentCatalog,magicItemCatalog,spellOptions,loadEditorCatalogs,editorLoading,loading,warning,lastReferenceMs,referenceSource,reload:async()=>{cache.clear();clearPersistedSheetReferences();editorScope='';await load(true)}}
 }
  type Library=ReturnType<typeof createLibrary>
 const key:InjectionKey<Library>=Symbol('sheet-library')

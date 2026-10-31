@@ -13,14 +13,15 @@ it('defaults off and accepts only explicit production identity, origin, room and
   for (const patch of [{ VERCEL: undefined }, { VERCEL_PROJECT_ID: 'prj_test' }, { OWLBEAR_SHARED_TEST: '1' }, { OWLBEAR_TRIAL_WEBSITE_ORIGIN: TRIAL_WEBSITE_ORIGIN + '/' }, { OWLBEAR_TRIAL_EXTENSION_ORIGIN: 'https://other.example.test' }, { OWLBEAR_TRIAL_ROOM_ID: 'a'.repeat(24) }, { OWLBEAR_TRIAL_EPOCH: '' }]) expect(() => readProductionTrialConfig({ ...input(), ...patch })).toThrow()
 })
 
-it('keeps renewal default-off and binds explicit activation to the existing production play scope', () => {
+it('keeps game sessions default-off and binds explicit activation to the existing production play scope', () => {
   const play = { ...input(), OWLBEAR_PRODUCTION_TRIAL: 'play-controls' }
-  expect(productionBoundaryOptions(readProductionTrialConfig(play)!)).toEqual({ websiteOrigin: TRIAL_WEBSITE_ORIGIN, extensionOrigins: [TRIAL_EXTENSION_ORIGIN], rememberedConnections: false, playTrial: { roomId: TRIAL_ROOM_ID, epoch: play.OWLBEAR_TRIAL_EPOCH } })
-  const enabled = { ...play, OWLBEAR_PRODUCTION_REMEMBERED: '1' }
-  expect(productionBoundaryOptions(readProductionTrialConfig(enabled)!)).toEqual({ websiteOrigin: TRIAL_WEBSITE_ORIGIN, extensionOrigins: [TRIAL_EXTENSION_ORIGIN], rememberedConnections: true, playTrial: { roomId: TRIAL_ROOM_ID, epoch: play.OWLBEAR_TRIAL_EPOCH } })
-  for (const activation of ['', '0', 'true', 'yes', ' 1']) expect(() => readProductionTrialConfig({ ...play, OWLBEAR_PRODUCTION_REMEMBERED: activation })).toThrow()
+  expect(productionBoundaryOptions(readProductionTrialConfig(play)!)).toEqual({ websiteOrigin: TRIAL_WEBSITE_ORIGIN, extensionOrigins: [TRIAL_EXTENSION_ORIGIN], gameSessions: false, playTrial: { roomId: TRIAL_ROOM_ID, epoch: play.OWLBEAR_TRIAL_EPOCH } })
+  const enabled = { ...play, OWLBEAR_PRODUCTION_GAME_SESSION: '12h' }
+  expect(productionBoundaryOptions(readProductionTrialConfig(enabled)!)).toEqual({ websiteOrigin: TRIAL_WEBSITE_ORIGIN, extensionOrigins: [TRIAL_EXTENSION_ORIGIN], gameSessions: true, playTrial: { roomId: TRIAL_ROOM_ID, epoch: play.OWLBEAR_TRIAL_EPOCH } })
+  for (const activation of ['', '0', 'true', 'yes', ' 1']) expect(() => readProductionTrialConfig({ ...play, OWLBEAR_PRODUCTION_GAME_SESSION: activation })).toThrow()
   for (const mode of [undefined, 'read-only', 'unknown']) expect(() => readProductionTrialConfig({ ...enabled, OWLBEAR_PRODUCTION_TRIAL: mode })).toThrow()
   for (const patch of [{ VERCEL_PROJECT_ID: 'prj_test' }, { OWLBEAR_SHARED_TEST: '1' }, { OWLBEAR_TRIAL_WEBSITE_ORIGIN: TRIAL_WEBSITE_ORIGIN + '/' }, { OWLBEAR_TRIAL_EXTENSION_ORIGIN: 'https://owlbear-character-sheet-test.vercel.app' }, { OWLBEAR_TRIAL_ROOM_ID: 'a'.repeat(24) }, { OWLBEAR_TRIAL_EPOCH: '' }]) expect(() => readProductionTrialConfig({ ...enabled, ...patch })).toThrow()
+  for (const activation of ['', '0', '1', 'true']) expect(() => readProductionTrialConfig({ ...play, OWLBEAR_PRODUCTION_REMEMBERED: activation })).toThrow()
   expect(productionBoundaryOptions(readProductionTrialConfig(input())!)).toHaveProperty('readOnlyTrial')
 })
 
@@ -48,9 +49,9 @@ it('preserves ordinary routes, denies existing grants when disabled and reloads 
     expect(await (await fetch(base + '/api/extension/v1/session')).json()).toMatchObject({ epoch: current.epoch }); expect(loads).toBe(2)
     current = { ...current, mode: 'play-controls' }
     expect((await fetch(base + '/api/extension/v1/session')).status).toBe(200); expect(loads).toBe(3)
-    current = { ...current, rememberedConnections: true }
+    current = { ...current, gameSessions: true }
     expect((await fetch(base + '/api/extension/v1/session')).status).toBe(200); expect(loads).toBe(4)
-    current = { ...current, rememberedConnections: false }
+    current = { ...current, gameSessions: false }
     expect((await fetch(base + '/api/extension/v1/session')).status).toBe(200); expect(loads).toBe(5)
     fail = true; current = { ...current, epoch: 'failed-trial-fixture' }
     const failed = await fetch(base + '/api/extension/v1/session'); expect(failed.status).toBe(503); expect(await failed.text()).not.toContain('private-internal-detail')

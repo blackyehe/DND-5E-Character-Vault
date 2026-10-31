@@ -1,10 +1,10 @@
 import { readEdn, type EdnSpan } from './edn'
 import { canonicalContent, type OrcbrewEntry } from './orcbrew'
 
-export type CreationKind = 'class' | 'subclass' | 'race' | 'monster'
+export type CreationKind = 'class' | 'subclass' | 'race' | 'monster' | 'feat' | 'background' | 'invocation' | 'boon' | 'selection' | 'language' | 'reference' | 'subrace'
 export type ArchivedPart = { path: string[]; section: string; key: string; pair: string }
 export type ArchivedDefinition = { id: string; kind: CreationKind; name: string; deletedAt: string; parts: ArchivedPart[] }
-const sections = { class: 'classes', subclass: 'subclasses', race: 'races', monster: 'monsters' } as const
+const sections = { class: 'classes', subclass: 'subclasses', race: 'races', monster: 'monsters', feat:'feats',background:'backgrounds',invocation:'invocations',boon:'boons',selection:'selections',language:'languages',reference:'other',subrace:'subraces' } as const
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
 
 /** Remove only the selected native definition. Keep exact EDN forms for restoration. */
