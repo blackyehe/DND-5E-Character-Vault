@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto'
-import {gzipSync,gunzipSync} from 'node:zlib'
+import {gzip,gzipSync,gunzipSync} from 'node:zlib'
+import {promisify} from 'node:util'
 import type {BrowseEntry,BrowseIndex,BrowseKind} from '../../shared/compendium-browse'
 
 // Bump for parser, source snapshot, projection, grouping or filter changes.
@@ -12,6 +13,14 @@ export function encodePrepared(value:unknown,maxBytes:number):PreparedChunk[] {
   const json=JSON.stringify(value)
   if(Buffer.byteLength(json)>maxBytes)throw new Error('Prepared object exceeds its supported size.')
   const data=gzipSync(json),digest=createHash('sha256').update(data).digest('hex'),parts=Math.ceil(data.length/CHUNK_BYTES)
+  return Array.from({length:parts},(_,part)=>({part,parts,digest,payload:data.subarray(part*CHUNK_BYTES,(part+1)*CHUNK_BYTES)}))
+}
+const compress=promisify(gzip)
+/** Background preparation uses the zlib pool rather than blocking HTTP work. */
+export async function encodePreparedAsync(value:unknown,maxBytes:number):Promise<PreparedChunk[]> {
+  const json=JSON.stringify(value)
+  if(Buffer.byteLength(json)>maxBytes)throw new Error('Prepared object exceeds its supported size.')
+  const data=await compress(json),digest=createHash('sha256').update(data).digest('hex'),parts=Math.ceil(data.length/CHUNK_BYTES)
   return Array.from({length:parts},(_,part)=>({part,parts,digest,payload:data.subarray(part*CHUNK_BYTES,(part+1)*CHUNK_BYTES)}))
 }
 export function decodePrepared(chunks:StoredPreparedChunk[],maxBytes:number):unknown|null {

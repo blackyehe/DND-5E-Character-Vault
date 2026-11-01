@@ -16,6 +16,7 @@ import { ensureContentIndexes } from '../lib/content-indexes'
 import { combinedOrcbrew } from '../lib/orcbrew-export'
 import { itemBrowseEntry } from '../lib/orcbrew-items'
 import { creationCatalogResponse } from '../lib/creation-catalog'
+import {packPreparationStatus} from '../lib/pack-preparation'
 
 const router = Router()
 router.use(requireAuth)
@@ -81,6 +82,12 @@ router.get('/orcbrew-packs/export-all',async(req,res)=>{
     const source=combinedOrcbrew(docs.map(doc=>({filename:String((doc.data as Record<string,unknown>).filename),source:packSource(doc.data)})))
     res.attachment('All homebrew.orcbrew').type('application/octet-stream').send(Buffer.from(source,'utf8'))
   }catch(error){res.status(422).json({error:error instanceof Error?error.message:'Could not combine your Orcbrew files.'})}
+})
+
+router.get('/orcbrew-packs/:id/preparation',async(req,res)=>{
+  if(!isValidObjectId(req.params.id))return res.status(400).json({error:'Invalid file ID'})
+  const status=await packPreparationStatus(req.userId!,String(req.params.id))
+  return status?res.json(status):res.status(404).json({error:'File not found'})
 })
 
 router.get('/orcbrew-packs/:id/export', async (req, res) => {

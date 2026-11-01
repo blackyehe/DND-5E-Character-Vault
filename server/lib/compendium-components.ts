@@ -1,14 +1,15 @@
 import {randomUUID} from 'node:crypto'
-import {Types} from 'mongoose'
+import {Types,mongo} from 'mongoose'
 import {gunzipSync} from 'node:zlib'
 import {CustomContent} from '../models/CustomContent'
 import {CompendiumComponent,CompendiumComponentObject} from '../models/CompendiumComponent'
 import {sourceHash,inspectOrcbrew,buildOrcbrewCatalog,ORCBREW_KINDS,type OrcbrewEntry,type OrcbrewEntries,type CatalogPack,type ParsedOrcbrew} from './orcbrew'
 import {readPackDocuments} from './pack-source'
 import {parsedPack,cachedParsedPack} from './orcbrew-library'
+import {parseBackgroundPack} from './background-pack-parser'
 import {compactBrowseEntry} from './compendium-browse'
 import {compendiumFacets} from '../../shared/compendium-facets'
-import {encodePrepared,decodePrepared,PREPARED_SOURCE_MAX,type StoredPreparedChunk} from './compendium-prepared-codec'
+import {encodePrepared,encodePreparedAsync,decodePrepared,PREPARED_SOURCE_MAX,type StoredPreparedChunk} from './compendium-prepared-codec'
 import type {BrowseEntry,BrowseKind} from '../../shared/compendium-browse'
 
 export const COMPONENT_VERSION='compendium-components-3-families'
@@ -29,6 +30,10 @@ interface CatalogueReadOptions {onLargeRepair?:()=>void;readOnlyFallback?:boolea
 const CATALOGUE_BATCH_SIZE=128,CHUNK_BYTES=512*1024
 const checkedEmptyChunk=encodePrepared([],2)[0]!
 interface RepairBudget {deadline:number;attempts:number;sourceBytes:number;projectionBytes:number;entries:number;chunks:number}
+export interface BackgroundComponentWork {
+ generation:string;deadline:number;maxSourceBytes:number;maxStoredBytes:number;maxBytes:number;maxObjects:number
+ checkpoint:(progress?:{bytes:number;objects:number})=>Promise<void>
+}
 function remaining(deadline:number,max=1000) {
  const ms=Math.min(max,Math.floor(deadline-performance.now()))
  if(ms<=0)throw Error('Component request budget exhausted')
@@ -81,24 +86,42 @@ async function boundedRequestPack(p:PackMetadata,budget:RepairBudget) {
  if(typeof source!=='string'||Buffer.byteLength(source)>REQUEST_SOURCE_BYTES||sourceHash(source)!==p.sourceHash)throw Error('Invalid bounded component source')
  return source
 }
-export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;replace?:boolean;budget?:RepairBudget;expectedGeneration?:string}={}):Promise<ComponentProjection> {
+export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;replace?:boolean;budget?:RepairBudget;expectedGeneration?:string;background?:BackgroundComponentWork}={}):Promise<ComponentProjection> {
  const context=componentContext(p);if(!context)throw Error('Source has no exact reusable component identity')
  // Request repairs are not allowed to wait for an unbounded operator job.
- const key=String(p.userId)+':'+context+':'+!!options.sources+':'+(options.budget?'request':'operator'),previous=pending.get(key)
+ const key=String(p.userId)+':'+context+':'+!!options.sources+':'+(options.budget?'request':options.background?'background:'+options.background.generation:'operator'),previous=pending.get(key)
  if(previous){if(options.budget)throw Error('Component repair already in progress');return previous}
  const task=(async()=>{
-  const deadline=options.budget?.deadline??Infinity
-  let source:string
-  if(options.budget){if(++options.budget.attempts>2)throw Error('Component repair count exhausted');source=await boundedRequestPack(p,options.budget)}
+  const deadline=options.budget?.deadline??options.background?.deadline??Infinity
+  let source:string,parsed:ParsedOrcbrew
+  if(options.background){
+   const work=options.background
+   await work.checkpoint()
+   const [size]=await CustomContent.aggregate<{stored:number;decoded:number}>([
+    {$match:packFilter(p)},{$project:{stored:{$strLenBytes:{$ifNull:['$data.source','']}},decoded:{$cond:[{$eq:['$data.sourceEncoding','gzip-base64']},'$data.sourceBytes',{$strLenBytes:{$ifNull:['$data.source','']}}]}}},
+   ]).option({maxTimeMS:2000,timeoutMS:remaining(deadline,4000)})
+   if(!size||!Number.isSafeInteger(size.decoded)||size.decoded<=0||size.decoded>work.maxSourceBytes||!Number.isSafeInteger(size.stored)||size.stored<=0||size.stored>work.maxStoredBytes)throw Error('Background component source exceeds its limit')
+   const cached=cachedParsedPack(p.sourceHash)
+   if(cached)parsed=cached
+   else{
+    const doc=(await readPackDocuments(String(p.userId),String(p._id),{maxDecodedBytes:work.maxSourceBytes,maxStoredBytes:work.maxStoredBytes,checkpoint:()=>work.checkpoint()}))[0]
+    if(!doc||componentContext(doc as unknown as PackMetadata)!==context)throw Error('Source changed before component preparation')
+    source=(doc.data as {source:string}).source
+    if(sourceHash(source)!==p.sourceHash)throw Error('Source fingerprint mismatch')
+    parsed=Buffer.byteLength(source)>=1024*1024?await parseBackgroundPack(source,deadline):parsedPack({source})
+   }
+   await work.checkpoint()
+  }else if(options.budget){if(++options.budget.attempts>2)throw Error('Component repair count exhausted');source=await boundedRequestPack(p,options.budget);parsed=parsedPack({source})}
   else{
    const doc=(await readPackDocuments(String(p.userId),String(p._id)))[0]
    if(!doc||componentContext(doc as unknown as PackMetadata)!==context)throw Error('Source changed before component preparation')
    source=(doc.data as {source:string}).source
    if(sourceHash(source)!==p.sourceHash)throw Error('Source fingerprint mismatch')
+   parsed=inspectOrcbrew(source)
   }
   // Reuse the current parser's bounded cache for a small repair. If later
   // persistence/composition falls back, the legacy reader can reuse this parse.
-  const parsed=options.budget?parsedPack({source}):inspectOrcbrew(source),entries=projection(parsed)
+  const entries=projection(parsed)
   const counts=Object.fromEntries(ORCBREW_KINDS.map(k=>[k,entries[k].length])),bytes=Object.fromEntries(ORCBREW_KINDS.map(k=>[k,Buffer.byteLength(JSON.stringify(entries[k]))]))
   if(options.budget){
    options.budget.entries+=Object.values(counts).reduce((a,b)=>a+b,0)
@@ -106,14 +129,20 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
    if(options.budget.entries>REQUEST_ENTRIES||options.budget.projectionBytes>REQUEST_PROJECTION_BYTES)throw Error('Changed source projection exceeds request budget')
    remaining(deadline)
   }
-  const ready:ReadyComponent={version:COMPONENT_VERSION,userId:p.userId,context,generation:randomUUID(),counts,bytes,sources:options.sources===true}
+  const ready:ReadyComponent={version:COMPONENT_VERSION,userId:p.userId,context,generation:options.background?.generation??randomUUID(),counts,bytes,sources:options.sources===true}
   type ObjectWrite={version:string;userId:Types.ObjectId;generation:string;kind:BrowseKind;role:string;index:string;part:number;parts:number;digest:string;payload:Buffer;createdAt:Date}
-  let batch:ObjectWrite[]=[],batchBytes=0
+  let batch:ObjectWrite[]=[],batchBytes=0,storedBytes=0,storedObjects=0
   const flush=async()=>{
    if(!batch.length)return
    const group=batch;batch=[];batchBytes=0
    if(performance.now()>deadline)throw Error('Component request budget exhausted')
    const timeout=Number.isFinite(deadline)?remaining(deadline):4000
+   if(options.background){
+    for(const object of group)Object.assign(object,{_id:new Types.ObjectId()})
+    storedBytes+=group.reduce((total,object)=>total+mongo.BSON.calculateObjectSize(object),0);storedObjects+=group.length
+    if(storedBytes>options.background.maxBytes||storedObjects>options.background.maxObjects)throw Error('Background component storage exceeds its limit')
+    await options.background.checkpoint({bytes:storedBytes,objects:storedObjects})
+   }
    await CompendiumComponentObject.collection.insertMany(group,{ordered:true,timeoutMS:timeout})
    const stored=await CompendiumComponentObject.find({userId:p.userId,generation:ready.generation,$or:group.map(o=>({kind:o.kind,role:o.role,index:o.index}))}).select('kind role index part parts digest payload').setOptions({maxTimeMS:timeout,timeoutMS:Number.isFinite(deadline)?remaining(deadline):4000}).lean()
    for(const object of group){
@@ -123,7 +152,7 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
    }
   }
   const persist=async(kind:BrowseKind,role:string,index:string,value:unknown,max:number)=>{
-   const chunks=encodePrepared(value,max),size=chunks.reduce((n,c)=>n+c.payload.length,0)
+   const chunks=options.background?await encodePreparedAsync(value,max):encodePrepared(value,max),size=chunks.reduce((n,c)=>n+c.payload.length,0)
    if(options.budget&&((options.budget.chunks+=chunks.length)>32))throw Error('Component repair chunk budget exceeded')
    if(batch.length&&(batch.length+chunks.length>32||batchBytes+size>512*1024))await flush()
    batch.push(...chunks.map(chunk=>({version:COMPONENT_VERSION,userId:p.userId,generation:ready.generation,kind,role,index,...chunk,createdAt:new Date()})));batchBytes+=size
@@ -139,6 +168,7 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
     for(const kind of ORCBREW_KINDS)for(const entry of catalog[kind])await persist(kind,'source',entry.index,entry,PREPARED_SOURCE_MAX)
    }
    await flush()
+   await options.background?.checkpoint()
    const current=await CustomContent.findOne(packFilter(p)).select('_id userId sourceHash updatedAt data.filename data.includeDisabled').setOptions({maxTimeMS:1000,timeoutMS:Number.isFinite(deadline)?remaining(deadline):4000}).lean()
    if(!current||componentContext(current as unknown as PackMetadata)!==context)throw Error('Source changed during component preparation')
    if(performance.now()>deadline)throw Error('Component request budget exhausted')
@@ -156,7 +186,7 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
    // Another immutable attempt won. Our verified projection still belongs to
    // this exact input; caller must perform its final global revision validation.
   }catch(error){
-   if(!Number.isFinite(deadline))throw error
+   if(options.background||!Number.isFinite(deadline))throw error
    console.warn('Component persistence unavailable; using verified request projection',{name:(error as Error).name})
   }
   return {ready,entries}

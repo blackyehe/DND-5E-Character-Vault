@@ -74,10 +74,10 @@ export function acceptCompendiumRevision(owner:string,revision:string){
  }
  validated={owner,revision,until:Date.now()+30000}
 }
-async function currentRevision(owner:string,kind:BrowseKind,signal:AbortSignal,force=false){
+async function currentRevision(owner:string,kind:BrowseKind,signal:AbortSignal,force=false,idle=false){
  if(!force&&validated?.owner===owner&&validated.until>Date.now())return validated.revision
  const current=generation
- const result=await api.get<LocalCompendiumRevision>(`/api/compendium-browse/${kind}/local-revision`,{signal,timeoutMs:5000,background:true})
+ const result=await api.get<LocalCompendiumRevision>(`/api/compendium-browse/${kind}/local-revision`,{signal,timeoutMs:5000,background:true,...(idle?{idle:true}:{})})
  if(current!==generation||signal.aborted||result.owner!==owner||result.version!==LOCAL_COMPENDIUM_VERSION||!/^[a-f0-9]{64}$/.test(result.revision))throw Error('Library validation unavailable')
  acceptCompendiumRevision(owner,result.revision)
  return result.revision
@@ -110,7 +110,7 @@ export function prepareSavedCompendium(owner:string){
 }
 export async function checkSavedCompendium(owner:string,kind:BrowseKind,signal:AbortSignal){
  const current=generation
- const revision=await currentRevision(owner,kind,signal)
+ const revision=await currentRevision(owner,kind,signal,false,true)
  const disk=await maintenance.request<string|null>({action:'open',owner,kind},signal)
  if(signal.aborted||current!==generation)throw Error('Local check cancelled')
  let valid=!!disk&&disk===revision
@@ -122,7 +122,7 @@ export async function checkSavedCompendium(owner:string,kind:BrowseKind,signal:A
    if(content.owner!==owner||content.kind!==kind||content.version!==LOCAL_COMPENDIUM_VERSION||!/^[a-f0-9]{64}$/.test(content.revision)||!/^[a-f0-9]{64}$/.test(content.digest??''))throw Error('Category validation unavailable')
    if(content.digest===identity.digest){
     // As for a new export, reject a mutation during validation before writing.
-    if(await currentRevision(owner,kind,signal,true)!==content.revision)throw Error('Library changed during category validation')
+    if(await currentRevision(owner,kind,signal,true,true)!==content.revision)throw Error('Library changed during category validation')
     if(signal.aborted||current!==generation)throw Error('Local check cancelled')
     const result=await maintenance.request<{revision:string|null;kinds?:BrowseKind[]}>({action:'revalidate',owner,kind,previous:disk,digest:identity.digest,revision:content.revision},signal)
     if(signal.aborted||current!==generation)throw Error('Local check cancelled')
@@ -151,7 +151,7 @@ export async function saveLocalCompendium(owner:string,kind:BrowseKind,signal:Ab
  const result=await maintenance.request<{revision:string;kinds?:BrowseKind[]}>({action:'save',owner,kind,snapshot},signal)
  if(signal.aborted||current!==generation)throw Error('Local download cancelled')
  // A forced post-export read detects mutations during the download/write.
- if(await currentRevision(owner,kind,signal,true)!==result.revision)throw Error('Library changed while preparing this category')
+ if(await currentRevision(owner,kind,signal,true,true)!==result.revision)throw Error('Library changed while preparing this category')
  if(signal.aborted||current!==generation)throw Error('Local download cancelled')
  const before=savedLocalKinds(owner),kinds=result.kinds??[...new Set([...before,kind])]
  try{localStorage.setItem(markerKey,JSON.stringify({owner,kinds,update:crypto.randomUUID()}))}catch{throw Error('Local storage unavailable')}

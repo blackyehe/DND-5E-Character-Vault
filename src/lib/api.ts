@@ -54,7 +54,7 @@ async function largeRequest<T>(path: string, options: RequestInit): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string,options:{timeoutMs?:number;signal?:AbortSignal;background?:boolean}={}) => request<T>(path,{signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(options.timeoutMs??15000)]):AbortSignal.timeout(options.timeoutMs??15000)},options.background),
+  get: <T>(path: string,options:{timeoutMs?:number;signal?:AbortSignal;background?:boolean;idle?:boolean}={}) => request<T>(path,{signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(options.timeoutMs??15000)]):AbortSignal.timeout(options.timeoutMs??15000),...(options.idle?{headers:{'Content-Type':'application/json','X-Compendium-Idle':'1'}}:{})},options.background),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
   patch: <T>(path: string, body: unknown) =>

@@ -25,10 +25,12 @@ import { localSrdRule } from './lib/srd-snapshot'
 import { enrichedStandardMonster } from './lib/monster-enrichment'
 import { MAP_UPLOAD_JSON_BYTES } from '../shared/room-maps'
 import cityLibraryRoutes from './routes/city-libraries'
+import {packPreparation} from './middleware/pack-preparation'
 
 const app = express()
 let sampledSheetReads=0
 app.disable('x-powered-by')
+app.use(packPreparation)
 app.use(streamLargeResponses)
 app.use((req,res,next)=>{
   const started=performance.now()

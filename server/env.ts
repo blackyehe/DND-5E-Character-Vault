@@ -10,6 +10,7 @@ const envSchema = z.object({
   // Rollback switch. Derived records do not change any source or saved character.
   COMPENDIUM_READER: z.enum(['legacy','prepared']).default('legacy'),
   COMPENDIUM_PREPARED_USERS: z.string().default(''),
+  COMPENDIUM_PACK_PREPARATION:z.enum(['off','on']).default('off'),
 })
 
 const production = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL)
