@@ -18,13 +18,14 @@ import { approvalPage } from './approval-page'
 import { applyPlayUpdate, playUpdateSchema } from '../lib/play-update'
 import { availableBenefitSpells } from '../../shared/rule-benefits'
 import { itemKind } from '../../shared/item-rules'
-import { duringInitialization } from './initialization-diagnostic'
+import {extensionModelReadiness} from './model-readiness'
 
 const opaque = z.string().regex(/^[A-Za-z0-9_-]{43}$/)
 const secret = () => randomBytes(32).toString('base64url')
 export const proofHash = (value: string) => createHash('sha256').update(value).digest('base64url')
 const same = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b))
 const fail = (res: Response, status: number, error: string) => res.status(status).json({ error })
+const initializeModels = extensionModelReadiness(ExtensionPairing, ExtensionSession)
 
 /** Explicit HTTP boundary. Ordinary app routes and cookie/write policies stay unchanged. */
 export async function createExtensionApp(options: { websiteOrigin: string; extensionOrigins: string[]; readOnlyTrial?: { roomId: string; epoch: string }; playTrial?: { roomId: string; epoch: string }; gameSessions?: boolean; clock?: () => number }) {
@@ -41,7 +42,7 @@ export async function createExtensionApp(options: { websiteOrigin: string; exten
   const websiteOrigin = new URL(options.websiteOrigin).origin
   const origins = new Set(options.extensionOrigins.map(value => new URL(value).origin))
   if (origins.has(websiteOrigin)) throw new Error('Website and extension origins must be distinct.')
-  await Promise.all([duringInitialization('pairing-indexes', () => ExtensionPairing.init()), duringInitialization('session-indexes', () => ExtensionSession.init())])
+  await initializeModels()
   const app = express()
   app.disable('x-powered-by')
   app.use((_req, res, next) => {

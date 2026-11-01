@@ -2,7 +2,7 @@
 
 ## Added follow-ups - 1 November 2026
 
-[Map-opening recovery is published and publicly verified](audits/map-opening-recovery-2026-11-01.md), following a fresh review with safer startup diagnostics. The first candidate was withheld after Owlbear pairing-index initialization returned 503; the new candidate passes all boundary, character, map and player checks. The [separate startup investigation](audits/owlbear-startup-recovery-2026-11-01.md) reproduces a cached transient initialization failure and is evaluating reuse of the existing readiness-recovery helper. The unfinished remembered-login feature remains separate.
+[Map-opening recovery is published and publicly verified](audits/map-opening-recovery-2026-11-01.md), following a fresh review with safer startup diagnostics. The first candidate was withheld after Owlbear pairing-index initialization returned 503; the new candidate passes all boundary, character, map and player checks. The [separate startup investigation](audits/owlbear-startup-recovery-2026-11-01.md) reproduces a cached transient initialization failure; its narrow readiness-recovery fix is also published and publicly verified. Validation includes 710 standard tests and all 44 isolated extension lifecycle tests. Permanent initialization errors still fail closed. The unfinished remembered-login feature remains separate.
 
 
 ## Added follow-ups — 31 October 2026
