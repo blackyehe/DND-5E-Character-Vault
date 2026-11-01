@@ -1,5 +1,7 @@
 # Compendium loading: bounded next-session handoff
 
+Published update: [the normal foreground cache lookup now avoids one database read when the legacy cache misses](audits/foreground-cache-lookup-2026-11-01.md) without fetching both payloads. Eight isolated database scenarios and 43 focused tests pass, along with hosted/public read-only checks. Live latency savings have not been measured. Production deployment: `dpl_922Tuz5hpV7iS3Tuv45pju2hNDVe`.
+
 Update: the larger visible-page detail preloader is now published and publicly verified. See [behavior, measured incremental benefit, traffic costs and release work](audits/visible-compendium-details-2026-11-01.md). It reuses the existing cache, warms only up to 25 default visible versions in bounded batches, and preserves normal click fallbacks. Per-entry freshness tracking remains separate.
 
 Update: metadata batching is now published with the visible-page preloader. The actual application query passes the isolated comparison and 30 focused tests; backend types pass. See [incremental results and remaining release step](audits/compendium-metadata-batching-2026-11-01.md). The earlier groundwork descriptions below are historical; do not repeat the implementation or the large benchmarks.

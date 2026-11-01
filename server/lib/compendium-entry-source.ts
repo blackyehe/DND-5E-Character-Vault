@@ -78,12 +78,19 @@ export async function importedCompendiumSource(userId:string,kind:BrowseKind,ind
   const previous=pending.get(key);if(previous)return previous
   const task=(async()=>{
     try {
-      if(resolvePrepared){
-        const legacy=decoded(await CompendiumEntryCache.findOne({...legacyFilter,expiresAt:{$gt:new Date()}}).select('payload digest').lean(),index)
-        if(legacy)return legacy
+      // Both exact namespace keys use the existing compound index. Their fixed
+      // prefixes sort legacy first; limit-one avoids downloading both payloads
+      // when the preferred legacy value is valid.
+      const row=resolvePrepared
+        ?await CompendiumEntryCache.findOne({...filter,revision:{$in:[legacyFilter.revision,filter.revision]},expiresAt:{$gt:new Date()}}).select('revision payload digest').sort({revision:1}).lean()
+        :await CompendiumEntryCache.findOne({...filter,expiresAt:{$gt:new Date()}}).select('payload digest').lean()
+      const cached=decoded(row,index);if(cached)return cached
+      // Preserve the current fallback for corrupt/invalid legacy values. This
+      // uncommon path still needs two reads, just as the previous reader did.
+      if(resolvePrepared&&row?.revision===legacyFilter.revision){
+        const current=decoded(await CompendiumEntryCache.findOne({...filter,expiresAt:{$gt:new Date()}}).select('payload digest').lean(),index)
+        if(current)return current
       }
-      const cached=decoded(await CompendiumEntryCache.findOne({...filter,expiresAt:{$gt:new Date()}}).select('payload digest').lean(),index)
-      if(cached)return cached
     }catch(error){console.warn('Compendium source cache read unavailable',{name:(error as Error).name})}
     // Prepared data shares the same revisioned, bounded base-source cache.
     // Personal changes and enrichment are applied by the returning caller.
