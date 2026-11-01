@@ -1,8 +1,9 @@
 // Only fixed labels leave the process. Never log an error message, stack or cause.
 export type InitializationStage = 'configuration' | 'database' | 'boundary' | 'pairing-indexes' | 'session-indexes' | 'family-indexes' | 'renewal-indexes' | 'request-dispatch'
 const databaseCodes = new Set([13, 18, 48, 67, 85, 86, 11000, 8000])
-const errorKinds = new Set(['MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError'])
-export type InitializationDiagnostic = { event: 'owlbear-initialization-failed'; stage: InitializationStage; kind: string; code?: number }
+const errorKinds = new Set(['TypeError', 'MongooseError', 'MongoServerError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoServerSelectionError', 'MongooseServerSelectionError', 'MongoNotConnectedError', 'MongoTopologyClosedError', 'MongoPoolClosedError', 'MongoWaitQueueTimeoutError'])
+type InitializationReason = 'buffering-timeout' | 'not-connected' | 'index-conflict' | 'runtime-type' | 'operation-timeout'
+export type InitializationDiagnostic = { event: 'owlbear-initialization-failed'; stage: InitializationStage; kind: string; code?: number; reason?: InitializationReason }
 
 class InitializationFailure extends Error {
   readonly stage: InitializationStage
@@ -28,6 +29,14 @@ export function initializationDiagnostic(error: unknown, fallback: Initializatio
   const constructor = original instanceof Error ? Object.getOwnPropertyDescriptor(Object.getPrototypeOf(original), 'constructor')?.value : undefined
   const constructorName = typeof constructor === 'function' ? Object.getOwnPropertyDescriptor(constructor, 'name')?.value : undefined
   const code = original && typeof original === 'object' ? Object.getOwnPropertyDescriptor(original, 'code')?.value : undefined
+  const message = original instanceof Error ? Object.getOwnPropertyDescriptor(original, 'message')?.value : undefined
+  // Inspect a data property only; emit fixed categories, never its contents.
+  const text = typeof message === 'string' ? message.slice(0, 1000) : ''
+  const reason: InitializationReason | undefined = /buffering timed out after \d+ms/.test(text) ? 'buffering-timeout'
+    : /(?:Client must be connected|before initial connection is complete|not connected)/i.test(text) ? 'not-connected'
+    : /(?:IndexOptionsConflict|already exists with different options)/.test(text) ? 'index-conflict'
+    : /(?:Cannot read properties of|is not a function)/.test(text) ? 'runtime-type'
+    : /(?:timed out|timeout)/i.test(text) ? 'operation-timeout' : undefined
   const kind = [name, prototypeName, constructorName].find(value => typeof value === 'string' && errorKinds.has(value)) ?? 'unclassified'
-  return { event: 'owlbear-initialization-failed', stage, kind, ...(typeof code === 'number' && databaseCodes.has(code) ? { code } : {}) }
+  return { event: 'owlbear-initialization-failed', stage, kind, ...(typeof code === 'number' && databaseCodes.has(code) ? { code } : {}), ...(reason ? {reason} : {}) }
 }

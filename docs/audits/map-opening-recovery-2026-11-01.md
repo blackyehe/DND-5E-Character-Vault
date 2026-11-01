@@ -1,6 +1,6 @@
 # Map opening recovery — 1 November 2026
 
-The user asked to continue the loading/map plan after publishing the Compendium fixes. A narrow map recovery change is implemented and passes local and hosted map checks. **It is not live.** The reviewed deployment fails the independent Owlbear availability gate; the existing public deployment remains unchanged and healthy at that boundary. Owlbear authentication changes remain separate.
+The user asked to continue the loading/map plan after publishing the Compendium fixes. The narrow map recovery change is now **live and publicly verified**, following a fresh exact-source review with safer initialization diagnostics. The first candidate was withheld after an independent Owlbear availability failure. The unfinished remembered-login feature remains separate.
 
 ## User behavior
 
@@ -24,7 +24,7 @@ This is connection recovery, not evidence that Revalon's earlier incident had on
 
 No ordinary load-time speedup is claimed. This removes a manual recovery step for selected temporary failures and supplies a clear recovery action for persistent failures. The extra retry can make a persistent eligible failure take 250 ms plus the second request longer, within the original deadline. It does not remove server/network delays.
 
-## Release gate: held
+## Initial review: withheld
 
 Reviewed candidate: `dpl_GftJe1p6zAt6KCmejojZw5DgiQvv`, immutable `https://dndoldal-p0bds6gdf-dndenjoyerstudio.vercel.app`.
 
@@ -33,5 +33,11 @@ Current live baseline: `dpl_FzBdyV5yuKkPYKwyXRJyxAyQ7s59`, immutable `https://dn
 The reviewed candidate repeatedly returns HTTP 503 from the Owlbear reference boundary with both absent and permitted origins. The unchanged live baseline returns the expected 403 for absent origin and 401 for permitted origin without a session. Sanitized runtime diagnostics identify `owlbear-initialization-failed`, stage `pairing-indexes`, kind `unclassified`. This narrows the failing stage but does not establish its root cause. The same broad availability symptom was observed during an earlier rollout; the new evidence must not be described as a proven map regression or a repaired authentication issue.
 
 Promotion was not attempted. The next separate availability investigation should reproduce pairing-model initialization and inspect safe error classification, connection readiness and retry behavior without changing grant scope or mixing in the unfinished remembered-login feature. Do not bypass or weaken the gate to ship this map change.
+
+## Published fresh review
+
+The user subsequently authorized publishing all safe work and continuing the next task. A fresh candidate includes the exact map change plus fixed, privacy-preserving initialization error categories. It passes 702 tests, backend types, the hosted build and all hosted character, player, map and rules gates. Its Owlbear endpoints return the expected 403/401 before promotion. It was promoted as `dpl_3TBrHnbQdE4jQgLX6DQFbZYYxNew`, immutable `https://dndoldal-2zly1y4ns-dndenjoyerstudio.vercel.app`. Immediate public HTTP/security, standard-rule/desktop and seven actual map owner/player/recovery/revocation scenarios pass, with fixture cleanup and quota restoration verified. The previous Compendium deployment above is the rollback target.
+
+Evidence for this publication is `.local/owlbear-initialization-20261101/live.json` and its associated exact-source, review/public checks. The healthy fresh review does not prove that the intermittent initialization problem is fixed. A real-Mongoose isolated replay demonstrates a cached transient failure that persists after storage recovery; a separate startup-readiness change is being evaluated. See [the startup investigation](owlbear-startup-recovery-2026-11-01.md).
 
 Ignored evidence: `.local/map-recovery-20261101/`, containing exact source/scope, local results, desktop scenarios/screenshots, hosted map/workflow/rules checks, source audit, cleanup evidence and the sanitized extension diagnostic. Git may retain its current README as the previously documented documentation-only difference from the frozen website artifact.

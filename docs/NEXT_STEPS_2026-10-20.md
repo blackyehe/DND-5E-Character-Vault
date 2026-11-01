@@ -2,7 +2,7 @@
 
 ## Added follow-ups - 1 November 2026
 
-[Map-opening recovery](audits/map-opening-recovery-2026-11-01.md) passes 701 tests, build/types, ten isolated desktop scenarios and hosted owner/player map checks. It adds stage-specific failures, one bounded transient GET retry and a direct Retry map action. Publication is held: the reviewed deployment returns Owlbear 503 during pairing-index initialization, while the live baseline retains its expected boundary responses. The public website remains on the verified 31 October Compendium release. Investigate this availability failure separately from the unfinished Owlbear remembered-login feature before promoting the map change.
+[Map-opening recovery is published and publicly verified](audits/map-opening-recovery-2026-11-01.md), following a fresh review with safer startup diagnostics. The first candidate was withheld after Owlbear pairing-index initialization returned 503; the new candidate passes all boundary, character, map and player checks. The [separate startup investigation](audits/owlbear-startup-recovery-2026-11-01.md) reproduces a cached transient initialization failure and is evaluating reuse of the existing readiness-recovery helper. The unfinished remembered-login feature remains separate.
 
 
 ## Added follow-ups — 31 October 2026
