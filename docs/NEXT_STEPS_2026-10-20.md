@@ -1,5 +1,9 @@
 # Follow-up priorities — 20 October 2026
 
+## Next-session groundwork - 1 November 2026
+
+[Focused Compendium handoff](COMPENDIUM_LOADING_HANDOFF_2026-11-01.md) records the live baseline, exact code locations, one small metadata-batching experiment, cache-lookup follow-up and visible-page preloading limits. `scripts/summarize-compendium-trace.mjs` summarizes existing evidence without contacting the website or printing source payloads. It was checked against an existing trace. Groundwork only; no application changes or deployment.
+
 ## Compendium pause feedback - published 1 November 2026
 
 Published and publicly verified: device-library feedback identifies the actual pause reason (room session, foreground request, hidden tab, offline or sign-in) and explains automatic resumption. Existing pause/resume scheduling is unchanged; a permanent stuck pause has not been reproduced. All 42 focused preparation/client tests, frontend types and production build pass. Five read-only browser checks pass on both review and public deployments, including room exit, reconnection and foreground-request completion. Live dpl_6fm5k6C6Ad6ArkMw77cp73Bt1ijA; rollback dpl_5aAwkFLg8Wv3juLoP1eH9FQ2AZPb. Only three frontend runtime files changed; backend and feature settings are preserved. Evidence: `.local/pause-feedback-release-20261101/`. [Ranked remaining loading options](audits/compendium-next-small-options-2026-11-01.md) are inspection findings, not implemented or measured savings.
