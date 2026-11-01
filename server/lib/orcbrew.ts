@@ -322,10 +322,6 @@ export function inspectOrcbrew(source: string): ParsedOrcbrew {
   return { entries, report }
 }
 
-export function parseOrcbrew(source: string): OrcbrewEntries {
-  return inspectOrcbrew(source).entries
-}
-
 export interface CatalogPack {
   id: string
   filename: string

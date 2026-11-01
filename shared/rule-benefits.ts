@@ -2,7 +2,7 @@ import type { Character } from './character'
 import { itemActive } from './item-rules'
 import {choiceBenefits,choiceSelectionProblem,type ChoiceGroup} from './choice-groups'
 import {isFeatureOptionKind} from './option-kinds'
-import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, type AbilityKey, type Proficiency } from './calc'
+import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, type AbilityKey } from './calc'
 
 export const DAMAGE_TYPES=['acid','bludgeoning','cold','fire','force','lightning','necrotic','piercing','poison','psychic','radiant','slashing','thunder'] as const
 export const CONDITIONS=['blinded','charmed','deafened','exhaustion','frightened','grappled','incapacitated','invisible','paralyzed','petrified','poisoned','prone','restrained','stunned','unconscious'] as const
@@ -137,7 +137,6 @@ export function characterBenefits(c:Character){
  return effects
 }
 export type CharacterBenefits=ReturnType<typeof characterBenefits>
-export function benefitSkillRank(c:Character,key:string):Proficiency{return characterBenefits(c).skills[key]??'none'}
 export function benefitSpellAttack(c:Character,benefits:CharacterBenefits=characterBenefits(c)){return abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+benefits.spellAttack}
 export function benefitSpellDC(c:Character,benefits:CharacterBenefits=characterBenefits(c)){return 8+abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+benefits.spellDC}
 export function benefitDamage(amount:number,type:string,defenses:Pick<ReturnType<typeof characterBenefits>,'resistances'|'immunities'|'vulnerabilities'>){

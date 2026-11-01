@@ -4,9 +4,9 @@ import type { Character } from '../../../shared/character'
 import { api } from '../../lib/api'
 import { combatAttacks } from '../../lib/equipment'
 import { combatSuggested, pretty, signed, sheetProficiencies } from '../../lib/character-sheet'
-import { type AbilityKey, SKILL_ABILITY, abilityMod, profBonus } from '../../lib/calc'
+import { type AbilityKey, abilityMod, profBonus } from '../../lib/calc'
 import RuleBenefits from '../sheet/RuleBenefits.vue'
-import { sheetSkill,sheetSave,sheetInitiative } from '../../lib/character-sheet'
+import { sheetSkillRows,sheetSave,sheetInitiative } from '../../lib/character-sheet'
 import { characterBenefits } from '../../../shared/rule-benefits'
 import { itemBonuses } from '../../../shared/item-rules'
 import type { HomebrewFeat, SrdSpell } from '../../lib/srd'
@@ -54,13 +54,11 @@ async function load() {
 watch(() => [props.roomId, props.characterId, props.version], () => { void load() }, { immediate: true })
 onUnmounted(() => { generation++; controller?.abort(); referenceController?.abort() })
 const matches = (text: string) => text.toLowerCase().includes(query.value.trim().toLowerCase())
-const allSkillRows = computed(() => character.value ? Object.entries(SKILL_ABILITY).map(([key, ability]) => {
-  const c = character.value!, rank = characterBenefits(c).skills[key] ?? 'none'
-  return { key, ability, rank, name: pretty(key), modifier: sheetSkill(c,key) }
-}).sort((a, b) => a.name.localeCompare(b.name)) : [])
+const benefits = computed(() => character.value ? characterBenefits(character.value) : undefined)
+const allSkillRows = computed(() => character.value ? sheetSkillRows(character.value,benefits.value) : [])
 const trainedSkills = computed(() => allSkillRows.value.filter(skill => skill.rank !== 'none'))
 const skills = computed(() => allSkills.value ? allSkillRows.value : trainedSkills.value)
-const proficiencies = computed(() => character.value ? sheetProficiencies(character.value) : null)
+const proficiencies = computed(() => character.value ? sheetProficiencies(character.value,benefits.value) : null)
 const hasTraining = computed(() => proficiencies.value && Object.values(proficiencies.value).some(values => values.length))
 const saveBonus = computed(() => character.value ? itemBonuses(character.value).saves : 0)
 const features = computed(() => featFeatureRows(character.value?.features ?? []).map(f => {
@@ -69,7 +67,7 @@ const features = computed(() => featFeatureRows(character.value?.features ?? [])
 })
   .filter(f => (allFeatures.value || combatSuggested(f)) && matches(`${f.name} ${f.description} ${f.searchText}`))
   .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || (a.order ?? a.index) - (b.order ?? b.index)))
-const attacks = computed(() => character.value ? combatAttacks(character.value).filter(a => matches(`${a.name} ${a.notes}`)) : [])
+const attacks = computed(() => character.value ? combatAttacks(character.value,benefits.value).filter(a => matches(`${a.name} ${a.notes}`)) : [])
 const spellList = computed(() => [...new Set([...(character.value?.spellcasting.prepared ?? []), ...(character.value?.spellcasting.known ?? [])])]
   .map(index => ({ index, detail: spells.value[index], name: spells.value[index]?.name ?? pretty(index.replace(/^homebrew-/, '')), prepared: character.value?.spellcasting.prepared.includes(index) }))
   .filter(s => matches(`${s.name} ${s.detail?.desc.join(' ') ?? ''}`)).sort((a, b) => Number(!!b.prepared) - Number(!!a.prepared) || a.name.localeCompare(b.name)))
@@ -80,7 +78,7 @@ const spellList = computed(() => [...new Set([...(character.value?.spellcasting.
     <p v-if="loading&&!character" class="sheet-small" role="status">Loading character details…</p>
     <template v-if="character">
       <dl class="party-detail-essentials" aria-label="Additional character statistics">
-        <div><dt>Initiative</dt><dd>{{signed(sheetInitiative(character))}}</dd></div>
+        <div><dt>Initiative</dt><dd>{{signed(sheetInitiative(character,benefits))}}</dd></div>
         <div><dt>Proficiency bonus</dt><dd>{{signed(profBonus(character.meta.level))}}</dd></div>
         
         <div v-if="speed!==undefined"><dt>Speed</dt><dd>{{speed}} <small>ft.</small></dd></div>
@@ -88,7 +86,7 @@ const spellList = computed(() => [...new Set([...(character.value?.spellcasting.
       </dl>
           <section class="party-reference-section party-reference-saves" aria-label="Abilities and saving throws">
             <h5>Saving throws</h5>
-            <dl class="party-ability-grid"><div v-for="key in saveOrder" :key="key"><dt>{{abilityNames[key]}}</dt><dd class="party-ability-save" :class="{'party-trained-save':characterBenefits(character).saves[key]}"><span v-if="characterBenefits(character).saves[key]" class="party-training-dot" role="img" aria-label="Proficient" />{{signed(sheetSave(character,key))}} <small>{{characterBenefits(character).saves[key]?'proficient':'save'}}</small></dd><dd class="party-ability-score"><small>{{character.abilities[key]}} score &middot; {{signed(abilityMod(character.abilities[key]))}} mod</small></dd></div></dl>
+            <dl class="party-ability-grid"><div v-for="key in saveOrder" :key="key"><dt>{{abilityNames[key]}}</dt><dd class="party-ability-save" :class="{'party-trained-save':benefits?.saves[key]}"><span v-if="benefits?.saves[key]" class="party-training-dot" role="img" aria-label="Proficient" />{{signed(sheetSave(character,key,benefits))}} <small>{{benefits?.saves[key]?'proficient':'save'}}</small></dd><dd class="party-ability-score"><small>{{character.abilities[key]}} score &middot; {{signed(abilityMod(character.abilities[key]))}} mod</small></dd></div></dl>
             <p class="sheet-small">Proficiency bonus {{signed(profBonus(character.meta.level))}} is included in proficient saves.<template v-if="saveBonus"> Includes {{signed(saveBonus)}} from active items.</template></p>
           </section>
       <RuleBenefits :character="character" /><div class="party-training-columns">

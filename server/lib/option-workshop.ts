@@ -1,9 +1,9 @@
 import {z} from 'zod'
 import {normalizeBuilderEntry} from './entry-builder-schema'
 import {benefitProblems} from '../../shared/rule-benefits'
-import type {OptionDraft,OptionKind} from '../../shared/option-workshop'
+import type {OptionDraft} from '../../shared/option-workshop'
 import type {OrcbrewEntry} from './orcbrew'
-import {OPTION_KINDS,isOptionKind} from '../../shared/option-kinds'
+import {OPTION_KINDS} from '../../shared/option-kinds'
 const published=z.object({revision:z.number().int().min(1),index:z.string().min(1).max(300),packId:z.string().regex(/^[a-f0-9]{24}$/i),packHash:z.string().length(64)}).strict()
 export const optionDraftSchema=z.object({version:z.literal(1),id:z.uuid(),kind:z.enum(OPTION_KINDS),source:z.string().trim().min(1).max(200),body:z.record(z.string(),z.unknown()),benefits:z.array(z.unknown()).max(200),updatedAt:z.string().max(60),published:published.optional()}).strict()
 export function validatedOption(value:unknown):OptionDraft{
@@ -25,4 +25,3 @@ export function optionRecord(draft:OptionDraft,revision:number,previous:string[]
  }
 }
 export const optionKey=(id:string)=>`codex-option-${id}`
-export function optionKind(value:unknown):value is OptionKind{return isOptionKind(value)}

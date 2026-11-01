@@ -1,6 +1,7 @@
 import { benefitProblems, entryBenefits } from './rule-benefits'
+import { BROWSE_KINDS } from './compendium-kinds'
 /** Personal definitions keep their original reference identity. */
-export const EDITABLE_KINDS = ['spells','equipment','magic-items','classes','subclasses','races','subraces','monsters','backgrounds','feats','invocations','boons','selections','languages','other'] as const
+export const EDITABLE_KINDS = BROWSE_KINDS
 export type CompendiumKind = typeof EDITABLE_KINDS[number]
 export type EntryData = Record<string, unknown>
 export interface CompendiumDefinition { kind: CompendiumKind; index: string; revision: number; sourceHash?: string; before: EntryData; entry: EntryData }

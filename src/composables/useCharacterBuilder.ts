@@ -100,9 +100,12 @@ export function useCharacterBuilder() {
     if(klass.value?.workshop)for(const group of ['armor','weapons','tools'] as const)proficiencies[group]=[...new Set([...proficiencies[group],...klass.value.workshop[group]])]
     const defaults = classSpellDefaults(klass.value?.name??'')
     const slots: Record<string, number> = {}
-    for (let level = 1; level <= 9; level++) slots[`l${level}`] = authored?workshopSlots(authored,draft.level)[`l${level}`]!:defaults ? slotMaximums(defaults.progression,draft.level)[`l${level}`]! : classLevel.value?.spellcasting?.[`spell_slots_level_${level}`] ?? 0
+    const maximums=authored?workshopSlots(authored,draft.level):defaults?slotMaximums(defaults.progression,draft.level):undefined
+    for (let level = 1; level <= 9; level++) slots[`l${level}`] = maximums?maximums[`l${level}`]!:classLevel.value?.spellcasting?.[`spell_slots_level_${level}`] ?? 0
     const classCasting = object(klass.value?.details?.[':spellcasting'])
     const ability = String(authored?.magic.ability??defaults?.ability ?? klass.value?.spellcasting?.spellcasting_ability.index ?? classCasting[':ability'] ?? 'int').replace(/^:/, '').replace(/^.*\//, '') as AbilityKey
+    const featContext={klass:klass.value,race:race.value,subrace:subrace.value}
+    const selectedFeats=new Set(selectedFeatIndexes(draft,featContext)),featSlots=featOpportunities(draft,featContext).slots
     return {
       featIndexes:feats.value.map(entry=>entry.index),
       ruleDefinitions:definitions,
@@ -110,7 +113,7 @@ export function useCharacterBuilder() {
       race: race.value, subrace: subrace.value, klass: klass.value, subclass: subclass.value, background: background.value,
       fixedSkills: fixedSkills.value, skillChoice: skillChoice.value, proficiencies, slots, spellAbility: ABILITY_KEYS.includes(ability) ? ability : 'int',
       features: [...raceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...subraceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...classTraits.value.map(f=>({...f,origin:'class' as const})), ...subclassTraits.value.map(f=>({...f,origin:'subclass' as const})), ...(background.value?.traits ?? []).map(f=>({...f,origin:'background' as const,level:1})),...draft.manualOptions.filter(f=>!manualOptionProblem(f)),
-        ...feats.value.filter((entry) => selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).includes(entry.index)).map((entry) => ({ name: contentLabel(entry), description: entry.description, origin:'feat' as const, definition:{version:1 as const,kind:'feats' as const,index:entry.index}, level:featOpportunities(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).slots.find(s=>draft.advancements[s.key]?.feat===entry.index)?.level??1 }))],
+        ...feats.value.filter((entry) => selectedFeats.has(entry.index)).map((entry) => ({ name: contentLabel(entry), description: entry.description, origin:'feat' as const, definition:{version:1 as const,kind:'feats' as const,index:entry.index}, level:featSlots.find(s=>draft.advancements[s.key]?.feat===entry.index)?.level??1 }))],
     }
   })
   const spellPolicy = computed(() => context.value.spellPolicy!)

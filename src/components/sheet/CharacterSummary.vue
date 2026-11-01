@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
 import { characterBenefits } from '../../../shared/rule-benefits'
-import { sheetSkill } from '../../lib/character-sheet'
+import { sheetSkillRows } from '../../lib/character-sheet'
 import { useCharactersStore } from '../../stores/characters'
-import { SKILL_ABILITY, ABILITY_KEYS, abilityMod } from '../../lib/calc'
+import { ABILITY_KEYS, abilityMod } from '../../lib/calc'
 import { pretty, signed, sheetProficiencies, XP_THRESHOLDS } from '../../lib/character-sheet'
 import SheetVitalsStats from './SheetVitalsStats.vue'
 import SheetDisclosure from './SheetDisclosure.vue'
 const store=useCharactersStore(),c=computed(()=>store.current!),xp=ref<number|''>(''),message=ref(''),xpId=useId()
-const skills=computed(()=>Object.entries(SKILL_ABILITY).map(([key,ability])=>{
-  const rank=characterBenefits(c.value).skills[key]??'none'
-  return {key,name:pretty(key),rank,ability,modifier:sheetSkill(c.value,key)}
-}).sort((a,b)=>a.name.localeCompare(b.name)))
-const proficiencies=computed(()=>sheetProficiencies(c.value))
+const benefits=computed(()=>characterBenefits(c.value))
+const skills=computed(()=>sheetSkillRows(c.value,benefits.value))
+const proficiencies=computed(()=>sheetProficiencies(c.value,benefits.value))
 const next=computed(()=>XP_THRESHOLDS[c.value.meta.level])
 const progress=computed(()=>{const base=XP_THRESHOLDS[c.value.meta.level-1]??0,target=next.value;return target?Math.min(100,Math.max(0,(c.value.meta.xp-base)/(target-base)*100)):100})
 async function addXP(){if(store.saving||!Number.isSafeInteger(xp.value)||Number(xp.value)<=0)return;const amount=Number(xp.value);try{await store.update(c.value._id,{meta:{...c.value.meta,xp:c.value.meta.xp+amount}});xp.value='';message.value=`${amount.toLocaleString()} XP added.`}catch{/* Sheet displays save errors. */}}
