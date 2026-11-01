@@ -1,5 +1,10 @@
 # Follow-up priorities — 20 October 2026
 
+## Added follow-ups - 1 November 2026
+
+[Map-opening recovery](audits/map-opening-recovery-2026-11-01.md) passes 701 tests, build/types, ten isolated desktop scenarios and hosted owner/player map checks. It adds stage-specific failures, one bounded transient GET retry and a direct Retry map action. Publication is held: the reviewed deployment returns Owlbear 503 during pairing-index initialization, while the live baseline retains its expected boundary responses. The public website remains on the verified 31 October Compendium release. Investigate this availability failure separately from the unfinished Owlbear remembered-login feature before promoting the map change.
+
+
 ## Added follow-ups — 31 October 2026
 
 The retained local website rollout is live with passing public checks; unfinished Owlbear authentication remains separate. The first performance candidate was rolled back after a public extension initialization failure; the revised combined package passed the public gate. An isolated release branch now reconciles the deployed website source and its tests without overwriting the original working checkout. See [rollout status](audits/local-only-rollout-2026-10-29.md).

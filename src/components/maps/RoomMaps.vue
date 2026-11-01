@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {computed, nextTick, onMounted, onUnmounted, ref, useId, watch} from 'vue'
 import {api, ApiError} from '../../lib/api'
+import {loadRoomMap} from '../../lib/map-loading'
 import {useVisiblePolling} from '../../composables/useVisiblePolling'
 import {createdPin, pinSaveOutcome, samePinValues, type PinSaveAttempt} from '../../lib/map-pin-save'
 import {vMotionPanel} from '../../directives/siteMotion'
@@ -24,6 +25,7 @@ const emit = defineEmits<{openNotebook: [id: string]}>()
 const index = ref<MapIndex | null>(null), selected = ref<RoomMap | null>(null), imageUrl = ref(''), imageFailure = ref(false)
 const loading = ref(false), opening = ref(false), busy = ref(false), error = ref(''), notice = ref(''), browse = ref(true), search = ref('')
 const deletingMap = ref('')
+const failedMap = ref('')
 const regionDraft=ref<MapRegion[]>([]), activeRegion=ref(''), regionPoint=ref(-1), regionDrawing=ref(false)
 const mapSearch = ref<HTMLInputElement | null>(null)
 const mode = ref<'read'|'upload'|'settings'|'pin'|'regions'>('read'), draft = ref<MapDraft | null>(null), baseline = ref('')
@@ -61,7 +63,7 @@ function path(tail = '', notebook = false, query: Record<string,string> = {}) {
   return `/api/rooms/${props.roomId}/${notebook ? 'notebook' : 'maps'}${tail}${values.size ? '?' + values : ''}`
 }
 function releaseImage() {controller?.abort(); controller = undefined; if (imageUrl.value) URL.revokeObjectURL(imageUrl.value); imageUrl.value = ''}
-function clearSelected() {cityRun++;currentCity.value=null;cityExpanded.value=false;focusMap.value=false;activeRegion.value='';openRun++; noteRun++; releaseImage(); popupOpen.value=false;menu.value=null;pinUndo.value=null;pendingPinSave.value=null;blocked.value=false;selected.value = null; note.value = null; selectedPin.value = ''; drawer.value = false; opening.value = false; noteBusy.value = false; imageFailure.value = false; discardDraft()}
+function clearSelected() {failedMap.value='';cityRun++;currentCity.value=null;cityExpanded.value=false;focusMap.value=false;activeRegion.value='';openRun++; noteRun++; releaseImage(); popupOpen.value=false;menu.value=null;pinUndo.value=null;pendingPinSave.value=null;blocked.value=false;selected.value = null; note.value = null; selectedPin.value = ''; drawer.value = false; opening.value = false; noteBusy.value = false; imageFailure.value = false; discardDraft()}
 function failure(e: unknown) {if (e instanceof ApiError && [401,403,404].includes(e.status)) {clearSelected(); index.value = null} error.value = e instanceof Error ? e.message : 'Maps could not be loaded. Try Refresh.'}
 function discardDraft() {cityPanel.value?.discardDraft();regionDraft.value=[];regionPoint.value=-1;regionDrawing.value=false;mode.value = 'read'; draft.value = null; pinDraft.value = null; locating.value = false; editingPin.value = ''; uploadImage.value = ''; uploadPreview.value = ''; uploadName.value = ''; uploadDetails.value = ''; error.value = ''}
 function mayLeave() {if (navigationBusy.value) return false; if (dirty.value && !window.confirm('Discard your unsaved map changes?')) return false; discardDraft(); return true}
@@ -79,17 +81,13 @@ async function openMap(id: string) {
   clearSelected(); const run = ++openRun; opening.value = true; error.value = ''; browse.value = false
   const abort = new AbortController(); controller = abort
   try {
-    const image = fetch(path(`/${id}/image`), {credentials: 'include', cache: 'no-cache', signal: AbortSignal.any([abort.signal, AbortSignal.timeout(20000)])}).then(async response=>{
-      if (!response.ok) throw new ApiError(response.status, 'The map image is unavailable. Refresh to check access.')
-      return response.blob()
-    })
     // Fetch metadata and the authorized image together rather than adding their
     // network delays. Browser revalidation reuses unchanged image bytes.
-    const [map,blob] = await Promise.all([api.get<RoomMap>(path(`/${id}`), {signal: abort.signal}),image])
+    const {map,image} = await loadRoomMap(path(`/${id}`), path(`/${id}/image`), abort.signal)
     if (disposed || run !== openRun) return
     selected.value = map;popupOpen.value=true
-    imageUrl.value = URL.createObjectURL(blob)
-  } catch (e) {abort.abort();if (!disposed && run === openRun) {imageFailure.value = true; failure(e)}} finally {if (run === openRun) opening.value = false}
+    imageUrl.value = URL.createObjectURL(image)
+  } catch (e) {abort.abort();if (!disposed && run === openRun) {imageFailure.value = true; failure(e);if (!(e instanceof ApiError && [401,403,404].includes(e.status))) failedMap.value=id}} finally {if (run === openRun) opening.value = false}
 }
 async function refresh() {
   if (disposed || props.active === false || navigationBusy.value || loading.value || opening.value || document.visibilityState !== 'visible') return
@@ -425,7 +423,7 @@ onUnmounted(() => {disposed = true; indexRun++; openRun++; noteRun++; searchRun+
 <template>
   <section class="room-maps" aria-label="Room maps">
     <header class="map-toolbar"><div><h2>Campaign maps</h2><p class="sheet-small">Open a map to explore and arrange its notebook pins.</p></div><div class="map-actions"><button type="button" class="sheet-button map-browse" @click="browse=!browse">{{browse?'Hide map list':'Browse maps'}}</button><button type="button" class="sheet-button" :disabled="loading||navigationBusy||opening" @click="refresh">Refresh maps</button><button v-if="canManage" class="sheet-button sheet-button-primary" type="button" :disabled="navigationBusy" @click="upload">Upload map</button></div></header>
-    <p v-if="error&&!popupOpen" class="sheet-alert" role="alert">{{error}}</p><p v-if="notice&&!popupOpen" class="sheet-small" role="status">{{notice}}</p>
+    <p v-if="error&&!popupOpen" class="sheet-alert" role="alert">{{error}} <button v-if="failedMap&&mode==='read'" type="button" class="sheet-button sheet-small-button" :disabled="opening||navigationBusy" @click="openMap(failedMap)">Retry map</button></p><p v-if="notice&&!popupOpen" class="sheet-small" role="status">{{notice}}</p>
     <p v-if="index?.readOnly" class="sheet-notice">Player preview is read-only. Maps and pins follow this player’s notebook access.</p>
     <div class="map-layout" :data-browse="browse">
       <aside class="map-index"><label>Find map<input ref="mapSearch" v-model="search" type="search" placeholder="Search by name" /></label><div class="map-index-scroll">
