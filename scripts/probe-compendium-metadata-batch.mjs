@@ -27,11 +27,13 @@ try{
   await CustomContent.collection.deleteMany({})
   const make=(userId,type,i)=>({_id:new mongoose.Types.ObjectId(),userId,type,sourceHash:hash('synthetic-'+i),updatedAt:new Date('2026-11-01T00:00:00Z'),data:{includeDisabled:i%2===0,source:'SYNTHETIC UNUSED PAYLOAD',filename:'synthetic.orcbrew'}})
   await CustomContent.collection.insertMany([...Array.from({length:count},(_,i)=>make(owner,types[i%types.length],i)),make(foreign,'orcbrew',-1),make(owner,'feat',-2)])
-  observed=[];const baseline=await browseRevision(String(owner)),baselineCommands=observed;observed=undefined
-  observed=[];const docs=await CustomContent.find({userId:String(owner),type:{$in:types}}).select(projection).sort({_id:1}).batchSize(512).lean(),candidateCommands=observed;observed=undefined
+  // Preserve the prior query as the control. Exercise the actual changed
+  // application function as the candidate, rather than comparing it to itself.
+  observed=[];const docs=await CustomContent.find({userId:String(owner),type:{$in:types}}).select(projection).sort({_id:1}).lean(),baselineCommands=observed;observed=undefined
+  observed=[];const candidate=await browseRevision(String(owner)),candidateCommands=observed;observed=undefined
   assert.equal(docs.length,count,'No truncation, unrelated types or foreign documents')
   for(const doc of docs){assert.ok(!doc.data?.source);assert.ok(types.includes(doc.type))}
-  assert.equal(hash(version+JSON.stringify(docs)),baseline,'Revision must remain identical to the actual application function')
+  assert.equal(hash(version+JSON.stringify(docs)),candidate,'Revision must remain identical to the prior default-batch query')
   results.push({metadataDocuments:count,identicalRevision:true,baselineCommands,candidateCommands,baselineCursorContinuations:baselineCommands.filter(c=>c.command==='getMore').length,candidateCursorContinuations:candidateCommands.filter(c=>c.command==='getMore').length})
  }
 }finally{
@@ -39,4 +41,4 @@ try{
  if(connected){assert.equal(mongoose.connection.host,'127.0.0.1');assert.equal(mongoose.connection.name,database);assert.match(database,/^metadata_batch_probe_[a-f0-9]{12}$/);await mongoose.connection.dropDatabase();cleaned=true}
  await mongoose.disconnect()
 }
-console.log(JSON.stringify({syntheticLocalOnly:true,applicationUnchanged:true,batchSize:512,fixtureCleaned:cleaned,notice:'Command-count experiment only; not a live timing or a speed guarantee.',results},null,2))
+console.log(JSON.stringify({syntheticLocalOnly:true,actualApplicationCandidate:true,batchSize:512,fixtureCleaned:cleaned,notice:'Command-count experiment only; not a live timing or a speed guarantee.',results},null,2))

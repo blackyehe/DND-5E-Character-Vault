@@ -1,5 +1,5 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest'
-import {COMPENDIUM_DETAIL_VERSION,type CompendiumDetailResponse} from '../../shared/compendium-details'
+import {COMPENDIUM_DETAIL_VERSION,COMPENDIUM_PRELOAD_LIMITS,type CompendiumDetailResponse} from '../../shared/compendium-details'
 import type {CompendiumDetailStorage,StoredCompendiumDetail} from './compendium-detail-storage'
 const get=vi.hoisted(()=>vi.fn())
 vi.mock('./api',()=>({api:{get}}))
@@ -8,6 +8,8 @@ let rows:Map<string,StoredCompendiumDetail>,storage:CompendiumDetailStorage,even
 let module:typeof import('./compendium-detail-cache')
 const entry=(name='Original'):CompendiumDetailResponse=>({owner:'owner',kind:'spells',index:'one',version:COMPENDIUM_DETAIL_VERSION,revision,entry:{index:'one',name,url:'',desc:['Full entry values']}})
 const load=()=>module.loadCompendiumDetail('owner','spells','one',storage)
+const batch=(name='Original')=>({...entry(),entries:[{index:'one',entry:entry(name).entry}],skipped:[]})
+const preload=(signal=new AbortController().signal)=>module.preloadCompendiumDetails('owner','spells',['one'],signal,512*1024,storage)
 beforeEach(async()=>{
  vi.resetModules();get.mockReset();rows=new Map();events=new Map()
  const markers=new Map<string,string>()
@@ -20,6 +22,46 @@ beforeEach(async()=>{
 })
 afterEach(()=>{vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()})
 describe('persistent personal Compendium details',()=>{
+ it('warms complete details without foreground work or disk writes; opening persists and reopening reuses them',async()=>{
+  const {foregroundBusy}=await import('./foreground-work');get.mockResolvedValueOnce(batch())
+  await preload();expect(foregroundBusy()).toBe(false);expect(storage.write).not.toHaveBeenCalled();expect(get.mock.calls[0]![1]).toMatchObject({background:true})
+  expect((await load()).desc).toEqual(['Full entry values']);expect(get).toHaveBeenCalledOnce();await vi.waitFor(()=>expect(storage.write).toHaveBeenCalledOnce())
+  module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner');expect((await load()).name).toBe('Original');expect(get.mock.calls.filter(([p])=>p.includes('/saved-detail/'))).toHaveLength(0)
+ })
+ it('revalidates an already saved entry without downloading its details again',async()=>{
+  await load();module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner');get.mockClear();await preload()
+  expect(get).toHaveBeenCalledOnce();expect(get.mock.calls[0]![0]).toContain('/detail-revision');expect(storage.write).toHaveBeenCalledOnce()
+ })
+ it('joins an almost-ready batch on click without a duplicate detail request',async()=>{
+  let finish!:(value:unknown)=>void;get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+  const warming=preload();await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));const opened=load();finish(batch());await warming;expect((await opened).name).toBe('Original');expect(get).toHaveBeenCalledOnce()
+ })
+ it('limits how long a click can wait for slow batch siblings and ignores their late values',async()=>{
+  vi.useFakeTimers();let finish!:(value:unknown)=>void;get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+  const warming=preload(),outcome=warming.catch(()=>{});await vi.advanceTimersByTimeAsync(0);expect(finish).toBeTypeOf('function')
+  const opened=load();await vi.advanceTimersByTimeAsync(COMPENDIUM_PRELOAD_LIMITS.joinMs);expect((await opened).name).toBe('Original');expect(get).toHaveBeenCalledTimes(2)
+  finish(batch('Late old rules'));await outcome;expect((await load()).name).toBe('Original')
+ })
+ it.each(['owner','index','revision','oversized','duplicates'])('rejects invalid preloaded %s without populating disk or memory',async(mode)=>{
+  const value:any=batch()
+  if(mode==='owner')value.owner='stranger'
+  if(mode==='index')value.entries[0].index='other'
+  if(mode==='revision')value.revision='bad'
+  if(mode==='oversized')value.entries[0].entry.desc=['x'.repeat(256*1024)]
+  if(mode==='duplicates')value.entries.push(value.entries[0])
+  get.mockResolvedValueOnce(value);await expect(preload()).rejects.toThrow();expect(storage.write).not.toHaveBeenCalled();expect((await load()).name).toBe('Original');expect(get.mock.calls.some(([p])=>p.includes('/saved-detail/'))).toBe(true)
+ })
+ it('aborts and discards a preload when the library or account changes',async()=>{
+  let finish!:(value:unknown)=>void;get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}));const warming=preload(),outcome=warming.catch(e=>e)
+  await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));events.get('codex:library-changed')!();finish(batch());expect(await outcome).toBeInstanceOf(Error);expect(storage.write).not.toHaveBeenCalled()
+ })
+ it('does not let a delayed old batch overwrite a newer foreground authorization',async()=>{
+  let finish!:(value:unknown)=>void;get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+  const warming=preload(),outcome=warming.catch(e=>e);await vi.waitFor(()=>expect(finish).toBeTypeOf('function'))
+  get.mockResolvedValueOnce({...entry('New rules'),index:'two',revision:next,entry:{...entry('New rules').entry,index:'two'}})
+  expect((await module.loadCompendiumDetail('owner','spells','two',storage)).name).toBe('New rules')
+  finish(batch('Old rules'));expect(await outcome).toMatchObject({message:expect.stringContaining('superseded')});expect(storage.write).toHaveBeenCalledOnce()
+ })
  it('stores complete opened-entry values and reuses disk after a new same-account session',async()=>{
   expect((await load()).desc).toEqual(['Full entry values'])
   await vi.waitFor(()=>expect(storage.write).toHaveBeenCalledOnce())

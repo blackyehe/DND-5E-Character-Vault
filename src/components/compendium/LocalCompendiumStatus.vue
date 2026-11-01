@@ -20,7 +20,7 @@ const labels={
   <div class="device-library-menu" aria-label="Device library status">
    <p>{{preparationStatus.completed}}/{{preparationStatus.total}} categories verified on this device.</p>
    <p v-if="preparationStatus.phase==='paused'">{{preparationPauseMessages[preparationStatus.pauseReason||'foreground']}}</p>
-   <p v-else>Search indexes prepare automatically while the website is idle. Full entry details load when opened.</p>
+   <p v-else>Search indexes and visible entry details prepare automatically while the website is idle. Opened entries are cached on this device.</p>
    <ul><li v-for="category in categories" :key="category.kind"><span>{{category.label}}</span><span>{{labels[category.state]}}</span></li></ul>
    <p v-if="preparationStatus.message">{{preparationStatus.message}}</p>
    <button v-if="preparationStatus.message" type="button" class="btn-ghost text-sm" @click="refreshCompendiumPreparation">Retry preparation</button>

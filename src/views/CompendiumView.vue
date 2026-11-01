@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import WorkshopLibraryTools from '../components/workshop/WorkshopLibraryTools.vue'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {useRoute} from 'vue-router'
 import CompendiumEntryEditor from '../components/compendium/CompendiumEntryEditor.vue'
 import { applyEntryChanges, changedEntryFields, type CompendiumEditState, type CompendiumKind, type EntryData } from '../../shared/compendium-editing'
 import { vMotionPanel } from '../directives/siteMotion'
@@ -31,7 +32,9 @@ import { useCompendiumBrowse } from '../composables/useCompendiumBrowse'
 import { useAuthStore } from '../stores/auth'
 import type { BrowseKind } from '../../shared/compendium-browse'
 import {releaseLocalCompendium} from '../lib/local-compendium-client'
-import {loadCompendiumDetail} from '../lib/compendium-detail-cache'
+import {loadCompendiumDetail,preloadCompendiumDetails,onCompendiumDetailsReset} from '../lib/compendium-detail-cache'
+import {CompendiumDetailPreloader} from '../lib/compendium-detail-preloader'
+import {foregroundBusy,onForegroundWork} from '../lib/foreground-work'
 type LibraryRef = SrdRef & {workshopItem?:EquipmentItem}
 type Detail = LibraryRef & Record<string, unknown> & {itemView?:ReturnType<typeof fiveToolsItemView>}
 defineProps<{embedded?:boolean}>()
@@ -102,6 +105,23 @@ function preferredMonsterIndex(entries:LibraryRef[]){
   const imported=entries.filter(e=>e.contentKey?.startsWith('five-tools-')&&!monsterIdentity(e).ua)
   return (imported.find(e=>monsterIdentity(e).source==='MM')??imported.find(e=>monsterIdentity(e).source==='XMM')??imported[0]??entries[0])!.index
 }
+const route=useRoute()
+const preloader=new CompendiumDetailPreloader({preload:(owner,kind,indexes,signal,budget)=>{
+ const run=()=>signal.aborted?Promise.resolve(0):preloadCompendiumDetails(owner,kind,indexes,signal,budget)
+ // Share the existing idle-work lock with device-index preparation across tabs.
+ return navigator.locks?navigator.locks.request(`codex-compendium:${owner}`,{ifAvailable:true},lock=>lock?run():undefined):run()
+}})
+function pausePreloading(){preloader.pause(document.hidden||!navigator.onLine||foregroundBusy()||route.path.startsWith('/rooms/')||!!editing.value)}
+const stopForeground=onForegroundWork(pausePreloading),stopDetailReset=onCompendiumDetailsReset(()=>preloader.clear())
+function visibleDetailIndexes(){
+ if(tab.value==='monsters')return monsterGroups.value.map(g=>preferredMonsterIndex(g.versions))
+ if(tab.value==='subclasses')return subclassGroups.value.map(g=>g.versions[0]!.index)
+ if(isItemTab.value)return itemGroups.value.map(g=>preferredItemIndex(g.versions))
+ if(isFamilyTab.value)return familyGroups.value.map(g=>g.versions[0]!.index)
+ return results.value.map(e=>e.index)
+}
+watch([()=>route.path,()=>!!editing.value],pausePreloading)
+onMounted(()=>{pausePreloading();document.addEventListener('visibilitychange',pausePreloading);window.addEventListener('online',pausePreloading);window.addEventListener('offline',pausePreloading)})
 function clearFilters(){categoryFilters.value={};filters.value=emptyItemFilters()}
 const unclassifiedMagicItems=computed(()=>pageInfo.value?.unclassifiedMagicItems??0)
 const loading=browse.loading
@@ -152,6 +172,7 @@ function clearSelection(){
   levels.value=[];levelsLoading.value=false;levelsError.value=''
 }
 async function search(page=1,force=false,preserveSelection=false) {
+  preloader.clear()
   clearTimeout(searchTimer)
   if(tab.value==='homebrew')return
   const kind=tab.value
@@ -160,18 +181,20 @@ async function search(page=1,force=false,preserveSelection=false) {
   if(!accepted||tab.value!==kind||sequence!==searchNumber)return
   const revision=pageInfo.value?.revision
   if(revision&&revision!==detailRevision){editions.value.clear();if(detailRevision&&!preserveSelection)clearSelection();detailRevision=revision}
+  if(auth.user)preloader.setPage(auth.user.id,kind as BrowseKind,visibleDetailIndexes())
   await nextTick();resultPanel.value?.scrollTo({top:0})
 }
 watch(()=>JSON.stringify([tab.value,query.value,categoryFilters.value,filters.value]),(value,previous)=>{
   const [kind,term]=JSON.parse(value),[oldKind,oldTerm]=JSON.parse(previous)
   ++searchNumber;clearTimeout(searchTimer);browse.cancel();clearSelection()
+  preloader.clear()
   if(kind!==oldKind){clearFilters();editions.value.clear();detailRevision='';browse.response.value=null;if(oldKind==='homebrew')browse.clear()}
   if(kind==='homebrew')return
   loading.value=true
   searchTimer=setTimeout(()=>void search(),term!==oldTerm?250:0)
 })
-watch(()=>auth.user?.id,()=>{++searchNumber;clearTimeout(searchTimer);browse.clear();editions.value.clear();clearSelection();editing.value=null;if(auth.user)void search()})
-onBeforeUnmount(()=>{releaseLocalCompendium();++searchNumber;clearTimeout(searchTimer);browse.cancel();++detailNumber})
+watch(()=>auth.user?.id,()=>{preloader.clear();++searchNumber;clearTimeout(searchTimer);browse.clear();editions.value.clear();clearSelection();editing.value=null;if(auth.user)void search()})
+onBeforeUnmount(()=>{preloader.dispose();stopForeground();stopDetailReset();document.removeEventListener('visibilitychange',pausePreloading);window.removeEventListener('online',pausePreloading);window.removeEventListener('offline',pausePreloading);releaseLocalCompendium();++searchNumber;clearTimeout(searchTimer);browse.cancel();++detailNumber})
 
 async function openDetail(index:string) {
   const sequence=++detailNumber,kind=tab.value

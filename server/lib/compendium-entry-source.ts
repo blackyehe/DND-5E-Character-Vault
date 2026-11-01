@@ -19,12 +19,12 @@ function binary(value:unknown):Buffer {
   if(bson?.buffer instanceof Uint8Array&&Number.isInteger(bson.position))return Buffer.from(bson.buffer.subarray(0,bson.position))
   throw new Error('Invalid source cache payload')
 }
-function decoded(doc:{payload?:unknown;digest?:unknown}|null,index:string):BrowseEntry|null {
+function decoded(doc:{payload?:unknown;digest?:unknown}|null,index:string,maxBytes=MAX_BYTES):BrowseEntry|null {
   if(!doc)return null
   try {
     const data=binary(doc.payload)
     if(digest(data)!==doc.digest)return null
-    const value=JSON.parse(gunzipSync(data,{maxOutputLength:MAX_BYTES}).toString('utf8')) as BrowseEntry
+    const value=JSON.parse(gunzipSync(data,{maxOutputLength:maxBytes}).toString('utf8')) as BrowseEntry
     return value.index===index&&typeof value.name==='string'&&value.homebrew===true?value:null
   }catch{return null}
 }
@@ -56,6 +56,19 @@ export async function targetedCompendiumSource(userId:string,kind:BrowseKind,ind
     return entry
   }
   return null
+}
+/** Optional preload reads never build, parse, repair, or write a source. */
+export async function cachedCompendiumSource(userId:string,kind:BrowseKind,index:string,revision:string,maxBytes=MAX_BYTES):Promise<BrowseEntry|null>{
+ const versions=[`source-1:${revision}`,`source-components-3-families:${revision}`]
+ const rows=await CompendiumEntryCache.find({userId,kind,index,revision:{$in:versions},expiresAt:{$gt:new Date()}}).select('revision payload digest').limit(2).setOptions({maxTimeMS:1000,timeoutMS:1500}).lean()
+ for(const version of versions){
+  const row=rows.find(r=>r.revision===version),entry=decoded(row??null,index,maxBytes)
+  if(entry)return entry
+  // The foreground reader gives a valid legacy row priority. If optional size
+  // limits cannot verify it, defer the entry rather than select another winner.
+  if(row&&version===versions[0])throw Error('Legacy source requires a foreground read')
+ }
+ return null
 }
 /** A source projection survives function cold starts; edits/enrichment are applied
  * separately so cached source can never replace the account's latest rules. */

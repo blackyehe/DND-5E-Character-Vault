@@ -1,5 +1,9 @@
 # Follow-up priorities — 20 October 2026
 
+## Visible entry details - published 1 November 2026
+
+[Visible-page detail preloading and metadata batching are live](audits/visible-compendium-details-2026-11-01.md). The public check preloaded 25 spells in 8.4 seconds and 18 classes in 3.4 seconds. A click during loading took 0.34 seconds; remaining work resumed after 0.91 seconds. These observed timings retain existing caches and are not guarantees. Clicks take priority, then visible details, then background category indexes. All 763 tests and hosted/public gates pass. Per-entry freshness remains a separate possible follow-up; unfinished Owlbear remembered login is excluded.
+
 ## Next-session groundwork - 1 November 2026
 
 [Focused Compendium handoff](COMPENDIUM_LOADING_HANDOFF_2026-11-01.md) records the live baseline, exact code locations, one small metadata-batching experiment, cache-lookup follow-up and visible-page preloading limits. `scripts/summarize-compendium-trace.mjs` summarizes existing evidence without contacting the website or printing source payloads. It was checked against an existing trace. Groundwork only; no application changes or deployment.

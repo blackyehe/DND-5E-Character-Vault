@@ -1,5 +1,9 @@
 # Compendium loading: bounded next-session handoff
 
+Update: the larger visible-page detail preloader is now published and publicly verified. See [behavior, measured incremental benefit, traffic costs and release work](audits/visible-compendium-details-2026-11-01.md). It reuses the existing cache, warms only up to 25 default visible versions in bounded batches, and preserves normal click fallbacks. Per-entry freshness tracking remains separate.
+
+Update: metadata batching is now published with the visible-page preloader. The actual application query passes the isolated comparison and 30 focused tests; backend types pass. See [incremental results and remaining release step](audits/compendium-metadata-batching-2026-11-01.md). The earlier groundwork descriptions below are historical; do not repeat the implementation or the large benchmarks.
+
 Prepared on 1 November 2026. Groundwork only: no application, dependency, database, or deployment changes in this batch.
 
 ## Starting point

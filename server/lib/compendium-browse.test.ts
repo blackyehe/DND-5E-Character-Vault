@@ -1,19 +1,30 @@
 import { beforeEach,describe,it,expect,vi } from 'vitest'
-const state=vi.hoisted(()=>({revision:'one',catalog:{} as Record<string,unknown[]>,edits:[] as unknown[],chunks:[] as any[],onBuild:undefined as (()=>void)|undefined,build:vi.fn(),writes:vi.fn(),reads:vi.fn(),prepared:false,preparedIndex:vi.fn()}))
+const state=vi.hoisted(()=>({revision:'one',catalog:{} as Record<string,unknown[]>,edits:[] as unknown[],chunks:[] as any[],onBuild:undefined as (()=>void)|undefined,build:vi.fn(),writes:vi.fn(),reads:vi.fn(),prepared:false,preparedIndex:vi.fn(),cachedSource:vi.fn(),component:vi.fn()}))
 vi.mock('../env',()=>({env:{SRD_API_URL:'https://fixture.invalid',COMPENDIUM_READER:'legacy',COMPENDIUM_PREPARED_USERS:''}}))
 vi.mock('./compendium-prepared',()=>({preparedReaderEnabled:()=>state.prepared,readPreparedIndex:state.preparedIndex,readPreparedSource:vi.fn()}))
-vi.mock('./compendium-entry-source',()=>({importedCompendiumSource:vi.fn()}))
+vi.mock('./compendium-entry-source',()=>({importedCompendiumSource:vi.fn(),cachedCompendiumSource:state.cachedSource}))
+vi.mock('./compendium-components',()=>({readComponentSource:state.component}))
 vi.mock('./workshop-library',()=>({workshopLibrary:async(user:string)=>{state.build(user);state.onBuild?.();return {catalog:state.catalog}}}))
 vi.mock('./monster-enrichment',()=>({enrichedMonsterEntries:async(_u:string,e:unknown)=>e,enrichedStandardMonster:(e:unknown)=>e}))
 vi.mock('../models/CustomContent',()=>({CustomContent:{find:(filter:any)=>{
-  let projection='';const chain={select:(s:string)=>{projection=s;return chain},sort:()=>chain,lean:async()=>projection.startsWith('_id')?[{_id:filter.userId,updatedAt:state.revision}]:filter.type==='compendium-edit'?state.edits:[]};return chain
+  let projection='';const chain={select:(s:string)=>{projection=s;return chain},sort:()=>chain,batchSize:()=>chain,lean:async()=>projection.startsWith('_id')?[{_id:filter.userId,updatedAt:state.revision}]:filter.type==='compendium-edit'?state.edits:[]};return chain
 },findOne:()=>({select:()=>({lean:async()=>null}),lean:async()=>null})}}))
 vi.mock('../models/CompendiumBrowseIndex',()=>({CompendiumBrowseIndex:{
   init:async()=>{},createCollection:async()=>{},ensureIndexes:async()=>{},
-  find:(filter:any)=>{const q={sort:()=>q,setOptions:()=>q,lean:async()=>{state.reads(filter);return state.chunks.filter(c=>c.userId===filter.userId&&c.revision===filter.revision&&c.kind===filter.kind)}};return q},
+  find:(filter:any)=>{const q={sort:()=>q,limit:()=>q,setOptions:()=>q,lean:async()=>{state.reads(filter);return state.chunks.filter(c=>c.userId===filter.userId&&c.revision===filter.revision&&c.kind===filter.kind)}};return q},
   bulkWrite:async(ops:any[])=>{state.writes(ops);for(const op of ops)state.chunks.push({...op.updateOne.filter,...op.updateOne.update.$set})},
 }}))
-beforeEach(()=>{vi.resetModules();state.revision='one';state.catalog={other:[]};state.edits=[];state.chunks=[];state.onBuild=undefined;state.build.mockClear();state.writes.mockClear();state.reads.mockClear();state.prepared=false;state.preparedIndex.mockReset()})
+beforeEach(()=>{vi.resetModules();state.revision='one';state.catalog={other:[]};state.edits=[];state.chunks=[];state.onBuild=undefined;state.build.mockClear();state.writes.mockClear();state.reads.mockClear();state.prepared=false;state.preparedIndex.mockReset();state.cachedSource.mockReset();state.cachedSource.mockResolvedValue(null);state.component.mockReset();state.component.mockResolvedValue(null)})
+
+it('optional preloading skips an unprepared source without parsing or assembling a library',async()=>{
+ state.prepared=true;const module=await import('./compendium-browse')
+ expect(await module.cachedBrowseIndex('owner','classes','missing')).toBeNull();expect(state.build).not.toHaveBeenCalled()
+ const locator={index:'homebrew-classes-one',name:'Current',url:''}
+ expect(await module.preloadBrowseEntry('owner','classes',locator.index,'revision',locator)).toBeNull()
+ expect(state.cachedSource).toHaveBeenCalledWith('owner','classes',locator.index,'revision',256*1024);expect(state.component).toHaveBeenCalledWith('owner','classes',locator.index,locator,256*1024);expect(state.build).not.toHaveBeenCalled();expect(state.preparedIndex).not.toHaveBeenCalled()
+ state.cachedSource.mockResolvedValue({...locator,desc:['Complete rules']})
+ expect(await module.preloadBrowseEntry('owner','classes',locator.index,'revision')).toMatchObject({desc:['Complete rules']})
+})
 describe('revisioned per-account browse index',()=>{
   it('does not add a targeted fallback after an unclassified prepared-reader failure',async()=>{
     state.prepared=true;state.preparedIndex.mockResolvedValue(null)

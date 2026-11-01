@@ -298,7 +298,7 @@ export async function readComponentCatalogues(userId:string,kind:BrowseKind|read
  return packs.map(p=>({id:String(p._id),filename:p.data.filename,includeDisabled:p.data.includeDisabled,parsed:{entries:results.get(componentContext(p)!)!,report:{packCount:1,entryCount:0,disabledCount:0,duplicateCount:0,nonFiniteCount:0,counts:Object.fromEntries(ORCBREW_KINDS.map(k=>[k,0])) as ParsedOrcbrew['report']['counts'],warnings:[]}}}))
 }
 
-export async function readComponentSource(userId:string,kind:BrowseKind,index:string,locator:BrowseEntry):Promise<BrowseEntry|null> {
+export async function readComponentSource(userId:string,kind:BrowseKind,index:string,locator:BrowseEntry,maxBytes=PREPARED_SOURCE_MAX):Promise<BrowseEntry|null> {
  const deadline=performance.now()+2500,packs=await componentMetadata(userId,deadline),names=Array.isArray(locator.sourcePacks)?locator.sourcePacks:[],ids=(Array.isArray(locator.aliases)?locator.aliases:[]).flatMap(a=>typeof a==='string'?a.match(/^homebrew-([a-f0-9]{24})-/i)?.[1]??[]:[])
  const candidates=packs.filter(p=>names.length?names.includes(p.data.filename):ids.includes(String(p._id)))
  const ready=await CompendiumComponent.find({userId,context:{$in:candidates.map(componentContext).filter(Boolean)}}).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean()
@@ -307,8 +307,8 @@ export async function readComponentSource(userId:string,kind:BrowseKind,index:st
   // corrupt component must fall back to targeted parsing, never skip to a later
   // duplicate whose raw rule payload/provenance could differ.
   const m=ready.find(r=>r.context===componentContext(p));if(!m?.sources)return null
-  const chunks=await CompendiumComponentObject.find({userId,generation:m.generation,kind,role:'source',index}).select('part parts digest payload').sort({part:1}).limit(10).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean()
-  const value=decodePrepared(chunks as unknown as StoredPreparedChunk[],PREPARED_SOURCE_MAX) as BrowseEntry|null
+  const chunks=await CompendiumComponentObject.find({userId,generation:m.generation,kind,role:'source',index}).select('part parts digest payload').sort({part:1}).limit(maxBytes===PREPARED_SOURCE_MAX?10:Math.min(10,Math.ceil(maxBytes/CHUNK_BYTES)+1)).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean()
+  const value=decodePrepared(chunks as unknown as StoredPreparedChunk[],maxBytes) as BrowseEntry|null
   remaining(deadline)
   if(!value||value.index!==index||value.homebrew!==true||typeof value.name!=='string')return null
   // Preserve the baseline's global active-lineage normalization for the winner.

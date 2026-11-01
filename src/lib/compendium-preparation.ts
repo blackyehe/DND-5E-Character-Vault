@@ -1,6 +1,7 @@
 import {reactive} from 'vue'
 import {BROWSE_KINDS,type BrowseKind} from '../../shared/compendium-kinds'
 import {foregroundBusy,onForegroundWork} from './foreground-work'
+import {detailPreloadWaiting,onDetailPreloadActivity} from './compendium-detail-preloader'
 import {cancelLocalPreparation,checkSavedCompendium,invalidateLocalCompendium,localCompendiumEnabled,localCompendiumState,onLocalCompendiumChange,saveLocalCompendium,setLocalCategoryState} from './local-compendium-client'
 
 interface PreparationDependencies {
@@ -11,13 +12,14 @@ interface PreparationDependencies {
  cancel:()=>void
  lock:(owner:string,run:()=>Promise<void>)=>Promise<boolean>
 }
-export type PreparationPauseReason=''|'foreground'|'room'|'hidden'|'offline'|'login'
+export type PreparationPauseReason=''|'foreground'|'room'|'hidden'|'offline'|'login'|'details'
 export const preparationPauseMessages={
  foreground:'Waiting for the current website request to finish. Checks resume automatically when the website is idle.',
  room:'Paused during this game room session. Checks resume automatically after you leave the room.',
  hidden:'Paused while this tab is hidden. Checks resume automatically when you return to this tab.',
  offline:'Paused while offline. Checks resume automatically when your connection returns.',
  login:'Waiting for sign-in. Checks start automatically after you sign in.',
+ details:'Preparing visible entry details first. Search-index checks resume automatically afterward.',
 } as const
 export function compendiumPauseReason(path:string,hidden:boolean,online:boolean):PreparationPauseReason{
  if(!online)return 'offline'
@@ -102,8 +104,9 @@ const service=new CompendiumPreparation({
  },
 })
 let activeOwner='',blocked=true,blockedReason:PreparationPauseReason=''
-function configure(){service.configure(activeOwner,blocked||foregroundBusy(),blocked?blockedReason:'foreground')}
+function configure(){const busy=foregroundBusy(),details=detailPreloadWaiting();service.configure(activeOwner,blocked||busy||details,blocked?blockedReason:busy?'foreground':details?'details':'')}
 onForegroundWork(configure)
+onDetailPreloadActivity(configure)
 onLocalCompendiumChange(()=>{
  preparationStatus.completed=activeOwner?BROWSE_KINDS.filter(k=>localCompendiumState(activeOwner,k)==='saved').length:0
  // A cross-tab update is checked on the next pass; don't interrupt foreground queries.

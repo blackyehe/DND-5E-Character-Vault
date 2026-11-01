@@ -4,6 +4,20 @@ beforeEach(()=>{vi.resetModules();vi.useFakeTimers();vi.setSystemTime(0)})
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals()})
 const reply=()=>new Response(JSON.stringify({index:'fixture',desc:['Complete rules']}),{headers:{'Content-Type':'application/json'}})
 
+it('gives optional preloads a bounded low-priority attempt without import retries',async()=>{
+ const starts:string[]=[];vi.stubGlobal('fetch',vi.fn(async(url:string)=>{starts.push(new URL(url).pathname);return starts.at(-1)==='/classes/optional'?new Response('',{status:429}):reply()}))
+ const {readSrdRule}=await import('./srd-client')
+ const foreground=Array.from({length:3},(_,i)=>readSrdRule('https://rules.test','features/foreground-'+i,{interactive:true}))
+ const optional=readSrdRule('https://rules.test','classes/optional',{prefetch:true}),outcome=optional.catch(e=>e)
+ await vi.runAllTimersAsync();await Promise.all(foreground);expect(await outcome).toBeInstanceOf(Error)
+ expect(starts.at(-1)).toBe('/classes/optional');expect(starts.filter(p=>p==='/classes/optional')).toHaveLength(1)
+})
+it('stops optional upstream rules at their byte budget instead of buffering a large body',async()=>{
+ vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({index:'huge',desc:['x'.repeat(256*1024)]}))))
+ const {readSrdRule}=await import('./srd-client'),outcome=readSrdRule('https://rules.test','classes/huge',{prefetch:true}).catch(e=>e)
+ await vi.runAllTimersAsync();expect(await outcome).toMatchObject({message:'Optional rule exceeds preload size'})
+})
+
 it('opens an interactive rule ahead of a long import queue while keeping the shared request pace',async()=>{
  const starts:{path:string;at:number}[]=[]
  vi.stubGlobal('fetch',vi.fn(async(url:string)=>{starts.push({path:new URL(url).pathname,at:Date.now()});return reply()}))

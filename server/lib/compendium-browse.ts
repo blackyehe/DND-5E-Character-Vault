@@ -16,7 +16,9 @@ import { sourceHash, type OrcbrewEntry } from './orcbrew'
 import type { EquipmentItem } from '../../shared/character'
 import { browseIndex, browseRecord, type BrowseEntry, type BrowseIndex, type BrowseKind } from '../../shared/compendium-browse'
 import { decodeBrowseIndex, encodeBrowseIndex, type IndexChunk } from './compendium-browse-storage'
-import { importedCompendiumSource } from './compendium-entry-source'
+import { cachedCompendiumSource,importedCompendiumSource } from './compendium-entry-source'
+import {readComponentSource} from './compendium-components'
+import {COMPENDIUM_PRELOAD_LIMITS} from '../../shared/compendium-details'
 import { readPreparedIndex, readPreparedSource, preparedReaderEnabled, type PreparedProbeContext } from './compendium-prepared'
 
 // Bump when snapshot data, projection, grouping, filter or search semantics change.
@@ -32,7 +34,9 @@ export async function browseRevision(userId:string) {
   // Read optional personal-edition documents even on releases where their editor
   // has not yet extended the CustomContent discriminator enum. No editions are written here.
   const filter:Record<string,unknown>={userId,type:{$in:['orcbrew','item','compendium-edit']}}
-  const docs=await CustomContent.find(filter).select('_id type updatedAt sourceHash data.includeDisabled').sort({_id:1}).lean()
+  // Fetch small metadata in bounded batches; the default first batch splits a
+  // 126-pack library into an extra database round trip. This is not a limit.
+  const docs=await CustomContent.find(filter).select('_id type updatedAt sourceHash data.includeDisabled').sort({_id:1}).batchSize(512).lean()
   return sourceHash(INDEX_VERSION+JSON.stringify(docs))
 }
 function remember(key:string,index:BrowseIndex) {
@@ -95,6 +99,33 @@ async function applyPersonalEntry(userId:string,kind:BrowseKind,index:string,sou
   const filter:Record<string,unknown>={userId,type:'compendium-edit','data.kind':kind,'data.index':index}
   const doc=await CustomContent.findOne(filter).select('data.changes').lean()
   return personalEntry(source,(doc?.data as {changes?:Record<string,unknown>}|undefined)?.changes)
+}
+/** Read an existing current index only; optional preloading must not build one. */
+export async function cachedBrowseIndex(userId:string,kind:BrowseKind,revision:string):Promise<BrowseIndex|null>{
+ const cached=memory.get(`${userId}:${revision}:${kind}`);if(cached)return cached
+ for(const key of [preparedIndexRevision(revision),revision]){
+  const chunks=await CompendiumBrowseIndex.find({userId,revision:key,kind}).sort({part:1}).limit(129).setOptions({maxTimeMS:1000,timeoutMS:1500}).lean()
+  const index=decodeBrowseIndex(chunks as unknown as IndexChunk[]);if(index)return index
+ }
+ return null
+}
+/** Admit an existing index only after the batch caller's final revision check,
+ * so later batches reuse the ordinary bounded cache instead of decoding it again. */
+export function rememberValidatedBrowseIndex(userId:string,kind:BrowseKind,revision:string,index:BrowseIndex){remember(`${userId}:${revision}:${kind}`,index)}
+/** Same owned rules/editions as foreground detail reads, without rebuild fallbacks. */
+export async function preloadBrowseEntry(userId:string,kind:BrowseKind,index:string,revision:string,locator?:BrowseEntry):Promise<BrowseEntry|null>{
+ let source:BrowseEntry|null
+ if(index.startsWith('homebrew-')){
+  source=await cachedCompendiumSource(userId,kind,index,revision,COMPENDIUM_PRELOAD_LIMITS.entryBytes)
+  if(!source&&locator&&preparedReaderEnabled(userId))source=await readComponentSource(userId,kind,index,locator,COMPENDIUM_PRELOAD_LIMITS.entryBytes)
+  if(source&&kind==='monsters')source=(await enrichedMonsterEntries(userId,[source]))[0]!
+ }else if(index.startsWith('workshop-item-'))source=await browseEntrySource(userId,kind,index,revision)
+ else{
+  if(!/^[a-z0-9-]+$/i.test(index)||!['spells','equipment','magic-items','classes','subclasses','races','subraces','monsters','backgrounds','feats','languages'].includes(kind))return null
+  const path=`${kind}/${index}`,local=localSrdRule(path),value=local===undefined?await readSrdRule(env.SRD_API_URL,path,{prefetch:true}):local
+  source=value&&typeof value==='object'?enrichedStandardMonster(value,path) as BrowseEntry:null
+ }
+ return applyPersonalEntry(userId,kind,index,source)
 }
 /** Derive facets from full entries before discarding descriptions, rules and art. */
 export function compactBrowseEntry(source:BrowseEntry,kind:BrowseKind,preparedCompact=false):ReturnType<typeof browseRecord> {
