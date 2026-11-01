@@ -41,3 +41,15 @@ Known compatible historical trace: `.local/automatic-pack-preparation-20261101/c
 Useful existing references: [ranked options](audits/compendium-next-small-options-2026-11-01.md), [real-browser observations](audits/loading-investigation-2026-10-31.md), [automatic preparation](audits/automatic-pack-preparation-2026-11-01.md). The runtime detail path is `server/lib/compendium-details.ts`; the browser cache is `src/lib/compendium-detail-cache.ts`. Preserve the before/after revision checks: removing them can serve mixed or stale rules during an import/edit.
 
 Budget rule for the next session: implement one candidate, make one controlled comparison against the current baseline, stop and report its incremental result. Reuse passing evidence for unchanged systems. No full 126-pack replay, new cache architecture, broad cleanup or database replacement unless a specific finding requires it.
+
+## Ready-to-run isolated metadata probe
+
+A small harness is now available; it invokes the actual current `browseRevision` function and compares its revision with the same projected query using a batch size of 512:
+
+```powershell
+node --import ./server/node_modules/tsx/dist/loader.mjs scripts/probe-compendium-metadata-batch.mjs --run
+```
+
+Run from the verified checkout. Help/default invocation performs no database work. `--run` always creates its own randomly named `metadata_batch_probe_<hex>` database on loopback port 27017; it accepts no external database URI and never uses the configured application database. It inserts only synthetic metadata, checks 0, 126 and 600 matching documents plus excluded owner/type records, monitors database command counts, verifies identical full revision hashes, and removes its fixture database. It loads no pack sources or browser sessions.
+
+The harness was exercised successfully: all revisions matched, the 126-document case avoided its cursor continuation with the candidate batch, and the 600-document case retained every result across multiple batches. Fixture cleanup passed. This establishes a narrow local command-count opportunity, not a live latency saving. Application code remains unchanged; implementation, focused browse tests and one current-baseline measurement remain for next session.
