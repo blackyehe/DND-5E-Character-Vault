@@ -15,7 +15,12 @@ const filter = ref('all'), query = ref(''), sort = ref('name')
 const createOpen=ref(false),itemNotice=ref('')
 const hydrated = computed(() => c.value.equipment.map(saved => {const detail=library.items.value[saved._id??saved.name];return {...detail,...saved,weapon:saved.weapon??detail?.weapon,armor:saved.armor??detail?.armor,description:saved.description||detail?.description,referenceDescription:saved.referenceDescription??detail?.referenceDescription}}))
 const profile = computed(() => ({ ...c.value, equipment: hydrated.value }))
-const items = computed(() => hydrated.value.map((item, index) => ({ item, index, kind: inventoryKind(item, c.value), attacks: equipmentAttacks(profile.value, item), armour: armourValues(profile.value, item, index) })))
+const items = computed(() => hydrated.value.map((item, index) => {
+  // Filtered-out rows need no armour preview. A computed value also follows
+  // nested ability/rule changes without retaining stale AC on an existing row.
+  const armour = item.armor ? computed(() => armourValues(profile.value, item, index)) : undefined
+  return { item, index, kind: inventoryKind(item, c.value), attacks: equipmentAttacks(profile.value, item), get armour() { return armour?.value ?? null } }
+}))
 const definitions: { kind: InventoryKind; title: string; equipped?: boolean }[] = [
   { kind: 'weapon', equipped: true, title: 'Equipped weapons' },
   { kind: 'armour', equipped: true, title: 'Equipped armour & shields' },
