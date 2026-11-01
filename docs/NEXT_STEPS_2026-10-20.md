@@ -1,8 +1,12 @@
 # Follow-up priorities — 20 October 2026
 
+## Compendium pause feedback - published 1 November 2026
+
+Published and publicly verified: device-library feedback identifies the actual pause reason (room session, foreground request, hidden tab, offline or sign-in) and explains automatic resumption. Existing pause/resume scheduling is unchanged; a permanent stuck pause has not been reproduced. All 42 focused preparation/client tests, frontend types and production build pass. Five read-only browser checks pass on both review and public deployments, including room exit, reconnection and foreground-request completion. Live dpl_6fm5k6C6Ad6ArkMw77cp73Bt1ijA; rollback dpl_5aAwkFLg8Wv3juLoP1eH9FQ2AZPb. Only three frontend runtime files changed; backend and feature settings are preserved. Evidence: `.local/pause-feedback-release-20261101/`. [Ranked remaining loading options](audits/compendium-next-small-options-2026-11-01.md) are inspection findings, not implemented or measured savings.
+
 ## Imported-pack preparation - published 1 November 2026
 
-[Automatic changed-pack preparation is live and publicly verified](audits/automatic-pack-preparation-2026-11-01.md). Imported source is preserved; exact current changed packs prepare after successful mutations or permitted idle checks, with durable jobs, storage limits, reader grace and the existing fallback. In the controlled delayed two-pack rebuild, the identical response fell from 27.93 to 4.29 seconds (84.66%); this is not a promised saving for every entry click. All 728 standard and 12 isolated queue tests pass, as do hosted/public cold-worker, freshness, access, character, rule and map checks. The paused-check status/resume UI remains a separate follow-up; unfinished Owlbear remembered login remains excluded.
+[Automatic changed-pack preparation is live and publicly verified](audits/automatic-pack-preparation-2026-11-01.md). Imported source is preserved; exact current changed packs prepare after successful mutations or permitted idle checks, with durable jobs, storage limits, reader grace and the existing fallback. In the controlled delayed two-pack rebuild, the identical response fell from 27.93 to 4.29 seconds (84.66%); this is not a promised saving for every entry click. All 728 standard and 12 isolated queue tests pass, as do hosted/public cold-worker, freshness, access, character, rule and map checks. Further investigation of sustained pauses remains a separate follow-up; unfinished Owlbear remembered login remains excluded.
 
 ## Added follow-ups - 1 November 2026
 

@@ -11,7 +11,22 @@ interface PreparationDependencies {
  cancel:()=>void
  lock:(owner:string,run:()=>Promise<void>)=>Promise<boolean>
 }
-export const preparationStatus=reactive({owner:'',phase:'idle',kind:'' as BrowseKind|'',completed:0,total:BROWSE_KINDS.length,message:''})
+export type PreparationPauseReason=''|'foreground'|'room'|'hidden'|'offline'|'login'
+export const preparationPauseMessages={
+ foreground:'Waiting for the current website request to finish. Checks resume automatically when the website is idle.',
+ room:'Paused during this game room session. Checks resume automatically after you leave the room.',
+ hidden:'Paused while this tab is hidden. Checks resume automatically when you return to this tab.',
+ offline:'Paused while offline. Checks resume automatically when your connection returns.',
+ login:'Waiting for sign-in. Checks start automatically after you sign in.',
+} as const
+export function compendiumPauseReason(path:string,hidden:boolean,online:boolean):PreparationPauseReason{
+ if(!online)return 'offline'
+ if(hidden)return 'hidden'
+ if(path.startsWith('/rooms/'))return 'room'
+ if(path==='/login')return 'login'
+ return ''
+}
+export const preparationStatus=reactive({owner:'',phase:'idle',pauseReason:'' as PreparationPauseReason,kind:'' as BrowseKind|'',completed:0,total:BROWSE_KINDS.length,message:''})
 
 /** Single, abortable idle queue. Exported for deterministic timing tests. */
 export class CompendiumPreparation {
@@ -24,10 +39,11 @@ export class CompendiumPreparation {
  private priority?:BrowseKind
  private deps:PreparationDependencies
  constructor(deps:PreparationDependencies){this.deps=deps}
- configure(owner:string,paused:boolean){
+ configure(owner:string,paused:boolean,reason:PreparationPauseReason='foreground'){
   if(owner!==this.owner){this.pause();this.owner=owner;this.due.clear();this.failures.clear();this.priority=undefined}
   this.paused=paused||!owner
   preparationStatus.owner=owner
+  preparationStatus.pauseReason=this.paused&&owner?reason||'foreground':''
   if(this.paused){this.pause();preparationStatus.phase=owner?'paused':'idle'}else{
    if(!this.active)preparationStatus.phase=preparationStatus.completed===BROWSE_KINDS.length?'ready':'queued'
    this.schedule(1500)
@@ -85,13 +101,13 @@ const service=new CompendiumPreparation({
   return navigator.locks.request(`codex-compendium:${owner}`,{ifAvailable:true},async lock=>{if(!lock)return false;await run();return true})
  },
 })
-let activeOwner='',blocked=true
-function configure(){service.configure(activeOwner,blocked||foregroundBusy())}
+let activeOwner='',blocked=true,blockedReason:PreparationPauseReason=''
+function configure(){service.configure(activeOwner,blocked||foregroundBusy(),blocked?blockedReason:'foreground')}
 onForegroundWork(configure)
 onLocalCompendiumChange(()=>{
  preparationStatus.completed=activeOwner?BROWSE_KINDS.filter(k=>localCompendiumState(activeOwner,k)==='saved').length:0
  // A cross-tab update is checked on the next pass; don't interrupt foreground queries.
 })
-export function configureCompendiumPreparation(owner:string|undefined,paused:boolean){activeOwner=localCompendiumEnabled?owner??'':'';blocked=paused;configure()}
+export function configureCompendiumPreparation(owner:string|undefined,paused:boolean,reason:PreparationPauseReason=''){activeOwner=localCompendiumEnabled?owner??'':'';blocked=paused;blockedReason=reason;configure()}
 export function prioritizeCompendium(kind:BrowseKind){service.prioritize(kind)}
 export function refreshCompendiumPreparation(){invalidateLocalCompendium();service.refresh()}

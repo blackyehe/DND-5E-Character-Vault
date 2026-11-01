@@ -7,10 +7,10 @@ import BuilderAppearance from './components/creation/BuilderAppearance.vue'
 import { useBuilderAppearance } from './composables/useBuilderAppearance'
 import { cancelSiteMotion, vMotionPanel } from './directives/siteMotion'
 import {useAuthStore} from './stores/auth'
-import {configureCompendiumPreparation,refreshCompendiumPreparation} from './lib/compendium-preparation'
+import {compendiumPauseReason,configureCompendiumPreparation,refreshCompendiumPreparation} from './lib/compendium-preparation'
 const route = useRoute()
 const auth=useAuthStore()
-function updatePreparation(){configureCompendiumPreparation(auth.user?.id,document.hidden||!navigator.onLine||route.path.startsWith('/rooms/')||route.path==='/login')}
+function updatePreparation(){const reason=compendiumPauseReason(route.path,document.hidden,navigator.onLine);configureCompendiumPreparation(auth.user?.id,!!reason,reason)}
 watch([()=>auth.user?.id,()=>route.path],updatePreparation,{immediate:true,flush:'sync'})
 function libraryStorage(event:StorageEvent){if(event.key==='codex:workshop-revision')refreshCompendiumPreparation()}
 onMounted(()=>{

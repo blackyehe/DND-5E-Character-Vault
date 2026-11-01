@@ -3,7 +3,7 @@ import {computed} from 'vue'
 import {useAuthStore} from '../../stores/auth'
 import {BROWSE_KINDS} from '../../../shared/compendium-kinds'
 import {localCompendiumState} from '../../lib/local-compendium-client'
-import {preparationStatus,refreshCompendiumPreparation} from '../../lib/compendium-preparation'
+import {preparationPauseMessages,preparationStatus,refreshCompendiumPreparation} from '../../lib/compendium-preparation'
 import {compendiumTabLabel} from '../../lib/compendium-navigation'
 const auth=useAuthStore()
 const categories=computed(()=>BROWSE_KINDS.map(kind=>({kind,label:compendiumTabLabel(kind),state:auth.user?localCompendiumState(auth.user.id,kind):'not-saved' as const})))
@@ -19,7 +19,7 @@ const labels={
   <summary>Library on device: {{preparationStatus.completed}}/{{preparationStatus.total}} · {{preparationStatus.phase}}</summary>
   <div class="device-library-menu" aria-label="Device library status">
    <p>{{preparationStatus.completed}}/{{preparationStatus.total}} categories verified on this device.</p>
-   <p v-if="preparationStatus.phase==='paused'">Preparation pauses while the website needs your connection, while hidden, or during a game room session.</p>
+   <p v-if="preparationStatus.phase==='paused'">{{preparationPauseMessages[preparationStatus.pauseReason||'foreground']}}</p>
    <p v-else>Search indexes prepare automatically while the website is idle. Full entry details load when opened.</p>
    <ul><li v-for="category in categories" :key="category.kind"><span>{{category.label}}</span><span>{{labels[category.state]}}</span></li></ul>
    <p v-if="preparationStatus.message">{{preparationStatus.message}}</p>

@@ -1,5 +1,5 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest'
-import {CompendiumPreparation,preparationStatus} from './compendium-preparation'
+import {CompendiumPreparation,compendiumPauseReason,preparationStatus} from './compendium-preparation'
 import type {BrowseKind} from '../../shared/compendium-browse'
 const services:CompendiumPreparation[]=[]
 function fixture(){
@@ -14,6 +14,26 @@ function fixture(){
 beforeEach(()=>vi.useFakeTimers())
 afterEach(()=>{services.splice(0).forEach(s=>s.dispose());vi.useRealTimers()})
 describe('automatic idle preparation',()=>{
+ it('identifies each existing route, visibility and connection pause without blocking normal pages',()=>{
+  expect(compendiumPauseReason('/rooms/test',false,true)).toBe('room')
+  expect(compendiumPauseReason('/compendium',true,true)).toBe('hidden')
+  expect(compendiumPauseReason('/compendium',false,false)).toBe('offline')
+  expect(compendiumPauseReason('/login',false,true)).toBe('login')
+  for(const path of ['/compendium','/rooms','/characters/new','/'])expect(compendiumPauseReason(path,false,true)).toBe('')
+ })
+ it('replaces the room reason with foreground activity and clears it when idle',async()=>{
+  const f=fixture();f.service.configure('owner',true,'room')
+  expect(preparationStatus.pauseReason).toBe('room')
+  f.service.configure('owner',true)
+  expect(preparationStatus.pauseReason).toBe('foreground')
+  f.service.configure('owner',false)
+  expect(preparationStatus.pauseReason).toBe('');expect(preparationStatus.phase).toBe('queued')
+  await vi.advanceTimersByTimeAsync(1500);expect(f.check).toHaveBeenCalledOnce()
+ })
+ it('does not leave a pause reason after signing out',()=>{
+  const f=fixture();f.service.configure('owner',true,'offline');f.service.configure('',true)
+  expect(preparationStatus.phase).toBe('idle');expect(preparationStatus.pauseReason).toBe('')
+ })
  it('starts only after authentication and idle, then downloads sequentially',async()=>{
   const f=fixture();f.service.configure('',false);await vi.advanceTimersByTimeAsync(10000);expect(f.save).not.toHaveBeenCalled()
   f.service.configure('owner',false);await vi.advanceTimersByTimeAsync(1499);expect(f.save).not.toHaveBeenCalled()
