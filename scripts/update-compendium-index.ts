@@ -1,6 +1,7 @@
 /** Run with server's tsx. Rebuilds public metadata, never account/homebrew data. */
 import { writeFile } from 'node:fs/promises'
 import { compendiumFacets } from '../shared/compendium-facets'
+import equipment from '../server/data/srd-2014-equipment.json'
 const revision = '85acb251dad0b044a72c554c2d7f2d0c11e43504'
 const categories = ['monsters','classes','races','subraces','subclasses','backgrounds','feats','languages']
 const entries = await Promise.all(categories.map(async kind => {
@@ -14,4 +15,9 @@ const entries = await Promise.all(categories.map(async kind => {
   })]
 }))
 await writeFile('server/data/srd-2014-compendium-index.json', JSON.stringify(Object.fromEntries(entries),null,2)+'\n')
+const index=Object.fromEntries(entries)
+const refs=(rows:{index:string;name:string;url:string}[])=>rows.map(({index,name,url})=>({index,name,url}))
+const selectionLists=Object.fromEntries(['classes','races','backgrounds','languages'].map(kind=>[kind,refs(index[kind]).sort((a,b)=>a.index.localeCompare(b.index,'en'))]))
+selectionLists.equipment=refs(equipment)
+await writeFile('src/lib/srd-selection-lists.json',JSON.stringify(selectionLists)+'\n')
 console.log(`Saved public filter indexes for ${entries.length} categories at ${revision}.`)

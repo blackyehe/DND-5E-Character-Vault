@@ -34,3 +34,37 @@ it('retries a busy cross-tab lock without consuming the page or making parallel 
  await vi.advanceTimersByTimeAsync(2500);expect(preload).toHaveBeenCalledTimes(2);expect(preload.mock.calls.map(c=>c[2])).toEqual([['one'],['one']])
  queue.dispose();await vi.advanceTimersByTimeAsync(10000);expect(preload).toHaveBeenCalledTimes(2)
 })
+it('moves sustained intent to the next batch without changing page limits or adding entries',async()=>{
+ const {preload,queue}=fixture(),indexes=Array.from({length:25},(_,i)=>'entry-'+i)
+ queue.pause(false);queue.setPage('owner','spells',indexes);queue.prioritize('entry-24')
+ await vi.advanceTimersByTimeAsync(limits.intentMs-1);expect(preload).not.toHaveBeenCalled()
+ await vi.advanceTimersByTimeAsync(2);expect(preload).toHaveBeenCalledOnce()
+ expect(preload.mock.calls[0]![2]).toEqual(['entry-24','entry-0','entry-1'])
+ await vi.advanceTimersByTimeAsync(5000)
+ const loaded=preload.mock.calls.flatMap(c=>c[2]);expect(loaded).toHaveLength(25);expect(new Set(loaded)).toEqual(new Set(indexes));expect(preload).toHaveBeenCalledTimes(9)
+})
+it('ignores brief pointer crossings and focus loss before the intent delay',async()=>{
+ const {preload,queue}=fixture();queue.pause(false);queue.setPage('owner','spells',['a','b','c','d'])
+ queue.prioritize('d');await vi.advanceTimersByTimeAsync(limits.intentMs-1);queue.cancelPriority('d')
+ await vi.advanceTimersByTimeAsync(limits.idleMs);expect(preload.mock.calls[0]![2]).toEqual(['a','b','c'])
+})
+it('prioritizes waiting entries without aborting the current batch',async()=>{
+ const {preload,queue}=fixture();let finish!:(bytes:number)=>void
+ preload.mockImplementationOnce(()=>new Promise(r=>{finish=r}));queue.pause(false);queue.setPage('owner','spells',['a','b','c','d','e','f','g'])
+ await vi.advanceTimersByTimeAsync(limits.idleMs);queue.prioritize('g');await vi.advanceTimersByTimeAsync(limits.intentMs)
+ expect(preload.mock.calls[0]![3].aborted).toBe(false);expect(preload).toHaveBeenCalledOnce()
+ finish(100);await vi.advanceTimersByTimeAsync(limits.betweenMs)
+ expect(preload.mock.calls[1]![2]).toEqual(['g','d','e'])
+})
+it('drops old intent on page/account replacement and while foreground work pauses the queue',async()=>{
+ const {preload,queue}=fixture();queue.pause(false);queue.setPage('owner','spells',['a','b','c','d']);queue.prioritize('d')
+ queue.setPage('other','classes',['one','two','three','four']);queue.prioritize('four');queue.pause(true)
+ await vi.advanceTimersByTimeAsync(2000);expect(preload).not.toHaveBeenCalled()
+ queue.pause(false);await vi.advanceTimersByTimeAsync(limits.idleMs)
+ expect(preload.mock.calls[0]!.slice(0,3)).toEqual(['other','classes',['one','two','three']])
+})
+it('never fetches an off-page entry or fetches a completed entry again because of intent',async()=>{
+ const {preload,queue}=fixture();queue.pause(false);queue.setPage('owner','spells',['a']);queue.prioritize('foreign')
+ await vi.advanceTimersByTimeAsync(2000);queue.prioritize('a');queue.prioritize('foreign');await vi.advanceTimersByTimeAsync(2000)
+ expect(preload).toHaveBeenCalledOnce();expect(preload.mock.calls[0]![2]).toEqual(['a'])
+})

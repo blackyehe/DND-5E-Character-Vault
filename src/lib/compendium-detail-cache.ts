@@ -1,7 +1,7 @@
 import type {BrowseEntry,BrowseKind} from '../../shared/compendium-browse'
 import {COMPENDIUM_DETAIL_VERSION,COMPENDIUM_PRELOAD_LIMITS,type CompendiumDetailResponse,type CompendiumDetailRevision,type CompendiumDetailBatch} from '../../shared/compendium-details'
 import {api} from './api'
-import {beginForegroundWork} from './foreground-work'
+import {beginForegroundWork,foregroundBusy,onForegroundWork} from './foreground-work'
 import {compendiumDetailStorage,suspendCompendiumDetailStorage,DETAIL_LIFETIME,DETAIL_MAX_BYTES,type CompendiumDetailStorage,type StoredCompendiumDetail} from './compendium-detail-storage'
 
 const marker='codex:compendium-detail-owner'
@@ -52,6 +52,18 @@ async function checkedEntry(stored:StoredCompendiumDetail|undefined,owner:string
 function persist(owner:string,current:number,key:string,row:StoredCompendiumDetail,storage:CompendiumDetailStorage){
  void Promise.resolve().then(()=>{assertCurrent(owner,current);return storage.write(key,row)}).catch(()=>{/* Optional quota/blocked storage. */})
 }
+function persistPreloaded(owner:string,current:number,rows:{key:string;row:StoredCompendiumDetail}[],storage:CompendiumDetailStorage,signal:AbortSignal){
+ if(!rows.length||!storage.writeMany)return
+ const controller=new AbortController(),abort=()=>controller.abort()
+ const stop=onForegroundWork(busy=>{if(busy)abort()})
+ signal.addEventListener('abort',abort,{once:true})
+ // Disk work must neither hold up the next network batch nor compete with a
+ // click. The existing adapter bounds the transaction and aborts it on demand.
+ void Promise.resolve().then(()=>{
+  assertCurrent(owner,current)
+  if(!signal.aborted&&!foregroundBusy()&&!controller.signal.aborted)return storage.writeMany!(rows,controller.signal)
+ }).catch(()=>{/* Memory and ordinary opening remain available. */}).finally(()=>{stop();signal.removeEventListener('abort',abort)})
+}
 /** Only the signed-in owner's personal Compendium endpoint is eligible. Room,
  * player and character responses never enter this cache. No offline authority. */
 export async function loadCompendiumDetail(owner:string,kind:BrowseKind,index:string,storage:CompendiumDetailStorage=compendiumDetailStorage):Promise<BrowseEntry>{
@@ -91,8 +103,8 @@ export async function loadCompendiumDetail(owner:string,kind:BrowseKind,index:st
   return response.entry
  }finally{finish()}
 }
-/** Warm only a small visible batch in memory. Unopened entries never write to
- * IndexedDB; a normal open persists them through the same checked cache. */
+/** Warm a small visible batch and save it within the existing optional disk
+ * budget. A foreground interruption may cancel disk work; memory stays usable. */
 export async function preloadCompendiumDetails(owner:string,kind:BrowseKind,indexes:string[],signal:AbortSignal,budget:number,storage:CompendiumDetailStorage=compendiumDetailStorage):Promise<number>{
  const limits=COMPENDIUM_PRELOAD_LIMITS,current=epoch
  if(signal.aborted||!indexes.length||indexes.length>limits.batch||new Set(indexes).size!==indexes.length||indexes.some(i=>!i||i.length>limits.indexLength)||budget<1024)return 0
@@ -136,6 +148,7 @@ export async function preloadCompendiumDetails(owner:string,kind:BrowseKind,inde
   if(response.skipped.some(i=>!missing.includes(i)||seen.has(i))||new Set([...seen,...response.skipped]).size!==missing.length||seen.size+response.skipped.length!==missing.length)throw Error('Invalid preload completion')
   check();checkAuthorization();rememberRevision(response)
   for(const value of accepted){remember(value.key,value.row);warmed.add(value.key)}
+  persistPreloaded(owner,current,accepted,storage,signal)
  })()
  for(const index of indexes)pendingPreloads.set(identity(owner,kind,index),batch)
  try{await batch.promise;return downloaded}finally{signal.removeEventListener('abort',cancel);for(const index of indexes){const key=identity(owner,kind,index);if(pendingPreloads.get(key)===batch)pendingPreloads.delete(key)}}

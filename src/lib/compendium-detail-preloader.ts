@@ -19,6 +19,8 @@ export class CompendiumDetailPreloader {
  private paused=true
  private disposed=false
  private timer?:ReturnType<typeof setTimeout>
+ private intentTimer?:ReturnType<typeof setTimeout>
+ private intentIndex=''
  private active?:AbortController
  private token=Symbol('visible-page')
  private deps:Dependencies
@@ -28,8 +30,21 @@ export class CompendiumDetailPreloader {
   this.indexes=[...new Set(indexes)].filter(i=>i&&i.length<=limits.indexLength).slice(0,limits.page)
   this.schedule(limits.idleMs)
  }
- clear(){++this.generation;clearTimeout(this.timer);this.timer=undefined;this.active?.abort();this.indexes=[];this.seen.clear();this.bytes=0;this.failures=0;this.attempts=0;this.activity()}
- pause(value:boolean){this.paused=value;if(value){clearTimeout(this.timer);this.timer=undefined;this.active?.abort();this.activity()}else this.schedule(limits.idleMs)}
+ /** Reorder this page only. Intent never adds work or interrupts a batch. */
+ prioritize(index:string){
+  if(this.disposed||this.paused||this.seen.has(index)||!this.indexes.includes(index)||this.intentIndex===index)return
+  this.cancelPriority();this.intentIndex=index
+  this.intentTimer=setTimeout(()=>{
+   this.intentTimer=undefined;this.intentIndex=''
+   if(!this.paused&&!this.seen.has(index)){
+    this.indexes=[index,...this.indexes.filter(i=>i!==index)]
+    if(!this.active){clearTimeout(this.timer);this.timer=undefined;this.schedule(0)}
+   }
+  },limits.intentMs)
+ }
+ cancelPriority(index?:string){if(index!==undefined&&index!==this.intentIndex)return;clearTimeout(this.intentTimer);this.intentTimer=undefined;this.intentIndex=''}
+ clear(){++this.generation;this.cancelPriority();clearTimeout(this.timer);this.timer=undefined;this.active?.abort();this.indexes=[];this.seen.clear();this.bytes=0;this.failures=0;this.attempts=0;this.activity()}
+ pause(value:boolean){this.paused=value;if(value){this.cancelPriority();clearTimeout(this.timer);this.timer=undefined;this.active?.abort();this.activity()}else this.schedule(limits.idleMs)}
  private activity(){
   const before=waiting.size>0,eligible=!this.disposed&&!this.paused&&!!this.owner&&this.failures<2&&this.bytes<=limits.pageBytes-1024&&(this.attempts<limits.requests||!!this.active)&&this.indexes.some(i=>!this.seen.has(i))
   if(eligible)waiting.add(this.token);else waiting.delete(this.token)

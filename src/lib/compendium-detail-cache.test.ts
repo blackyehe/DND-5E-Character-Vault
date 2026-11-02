@@ -22,6 +22,24 @@ beforeEach(async()=>{
 })
 afterEach(()=>{vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals()})
 describe('persistent personal Compendium details',()=>{
+ it('saves a verified preload batch and reuses it in a new session without opening it first',async()=>{
+  storage.writeMany=vi.fn(async entries=>{for(const {key,row} of entries)rows.set(key,structuredClone(row))})
+  get.mockResolvedValueOnce(batch());await preload();expect(storage.writeMany).toHaveBeenCalledOnce();expect(storage.write).not.toHaveBeenCalled()
+  module.suspendCompendiumDetails();module.adoptCompendiumDetails('owner');get.mockClear()
+  expect((await load()).name).toBe('Original');expect(get.mock.calls.map(([path])=>path)).toEqual(['/api/compendium-browse/spells/detail-revision'])
+ })
+ it('does not make a click wait for a slow optional disk transaction',async()=>{
+  let interrupted=false
+  storage.writeMany=vi.fn((_entries,signal)=>new Promise(resolve=>{signal!.addEventListener('abort',()=>{interrupted=true;resolve(undefined)},{once:true})}))
+  get.mockResolvedValueOnce(batch());const warming=preload()
+  await warming // Network preparation finishes even while its disk save is pending.
+  await vi.waitFor(()=>expect(storage.writeMany).toHaveBeenCalledOnce())
+  expect((await load()).name).toBe('Original');await warming;expect(interrupted).toBe(true);expect(get).toHaveBeenCalledOnce()
+ })
+ it('keeps the memory fallback when optional batch storage is unavailable',async()=>{
+  storage.writeMany=vi.fn(async()=>{throw Error('Quota')});get.mockResolvedValueOnce(batch());await preload()
+  expect((await load()).name).toBe('Original');expect(get).toHaveBeenCalledOnce()
+ })
  it('warms complete details without foreground work or disk writes; opening persists and reopening reuses them',async()=>{
   const {foregroundBusy}=await import('./foreground-work');get.mockResolvedValueOnce(batch())
   await preload();expect(foregroundBusy()).toBe(false);expect(storage.write).not.toHaveBeenCalled();expect(get.mock.calls[0]![1]).toMatchObject({background:true})
@@ -43,13 +61,14 @@ describe('persistent personal Compendium details',()=>{
   finish(batch('Late old rules'));await outcome;expect((await load()).name).toBe('Original')
  })
  it.each(['owner','index','revision','oversized','duplicates'])('rejects invalid preloaded %s without populating disk or memory',async(mode)=>{
+  storage.writeMany=vi.fn(async()=>{})
   const value:any=batch()
   if(mode==='owner')value.owner='stranger'
   if(mode==='index')value.entries[0].index='other'
   if(mode==='revision')value.revision='bad'
   if(mode==='oversized')value.entries[0].entry.desc=['x'.repeat(256*1024)]
   if(mode==='duplicates')value.entries.push(value.entries[0])
-  get.mockResolvedValueOnce(value);await expect(preload()).rejects.toThrow();expect(storage.write).not.toHaveBeenCalled();expect((await load()).name).toBe('Original');expect(get.mock.calls.some(([p])=>p.includes('/saved-detail/'))).toBe(true)
+  get.mockResolvedValueOnce(value);await expect(preload()).rejects.toThrow();expect(storage.write).not.toHaveBeenCalled();expect(storage.writeMany).not.toHaveBeenCalled();expect((await load()).name).toBe('Original');expect(get.mock.calls.some(([p])=>p.includes('/saved-detail/'))).toBe(true)
  })
  it('aborts and discards a preload when the library or account changes',async()=>{
   let finish!:(value:unknown)=>void;get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}));const warming=preload(),outcome=warming.catch(e=>e)
