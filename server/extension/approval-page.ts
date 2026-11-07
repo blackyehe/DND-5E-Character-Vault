@@ -5,7 +5,7 @@ export function approvalPage(nonce: string) {
 </style></head><body><main><a href="/">Codex of Heroes</a><h1>Connect your Owlbear sheet</h1><p>Connect your sheet to authorised characters from one game room. Review the requested access below. Your website permissions still apply.</p>
 <p id="status" role="status" aria-live="polite">Checking your account…</p>
 <div id="login" hidden class="panel"><p>Sign in to the account you want to connect, then return here.</p><a class="button" href="/login" target="_blank" rel="noopener noreferrer">Sign in to website</a><button id="retry">Check sign-in</button></div>
-<section id="approval" hidden class="panel"><p>Connecting as <strong id="account"></strong></p><p>Check that this code matches the one in your Owlbear sheet:</p><div class="code" id="code"></div><p class="quiet">Requested by <span id="origin"></span></p><p id="access-scope"></p><label>Game room<select id="rooms"></select></label><label><input id="confirm" type="checkbox">The code matches the sheet I am connecting.</label><p class="quiet" id="lifetime">This connection expires after one hour. Only the play controls named above are permitted. Character definitions, assignments and room settings cannot be changed.</p><div class="actions"><button id="approve" class="primary" disabled>Approve read-only access</button><button id="deny">Deny</button></div></section>
+<section id="approval" hidden class="panel"><p>Connecting as <strong id="account"></strong></p><p>Check that this code matches the one in your Owlbear sheet:</p><div class="code" id="code"></div><p class="quiet">Requested by <span id="origin"></span></p><p id="access-scope"></p><label>Game room<select id="rooms"></select></label><label><input id="confirm" type="checkbox">The code matches the sheet I am connecting.</label><p class="quiet"><span id="lifetime">This connection expires after one hour.</span> Only the play controls named above are permitted. Character definitions, assignments and room settings cannot be changed.</p><div class="actions"><button id="approve" class="primary" disabled>Approve read-only access</button><button id="deny">Deny</button></div></section>
 <section id="connections" hidden><h2>Your active connections</h2><p class="quiet">Revoke access here at any time. Each browser sheet has its own connection.</p><div id="list"></div><button id="refresh">Refresh connections</button></section>
 </main><script nonce="${nonce}">
 const root='/api/extension/v1/approval',id=new URL(location.href).searchParams.get('request'),el=x=>document.getElementById(x);let csrf='',working=false;
@@ -19,7 +19,7 @@ async function list(){
     const row=document.createElement('div');row.className='connection';
     const info=document.createElement('div'),name=document.createElement('strong');name.textContent=connection.roomName;
     const detail=document.createElement('span');detail.className='quiet';
-    detail.textContent=(connection.kind==='remembered'?'Remembered browser / ':connection.kind==='session'?'Session connection / ':'')+connection.origin+' / '+(writeNames(connection).join(' + ')||'Read-only')+' / expires '+new Date(connection.expiresAt).toLocaleString();
+    detail.textContent=connection.origin+' / '+(writeNames(connection).join(' + ')||'Read-only')+' / expires '+new Date(connection.expiresAt).toLocaleTimeString();
     info.append(name,detail);const button=document.createElement('button');button.textContent='Revoke';
     button.onclick=async()=>{button.disabled=true;try{await api('/connections/'+connection.id+'/revoke',{});status('Connection revoked.');await list()}catch(error){status(error.message);button.disabled=false}};
     row.append(info,button);el('list').append(row);
@@ -33,7 +33,7 @@ async function init(){
     el('login').hidden=true;el('connections').hidden=false;await list();
     if(!data.pairing){status('Manage your Owlbear connections here.');return}
     el('account').textContent=data.account.displayName;el('code').textContent=data.pairing.code;el('origin').textContent=data.pairing.origin;
-    el('lifetime').textContent=(data.pairing.connectionKind==='remembered'?'Remember this browser for 30 days after connection. Sheet access renews automatically.':data.pairing.connectionKind==='session'?'This session lasts up to 12 hours after connection; access renews automatically.':data.pairing.connectionKind==='long-session'?'This browser cannot remember a key. This session expires after 12 hours without renewal.':'This connection expires after one hour.')+' Only the play controls named above are permitted. Character definitions, assignments and room settings cannot be changed. Revoke here or Disconnect in the sheet to end access.';
+    el('lifetime').textContent=data.pairing.gameSession?'This game connection expires 12 hours after approval is completed. It does not renew automatically. You can revoke it at any time.':'This connection expires after one hour.';
     const writes=writeNames(data.pairing);
     el('access-scope').textContent=(data.pairing.details?'Includes vitals, attacks, equipment, spells, features, proficiencies, biography and notes for characters you may access.':'Includes character names and vitals only.')+
       (writes.length?' Also permits '+writes.join(' and ')+' for those characters. All other values remain read-only.':' No changes are permitted.');

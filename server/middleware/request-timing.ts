@@ -32,7 +32,6 @@ export function recordTimingEntries(count: number) {
 function bucketFor(command: Record<string, any>, endpoint: string): Bucket {
   if (!endpoint.startsWith('notebook.')) return 'other'
   if (endpoint === 'notebook.navigation') return 'navigation'
-  if (command.comment === 'notebook-listing-readiness') return 'listing'
   if (command.count || command.aggregate && command.pipeline?.some((p: any) => p.$count || p.$group || p.$facet)) return 'counts'
   if (command.comment === 'notebook-navigation' || command.find === 'rooms' || command.find === 'characters' || command.filter?.kind === 'folder') return 'navigation'
   return 'listing'
@@ -78,7 +77,7 @@ export function observeTimingClient(client: mongo.MongoClient) {
 
 function endpoint(path: string) {
   const notebook = /^\/api\/rooms\/[^/]+\/notebook(?:\/(.*))?\/?$/.exec(path)
-  if (notebook) return !notebook[1] ? 'notebook.listing' : ['link-targets','navigation'].includes(notebook[1]) ? 'notebook.navigation' : /\/history\/?$/.test(path) ? 'notebook.history' : 'notebook.read'
+  if (notebook) return !notebook[1] ? 'notebook.listing' : notebook[1] === 'link-targets' ? 'notebook.navigation' : /\/history\/?$/.test(path) ? 'notebook.history' : 'notebook.read'
   if (/^\/api\/compendium-browse(?:\/|$)/.test(path)) {
     const parts = path.slice('/api/compendium-browse'.length).split('/').filter(Boolean)
     const known: Record<string, string> = {'detail-batch': 'preload', 'local-revision': 'local-revision', 'detail-revision': 'detail-revision', 'local-index': 'local-index', 'saved-detail': 'saved-detail'}

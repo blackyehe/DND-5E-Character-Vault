@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 const envSchema = z.object({
+  NOTEBOOK_DB_LISTING:z.enum(['off','on']).default('off'),
+  NOTEBOOK_DB_ROOMS:z.string().max(3000).default('').refine(value=>value.trim()==='*'||value.split(',').filter(id=>id.trim()).every(id=>/^[a-f\d]{24}$/i.test(id.trim())),'Use comma-separated room IDs, or * for all certified rooms.'),
   PORT: z.coerce.number().default(4000),
   MONGO_URI: z.string().default('mongodb://localhost:27017/dnd_site'),
   JWT_SECRET: z.string().min(8).default('dev-secret-change-in-production'),
@@ -11,9 +13,6 @@ const envSchema = z.object({
   COMPENDIUM_READER: z.enum(['legacy','prepared']).default('legacy'),
   COMPENDIUM_PREPARED_USERS: z.string().default(''),
   COMPENDIUM_PACK_PREPARATION:z.enum(['off','on']).default('off'),
-  NOTEBOOK_DB_LISTING:z.enum(['off','on']).default('off'),
-  // Name canary rooms explicitly; '*' deliberately admits all certified rooms.
-  NOTEBOOK_DB_ROOMS:z.string().max(3000).default('').refine(value=>value.trim()==='*'||value.split(',').filter(id=>id.trim()).every(id=>/^[a-f\d]{24}$/i.test(id.trim())),'Use comma-separated room IDs, or * for all certified rooms.'),
 })
 
 const production = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL)

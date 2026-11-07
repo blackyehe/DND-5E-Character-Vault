@@ -16,7 +16,6 @@ import { normalizeItemName } from '../../shared/item-reference'
 import ItemRules from '../components/sheet/ItemRules.vue'
 import MonsterStatblock from '../components/monsters/MonsterStatblock.vue'
 import ReferenceReader from '../components/compendium/ReferenceReader.vue'
-import CompendiumFocusDialog from '../components/compendium/CompendiumFocusDialog.vue'
 import CompendiumFilters from '../components/compendium/CompendiumFilters.vue'
 import CompendiumCategories from '../components/compendium/CompendiumCategories.vue'
 import { compendiumTabLabel as tabLabel, type CompendiumTab as Tab } from '../lib/compendium-navigation'
@@ -130,11 +129,6 @@ const error=browse.error
 const detail = ref<Detail | null>(null)
 const selectedDetailIndex=ref('')
 const detailPanel = ref<HTMLElement | null>(null)
-const focused=ref(false),focusDialog=ref<InstanceType<typeof CompendiumFocusDialog>|null>(null)
-let focusOpener:HTMLElement|null=null,previousDetailScroll=0
-async function openFocus(){if(!detail.value||detailLoading.value)return;focusOpener=document.activeElement as HTMLElement|null;previousDetailScroll=detailPanel.value?.scrollTop??0;focused.value=true;await nextTick();detailPanel.value?.scrollTo({top:0,behavior:'instant'})}
-async function closeFocus(){if(!focused.value)return;focused.value=false;await nextTick();detailPanel.value?.scrollTo({top:previousDetailScroll,behavior:'instant'});if(focusOpener?.isConnected)focusOpener.focus({preventScroll:true})}
-async function editEntry(){const entry=detail.value;if(!entry||tab.value==='homebrew')return;await closeFocus();editing.value={kind:tab.value as CompendiumKind,index:entry.index}}
 watch(() => detail.value?.index, async () => {
   await nextTick()
   detailPanel.value?.scrollTo({ top:0 })
@@ -174,7 +168,6 @@ let searchTimer:ReturnType<typeof setTimeout>|undefined
 let detailRevision=''
 let searchNumber=0
 function clearSelection(){
-  focused.value=false
   ++detailNumber;selectedDetailIndex.value='';selectedEntries.value=[];detail.value=null;detailLoading.value=false;detailError.value=''
   levels.value=[];levelsLoading.value=false;levelsError.value=''
 }
@@ -270,9 +263,9 @@ search()
             <div><button type="button" class="btn-ghost" :disabled="loading||pageInfo.page<=1" @click="search(pageInfo.page-1)">Previous</button><button type="button" class="btn-ghost" :disabled="loading||pageInfo.page>=pageInfo.pages" @click="search(pageInfo.page+1)">Next</button></div>
           </nav>
         </div>
-        <div class="compendium-detail-host"><Teleport :to="focusDialog?.body??'body'" :disabled="!focused||!focusDialog?.body"><div ref="detailPanel" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details" :aria-busy="detailLoading">
+        <div ref="detailPanel" class="panel p-6 compendium-detail" tabindex="0" role="region" aria-label="Entry details" :aria-busy="detailLoading">
           <p v-if="detailError" role="alert" class="text-sm text-[var(--site-danger)] mb-3">{{detailError}}</p>
-          <div v-if="detail&&!detailLoading" class="compendium-edition-actions"><span v-if="editions.has(detail.index)&&Object.keys(editions.get(detail.index)??{}).length" class="compendium-edition-label">Your personal edition</span><div class="compendium-reading-actions"><button v-show="!focused" type="button" class="btn-ghost" @click="openFocus">Focus view</button><button type="button" class="btn-ghost" @click="editEntry">Edit entry</button></div></div>
+          <div v-if="detail&&!detailLoading" class="compendium-edition-actions"><span v-if="editions.has(detail.index)&&Object.keys(editions.get(detail.index)??{}).length" class="compendium-edition-label">Your personal edition</span><button type="button" class="btn-ghost" @click="editing={kind:tab as CompendiumKind,index:detail.index}">Edit entry</button></div>
           <label v-if="isFamilyTab&&selectedFamilyGroup&&selectedFamilyGroup.versions.length>1" class="monster-version-selector">Source / option / version<select :value="selectedDetailIndex" class="input-base" @change="openDetail(($event.target as HTMLSelectElement).value)"><option v-for="entry in selectedFamilyGroup.versions" :key="entry.index" :value="entry.index">{{familyOptionLabel(entry)}}</option></select><small>Each version keeps its own rules. Search and filters apply to individual versions.</small></label>
           <label v-if="tab==='subclasses'&&selectedSubclassGroup&&selectedSubclassGroup.versions.length>1" class="monster-version-selector">Source / option / version<select :value="selectedDetailIndex" class="input-base" @change="openDetail(($event.target as HTMLSelectElement).value)"><option v-for="entry in selectedSubclassGroup.versions" :key="entry.index" :value="entry.index">{{subclassOptionLabel(entry)}}</option></select><small>Each version keeps its own features and rules. Search and filters apply to individual versions.</small></label>
           <label v-if="isItemTab&&selectedItemGroup&&selectedItemGroup.versions.length>1" class="monster-version-selector">Source / version<select :value="selectedDetailIndex" class="input-base" @change="openDetail(($event.target as HTMLSelectElement).value)"><option v-for="entry in selectedItemGroup.versions" :key="entry.index" :value="entry.index">{{itemOptionLabel(entry)}}</option></select><small>Each version retains its source rules. Filters apply to individual versions.</small></label>
@@ -315,15 +308,14 @@ search()
                 <div class="flex flex-wrap gap-2"><button v-for="variant in itemDetail.variants" :key="variant.index" class="btn-ghost text-sm" @click="openDetail(variant.index)">{{ variant.name }}</button></div>
               </template>
             </template>
-            <ReferenceReader v-else :key="`${tab}:${detail.index}`" :entry="detail" :kind="tab" :owner="auth.user?.id" :levels="levels" :levels-loading="levelsLoading" :levels-error="levelsError" @retry-levels="loadLevels(detail.index,tab)" />
+            <ReferenceReader v-else :key="`${tab}:${detail.index}`" :entry="detail" :kind="tab" :levels="levels" :levels-loading="levelsLoading" :levels-error="levelsError" @retry-levels="loadLevels(detail.index,tab)" />
           </div>
           </div>
-        </div></Teleport></div>
+        </div>
       </div>
     </template>
     </div>
     <p class="text-xs mt-6 opacity-80">Standard rules: SRD 5.1 by Wizards of the Coast LLC · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Data from <a href="https://github.com/5e-bits/5e-srd-api" target="_blank" rel="noopener noreferrer">5e Bits</a>.</p>
-    <CompendiumFocusDialog ref="focusDialog" :open="focused" @close="closeFocus" />
     <CompendiumEntryEditor v-if="editing" :key="`${editing.kind}:${editing.index}`" :kind="editing.kind" :index="editing.index" @close="editing=null" @saved="savedEdition" />
   </div>
 </template>

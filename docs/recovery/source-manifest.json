@@ -1,0 +1,1966 @@
+[
+  {
+    "path": ".env.example",
+    "uid": "7b5dac6484d4cfdd38a9e0061f1271cf2d8fcf5f"
+  },
+  {
+    "path": ".nvmrc",
+    "uid": "4d134bc072212ace2df385dae143139da74ec0ef"
+  },
+  {
+    "path": ".vercelignore",
+    "uid": "619ffe3d7f5bcaff4ec13a8906c9367118109dcd"
+  },
+  {
+    "path": "PLAN.md",
+    "uid": "da8524cdb2c3b685ed1aaf6af311ae67d28a22a7"
+  },
+  {
+    "path": "README.md",
+    "uid": "45682081574bddc78ac4ccade987beae786e5898"
+  },
+  {
+    "path": "docker-compose.yml",
+    "uid": "7d7f13955d14bff6cf6b050ab40f9a366980f86d"
+  },
+  {
+    "path": "index.html",
+    "uid": "984e91cd5b15904277900f4789df59c81619608d"
+  },
+  {
+    "path": "package-lock.json",
+    "uid": "62d7ca0ade959fdfc098a9c70ba531f59f0194e7"
+  },
+  {
+    "path": "package.json",
+    "uid": "51b0def905fcf0d2c393fb0744772ed452c43e5f"
+  },
+  {
+    "path": "public/favicon.svg",
+    "uid": "3f5bb8f3a6a05b7ca68a62581d2dd5bc88812caf"
+  },
+  {
+    "path": "public/icons.svg",
+    "uid": "f9897ac25e13de9ea601d2f1ac5d9353dfbefcda"
+  },
+  {
+    "path": "server/app.ts",
+    "uid": "a26a149fa31c9e278719940d6ab92c31afbf7c74"
+  },
+  {
+    "path": "server/data/5etools-monster-references.json",
+    "uid": "b036b43bf7efb104ff2e9ef8386a629130026e6e"
+  },
+  {
+    "path": "server/data/5etools-monster-tokens.json",
+    "uid": "5afbae6ce349537f1177b6f20863f87640caef44"
+  },
+  {
+    "path": "server/data/README.md",
+    "uid": "bd84aabcd48c96f657de116afc35e0d7280ddddf"
+  },
+  {
+    "path": "server/data/UPSTREAM-LICENSE.md",
+    "uid": "d4ec3d04809291ff40672499562de729f4c84473"
+  },
+  {
+    "path": "server/data/srd-2014-compendium-index.json",
+    "uid": "558ab839e910c945824a938e01db608941dbd062"
+  },
+  {
+    "path": "server/data/srd-2014-equipment.json",
+    "uid": "de4b771c4fe88cc192f7536d211ed69de285d45d"
+  },
+  {
+    "path": "server/data/srd-2014-magic-items.json",
+    "uid": "ccce9265cbae6b8513e33e34f4264fa98845c4f2"
+  },
+  {
+    "path": "server/data/srd-2014-spells.json",
+    "uid": "4fe4e2cb15d57028965b7747c41a35ab47c79b72"
+  },
+  {
+    "path": "server/db.test.ts",
+    "uid": "c17ea28ccbc8d6eb4a9a1122ab3ecc224e0e23de"
+  },
+  {
+    "path": "server/db.ts",
+    "uid": "3b7f6cdc2821c5e98dcfc5e37d731b881be628fc"
+  },
+  {
+    "path": "server/env.ts",
+    "uid": "43bad00fb4fa0c9568fd2f984a6168a58776cc50"
+  },
+  {
+    "path": "server/extension/api.ts",
+    "uid": "cf3a3f3539d33aa20e2da96ab70886bd5cd9259c"
+  },
+  {
+    "path": "server/extension/approval-page.ts",
+    "uid": "967bd0d6f8cb849ec32be9a22c0c5a9240227b9c"
+  },
+  {
+    "path": "server/extension/initialization-diagnostic.ts",
+    "uid": "c92d745da5b58f3e9e3cc678eb0718cce27d7614"
+  },
+  {
+    "path": "server/extension/model-readiness.ts",
+    "uid": "897086a62642c75f6c0e53396d7ca093958dae19"
+  },
+  {
+    "path": "server/extension/models.ts",
+    "uid": "eac5dfd42779348e9f84e1f5b1791bcbafeb6f7d"
+  },
+  {
+    "path": "server/extension/production-trial-app.ts",
+    "uid": "bdad250aaeb7810a4c5d8560a702c45c6701ad70"
+  },
+  {
+    "path": "server/extension/production-trial-config.ts",
+    "uid": "9844e47a361b603144aa51b36ed15b7ef3cd6d82"
+  },
+  {
+    "path": "server/extension/production-trial.ts",
+    "uid": "0f462aa098503cd33f267ceee01d718ea9fe8fa4"
+  },
+  {
+    "path": "server/extension/sheet.ts",
+    "uid": "448d8a280b40293b8d8293f8ffbda678a81fb929"
+  },
+  {
+    "path": "server/index.ts",
+    "uid": "8280770f99ea4fc9ab46e5852dae1dc0c4a90f2c"
+  },
+  {
+    "path": "server/lib/account-backup.test.ts",
+    "uid": "cfa47ef9b5fc42327ed35ee78a5fbd96a56f9f1f"
+  },
+  {
+    "path": "server/lib/account-backup.ts",
+    "uid": "95b7e91c0fa8a9f645c1edbc4b3b0cdf0ed44a23"
+  },
+  {
+    "path": "server/lib/background-pack-parser.ts",
+    "uid": "3992cb62f3cc38de69bc6b2bb1bf23f00de61d7a"
+  },
+  {
+    "path": "server/lib/cache-failure-codes.ts",
+    "uid": "4459bdac97d0c2c1e79ca91ced5886792fbf575b"
+  },
+  {
+    "path": "server/lib/character-output.ts",
+    "uid": "9353533d579876b91c65334af7f6e952ebdddd94"
+  },
+  {
+    "path": "server/lib/character-rule-library.ts",
+    "uid": "45a2ae47dee80ca036c8326b0ea2726e0aa5b86f"
+  },
+  {
+    "path": "server/lib/compendium-browse-storage.ts",
+    "uid": "da4e776c5b97272e39e52729bf1633227c3f5af8"
+  },
+  {
+    "path": "server/lib/compendium-browse.ts",
+    "uid": "5fd9ee2650ca044333ee3b3a9c49b09d2ab0442c"
+  },
+  {
+    "path": "server/lib/compendium-character.ts",
+    "uid": "81f76d6b81cdbba75d3ad25ba7eb8611268cee61"
+  },
+  {
+    "path": "server/lib/compendium-components.ts",
+    "uid": "aa41ff90a7ed66a07391bb5063e158867ffa40ce"
+  },
+  {
+    "path": "server/lib/compendium-details.ts",
+    "uid": "28ba4890e62090c260b6ea6087e3e9aea51c6aec"
+  },
+  {
+    "path": "server/lib/compendium-entry-source.ts",
+    "uid": "aaf2b434211f1026d82a8c8be247d6f8a7c0413e"
+  },
+  {
+    "path": "server/lib/compendium-prepare-job.ts",
+    "uid": "febdb0b1d8d6d2a77bfd8ebd9d9fbfe576076e99"
+  },
+  {
+    "path": "server/lib/compendium-prepared-codec.ts",
+    "uid": "51a65b9548431b397f0b7c6b9c76dbfa92a3fff4"
+  },
+  {
+    "path": "server/lib/compendium-prepared.ts",
+    "uid": "2408b58333bcadfd9f1f460490ab3abd326621cf"
+  },
+  {
+    "path": "server/lib/compendium-source.ts",
+    "uid": "89fae3bbc21a18028a79346022db1267bb7f3fc7"
+  },
+  {
+    "path": "server/lib/content-indexes.ts",
+    "uid": "7d6359de4563d72075d390ed38e180702f48f54d"
+  },
+  {
+    "path": "server/lib/creation-catalog.test.ts",
+    "uid": "882299fd70c3760bce127a15da6caf4fab326843"
+  },
+  {
+    "path": "server/lib/creation-catalog.ts",
+    "uid": "e53c3e6c68ca73fe5f54b8e1e41aff7dc13bec11"
+  },
+  {
+    "path": "server/lib/database-error.ts",
+    "uid": "e67c4479e7b3fe12be065dd8cd1fe251112ed1e6"
+  },
+  {
+    "path": "server/lib/dmv-import.ts",
+    "uid": "3395f34b8615b11c5725c4c0d4fc68b4378aef0e"
+  },
+  {
+    "path": "server/lib/edn.ts",
+    "uid": "6d5cedcf72da055441dfce8f4eb82bf92733cfe4"
+  },
+  {
+    "path": "server/lib/entry-builder-schema.ts",
+    "uid": "3d4652e381212b100e89f8618cba05bc6bc22eaa"
+  },
+  {
+    "path": "server/lib/equipment-references.ts",
+    "uid": "66e49ea91494535fdaaa5437392aec1c8ffeb1cc"
+  },
+  {
+    "path": "server/lib/inventory.ts",
+    "uid": "6db6023d3b1dbc48f0516d543387bc9b54b21443"
+  },
+  {
+    "path": "server/lib/local-compendium.ts",
+    "uid": "968934c92d8d0761951a506147f57c04b6e8ea62"
+  },
+  {
+    "path": "server/lib/map-overview-backfill.ts",
+    "uid": "34d636b99bc032c785e55351adfcd6d768be1a07"
+  },
+  {
+    "path": "server/lib/map-overviews.test.ts",
+    "uid": "f722b44aa039450f13dcac1ab59c94032682f570"
+  },
+  {
+    "path": "server/lib/map-overviews.ts",
+    "uid": "26e09a1d3bd910ff7e671f25fe04bd50c4307a13"
+  },
+  {
+    "path": "server/lib/map-storage.ts",
+    "uid": "d65846771cac5b47b73a10be5abd764451dc2834"
+  },
+  {
+    "path": "server/lib/model-initialization.ts",
+    "uid": "3f953e3604385e2cd37a93164461ab58f70291f0"
+  },
+  {
+    "path": "server/lib/monster-browse.ts",
+    "uid": "1dd5ee3eaf71760ca6f0edc9a0dd21a933af3197"
+  },
+  {
+    "path": "server/lib/monster-enrichment.ts",
+    "uid": "7be1b77a6c02f5b7c45db20058f078ebe834eb9b"
+  },
+  {
+    "path": "server/lib/monster-pack.ts",
+    "uid": "5e6d6f82711cc788e1b49bcf8b59ee7497795685"
+  },
+  {
+    "path": "server/lib/monster-workshop-schema.ts",
+    "uid": "d241a9b00e14f323bb42904d7f37bd4c357c572f"
+  },
+  {
+    "path": "server/lib/notebook-backfill.test.ts",
+    "uid": "395c1e36dc900886f19ad432ef640f6f51857778"
+  },
+  {
+    "path": "server/lib/notebook-backfill.ts",
+    "uid": "cd2db361288e7aa55a28114cb843ce30ce295561"
+  },
+  {
+    "path": "server/lib/notebook-changes.test.ts",
+    "uid": "19e6dacbde273cef98e05781a61dad19f1fd0533"
+  },
+  {
+    "path": "server/lib/notebook-changes.ts",
+    "uid": "945994bd5710fc6be0e7c7843dc60d3af6619069"
+  },
+  {
+    "path": "server/lib/notebook-derived.test.ts",
+    "uid": "bbd31c0a17b8894bbfb179704ac323c7b370b8ae"
+  },
+  {
+    "path": "server/lib/notebook-derived.ts",
+    "uid": "c79b61bb6ecc8ae8fbf4cf41b0fb48e4ee253c6e"
+  },
+  {
+    "path": "server/lib/notebook-listing.test.ts",
+    "uid": "f50dc50533447cb526c087c3a6f06f6a4ec2c3f1"
+  },
+  {
+    "path": "server/lib/notebook-listing.ts",
+    "uid": "e96fe1c39791e2553e65d6a38db72e8decf03882"
+  },
+  {
+    "path": "server/lib/notebook-preflight.test.ts",
+    "uid": "f7fb570c7bbe000546611dc039a9fe03bfdd4239"
+  },
+  {
+    "path": "server/lib/notebook-preflight.ts",
+    "uid": "ae096c0d330fa4f8041a359e4d00b09a9ae3b189"
+  },
+  {
+    "path": "server/lib/option-choices.ts",
+    "uid": "c4c142ac7eb0842f515961dfc064aaa37a103505"
+  },
+  {
+    "path": "server/lib/option-workshop.ts",
+    "uid": "ba85ce5895a197f0294542fcfe76153a29b065bd"
+  },
+  {
+    "path": "server/lib/orcbrew-background-worker.cjs",
+    "uid": "97b0671f82dafe76777e4a0404709cdd2e8d4ba9"
+  },
+  {
+    "path": "server/lib/orcbrew-export.ts",
+    "uid": "acc697c6547d21238dbb55099425fd9d52223561"
+  },
+  {
+    "path": "server/lib/orcbrew-items.ts",
+    "uid": "b014c460fd8bbc220aa5e1f57c3ff4bc7459b7ef"
+  },
+  {
+    "path": "server/lib/orcbrew-library.ts",
+    "uid": "c37666a9dfbdbcff368f0f13362d401f8df12d8e"
+  },
+  {
+    "path": "server/lib/orcbrew.ts",
+    "uid": "106363ed9fae9a2b0574fe75631755b11a7fcb70"
+  },
+  {
+    "path": "server/lib/pack-preparation.ts",
+    "uid": "74b5ee36e1e34b6d722df2c9066202a9261cbe6c"
+  },
+  {
+    "path": "server/lib/pack-source.ts",
+    "uid": "0b5f7f59a126043377570cf4f67f0b8a525c454e"
+  },
+  {
+    "path": "server/lib/pack-storage.ts",
+    "uid": "9286d3c639226e7707225f883cfb10d156b5fb83"
+  },
+  {
+    "path": "server/lib/pack-summaries.test.ts",
+    "uid": "c366b719ae1c30ff7eeb3c29e3c1e0df8f1a6bf6"
+  },
+  {
+    "path": "server/lib/pack-summaries.ts",
+    "uid": "3f9249db9caaa1b8f93e9c797934f20788465add"
+  },
+  {
+    "path": "server/lib/pack-summary-backfill.ts",
+    "uid": "1930bcd7ee530c841d9b359e4043b28485b723d2"
+  },
+  {
+    "path": "server/lib/pack-summary.test.ts",
+    "uid": "7f0b1bd9973cf72d3412b9cdef0d23155a4b8ae7"
+  },
+  {
+    "path": "server/lib/pack-summary.ts",
+    "uid": "720bf864867129eb644dae186e41d309b79ae6ee"
+  },
+  {
+    "path": "server/lib/play-update.ts",
+    "uid": "05d8c66b3b4322dd6af9320e2ed963bb81043b51"
+  },
+  {
+    "path": "server/lib/room-library-access.ts",
+    "uid": "f48ab839bf5f6d4e9025685655b135164dbd2863"
+  },
+  {
+    "path": "server/lib/selected-options.ts",
+    "uid": "92aa6f3589c0f08cee7db9af1e947e9290143122"
+  },
+  {
+    "path": "server/lib/sheet-references.ts",
+    "uid": "b6aaaa7512c82a0fbbb837ed6a76eb24aa05f672"
+  },
+  {
+    "path": "server/lib/srd-client.ts",
+    "uid": "7113d36d48cf8ab5f01371348c7229235d03fede"
+  },
+  {
+    "path": "server/lib/srd-request-queue.ts",
+    "uid": "49cf4539924be73b60b971bb11dfbb3e6bdb6b39"
+  },
+  {
+    "path": "server/lib/srd-snapshot.ts",
+    "uid": "820c4cf0eec4fd71153f7914344fa21c1e9083c2"
+  },
+  {
+    "path": "server/lib/workshop-library.ts",
+    "uid": "2f7c6a52b5b1992a60d0a878a21478f894bb3505"
+  },
+  {
+    "path": "server/lib/workshop-pack.ts",
+    "uid": "219b8e5510978b7f8a71a2530329e98cf40acdf0"
+  },
+  {
+    "path": "server/lib/workshop-rules.ts",
+    "uid": "1a165686f3d980bbeb4c2c1f67d43a12c89c3ab1"
+  },
+  {
+    "path": "server/lib/workshop-schema.ts",
+    "uid": "19473cb64bdc4572b5982f41964a4679c8ad8d35"
+  },
+  {
+    "path": "server/lib/workshop-startup.test.ts",
+    "uid": "8e454d1481288076ef8700cb00e1b8d9e7b33261"
+  },
+  {
+    "path": "server/lib/workshop-startup.ts",
+    "uid": "d61a18cc592180c03bd26989e90172a66a1ad229"
+  },
+  {
+    "path": "server/lib/workshop-trash.ts",
+    "uid": "fb2b7838e8cde9a4fd8b2c9982af9f2330153057"
+  },
+  {
+    "path": "server/middleware/auth.ts",
+    "uid": "0a6b18a5bd1e374b74e2c5fdfa01703d28ec7381"
+  },
+  {
+    "path": "server/middleware/large-transfer.ts",
+    "uid": "357e478bd74392d4bc2ef210a7f4ed0dfe8523d8"
+  },
+  {
+    "path": "server/middleware/pack-preparation.test.ts",
+    "uid": "3625a4b86e1372e88bfa8be9a2e2ef6afbc7393b"
+  },
+  {
+    "path": "server/middleware/pack-preparation.ts",
+    "uid": "3cb0758615e4f02f9eb1466a50c227a394626e82"
+  },
+  {
+    "path": "server/middleware/request-limit.ts",
+    "uid": "0accc1e1d6cdb03594b2b46a5ecc8df7661499af"
+  },
+  {
+    "path": "server/middleware/request-timing.ts",
+    "uid": "610f790a2186c52e10b31f3e0e46a28b48a763f6"
+  },
+  {
+    "path": "server/models/Character.ts",
+    "uid": "5cf6802a765c7a629e9eda67bf832e4cee1b2acf"
+  },
+  {
+    "path": "server/models/CharacterLibrary.ts",
+    "uid": "abda7014aafec80987dd3ba03cef960766bda6f9"
+  },
+  {
+    "path": "server/models/CityLibrary.ts",
+    "uid": "b82c66bca21b09295018b762c74b782c7e17d79d"
+  },
+  {
+    "path": "server/models/CompendiumBrowseIndex.ts",
+    "uid": "803689fc3ea2a52eebc624b8d5f94b160da8d989"
+  },
+  {
+    "path": "server/models/CompendiumComponent.ts",
+    "uid": "a5c573f5d80166036415379ea615ca7af6c2115b"
+  },
+  {
+    "path": "server/models/CompendiumEntryCache.ts",
+    "uid": "cf0a606a07841087912130ddf7add65a728dc1e3"
+  },
+  {
+    "path": "server/models/CustomContent.ts",
+    "uid": "303cad0a1f62a1f17fb3c253b3f33f21fdaf1d0a"
+  },
+  {
+    "path": "server/models/Notebook.ts",
+    "uid": "c6ef8eb4f8820f7ed9d25dab3da018cf85237abe"
+  },
+  {
+    "path": "server/models/PackPreparation.ts",
+    "uid": "9c212cfb98c13d38aa65199c350f4b0cae07d3fd"
+  },
+  {
+    "path": "server/models/RequestLimit.ts",
+    "uid": "71fc0c56033b924e79078bf878280eaa5efd2ae9"
+  },
+  {
+    "path": "server/models/Room.ts",
+    "uid": "04416e78b7253a96b2238172b9e93508c3a67a5c"
+  },
+  {
+    "path": "server/models/RoomMap.ts",
+    "uid": "0da41bc14e698b96744d85ea8d835b4881978106"
+  },
+  {
+    "path": "server/models/Upload.ts",
+    "uid": "65728eb4fc029bf85e6ab64d73a9f6fc31c233fc"
+  },
+  {
+    "path": "server/models/User.ts",
+    "uid": "13bcef6209126e3cbfed69fb2842f709b91e1d40"
+  },
+  {
+    "path": "server/package-lock.json",
+    "uid": "5d7cd84d69ecbccb7e3d8ea7e70b565d195cff3d"
+  },
+  {
+    "path": "server/package.json",
+    "uid": "1a45761ea067f95af94cdea3ae52e7c1bd797d2a"
+  },
+  {
+    "path": "server/routes/auth.ts",
+    "uid": "c5c9d6efd78338f5f9f7f4d4390053d3a05f198b"
+  },
+  {
+    "path": "server/routes/character-import.ts",
+    "uid": "b1975fa41a4cbdd80785cf778f8a8d8bfd11e8d2"
+  },
+  {
+    "path": "server/routes/character-library.ts",
+    "uid": "3ff0088f8d3ccc8267c0a4487c5687c9b2b45495"
+  },
+  {
+    "path": "server/routes/characters.ts",
+    "uid": "e02b11a071f965fbb9a738a2cd21c6c3bf096143"
+  },
+  {
+    "path": "server/routes/city-libraries.ts",
+    "uid": "203afeb86343946803133741c031427fc112dc7b"
+  },
+  {
+    "path": "server/routes/compendium-browse.ts",
+    "uid": "637016f101b5a6d2735d672acfb039c3fa778639"
+  },
+  {
+    "path": "server/routes/compendium.ts",
+    "uid": "31f380eee489b92825f24e1ee46047cfe751f033"
+  },
+  {
+    "path": "server/routes/content.test.ts",
+    "uid": "2b82a703ff486d827c9ea15eda7fc73bd6ccb4ac"
+  },
+  {
+    "path": "server/routes/content.ts",
+    "uid": "cd591565cfc05e5f90b1847e53f0b418e43335c6"
+  },
+  {
+    "path": "server/routes/creation-options-http.test.ts",
+    "uid": "c86d5ec2ec5056a69b34326565e7cea9d923178d"
+  },
+  {
+    "path": "server/routes/items.ts",
+    "uid": "5bafe2cb103d5c69ed82be66eeea19220abf126e"
+  },
+  {
+    "path": "server/routes/library-restore.ts",
+    "uid": "c0d3711112d0f989383ddbfe79a39577593e3e7a"
+  },
+  {
+    "path": "server/routes/monster-workshop.ts",
+    "uid": "340ee34f11c7079d76b362587429bb120c4f1de5"
+  },
+  {
+    "path": "server/routes/notebook.test.ts",
+    "uid": "b6c625d68665a77305fbd712c93d56dfed4598cb"
+  },
+  {
+    "path": "server/routes/notebook.ts",
+    "uid": "9a67af55da18fc29b064b1fdfb09815eed057ada"
+  },
+  {
+    "path": "server/routes/option-workshop.ts",
+    "uid": "82330f8f6c420570efffbdac07807b65eff85824"
+  },
+  {
+    "path": "server/routes/room-maps.ts",
+    "uid": "843be62eb7ae23133630bfb39ec515f9d4940297"
+  },
+  {
+    "path": "server/routes/rooms-detail.test.ts",
+    "uid": "607c87aaa11c5e2ecd775ea7999edb36087f1e55"
+  },
+  {
+    "path": "server/routes/rooms.ts",
+    "uid": "93b2b18342a5822be179ea278308ab8c4dbbab79"
+  },
+  {
+    "path": "server/routes/workshop-trash.ts",
+    "uid": "8bba7952af5dafb0b8ea51cf0d9659ac49f20847"
+  },
+  {
+    "path": "server/routes/workshop.ts",
+    "uid": "11f6a2b9f06d428e4516ff7ad8715a1718e5ddc0"
+  },
+  {
+    "path": "server/scripts/backfill-map-overviews.ts",
+    "uid": "ea980f0e7e5703182a794bbf6ee24e1a22911135"
+  },
+  {
+    "path": "server/scripts/backfill-notebook-listing.ts",
+    "uid": "b18d9ca0c3f563154df4b5fdd75220239e217b7c"
+  },
+  {
+    "path": "server/scripts/backfill-pack-summaries.ts",
+    "uid": "876c27f56cf38b256d9fbae9a51bb847a3ac484a"
+  },
+  {
+    "path": "server/scripts/notebook-preflight.ts",
+    "uid": "720f6b0900fa3819c4a6b828621153058d3b6f89"
+  },
+  {
+    "path": "server/tsconfig.json",
+    "uid": "dea3a356ec71110220e9b98b5862ac83f1e976d2"
+  },
+  {
+    "path": "shared/account-backup.ts",
+    "uid": "0fe351d435571e4f9cadbd23bca2aa66ad44f5bb"
+  },
+  {
+    "path": "shared/calc.ts",
+    "uid": "1eceaefaca8f31b049d2b7a1e11ea6e73aedfb5b"
+  },
+  {
+    "path": "shared/character-library.ts",
+    "uid": "cd8d9108f5feb39401a607befe13b1858870f00f"
+  },
+  {
+    "path": "shared/character-progression.ts",
+    "uid": "93d05a2c7a32dad19f72a26f79346316df80e055"
+  },
+  {
+    "path": "shared/character-resources.ts",
+    "uid": "3aca0a25036526366588df038352693e36c8afde"
+  },
+  {
+    "path": "shared/character.ts",
+    "uid": "0ac9240083ddfb3c363e60e38895735c0910ae81"
+  },
+  {
+    "path": "shared/choice-groups.ts",
+    "uid": "6052596953f4494afe5f54373d8720214fb3b8d4"
+  },
+  {
+    "path": "shared/class-rules.ts",
+    "uid": "9395f24179b6c066d9c7ed463b0f16e5390b6f49"
+  },
+  {
+    "path": "shared/compendium-browse.ts",
+    "uid": "c0d91209b16661bf335122ff71557d8b53554263"
+  },
+  {
+    "path": "shared/compendium-details.ts",
+    "uid": "f568a4f36392851ee14e06423a74ee099ac41472"
+  },
+  {
+    "path": "shared/compendium-editing.ts",
+    "uid": "5d9bb33cc1c7a2b1d20047121e18f09247a7f383"
+  },
+  {
+    "path": "shared/compendium-facets.ts",
+    "uid": "3c5546aa03e62835e6bd8cfad92a9e3f9c8ae24a"
+  },
+  {
+    "path": "shared/compendium-family.ts",
+    "uid": "80ae4cb00f5f32bb60e450f76aac43a634ff5244"
+  },
+  {
+    "path": "shared/compendium-kinds.ts",
+    "uid": "4b4bf3adeb2453330994f2f8cbd8964164a4f18f"
+  },
+  {
+    "path": "shared/compendium-source-names.json",
+    "uid": "ab5b00207c6bdb53afbc7fa4e14dfe81d310ceae"
+  },
+  {
+    "path": "shared/creation-selection.test.ts",
+    "uid": "35928c865d75e3c79b1c13863a63e8b134a805ff"
+  },
+  {
+    "path": "shared/creation-selection.ts",
+    "uid": "7ce6c0b10f2bd70a9531395884492d77f695ed31"
+  },
+  {
+    "path": "shared/entry-builder-examples.ts",
+    "uid": "ee12ee6ed2b90364413b3424e5687b5eba3514db"
+  },
+  {
+    "path": "shared/entry-builders.ts",
+    "uid": "15fbe1125481128d892434ab2a00627d55938a9e"
+  },
+  {
+    "path": "shared/equipment-definitions.ts",
+    "uid": "bb6e2e76a885d60c70e29636bf12241e001f713c"
+  },
+  {
+    "path": "shared/feat-resources.ts",
+    "uid": "ef714322de8767017291183e0c48ff3b83838099"
+  },
+  {
+    "path": "shared/five-tools-item.ts",
+    "uid": "21c4301e5a0389dc86fe7df0860b64e6a78240ef"
+  },
+  {
+    "path": "shared/five-tools-monster.ts",
+    "uid": "14afed4791dd03dda5ce0707c9a2b75b8acc233b"
+  },
+  {
+    "path": "shared/five-tools-orcbrew.ts",
+    "uid": "5184d57aea4a1c22c7b57761b480a26048ac4edc"
+  },
+  {
+    "path": "shared/homebrew-workshop.ts",
+    "uid": "31477d267a78fc4aef2dac7c977aaf4dd714c9bb"
+  },
+  {
+    "path": "shared/imported-items.ts",
+    "uid": "ae8eca48109628a37f918753677e8f8e5a9ac73e"
+  },
+  {
+    "path": "shared/item-classification.ts",
+    "uid": "b3e6b77783998f645a81f90c71458fec9ad9cdc1"
+  },
+  {
+    "path": "shared/item-reference.ts",
+    "uid": "27bb44e8f03278e33a019fa7c7e78a70ed46e2af"
+  },
+  {
+    "path": "shared/item-rules.ts",
+    "uid": "7074ac82faaa9d49f8fd22a315908ffe1ec4f670"
+  },
+  {
+    "path": "shared/item-validation.ts",
+    "uid": "a728539b7071802d6ef2a330db4d543f554e5df6"
+  },
+  {
+    "path": "shared/level-up.ts",
+    "uid": "fec8d1bbe1315c0f7d20eeac3fe881c735ceb419"
+  },
+  {
+    "path": "shared/local-compendium.ts",
+    "uid": "50887adc9482e0d59510d000ab89489a4c353ac0"
+  },
+  {
+    "path": "shared/manual-options.ts",
+    "uid": "004a3278ca13ee6dce387b719930598b3a7324be"
+  },
+  {
+    "path": "shared/map-city-library.ts",
+    "uid": "3f5cfb1703b2c7415a1bd023c5bc277808c23a29"
+  },
+  {
+    "path": "shared/map-regions.ts",
+    "uid": "d48ea1e2deaebcee55d35c3b3d000794ec8def5e"
+  },
+  {
+    "path": "shared/monster-benefits.ts",
+    "uid": "295aa59fbf59338b6e549a7fa27bf4cddc4a31c4"
+  },
+  {
+    "path": "shared/monster-enrichment.ts",
+    "uid": "07a7bdfe90f04e058e98f67420b26afadcf2a2a1"
+  },
+  {
+    "path": "shared/monster-extensions.ts",
+    "uid": "c29f7b860915e27a6f336c255d2fbd34ba3628fe"
+  },
+  {
+    "path": "shared/monster-families.json",
+    "uid": "9b6767e7c0c94d0fb104b35b5571ccbd8ece59c6"
+  },
+  {
+    "path": "shared/monster-format.ts",
+    "uid": "7d8cd5e25ecd5053ed1c1ac01ce4d398c53663f3"
+  },
+  {
+    "path": "shared/monster-identity.ts",
+    "uid": "46c3a63d9fbfdeced85dd50a387b82c816338c05"
+  },
+  {
+    "path": "shared/monster-reference-match.ts",
+    "uid": "45e925bdfc96008220dc3cba52b42ab908147382"
+  },
+  {
+    "path": "shared/monster-statblock.ts",
+    "uid": "ed71062cf20fc2d6df2bb4cc756162e0c969bff4"
+  },
+  {
+    "path": "shared/monster-token.ts",
+    "uid": "30c914e3437386ecc6c1ac94b6b274a3ed1bcdeb"
+  },
+  {
+    "path": "shared/monster-workshop.ts",
+    "uid": "ec59d02f146168affd46b0580a12c59ba167ca79"
+  },
+  {
+    "path": "shared/notebook-clues.ts",
+    "uid": "aa73fdcd2503038613b54bcc98d786979f7a7a93"
+  },
+  {
+    "path": "shared/notebook-codex.ts",
+    "uid": "a91f0af1b3c2751b4f4414c90aaa460e399349be"
+  },
+  {
+    "path": "shared/notebook-cover.ts",
+    "uid": "4ed6ce5240cd15f8ce04265835f34a4fa260e515"
+  },
+  {
+    "path": "shared/notebook-folders.ts",
+    "uid": "3fdcf2ffe3a9677618ca3085f5b1e7c3e4cda0ec"
+  },
+  {
+    "path": "shared/notebook-gallery.ts",
+    "uid": "06879d907e035e1bbe6ed4f8271f866642cc4aa8"
+  },
+  {
+    "path": "shared/notebook-links.ts",
+    "uid": "5fb9b7c60325ea0270ea2e3e4e396e258e045b31"
+  },
+  {
+    "path": "shared/notebook-session-links.ts",
+    "uid": "3e2a5ae13f96cc1e0850f7d9fb6567eeee1944e3"
+  },
+  {
+    "path": "shared/notebook-tags.ts",
+    "uid": "d63d97069a048022be29324faa6cf9e7e90a66e2"
+  },
+  {
+    "path": "shared/notebook.ts",
+    "uid": "a7cc9427d45e266dd25d50dd2dfa0871e2501e7c"
+  },
+  {
+    "path": "shared/option-kinds.ts",
+    "uid": "dc12a2e49bfac5fa69f4db17e2a0640f18c3942c"
+  },
+  {
+    "path": "shared/option-reference.ts",
+    "uid": "ae0739518ba528de2ff7bce853d4e542ca075d89"
+  },
+  {
+    "path": "shared/option-workshop.ts",
+    "uid": "afde8068b3e09c8292751e3df9ec3163ba8b0bd7"
+  },
+  {
+    "path": "shared/pack-limits.ts",
+    "uid": "476d045c2e67d14abee04182198c439764832b7b"
+  },
+  {
+    "path": "shared/party-dashboard.ts",
+    "uid": "8a35908011db03d6e51b12620e23784a92f94bf7"
+  },
+  {
+    "path": "shared/room-maps.ts",
+    "uid": "0aa6a776c300ae060395a39100f3a9247e7dbd73"
+  },
+  {
+    "path": "shared/rooms.ts",
+    "uid": "760585755113c6fcc5cacf22b0384dc22217d8ea"
+  },
+  {
+    "path": "shared/rule-benefits.ts",
+    "uid": "7f089cb2c7d3a53198c40f0be84ccc9ca9bf4677"
+  },
+  {
+    "path": "shared/subclass-identity.ts",
+    "uid": "e0056f0cd7bba9dae3d1426576b22f63d573faba"
+  },
+  {
+    "path": "shared/subrace-options.ts",
+    "uid": "e4427baa821a60b32fd8a943bd736d3c60e54db6"
+  },
+  {
+    "path": "shared/weapon-proficiencies.ts",
+    "uid": "7c0d2a28cfe573c112475863b1e5645999cf7fd4"
+  },
+  {
+    "path": "shared/workshop-character.ts",
+    "uid": "a6ed1eaceac45507744338185fb352af424c8b91"
+  },
+  {
+    "path": "shared/workshop-race.ts",
+    "uid": "904c52f8e73985b6e1dcb1da9660e4f1448ccaf3"
+  },
+  {
+    "path": "src/App.vue",
+    "uid": "29926d2d6aa1f1c84ce3112d0b3aa7cb68ed9794"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHpv4kjgoGqM7E_A8s52Hs.woff2",
+    "uid": "486301dc68b9ab55bae68b416f754bbc55fb7cb2"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHpv4kjgoGqM7E_Ass52Hs.woff2",
+    "uid": "496c894648dec77890c65e08d5f7f19fbbb9e833"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHpv4kjgoGqM7E_DMs5.woff2",
+    "uid": "4f0f26f139db2a7eee91dca038012399b3abdc47"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHqv4kjgoGqM7E30-8s51os.woff2",
+    "uid": "800311e32df4fd8460628e4927d5231cdd21757f"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHqv4kjgoGqM7E30-8s6FospT4.woff2",
+    "uid": "b5e99b73d58afded3b1930515ee7edbb03d77876"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHqv4kjgoGqM7E30-8s6VospT4.woff2",
+    "uid": "a016855326ff1df84ab11c5a3adeea9ef1bf8462"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHqv4kjgoGqM7E3_-gs51os.woff2",
+    "uid": "ad8e9490a983a615bfe43dcd4ad332e611178948"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHqv4kjgoGqM7E3_-gs6FospT4.woff2",
+    "uid": "1e8c9c20c76def3075b978e33cdf998d43d0502b"
+  },
+  {
+    "path": "src/assets/fonts/barlow/7cHqv4kjgoGqM7E3_-gs6VospT4.woff2",
+    "uid": "278f01dbfb7737a00b62ff030975ed73c54d593f"
+  },
+  {
+    "path": "src/assets/fonts/barlow/HTxwL3I-JCGChYJ8VI-L6OO_au7B4-Lwz3bWuQ.woff2",
+    "uid": "fe2f6553fb5a73928c08479433a61b94c98b0276"
+  },
+  {
+    "path": "src/assets/fonts/barlow/HTxwL3I-JCGChYJ8VI-L6OO_au7B4-Lwz3jWuZEC.woff2",
+    "uid": "ea79e58539d35b982bb2e052b89b8f2cd2ca3a6b"
+  },
+  {
+    "path": "src/assets/fonts/barlow/HTxwL3I-JCGChYJ8VI-L6OO_au7B4-Lwz3nWuZEC.woff2",
+    "uid": "c8e6128829784e03d800f0ae9be3744e1e58c72d"
+  },
+  {
+    "path": "src/assets/fonts/barlow/HTxwL3I-JCGChYJ8VI-L6OO_au7B4873z3bWuQ.woff2",
+    "uid": "0a7db4011ad8495d15f98572df81b76120c267ee"
+  },
+  {
+    "path": "src/assets/fonts/barlow/HTxwL3I-JCGChYJ8VI-L6OO_au7B4873z3jWuZEC.woff2",
+    "uid": "3454102127bd85ae55ead37007a91cbd181afb4d"
+  },
+  {
+    "path": "src/assets/fonts/barlow/HTxwL3I-JCGChYJ8VI-L6OO_au7B4873z3nWuZEC.woff2",
+    "uid": "07b301a613fe8bb216874e9e50c5c9f57dd33fea"
+  },
+  {
+    "path": "src/assets/fonts/barlow/README.md",
+    "uid": "10a6d6f4ba221606bcc1a7c74a0f855b099e0d16"
+  },
+  {
+    "path": "src/assets/fonts/barlow/barlow-OFL.txt",
+    "uid": "d0dbf6e88cdad08b4270220f0c92fbd7c9fc1c6b"
+  },
+  {
+    "path": "src/assets/fonts/barlow/barlowcondensed-OFL.txt",
+    "uid": "d0dbf6e88cdad08b4270220f0c92fbd7c9fc1c6b"
+  },
+  {
+    "path": "src/assets/fonts/barlow/font-faces.css",
+    "uid": "b8601bde4182e581477f30f4a48051166cd52ba9"
+  },
+  {
+    "path": "src/assets/fonts/statblock/font-faces.css",
+    "uid": "7f33b93da6060f4546dc6782aa5fecf9b32cf940"
+  },
+  {
+    "path": "src/assets/fonts/statblock/libre-baskerville-normal-700.woff2",
+    "uid": "8233821ce273b8e908d233d4ab3866da41d9477d"
+  },
+  {
+    "path": "src/assets/fonts/statblock/librebaskerville-OFL.txt",
+    "uid": "4fc3603229bc5619566bdae7c2ca3ee599464a15"
+  },
+  {
+    "path": "src/assets/fonts/statblock/noto-sans-italic-400.woff2",
+    "uid": "d77bb045382371d1d4198d58ca1a51f31c74569d"
+  },
+  {
+    "path": "src/assets/fonts/statblock/noto-sans-normal-400.woff2",
+    "uid": "c916a8117ba03f6810cbca86fa9427660a9e4c24"
+  },
+  {
+    "path": "src/assets/fonts/statblock/notosans-OFL.txt",
+    "uid": "af866b5e74511e0227cb84a1d9da497f13f582f7"
+  },
+  {
+    "path": "src/compact-layout.css",
+    "uid": "38e54105637307d605deb12d04035968fbcf0ba6"
+  },
+  {
+    "path": "src/components/CharacterLinkImport.vue",
+    "uid": "8800d38de4cc7f816505ff30409d3ce635a83da6"
+  },
+  {
+    "path": "src/components/OrcbrewPacks.vue",
+    "uid": "4f8284167588ea10cb0ff0fbadd334c6689470d0"
+  },
+  {
+    "path": "src/components/ShadowChampions.vue",
+    "uid": "2274dd9d4c4376591b80ab157c94b367673d274e"
+  },
+  {
+    "path": "src/components/characters/CharacterFolders.vue",
+    "uid": "9deb0ca78a426ee358c6281c17d63aa008522bdc"
+  },
+  {
+    "path": "src/components/characters/CharacterRoster.vue",
+    "uid": "5a4fef3ba9d606e31ac5914d7afc78580272d85f"
+  },
+  {
+    "path": "src/components/characters/character-folders.css",
+    "uid": "32b6660d22a20a6d581effd812cf7ed72ced4f3e"
+  },
+  {
+    "path": "src/components/characters/character-workspace.css",
+    "uid": "4ef356784f7dc21beedf93249c7f7db0dcc654d0"
+  },
+  {
+    "path": "src/components/compendium/CompendiumCategories.vue",
+    "uid": "7301a5150dafaa92ff24fa078816cb54d044831a"
+  },
+  {
+    "path": "src/components/compendium/CompendiumEntryEditor.vue",
+    "uid": "b0c6a3465ed5fc4f2400ef3556ec91ef6e5e10c0"
+  },
+  {
+    "path": "src/components/compendium/CompendiumFilters.vue",
+    "uid": "e9c673106222322ba36ce7e58d9f00ae5c9b1206"
+  },
+  {
+    "path": "src/components/compendium/EntryBuilder.vue",
+    "uid": "9a6a136e5ed39c298208142978c8c565940e5287"
+  },
+  {
+    "path": "src/components/compendium/LocalCompendiumStatus.vue",
+    "uid": "fe7082fb931be4fba835e76180a51233c736e9ba"
+  },
+  {
+    "path": "src/components/compendium/ReferenceEntryBuilder.vue",
+    "uid": "84374b9d392439bd1626e966469214adcfb71b8e"
+  },
+  {
+    "path": "src/components/compendium/ReferenceReader.vue",
+    "uid": "a8fe4998e0a38306ff8edefb43d06b7272ed76fd"
+  },
+  {
+    "path": "src/components/compendium/ReferenceRule.vue",
+    "uid": "5a19696c4524319bfc028d70077ef10f1be3fe10"
+  },
+  {
+    "path": "src/components/compendium/ReferenceValue.vue",
+    "uid": "1814a45d1a7add78ddde4a47b7c9fc9240238a22"
+  },
+  {
+    "path": "src/components/compendium/RuleBenefitsEditor.vue",
+    "uid": "cf975f6ea0d3d6ef88f6b143b75879c0e1062131"
+  },
+  {
+    "path": "src/components/compendium/compendium-categories.css",
+    "uid": "c49e2c2d1c9c8bbced1325fbdf485b94a0c197d5"
+  },
+  {
+    "path": "src/components/compendium/compendium-layout.css",
+    "uid": "43fa87a568d849c46ba9706075c5c43975178210"
+  },
+  {
+    "path": "src/components/compendium/compendium-reader.css",
+    "uid": "90a55600f9206d02047e78434b5509e5c6847c98"
+  },
+  {
+    "path": "src/components/compendium/entry-editor.css",
+    "uid": "e26b36d421c7295ad213d02a3b0b7dfbf36a05e2"
+  },
+  {
+    "path": "src/components/creation/BuilderAdvancements.vue",
+    "uid": "e2397ad420840dda54c7ab5f8466f03a1c2fc6cb"
+  },
+  {
+    "path": "src/components/creation/BuilderAppearance.vue",
+    "uid": "0821e10a69320fa13ce08db9230d137e2a0acae6"
+  },
+  {
+    "path": "src/components/creation/BuilderChoices.vue",
+    "uid": "792f065950152ad2e2d90cdf8ec7877fe67ea3d4"
+  },
+  {
+    "path": "src/components/creation/BuilderIcon.vue",
+    "uid": "e21f0ff33875d6be203a4ed27291b6ce35d2e014"
+  },
+  {
+    "path": "src/components/creation/ChoiceGroupPicker.vue",
+    "uid": "e8d455d05720b78940f3a26bda870b7be8a5b32e"
+  },
+  {
+    "path": "src/components/creation/ManualOptionPicker.vue",
+    "uid": "f8acea9b97438d43c4452eac18c5db0d6f5e62b4"
+  },
+  {
+    "path": "src/components/creation/builder-theme.css",
+    "uid": "8ed7b73e477662fb6fee6a7c39dfc994b79b9678"
+  },
+  {
+    "path": "src/components/creation/builder.css",
+    "uid": "f0943227e619b265465c3ef3d2fa408ae30f84d9"
+  },
+  {
+    "path": "src/components/items/DeferredItemComposer.vue",
+    "uid": "9a362c9ae0f3ba5e31efc2224c35fdfbb7652c40"
+  },
+  {
+    "path": "src/components/items/ImportedItemDetails.vue",
+    "uid": "9aac42ac9bbbcc95bc9d8ab5264c33aaa8e9218c"
+  },
+  {
+    "path": "src/components/items/ImportedItemPicker.vue",
+    "uid": "1d5e87484470319796ffb195a875cb8a7b8fee08"
+  },
+  {
+    "path": "src/components/items/ItemComposer.vue",
+    "uid": "620f850731f71be23534abbba3b04b902b153141"
+  },
+  {
+    "path": "src/components/items/ItemFilters.vue",
+    "uid": "6bc08c59b0b1de324a593be33e4997200cfdf6b4"
+  },
+  {
+    "path": "src/components/items/ItemWorkshop.vue",
+    "uid": "fb033057120e0a40d7a1d35b12f348cb6f57be0d"
+  },
+  {
+    "path": "src/components/items/item-composer-props.ts",
+    "uid": "a31062aa19bc7157beaf2985abd72de2211779e7"
+  },
+  {
+    "path": "src/components/maps/MapCanvas.test.ts",
+    "uid": "ead6662f7d9d64c43eaeba63e87ee065db7964e1"
+  },
+  {
+    "path": "src/components/maps/MapCanvas.vue",
+    "uid": "b08a597f5ab1378ea3f0113447c7d38ae077c00e"
+  },
+  {
+    "path": "src/components/maps/MapCityLibrary.vue",
+    "uid": "bea0e2dbd63c98105a0dd63574c29d557c55e028"
+  },
+  {
+    "path": "src/components/maps/MapPinGlyph.vue",
+    "uid": "38f4327a98de8147acaf5b1cc9cdcdc15286b8f1"
+  },
+  {
+    "path": "src/components/maps/MapRegionEditor.vue",
+    "uid": "d47bbae0a2346712e893c2d6e0fd4593e892de96"
+  },
+  {
+    "path": "src/components/maps/MapRegionLayer.vue",
+    "uid": "f6026722823a4dc12e625b0282c8ab4ba5cb3771"
+  },
+  {
+    "path": "src/components/maps/PinDisplaySettings.vue",
+    "uid": "5b7ad8864cdcbe24b7fc1353b35d3f21d82cb0cc"
+  },
+  {
+    "path": "src/components/maps/RoomMaps.test.ts",
+    "uid": "67dc61dc6f4695667d606bcb96e50a8aacd43d95"
+  },
+  {
+    "path": "src/components/maps/RoomMaps.vue",
+    "uid": "9398b8d9d60fc9d9d27595116fbb418ce7c2ee0b"
+  },
+  {
+    "path": "src/components/maps/map-city-library.css",
+    "uid": "1e177aba930f8bd442b5d2441eff13d8b24f5d40"
+  },
+  {
+    "path": "src/components/maps/room-maps.css",
+    "uid": "29f8ee19dbce6904297eb817f8506933bd7d6b1c"
+  },
+  {
+    "path": "src/components/monsters/MonsterActionEditor.vue",
+    "uid": "fff2fa256fadc951e8e6d0a11d8ea7f47983d449"
+  },
+  {
+    "path": "src/components/monsters/MonsterCoreFields.vue",
+    "uid": "6921f817ac9192bb5f0563abd3f33f369a7fb7ba"
+  },
+  {
+    "path": "src/components/monsters/MonsterDetailsEditor.vue",
+    "uid": "ddfd4fb776076d039a2b4daac8e2440f1cbcd269"
+  },
+  {
+    "path": "src/components/monsters/MonsterRuleText.vue",
+    "uid": "f2491dbc3527098f27cddfe98eafab0178abbfaf"
+  },
+  {
+    "path": "src/components/monsters/MonsterSpellcastingEditor.vue",
+    "uid": "f2a8b57f1bf29a446623896d2373578895570d43"
+  },
+  {
+    "path": "src/components/monsters/MonsterStatblock.vue",
+    "uid": "85025f3f3d06267ec6e91821deeba89325b2b84b"
+  },
+  {
+    "path": "src/components/monsters/MonsterWorkshop.vue",
+    "uid": "22619261931e23e7aea550a8135ba069286503d4"
+  },
+  {
+    "path": "src/components/monsters/monster-statblock.css",
+    "uid": "4fab2ae4bc774c6fbaf0e22ed56efca93e151769"
+  },
+  {
+    "path": "src/components/monsters/monster-workshop.css",
+    "uid": "10dfc69098d560b99a306e67c7a4d62f53cc10ee"
+  },
+  {
+    "path": "src/components/notebook/CampaignNotebook.test.ts",
+    "uid": "4998de87b69ecfa7d6a25b029b75ee8d41c91c9c"
+  },
+  {
+    "path": "src/components/notebook/CampaignNotebook.vue",
+    "uid": "9ebb7305dcc0dd7ee1aed2c1ea3cc17abfabd7b7"
+  },
+  {
+    "path": "src/components/notebook/NotebookConnections.vue",
+    "uid": "effbbe77e66eaad4bbb6e284b8307d543088c956"
+  },
+  {
+    "path": "src/components/notebook/NotebookEditor.vue",
+    "uid": "0f122e04e7aab8157a23fece65cf449132a37116"
+  },
+  {
+    "path": "src/components/notebook/NotebookFocusReader.vue",
+    "uid": "4228d3aa611288be62de0ee8712c8ceb0cd2b663"
+  },
+  {
+    "path": "src/components/notebook/NotebookFolderFields.vue",
+    "uid": "fcd1fa5ccacdde0a59ab49c1b531b2c4de6bff5a"
+  },
+  {
+    "path": "src/components/notebook/NotebookGallery.vue",
+    "uid": "033fadc747b7efb0009c0dabd3274b9809ff5c70"
+  },
+  {
+    "path": "src/components/notebook/NotebookGalleryEditor.vue",
+    "uid": "1ab5185268436e0c8dc76a5f61e7d2faae1efde5"
+  },
+  {
+    "path": "src/components/notebook/NotebookQuestClueEditor.vue",
+    "uid": "f8fbfc05671b977acdbcfe1ef526eb2be6696c86"
+  },
+  {
+    "path": "src/components/notebook/NotebookQuestClues.vue",
+    "uid": "aa8d59569c4c3d620620552963bedadc6bc2bab6"
+  },
+  {
+    "path": "src/components/notebook/NotebookSharingFields.vue",
+    "uid": "22a10457d639c66e5d0f8bff64330e5e93ad57db"
+  },
+  {
+    "path": "src/components/notebook/NotebookShortcut.vue",
+    "uid": "5e054640d83f6ce6d0bb7d788fdb3f440539be73"
+  },
+  {
+    "path": "src/components/notebook/NotebookTagFilter.vue",
+    "uid": "1bb1096cbb6e687be6b8528dd11bf64713a54176"
+  },
+  {
+    "path": "src/components/notebook/NotebookTagsEditor.vue",
+    "uid": "551cc85ff6f81f63357b677ef58abc0f63f80932"
+  },
+  {
+    "path": "src/components/notebook/NotebookText.vue",
+    "uid": "0d39c4a5add76d3636f98df50bce623db31ed63f"
+  },
+  {
+    "path": "src/components/notebook/codex.css",
+    "uid": "0c2338565c5cbc83cdd44ac2ba50571f27e9fddf"
+  },
+  {
+    "path": "src/components/notebook/notebook-focus.css",
+    "uid": "60a758415070d4e8bb62310214facb3c858e7589"
+  },
+  {
+    "path": "src/components/notebook/notebook-gallery.css",
+    "uid": "388910336391f86db5ec72cbb8052774aaee2153"
+  },
+  {
+    "path": "src/components/notebook/notebook-tags.css",
+    "uid": "b15f3c5df3b37df64a6cc0f2f9326f92646e7590"
+  },
+  {
+    "path": "src/components/notebook/notebook.css",
+    "uid": "2a1f44b61df768bb964ad47d6efc59442c8fe0cb"
+  },
+  {
+    "path": "src/components/party/PartyCombatKit.vue",
+    "uid": "3c47c7037f13c09118065a50bfc6ea3115dfac6f"
+  },
+  {
+    "path": "src/components/party/PartyDashboard.vue",
+    "uid": "34edf522c9a71291190523d234cd7bb4c0474098"
+  },
+  {
+    "path": "src/components/party/PartyRuleDisclosure.vue",
+    "uid": "954b48712fb1cc0914a1a566da2e4cb2fa434702"
+  },
+  {
+    "path": "src/components/party/party-dashboard.css",
+    "uid": "7075031f6ec0c173d95b30ea2e2a208fff9ca962"
+  },
+  {
+    "path": "src/components/pickers/SpellPicker.vue",
+    "uid": "b8a28e49e73ffe9ccd764bcd5954b5f9e6751fda"
+  },
+  {
+    "path": "src/components/sheet/BioTab.vue",
+    "uid": "e877300ce5b8d9772fc11a099e0d708afa790e2f"
+  },
+  {
+    "path": "src/components/sheet/CharacterEditTab.vue",
+    "uid": "39b4e255fbb25e779becbec492fe7419a21db601"
+  },
+  {
+    "path": "src/components/sheet/CharacterHeader.vue",
+    "uid": "80bed642dc685d27fd5be34b619af184f0254155"
+  },
+  {
+    "path": "src/components/sheet/CharacterSheetFrame.vue",
+    "uid": "5c62cc9530229cfbaaf742a1941d833a38fb59b8"
+  },
+  {
+    "path": "src/components/sheet/CharacterSidebar.vue",
+    "uid": "a0942aec8ea5feddf2d342621d56617fb6c0a9bc"
+  },
+  {
+    "path": "src/components/sheet/CharacterSummary.vue",
+    "uid": "442165e888b5c2aad32ecf69c98d40bb0f4985aa"
+  },
+  {
+    "path": "src/components/sheet/CombatFeatureDescription.vue",
+    "uid": "d88c3838fc83eb2fad7664481cea41a018ab42e3"
+  },
+  {
+    "path": "src/components/sheet/CombatFeatures.vue",
+    "uid": "1232a48dba682cd4c0be2df19b97e9477effaec0"
+  },
+  {
+    "path": "src/components/sheet/CombatTab.vue",
+    "uid": "a889aa9c4380088615b6fefa74984b53b007c10f"
+  },
+  {
+    "path": "src/components/sheet/CombatTrackers.vue",
+    "uid": "74ac64eaa147673294d0053740d8815ce1a6e16c"
+  },
+  {
+    "path": "src/components/sheet/CoreTab.vue",
+    "uid": "95adc01b5fe398f3bc459907d53fa80214508945"
+  },
+  {
+    "path": "src/components/sheet/EquipmentSpellsTab.vue",
+    "uid": "6f8a53eb8fd7c72f33cecd42e0e0105ef5453a4c"
+  },
+  {
+    "path": "src/components/sheet/FeatReference.vue",
+    "uid": "f831e211dd4f571f8cb345cd69895edfd03c0ac2"
+  },
+  {
+    "path": "src/components/sheet/FeatRules.vue",
+    "uid": "03a9dd585a819c665173b52d08ce967c2cdd7866"
+  },
+  {
+    "path": "src/components/sheet/FeatureText.vue",
+    "uid": "22d5434286222a69da530cfb3db7de4b0390b811"
+  },
+  {
+    "path": "src/components/sheet/FeaturesTab.vue",
+    "uid": "d0d084e79c88825b6f3133f13a06fb26e6878056"
+  },
+  {
+    "path": "src/components/sheet/HitPointsPanel.vue",
+    "uid": "f18663f7e2e86695e5a6da2528564904e43e64f5"
+  },
+  {
+    "path": "src/components/sheet/ItemRules.vue",
+    "uid": "e8f2eee04efa29d5e2af14b705270b5133846ebe"
+  },
+  {
+    "path": "src/components/sheet/LevelUpWizard.vue",
+    "uid": "3302d847680ceb72fde01d18c8a269e2a43ce40d"
+  },
+  {
+    "path": "src/components/sheet/ResourceEditor.vue",
+    "uid": "2b64211017457f0ef0795c7a746fc053b1a688de"
+  },
+  {
+    "path": "src/components/sheet/RuleBenefits.vue",
+    "uid": "23fa57ace4f9a0710714836787dabebcb3a3934c"
+  },
+  {
+    "path": "src/components/sheet/RuleReference.vue",
+    "uid": "50281d9df7905abacec21282730328d0813c65a6"
+  },
+  {
+    "path": "src/components/sheet/SheetChunkedList.vue",
+    "uid": "73671fc90e7acf16953285d51c69bc64c97e16c4"
+  },
+  {
+    "path": "src/components/sheet/SheetDisclosure.vue",
+    "uid": "b00f28561de95f18af2013c603475e692cd03339"
+  },
+  {
+    "path": "src/components/sheet/SheetListGroup.vue",
+    "uid": "165edbca5c5d704bb6e405c05da1e5812905141b"
+  },
+  {
+    "path": "src/components/sheet/SheetLoadingStatus.vue",
+    "uid": "28101dc55e8c4b0aa83583c206869926b53fbea9"
+  },
+  {
+    "path": "src/components/sheet/SheetVitalsStats.vue",
+    "uid": "fa3dc92f4a3c345924e346740f2b427b756a5825"
+  },
+  {
+    "path": "src/components/sheet/SpellReferenceRepair.vue",
+    "uid": "08f95eee6f26ad17063a5617f7d55d103370301c"
+  },
+  {
+    "path": "src/components/sheet/SpellSlotEditor.vue",
+    "uid": "c5ddf8c729706314a5fe93643a4b569d4e8d38c7"
+  },
+  {
+    "path": "src/components/sheet/SpellbookPanel.vue",
+    "uid": "00be3c6bb461c752d75947ee814c2b7f919e0b63"
+  },
+  {
+    "path": "src/components/sheet/character-editor.css",
+    "uid": "c006343be997f3e731ae09491014908359478c46"
+  },
+  {
+    "path": "src/components/sheet/level-up.css",
+    "uid": "730f1b1b05f951cba1c475fbf6a77cef828f5758"
+  },
+  {
+    "path": "src/components/sheet/progression-editor.css",
+    "uid": "927539d741ee154665fe3e22e7380b606c0d6166"
+  },
+  {
+    "path": "src/components/sheet/sheet-alignment.css",
+    "uid": "b004f7a2d916e75b380da741ee5ed21956208f40"
+  },
+  {
+    "path": "src/components/sheet/sheet-density.css",
+    "uid": "826cfc335ef9a045509029ba643c0225be6d1102"
+  },
+  {
+    "path": "src/components/sheet/sheet-details.css",
+    "uid": "f78e71debae034fec263b80f89f364c452681ff8"
+  },
+  {
+    "path": "src/components/sheet/sheet-folio.css",
+    "uid": "6b37a83909b2f9a0f4daa8ab8bd7b980354a93f3"
+  },
+  {
+    "path": "src/components/sheet/sheet-refinements.css",
+    "uid": "0df50127cbd76ec17ce89b563a65b527808c4cf6"
+  },
+  {
+    "path": "src/components/sheet/sheet.css",
+    "uid": "f465a526e1ab99b85680bd84337affc83166a829"
+  },
+  {
+    "path": "src/components/ui/AppNav.vue",
+    "uid": "aa57ac0a5f4075c1355f768016803403f95d75a9"
+  },
+  {
+    "path": "src/components/ui/NavigationRecovery.vue",
+    "uid": "bb052deb2435d93af014d2daef2a1ab7c171a716"
+  },
+  {
+    "path": "src/components/workshop/ChoiceGroupEditor.vue",
+    "uid": "adb8024c7b131c8bb11dcc8ef50b9680ce052657"
+  },
+  {
+    "path": "src/components/workshop/DeleteCreationButton.vue",
+    "uid": "72468c15ce27c61c1a48aa1bbcbe79bd3d422b47"
+  },
+  {
+    "path": "src/components/workshop/OptionWorkshop.vue",
+    "uid": "db9091d839f3ed41bbcba71fa42dfaa5607014e2"
+  },
+  {
+    "path": "src/components/workshop/RaceWorkshopEditor.vue",
+    "uid": "e0224a2397daa67eafac58f0b8d3e38415a6ae6b"
+  },
+  {
+    "path": "src/components/workshop/SubraceFields.vue",
+    "uid": "a8224df249f3a5bcab9f4a1a76b782b512b14917"
+  },
+  {
+    "path": "src/components/workshop/WorkshopCharacterChoices.vue",
+    "uid": "daccf18ad6c3acb5a44474fb396565f17dbe5ece"
+  },
+  {
+    "path": "src/components/workshop/WorkshopEditor.vue",
+    "uid": "66b5aaafdd624ff72d48d44c97d6c57c56f4e90b"
+  },
+  {
+    "path": "src/components/workshop/WorkshopLibraryTools.vue",
+    "uid": "e022e228fa3fb68a67382400b0b490fbc7c1534e"
+  },
+  {
+    "path": "src/components/workshop/WorkshopPreview.vue",
+    "uid": "adda241fc3282e83a4ab36a0d723917fcb0a09d3"
+  },
+  {
+    "path": "src/components/workshop/WorkshopPublish.vue",
+    "uid": "f3ccc6431e843c1f5d1daa6b09c6abb8393ddb94"
+  },
+  {
+    "path": "src/components/workshop/WorkshopRuleReview.vue",
+    "uid": "f4b7724c5c5c37b80786103bc3e62f6c02439e71"
+  },
+  {
+    "path": "src/components/workshop/WorkshopSchedule.vue",
+    "uid": "84a9f868effbfcfe168fab24cc4171e46172dcdd"
+  },
+  {
+    "path": "src/components/workshop/WorkshopTrash.vue",
+    "uid": "f028c9247986f5410a54cf10bbf742d292432b37"
+  },
+  {
+    "path": "src/components/workshop/workshop.css",
+    "uid": "bcf0ab60309974ac2a9f54a852018f44edd84c60"
+  },
+  {
+    "path": "src/composables/useBuilderAppearance.ts",
+    "uid": "f6af88296c2492c95097a243397dc9bd9dddf5fd"
+  },
+  {
+    "path": "src/composables/useCharacterBuilder-reuse.test.ts",
+    "uid": "61ffa330f33597f84903c1a81f96f18dd12f703b"
+  },
+  {
+    "path": "src/composables/useCharacterBuilder.test.ts",
+    "uid": "b6617220d925055b61aef39230bac63b85c2d14c"
+  },
+  {
+    "path": "src/composables/useCharacterBuilder.ts",
+    "uid": "a01acf9d4dc746afa990882dde60904a33e90d43"
+  },
+  {
+    "path": "src/composables/useCharacterLibrary.ts",
+    "uid": "f380643d23f196c0bb40ad7675a20dc68809aa43"
+  },
+  {
+    "path": "src/composables/useCharacterSwitchScroll.ts",
+    "uid": "3d3104df0af3515f34fba98426a93083f0dce88d"
+  },
+  {
+    "path": "src/composables/useCompendiumBrowse.test.ts",
+    "uid": "2474dc69be111f4a8988a984259cf9ccf725bd29"
+  },
+  {
+    "path": "src/composables/useCompendiumBrowse.ts",
+    "uid": "eea8d9ebcc707e15af625771354405331c7b7234"
+  },
+  {
+    "path": "src/composables/useIndependentColumns.ts",
+    "uid": "ba2ec4439acfe4f54eef0f93e487be4e6f4cfacd"
+  },
+  {
+    "path": "src/composables/usePartyDashboard.ts",
+    "uid": "e7587621ad0a4f69694bdbb02c83282dcc0703bb"
+  },
+  {
+    "path": "src/composables/useSheetLibrary.ts",
+    "uid": "80c5a204452155f52444b097a32bc913d69c1e01"
+  },
+  {
+    "path": "src/composables/useVisiblePolling.ts",
+    "uid": "a7c0a0fddf7e1aa3ad5e712dd606aea33b8a0f29"
+  },
+  {
+    "path": "src/dashboard.css",
+    "uid": "2d4240b51742979c283ba46d2ec89f67a256c85e"
+  },
+  {
+    "path": "src/directives/siteMotion.ts",
+    "uid": "17a5cf4c69db66127aa8e20763b1b4f44af84b28"
+  },
+  {
+    "path": "src/directives/stableLoading.ts",
+    "uid": "a5aed3daf80df860cf9171e3e5e3e6b53ca53807"
+  },
+  {
+    "path": "src/lib/account-backup.test.ts",
+    "uid": "aa0e925f40803f6049c986bc2de58f1c986cc30e"
+  },
+  {
+    "path": "src/lib/account-backup.ts",
+    "uid": "25e0f0fcab89b4946a9bb382f399525e55d82eaa"
+  },
+  {
+    "path": "src/lib/advancement-discovery.ts",
+    "uid": "ea447ac6b95fdd512054f1e7bd6446802602ec64"
+  },
+  {
+    "path": "src/lib/advancements.ts",
+    "uid": "9cc3f70ef683344239d8b9adcc767e9a0560d782"
+  },
+  {
+    "path": "src/lib/api-response.test.ts",
+    "uid": "57977b6032b4edc2b0a168954c5ef92d7648016e"
+  },
+  {
+    "path": "src/lib/api.ts",
+    "uid": "f02c20f3c3cf9019682b700bf1b160fd8c0c7eb5"
+  },
+  {
+    "path": "src/lib/browse-startup.test.ts",
+    "uid": "effc1b08a0bdfdd26ae7cde60ccc200faeb73fba"
+  },
+  {
+    "path": "src/lib/browse-startup.ts",
+    "uid": "3ee9bfd338ee1d56108af0647cc06ae84d4bdee2"
+  },
+  {
+    "path": "src/lib/calc.ts",
+    "uid": "1ddc629d114a13ea8a3dd51d1caf17889f7eb370"
+  },
+  {
+    "path": "src/lib/character-builder.ts",
+    "uid": "e830c4590a252f5d68e84cff8c8b881982b5db83"
+  },
+  {
+    "path": "src/lib/character-sheet.ts",
+    "uid": "4a92c14e608f58bf404ef5743428901be938f37e"
+  },
+  {
+    "path": "src/lib/compendium-detail-cache.ts",
+    "uid": "ee9025124f93e0f1805609f3a37a8bd2b083b1e4"
+  },
+  {
+    "path": "src/lib/compendium-detail-preloader.ts",
+    "uid": "a7398357e34ffd82f270a083cef0e53deac69ae4"
+  },
+  {
+    "path": "src/lib/compendium-detail-storage.ts",
+    "uid": "93564bd0daa7dd0ce6fc9957685a2f529346369a"
+  },
+  {
+    "path": "src/lib/compendium-navigation.ts",
+    "uid": "57b9520ce9382cf69497377f054b613aea4ddcfe"
+  },
+  {
+    "path": "src/lib/compendium-preparation.ts",
+    "uid": "5b5fd13e9c1b8b45766fdc99730671c856f6507a"
+  },
+  {
+    "path": "src/lib/compendium-reading.ts",
+    "uid": "31219653a54d1ac4eed3e16e693e1d87053b432c"
+  },
+  {
+    "path": "src/lib/compendium-structured.ts",
+    "uid": "645827361af5fa7965fca47dc35cc21876c8a7ef"
+  },
+  {
+    "path": "src/lib/creation-options-cache.ts",
+    "uid": "656ee4c8016ac9f073efac29716b4eddc50e427c"
+  },
+  {
+    "path": "src/lib/creation-selection-client.test.ts",
+    "uid": "18588bb69ce7290c52d8329b72bc554bf691384b"
+  },
+  {
+    "path": "src/lib/creation-selection-client.ts",
+    "uid": "cdea9a00251c2ab23b3f39267a109a6890ff2643"
+  },
+  {
+    "path": "src/lib/equipment-filter-data.json",
+    "uid": "f741fc2351d9edb15a07b3d98a367bdc07fa8b0e"
+  },
+  {
+    "path": "src/lib/equipment.ts",
+    "uid": "f2c870d41098246978e8f7d289830e817f3ee871"
+  },
+  {
+    "path": "src/lib/feat-references.ts",
+    "uid": "4cb54168c7474c98fbfb0e52022a7f1431e534c8"
+  },
+  {
+    "path": "src/lib/foreground-work.ts",
+    "uid": "821133a54458a55e30e83160e8ce52dc8eefc754"
+  },
+  {
+    "path": "src/lib/homebrew-workshop.ts",
+    "uid": "ab3a60d29cc01cc7758f8ce4c6260f857f9f9f34"
+  },
+  {
+    "path": "src/lib/item-forms.json",
+    "uid": "dc49056e371ed122868c1fc0636e78a127e833ce"
+  },
+  {
+    "path": "src/lib/item-search.ts",
+    "uid": "e123d48ebd81dbf62ac4459327412ab30c23a1ff"
+  },
+  {
+    "path": "src/lib/level-up-rules.ts",
+    "uid": "625594f6eb1ddc939706a5be0282217a24a97e44"
+  },
+  {
+    "path": "src/lib/local-compendium-client.ts",
+    "uid": "b04b423a505b1bb75161fdac94c8bd1580c55d92"
+  },
+  {
+    "path": "src/lib/local-compendium-engine.ts",
+    "uid": "b9be95e588fa175920d159fe4b7ac1fdf36cc9e0"
+  },
+  {
+    "path": "src/lib/local-compendium-storage.ts",
+    "uid": "b19dd0d5ee291f78797e858fa69783f4ba7295e9"
+  },
+  {
+    "path": "src/lib/local-compendium.worker.ts",
+    "uid": "10fc3aebc820ba0eb12a0d3ca6c2c80dc7ae65ea"
+  },
+  {
+    "path": "src/lib/magic-item-filter-data.json",
+    "uid": "856578d4c5dcf8ac8650d031120db0694eb56500"
+  },
+  {
+    "path": "src/lib/magic-item-filters.ts",
+    "uid": "56dad6a94b871fc20ceaba6b5d2c5904029afa87"
+  },
+  {
+    "path": "src/lib/map-image-resolution.test.ts",
+    "uid": "7672a584dec04e896e96b0d1bdbbc662f2d8afb5"
+  },
+  {
+    "path": "src/lib/map-image-resolution.ts",
+    "uid": "64b39286101d3ccd5c0f178dae232c73be3b3c93"
+  },
+  {
+    "path": "src/lib/map-loading.test.ts",
+    "uid": "7b14b471637beb5acde626a879b99baa45972d48"
+  },
+  {
+    "path": "src/lib/map-loading.ts",
+    "uid": "65563549113cc4685a3da85fa826078fcb19bcd9"
+  },
+  {
+    "path": "src/lib/map-pin-save.ts",
+    "uid": "f9e858fb5e39495c594db7e416a5f760a43fa69f"
+  },
+  {
+    "path": "src/lib/monster-export.ts",
+    "uid": "6b2694ecb44d78af323d07c9f9c82abd99854d85"
+  },
+  {
+    "path": "src/lib/navigation-recovery.ts",
+    "uid": "52ef68a30d2332b7ba1a8ac036a67337156c5eab"
+  },
+  {
+    "path": "src/lib/navigation-scroll.ts",
+    "uid": "e07de73ca64e382805a47b51ac026eaf89499554"
+  },
+  {
+    "path": "src/lib/notebook-cover.ts",
+    "uid": "f18efa2f4d631ac57b41150cbb092b2dbbb137c8"
+  },
+  {
+    "path": "src/lib/persisted-sheet-references.ts",
+    "uid": "ac115d6f1d0eafca02ebc13a1bc75f56a5089ac6"
+  },
+  {
+    "path": "src/lib/room-startup.test.ts",
+    "uid": "e15277a65e62cb1aed298430dbff2505f68ed003"
+  },
+  {
+    "path": "src/lib/room-startup.ts",
+    "uid": "1af757c03c9b025e707b4b5d8f9eb4f12bc8fc2e"
+  },
+  {
+    "path": "src/lib/sheet-reference-cache.ts",
+    "uid": "1563790ca400468faf168512cbd1a6cfad418dbe"
+  },
+  {
+    "path": "src/lib/spell-level-groups.ts",
+    "uid": "98c3a7fe6cfcdc81fcd537994b2d715a8e6c3714"
+  },
+  {
+    "path": "src/lib/spell-reference.ts",
+    "uid": "a4c69e1691c6bbe0f551138d0083cbe1c114cfa9"
+  },
+  {
+    "path": "src/lib/spell-selection.ts",
+    "uid": "953835915a1747013dbfcbd2a547cfe0a457cfb6"
+  },
+  {
+    "path": "src/lib/srd-selection-lists.json",
+    "uid": "48070d5578f5ef12fb98e0f4976d70a21adbc578"
+  },
+  {
+    "path": "src/lib/srd.ts",
+    "uid": "72e6689b5cb481867090973913f38be90a32507c"
+  },
+  {
+    "path": "src/lib/workshop-startup.test.ts",
+    "uid": "e4554845fd083aefd62ec92ea31f548936b15031"
+  },
+  {
+    "path": "src/lib/workshop-startup.ts",
+    "uid": "fa33ca0c02d7587da674bac29a6bdc12bf19829d"
+  },
+  {
+    "path": "src/lib/workshop-trash.ts",
+    "uid": "ae93e3135a11a9cdc33b617c737db3f7017670ec"
+  },
+  {
+    "path": "src/main.ts",
+    "uid": "8be940a0a32ec2d489f2921d66aba20de918be04"
+  },
+  {
+    "path": "src/rooms.css",
+    "uid": "9710b39f1ab0c9d340804e98f95f83f78bcf95ca"
+  },
+  {
+    "path": "src/router/index.ts",
+    "uid": "33a9f9b4a9f6ef5b435b61ebd4996187c6914cd4"
+  },
+  {
+    "path": "src/router/recovery.test.ts",
+    "uid": "36564236638459f83dea07e63d5347dc4f8661f8"
+  },
+  {
+    "path": "src/site-motion.css",
+    "uid": "95e89cca4e1cdd37b29d8aff276c2fd10f7969ef"
+  },
+  {
+    "path": "src/site-scrollbars.css",
+    "uid": "da1d619d701215283932bb0dd0af0d9839c1cdc1"
+  },
+  {
+    "path": "src/site-theme.css",
+    "uid": "320ea70148a985c9feffbce2215d36cdf12f7e0c"
+  },
+  {
+    "path": "src/stores/auth.ts",
+    "uid": "1795eabf266a2c354c5865571b22f27e857b43d9"
+  },
+  {
+    "path": "src/stores/characters.ts",
+    "uid": "eb3433be73c48c1503c41d738e8f57dac1d991ae"
+  },
+  {
+    "path": "src/style.css",
+    "uid": "004ef4ea07d3c4a1aecdf43070c3e56c840386ba"
+  },
+  {
+    "path": "src/views/CharacterCreationView.vue",
+    "uid": "fbbf7aff9c4a594cb9122d3a04ac8af06c392cbe"
+  },
+  {
+    "path": "src/views/CharacterSheetView.vue",
+    "uid": "6a5a8e946ab5fda9d7aafa64e9450f0f8823f022"
+  },
+  {
+    "path": "src/views/CompendiumBuildersPreview.vue",
+    "uid": "28213b8e020985d6782ac04976ab4796ae921c12"
+  },
+  {
+    "path": "src/views/CompendiumView.vue",
+    "uid": "4f5571267b7b133814b79532d70a1d1881900a4e"
+  },
+  {
+    "path": "src/views/DashboardView.vue",
+    "uid": "7f9ca2a8baa23f32e9cb2a885eff6ce39b74377b"
+  },
+  {
+    "path": "src/views/HomebrewWorkshopView.vue",
+    "uid": "017f6d331a92754df4b1d80e20a081a8fe224edb"
+  },
+  {
+    "path": "src/views/LoginView.vue",
+    "uid": "aa368182bfba1d062d39169b2da44b1c26d8e019"
+  },
+  {
+    "path": "src/views/NotFoundView.vue",
+    "uid": "3f26e62a753357d06ea5dd1a0afee2c9686a48c8"
+  },
+  {
+    "path": "src/views/RoomJoinView.vue",
+    "uid": "a75cf40dd5c7d8d4a6f43712d71a8c3f1e8f2dbb"
+  },
+  {
+    "path": "src/views/RoomView.vue",
+    "uid": "d93e9dedf6ec4ec3d689ff5035e959ddb50ebc8c"
+  },
+  {
+    "path": "src/views/RoomsView.vue",
+    "uid": "0a378a5eb2064a8b22dfa44497e4de9b35130ebb"
+  },
+  {
+    "path": "tsconfig.app.json",
+    "uid": "e4be1d3316f33a7c219923e89108155c66a50d1d"
+  },
+  {
+    "path": "tsconfig.json",
+    "uid": "916168243c072245e89f349fb50e0d11696086fb"
+  },
+  {
+    "path": "tsconfig.node.json",
+    "uid": "4b33462ba6158e6089c849a970d01ca2d339ef54"
+  },
+  {
+    "path": "vercel.json",
+    "uid": "eab717e1c27b571af9a0315020a20f9d19eb7fc2"
+  },
+  {
+    "path": "vite.config.ts",
+    "uid": "190a667ff54d3316dda388a3af19f1d3bcdaa760"
+  },
+  {
+    "path": "server/lib/dmv-catalog.ts",
+    "uid": "14d18d09a0ea3f172dc7130d90b31a961c34d77e"
+  },
+  {
+    "path": "server/lib/dmv-catalog.test.ts",
+    "uid": "2f1eae84afdb9fce2f5f0ca4d4f3133aab99a4c7"
+  },
+  {
+    "path": "server/lib/dmv-rules.test.ts",
+    "uid": "76f9e9564e1e89e63799c17d51bffae995b88067"
+  },
+  {
+    "path": "server/lib/dmv-source.test.ts",
+    "uid": "e09ca6e87a20b9465601a47b17f48342f9205e19"
+  },
+  {
+    "path": "server/lib/dmv-overlap.test.ts",
+    "uid": "644b13789b8c45405ebb98819a78fd71beca17d9"
+  },
+  {
+    "path": "src/lib/dmv-data-link.ts",
+    "uid": "1f5ab138f55d4e93ace9b1bbf1fd50efd5449589"
+  },
+  {
+    "path": "src/lib/dmv-data-link.test.ts",
+    "uid": "1d452026ba46c5a5eabd53f028a1c09c9821c801"
+  },
+  {
+    "path": "src/router/page-preparation.ts",
+    "uid": "9c490cb97abfcf2621fc0bff2458ed844b6b9cbd"
+  },
+  {
+    "path": "src/router/page-preparation.test.ts",
+    "uid": "e86487bcec817d2012f9c43552d28539c6ea0b33"
+  }
+]

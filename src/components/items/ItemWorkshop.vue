@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed,onMounted,onUnmounted,ref } from 'vue'
+import { computed,onMounted,ref } from 'vue'
 import { api } from '../../lib/api'
 import type { EquipmentItem,CharacterSummary } from '../../../shared/character'
 import ItemComposer from './ItemComposer.vue'
@@ -12,28 +12,13 @@ const items=ref<{id:string;item:EquipmentItem}[]>([]),characters=ref<CharacterSu
 const open=ref(false),mode=ref<'library'|'give'>('library'),initial=ref<EquipmentItem>(),magical=ref(false),message=ref(''),error=ref(''),loading=ref(false)
 const filters=ref(emptyItemFilters())
 const matches=computed(()=>items.value.filter(e=>(filter.value==='all'||!!e.item.magical===(filter.value==='magic'))&&itemSearchText(e.item).includes(query.value.toLowerCase())&&matchesEquipmentItem(e.item,filters.value)))
-let loadRun=0,disposed=false,loadAbort:AbortController|undefined
-async function load(){
-  const run=++loadRun
-  loadAbort?.abort();const controller=new AbortController();loadAbort=controller
-  loading.value=true;error.value=''
-  try{
-    const [nextItems,nextCharacters]=await Promise.all([
-      api.get<{id:string;item:EquipmentItem}[]>('/api/items',{signal:controller.signal}),
-      api.get<CharacterSummary[]>('/api/characters',{signal:controller.signal}),
-    ])
-    if(disposed||run!==loadRun)return
-    items.value=nextItems;characters.value=nextCharacters
-  }catch(e){if(!disposed&&run===loadRun&&!controller.signal.aborted)error.value=e instanceof Error?e.message:'Could not load items.'}
-  finally{if(run===loadRun)loading.value=false}
-}
+async function load(){loading.value=true;error.value='';try{items.value=await api.get('/api/items');characters.value=await api.get('/api/characters')}catch(e){error.value=e instanceof Error?e.message:'Could not load items.'}finally{loading.value=false}}
 function create(value:boolean){mode.value='library';initial.value=undefined;magical.value=value;open.value=true}
 function edit(item:EquipmentItem){mode.value='library';initial.value=item;open.value=true}
 function give(item:EquipmentItem){mode.value='give';initial.value=item;open.value=true}
 async function saved(text:string){message.value=text;await load()}
 async function removed(text:string){open.value=false;message.value=text;await load()}
 onMounted(load)
-onUnmounted(()=>{disposed=true;loadRun++;loadAbort?.abort()})
 </script>
 <template>
   <section v-stable-loading="loading" class="item-workshop hw-library" aria-label="Item Workshop">

@@ -84,7 +84,7 @@ onMounted(async()=>{
 async function loadLibrary(){
   loading.value=true;loadError.value=''
   const imported=loadWorkshopStartup()
-  const results=await Promise.allSettled([imported.then(v=>v.classes),imported.then(v=>v.subclasses),imported.then(v=>v.spells),srd.classes(),srd.compendium('spells'),imported.then(v=>v.library),imported.then(v=>v.races)])
+  const results=await Promise.allSettled([imported.then(v=>v.classes),imported.then(v=>v.subclasses),imported.then(v=>v.spells),srd.classes(),srd.spells(),imported.then(v=>v.library),imported.then(v=>v.races)])
   const [klass,subclass,spell,coreClass,coreSpell,info,races]=results
   entries.value=[];classes.value=[];spells.value=[]
   if(klass?.status==='fulfilled'){entries.value.push(...klass.value.map(e=>({...e,kind:'class' as const})));classes.value.push(...klass.value)}
