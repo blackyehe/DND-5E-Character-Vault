@@ -12,7 +12,12 @@
     "preview": "vite preview",
     "server:dev": "npm --prefix server run dev",
     "server:typecheck": "npm --prefix server run typecheck",
+    "pretest": "node workspace-artifacts.mjs check",
     "test": "vitest run",
+    "test:workspace": "node --test scripts/workspace-artifacts.test.mjs",
+    "workspace:check": "node workspace-artifacts.mjs check",
+    "workspace:clean": "node workspace-artifacts.mjs clean",
+    "workspace:run": "node workspace-artifacts.mjs run",
     "typecheck": "vue-tsc -b"
   },
   "dependencies": {

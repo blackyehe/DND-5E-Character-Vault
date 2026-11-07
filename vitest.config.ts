@@ -3,6 +3,9 @@ import viteConfig from './vite.config.ts'
 
 export default mergeConfig(viteConfig, defineConfig({
   test: {
+    // Large transformed fixture modules previously left a multi-GB disk cache.
+    fsModuleCache: false,
+    maxWorkers: 2,
     // Archived releases under output/ and .preview.local/ are immutable evidence,
     // not the current application. Prototype node:test files have their own runner.
     include: ['src', 'shared', 'server', 'scripts/benchmarks'].map(directory =>
