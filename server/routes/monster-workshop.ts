@@ -45,8 +45,8 @@ router.post('/publish',async(req,res)=>{try{
   const key=`codex-monster-${draft.id}`,previous=old?inspectOrcbrew(old.source).entries.monsters.find(e=>(e.details as Record<string,unknown>)[':codex/monster']&&((e.details as Record<string,unknown>)[':codex/monster'] as {id:string}).id===draft.id):undefined
   const revision=Number((previous?.details as Record<string,unknown>|undefined)?.[':codex/monster-revision'])||0
   if((draft.published?.revision??0)!==revision)return res.status(409).json({error:'This creature has a newer saved revision. Reopen it from the library.'})
-  const source=placeMonsterEntry(old?.source,key,rawMonster(draft,revision+1),draft.id);if(Buffer.byteLength(source)>MAX_PACK_BYTES)return res.status(400).json({error:'The pack would exceed 64 MB. Choose a new pack.'});inspectOrcbrew(source)
-  const hash=sourceHash(source),data=storedPackData({...old,filename:old?.filename??target.filename!,source,includeDisabled:old?.includeDisabled??false})
+  const source=placeMonsterEntry(old?.source,key,rawMonster(draft,revision+1),draft.id);if(Buffer.byteLength(source)>MAX_PACK_BYTES)return res.status(400).json({error:'The pack would exceed 64 MB. Choose a new pack.'});const inspected=inspectOrcbrew(source)
+  const hash=sourceHash(source),data=storedPackData({...old,filename:old?.filename??target.filename!,source,includeDisabled:old?.includeDisabled??false},{report:inspected.report})
   let saved=doc?await CustomContent.findOneAndUpdate({_id:doc._id,userId:req.userId,updatedAt:doc.updatedAt},{$set:{data,sourceHash:hash}},{new:true}).lean():await CustomContent.findOne({userId:req.userId,type:'orcbrew',sourceHash:hash}).lean()
   if(!doc&&!saved)saved=(await CustomContent.create({userId:req.userId,type:'orcbrew',data,sourceHash:hash})).toObject()
   if(!saved)return res.status(409).json({error:'The pack changed while saving. Reload the library and retry.'})

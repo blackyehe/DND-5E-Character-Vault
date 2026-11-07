@@ -46,18 +46,20 @@ async function submit() {
 
       <form class="space-y-4" @submit.prevent="submit">
         <div v-if="mode === 'register'">
-          <label class="label-micro block mb-1">Display name</label>
-          <input v-model="displayName" class="input-base" required />
+          <label for="auth-display-name" class="label-micro block mb-1">Display name</label>
+          <input id="auth-display-name" v-model="displayName" autocomplete="nickname" class="input-base" required />
         </div>
         <div>
-          <label class="label-micro block mb-1">Email</label>
-          <input v-model="email" type="email" class="input-base" required />
+          <label for="auth-email" class="label-micro block mb-1">Email</label>
+          <input id="auth-email" v-model="email" type="email" autocomplete="username" class="input-base" required />
         </div>
         <div>
-          <label class="label-micro block mb-1">Password</label>
+          <label for="auth-password" class="label-micro block mb-1">Password</label>
           <input
+            id="auth-password"
             v-model="password"
             type="password"
+            :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
             class="input-base"
             :minlength="mode === 'register' ? 8 : undefined"
             required

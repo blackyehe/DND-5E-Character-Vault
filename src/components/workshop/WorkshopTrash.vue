@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import WorkshopLibraryTools from './WorkshopLibraryTools.vue'
 import { api } from '../../lib/api'
 import { useAuthStore } from '../../stores/auth'
 import { announceWorkshopChange, deviceTrash, restoreCreation, type DeletedCreation } from '../../lib/workshop-trash'
 const emit = defineEmits<{ changed: [] }>()
 const auth = useAuthStore(), entries = ref<DeletedCreation[]>([]), loading = ref(false), busy = ref(''), error = ref(''), notice = ref('')
+const query=ref('')
+const matches=computed(()=>entries.value.filter(entry=>`${entry.name} ${entry.kind} ${entry.packName??''}`.toLowerCase().includes(query.value.toLowerCase())))
 async function load() {
   loading.value = true; error.value = ''
   const results = await Promise.allSettled([api.get<DeletedCreation[]>('/api/workshop-trash', { timeoutMs: 60000 }), Promise.resolve().then(() => deviceTrash(auth.user?.id ?? 'local'))])
@@ -21,8 +24,8 @@ async function restore(entry: DeletedCreation) {
 }
 onMounted(load)
 </script>
-<template><section v-stable-loading="loading" class="hw-panel hw-trash"><header class="hw-between"><div><h2>Recently deleted</h2><p class="hw-hint">Restore creations to their original library or pack. Device drafts are available only in this browser.</p></div><button class="hw-button" :disabled="loading || !!busy" @click="load">Reload</button></header>
+<template><section v-stable-loading="loading" class="hw-trash hw-library"><WorkshopLibraryTools title="Recently deleted" description="Restore creations to their original library or pack. Device drafts are available only in this browser."><template #search><label>Find deleted creations<input v-model="query" type="search" placeholder="Search by name, type or pack…" /></label></template><template #utility><button type="button" class="hw-text-button" :disabled="loading || !!busy" @click="load">Reload library</button></template></WorkshopLibraryTools>
   <p class="hw-hint">Saved definitions stay recoverable while their original pack is kept. Complete site backups include saved recovery data.</p>
-  <p v-if="notice" class="hw-save-status" role="status">{{ notice }}</p><p v-if="error" class="hw-alert" role="alert">{{ error }}</p><p v-if="loading" role="status">Loading deleted creations…</p><p v-else-if="!entries.length && !error" class="hw-hint">No deleted creations.</p>
-  <div v-for="entry in entries" :key="entry.scope + entry.id" class="hw-trash-row"><div><strong>{{ entry.name }}</strong><small>{{ entry.kind === 'monster-action' ? 'Reusable action' : entry.kind }} · {{ entry.packName || (entry.scope === 'draft' ? 'This device' : 'Account library') }} · {{ new Date(entry.deletedAt).toLocaleDateString() }}</small></div><button class="hw-button" :disabled="!!busy" :aria-label="`Restore ${entry.name}`" @click="restore(entry)">{{ busy === entry.id ? 'Restoring…' : 'Restore' }}</button></div>
+  <p v-if="notice" class="hw-save-status" role="status">{{ notice }}</p><p v-if="error" class="hw-alert" role="alert">{{ error }}</p><p v-if="loading" role="status">Loading deleted creations…</p><p v-else-if="!matches.length && !error" class="hw-empty-inline">{{entries.length?'No deleted creations match your search.':'No deleted creations.'}}</p>
+  <div v-for="entry in matches" :key="entry.scope + entry.id" class="hw-trash-row"><div><strong>{{ entry.name }}</strong><small>{{ entry.kind === 'monster-action' ? 'Reusable action' : entry.kind }} · {{ entry.packName || (entry.scope === 'draft' ? 'This device' : 'Account library') }} · {{ new Date(entry.deletedAt).toLocaleDateString() }}</small></div><button class="hw-button" :disabled="!!busy" :aria-label="`Restore ${entry.name}`" @click="restore(entry)">{{ busy === entry.id ? 'Restoring…' : 'Restore' }}</button></div>
 </section></template>

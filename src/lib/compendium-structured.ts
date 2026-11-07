@@ -1,13 +1,51 @@
-import { field, hasReadingValue, readingFields, readingLabel, readingName, record } from './compendium-reading'
+import { field, hasReadingValue, readingFields, readingLabel, readingName, readingText, record } from './compendium-reading'
 import type { ReadingField } from './compendium-reading'
 
 const plain = (key: string) => key.replace(/^:/,'').replace(/_/g,'-').replace(/([a-z])([A-Z])/g,'$1-$2').toLowerCase()
 const without = (value: unknown, keys: string[]) => Object.fromEntries(Object.entries(record(value)).filter(([key])=>!keys.includes(plain(key))))
-export interface ReadingBenefit { title: string; level?: unknown; value?: unknown; details: ReadingField[] }
+export interface ReadingBenefit { title: string; level?: unknown; value?: unknown; spell?:string; details: ReadingField[] }
+
+/** Group only explicit acquisition levels. Preserve order within each level and retain unusual source values. */
+export function readingBenefitGroups(benefits: ReadingBenefit[]) {
+  const groups: {level:unknown;benefits:ReadingBenefit[]}[]=[]
+  for(const benefit of benefits){
+    const level=hasReadingValue(benefit.level)?benefit.level:undefined
+    let group=groups.find(row=>Object.is(row.level,level))
+    if(!group){group={level,benefits:[]};groups.push(group)}
+    group.benefits.push(benefit)
+  }
+  return groups.sort((a,b)=>{
+    if(a.level===undefined||b.level===undefined)return a.level===undefined?-1:1
+    if(typeof a.level==='number'&&typeof b.level==='number')return a.level-b.level
+    if(typeof a.level==='number'||typeof b.level==='number')return typeof a.level==='number'?-1:1
+    return 0
+  })
+}
+
+export interface ReadingResource { name:string; notes:string; fields:ReadingField[] }
+/** Compact presentation for complete Workshop tracker definitions; unfamiliar shapes keep the generic reader. */
+export function readingResources(value:unknown,key=''):ReadingResource[]|null {
+  if(!['resources','resource-trackers'].includes(plain(key))||!Array.isArray(value)||!value.length)return null
+  if(!value.every(row=>typeof field(row,'name')==='string'&&['fixed','level','ability','proficiency'].includes(String(field(row,'basis')))&&['base','multiplier','minimum'].every(k=>typeof field(row,k)==='number'&&Number.isInteger(field(row,k)))&&(field(row,'basis')!=='ability'||['str','dex','con','int','wis','cha'].includes(String(field(row,'ability')).replace(/^:/,'')))))return null
+  return value.map(row=>{
+    const basis=String(field(row,'basis')),base=Number(field(row,'base')),multiplier=Number(field(row,'multiplier')),minimum=Number(field(row,'minimum'))
+    const ability=field(row,'ability'),basisLabel=basis==='level'?'Class level':basis==='ability'?`${typeof ability==='string'?readingLabel(ability):readingName(ability)||'Ability'} modifier`:'Proficiency bonus'
+    const formula=basis==='fixed'?String(base):`${multiplier===1?'':`${multiplier} × `}${basisLabel}${base===0?'':base>0?` + ${base}`:` − ${Math.abs(base)}`}`
+    const notes=typeof field(row,'notes')==='string'?readingText(field(row,'notes')):'',recovery=field(row,'recovery')
+    const replaced=['name','basis','base','multiplier','minimum','ability',...(notes?['notes']:[]),'recovery']
+    // The formula expresses the active basis. Inactive editor settings do not describe this resource's rules.
+    return {name:String(field(row,'name')),notes,fields:[
+      {label:'Maximum',value:`${formula} (minimum ${minimum})`},
+      ...(hasReadingValue(field(row,'level'))?[{label:'Available at level',value:field(row,'level')}]:[]),
+      ...(hasReadingValue(recovery)?[{label:'Recovery',value:recovery==='short'?'Short rest':recovery==='long'?'Long rest':recovery==='manual'?'Manual':recovery}]:[]),
+      ...readingFields(without(row,[...replaced,'level'])).map(f=>plain(f.key??'')==='unlimited-at'?{...f,label:'Unlimited from level'}:f),
+    ]}
+  })
+}
 
 /** Keep source order and unspecified levels. In particular, a spell's own level is not the level it is gained. */
 export function readingBenefits(value: unknown, key = ''): ReadingBenefit[] | null {
-  if(!['level-modifiers','level-selections'].includes(plain(key))||!Array.isArray(value)||!value.length)return null
+  if(!['benefits','level-modifiers','level-selections'].includes(plain(key))||!Array.isArray(value)||!value.length)return null
   if(!value.every(row=>typeof field(row,'type')==='string'))return null
   return value.map(row=>{
     const type=String(field(row,'type')), payload=field(row,'value')
@@ -16,6 +54,7 @@ export function readingBenefits(value: unknown, key = ''): ReadingBenefit[] | nu
       const name=readingName(payload)||field(payload,'key')
       const ability=field(payload,'ability')
       result.title=typeof name==='string'&&name ? `Spell: ${name.startsWith(':')?readingLabel(name):name}` : 'Spell'
+      if(typeof name==='string'&&name)result.spell=name.replace(/^:/,'').split('/').pop()!
       // The key is normally editor metadata; here it is the spell's only name.
       result.value=undefined
       result.details=[

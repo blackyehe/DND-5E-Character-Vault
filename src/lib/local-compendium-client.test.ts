@@ -7,7 +7,7 @@ class TestWorker {
  onmessage?: (event:{data:unknown})=>void
  onerror?:()=>void
  constructor(){created++}
- postMessage(command:any){commands.push(command.action);queueMicrotask(()=>this.onmessage?.({data:{id:command.id,value:command.action==='open'||command.action==='save'?revision:{revision,entries:[]}}}))}
+ postMessage(command:any){commands.push(command.action);queueMicrotask(()=>this.onmessage?.({data:{id:command.id,value:command.action==='open'?revision:command.action==='save'?{revision,kinds:['spells']}:command.action==='browse'?{revision,page:{revision,entries:[]}}:{revision,entries:[]}}}))}
  terminate(){terminated++}
 }
 beforeEach(()=>{
@@ -19,6 +19,85 @@ beforeEach(()=>{
 })
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals()})
 describe('device index validation boundary',()=>{
+ it('keeps an unchanged category after a library mutation without exporting it again',async()=>{
+  const digest='d'.repeat(64),next='b'.repeat(64)
+  vi.stubGlobal('Worker',class extends TestWorker{postMessage(command:any){
+   if(command.action==='identity'||command.action==='revalidate'){
+    commands.push(command.action);queueMicrotask(()=>this.onmessage?.({data:{id:command.id,value:command.action==='identity'?{revision,digest}:{revision:next,kinds:['spells']}}}))
+   }else super.postMessage(command)
+  }})
+  get.mockImplementation(async(path:string)=>({owner:'owner',kind:'spells',revision:next,version:'local-compendium-1',...(path.includes('?content=true')?{digest}:{})}))
+  const module=await import('./local-compendium-client')
+  expect(await module.checkSavedCompendium('owner','spells',new AbortController().signal)).toBe(true)
+  expect(module.localCompendiumState('owner','spells')).toBe('saved')
+  expect(commands).toContain('revalidate');expect(get.mock.calls.some(([path])=>path.includes('/local-index'))).toBe(false)
+ })
+ it('requires a new export when the category fingerprint changed',async()=>{
+  vi.stubGlobal('Worker',class extends TestWorker{postMessage(command:any){
+   if(command.action==='identity')queueMicrotask(()=>this.onmessage?.({data:{id:command.id,value:{revision,digest:'d'.repeat(64)}}}))
+   else super.postMessage(command)
+  }})
+  get.mockResolvedValue({owner:'owner',kind:'spells',revision:'b'.repeat(64),version:'local-compendium-1',digest:'e'.repeat(64)})
+  const module=await import('./local-compendium-client')
+  expect(await module.checkSavedCompendium('owner','spells',new AbortController().signal)).toBe(false)
+  expect(module.localCompendiumState('owner','spells')).toBe('outdated');expect(commands).not.toContain('revalidate')
+ })
+ it.each(['owner','kind','version','concurrent-edit'])('does not relabel a category after invalid %s validation',async(mode)=>{
+  vi.stubGlobal('Worker',class extends TestWorker{postMessage(command:any){
+   if(command.action==='identity')queueMicrotask(()=>this.onmessage?.({data:{id:command.id,value:{revision,digest:'d'.repeat(64)}}}))
+   else super.postMessage(command)
+  }})
+  let metadataCalls=0
+  get.mockImplementation(async(path:string)=>{
+   const value:any={owner:'owner',kind:'spells',version:'local-compendium-1',revision:'b'.repeat(64),digest:'d'.repeat(64)}
+   if(path.includes('?content=true')){if(mode!=='concurrent-edit')value[mode]='wrong'}
+   else if(++metadataCalls>1&&mode==='concurrent-edit')value.revision='c'.repeat(64)
+   return value
+  })
+  const module=await import('./local-compendium-client')
+  await expect(module.checkSavedCompendium('owner','spells',new AbortController().signal)).rejects.toThrow()
+  expect(commands).not.toContain('revalidate');expect(module.localCompendiumState('owner','spells')).not.toBe('saved')
+ })
+ it('never presents a persisted marker alone as verified device storage',async()=>{
+  const module=await import('./local-compendium-client')
+  expect(module.localCompendiumState('owner','spells')).toBe('checking')
+ })
+ it('preserves the same verified owner but clears a different owner on adoption',async()=>{
+  const module=await import('./local-compendium-client'),before=marker
+  module.adoptLocalCompendiumOwner('owner');expect(marker).toBe(before)
+  module.adoptLocalCompendiumOwner('stranger');expect(marker).toBeNull()
+ })
+ it('does not publish a download that finishes after logout',async()=>{
+  let finish!:(value:unknown)=>void
+  get.mockImplementation(()=>new Promise(r=>{finish=r}))
+  const module=await import('./local-compendium-client')
+  const saving=module.saveLocalCompendium('owner','spells',new AbortController().signal)
+  module.clearLocalCompendium();finish({owner:'owner',kind:'spells',revision})
+  await expect(saving).rejects.toThrow('cancelled');expect(marker).toBeNull();expect(commands).toEqual([])
+ })
+ it('recovers a committed category without a marker instead of downloading it again',async()=>{
+  marker=null;get.mockResolvedValue({owner:'owner',revision,version:'local-compendium-1'})
+  const module=await import('./local-compendium-client')
+  expect(await module.checkSavedCompendium('owner','spells',new AbortController().signal)).toBe(true)
+  expect(JSON.parse(marker!).kinds).toEqual(['spells']);expect(get).toHaveBeenCalledOnce()
+  expect(get.mock.calls[0]![0]).toContain('/local-revision');module.cancelLocalPreparation()
+ })
+ it('removes evicted categories from the marker and does not advertise them as available',async()=>{
+  marker=JSON.stringify({owner:'owner',kinds:['spells','monsters']})
+  get.mockImplementation(async(path:string)=>path.endsWith('/local-index')?{owner:'owner',kind:'spells',revision}:{owner:'owner',revision,version:'local-compendium-1'})
+  const module=await import('./local-compendium-client')
+  await module.saveLocalCompendium('owner','spells',new AbortController().signal)
+  expect(JSON.parse(marker!).kinds).toEqual(['spells'])
+  expect(module.localCompendiumState('owner','monsters')).toBe('unavailable');module.cancelLocalPreparation()
+ })
+ it('does not terminate active browsing when background preparation is paused',async()=>{
+  get.mockResolvedValue({owner:'owner',revision,version:'local-compendium-1'})
+  const module=await import('./local-compendium-client')
+  await module.queryLocalCompendium('owner','spells',query,new AbortController().signal)
+  module.cancelLocalPreparation();expect(terminated).toBe(0)
+  expect(await module.queryLocalCompendium('owner','spells',query,new AbortController().signal)).toMatchObject({revision})
+  module.releaseLocalCompendium()
+ })
  it('changes the cross-tab marker on every successful resave of the same category',async()=>{
   vi.useFakeTimers()
   const module=await import('./local-compendium-client')
@@ -45,18 +124,19 @@ describe('device index validation boundary',()=>{
  })
  it('reports a missing disk copy and skips repeated opens without removing the saved hint',async()=>{
   vi.stubGlobal('Worker',class extends TestWorker{postMessage(command:any){commands.push(command.action);queueMicrotask(()=>this.onmessage?.({data:{id:command.id,value:null}}))}})
+  get.mockResolvedValue({owner:'owner',revision,version:'local-compendium-1'})
   const module=await import('./local-compendium-client')
   await module.queryLocalCompendium('owner','spells',query,new AbortController().signal)
   expect(module.localCompendiumState('owner','spells')).toBe('missing')
   await module.queryLocalCompendium('owner','spells',query,new AbortController().signal)
-  expect(commands).toEqual(['open']);expect(get).not.toHaveBeenCalled();expect(marker).not.toBeNull();module.releaseLocalCompendium()
+  expect(commands).toEqual(['open']);expect(get).toHaveBeenCalledOnce();expect(marker).not.toBeNull();module.releaseLocalCompendium()
  })
  it('allows a category refreshed in another tab to be validated again',async()=>{
   get.mockResolvedValueOnce({owner:'owner',revision:'b'.repeat(64),version:'local-compendium-1'}).mockResolvedValue({owner:'owner',revision,version:'local-compendium-1'})
   const module=await import('./local-compendium-client')
   await module.queryLocalCompendium('owner','spells',query,new AbortController().signal)
   storageChanged!({key:'codex:local-compendium:v1'})
-  expect(module.localCompendiumState('owner','spells')).toBe('saved')
+  expect(module.localCompendiumState('owner','spells')).toBe('checking')
   expect(await module.queryLocalCompendium('owner','spells',query,new AbortController().signal)).toMatchObject({revision})
   module.releaseLocalCompendium()
  })
@@ -77,17 +157,18 @@ describe('device index validation boundary',()=>{
   const pending=module.queryLocalCompendium('owner','spells',query,controller.signal)
   await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));controller.abort();await pending
   finish({owner:'owner',revision:'b'.repeat(64),version:'local-compendium-1'});await Promise.resolve()
-  expect(module.localCompendiumState('owner','spells')).toBe('saved');module.releaseLocalCompendium()
+  expect(module.localCompendiumState('owner','spells')).toBe('checking');module.releaseLocalCompendium()
  })
  it('bounds a silent worker to 1.5 seconds and backs off subsequent local attempts',async()=>{
   vi.useFakeTimers()
   vi.stubGlobal('Worker',class extends TestWorker{postMessage(){commands.push('silent-open')}})
+  get.mockResolvedValue({owner:'owner',revision,version:'local-compendium-1'})
   const module=await import('./local-compendium-client')
   const result=module.queryLocalCompendium('owner','spells',query,new AbortController().signal)
   await vi.advanceTimersByTimeAsync(1499);expect(terminated).toBe(0)
   await vi.advanceTimersByTimeAsync(1);expect(await result).toBeUndefined();expect(terminated).toBe(1)
   expect(await module.queryLocalCompendium('owner','spells',query,new AbortController().signal)).toBeUndefined()
-  expect(created).toBe(1);expect(get).not.toHaveBeenCalled()
+  expect(created).toBe(1);expect(get).toHaveBeenCalledOnce()
  })
  it('bounds a stalled revision check and aborts its network request before server fallback',async()=>{
   vi.useFakeTimers();get.mockImplementation(()=>new Promise(()=>{}))
@@ -103,7 +184,7 @@ describe('device index validation boundary',()=>{
   vi.stubGlobal('Worker',class extends TestWorker{postMessage(){}})
   const module=await import('./local-compendium-client'),controller=new AbortController()
   const result=module.queryLocalCompendium('owner','spells',query,controller.signal)
-  controller.abort();expect(await result).toBeUndefined();expect(get).not.toHaveBeenCalled()
+  controller.abort();expect(await result).toBeUndefined();expect(get.mock.calls[0]![1].signal.aborted).toBe(true)
   module.releaseLocalCompendium()
  })
  it('skips worker and network entirely without a saved owner/category hint',async()=>{

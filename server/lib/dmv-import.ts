@@ -5,6 +5,7 @@ import { emptyCharacter, type Character } from '../../shared/character'
 import { compactWeaponProficiencies } from '../../shared/weapon-proficiencies'
 import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, type AbilityKey } from '../../shared/calc'
 import { readSrdRule } from './srd-client'
+import { localSrdRule } from './srd-snapshot'
 import { readEdn } from './edn'
 import { resolveEquipmentItem } from './equipment-references'
 type Data = Record<string, unknown>
@@ -13,8 +14,9 @@ interface Selection { key: string; options: Choice[]; homebrew: boolean }
 export interface ImportCatalog { [kind: string]: Data[] }
 export interface DmvPreview { character: Omit<Character, '_id' | 'updatedAt'>; warnings: string[]; matchedSpells: number; unresolvedSpells: string[]; sourceUrl: string }
 export class DmvImportError extends Error {
-  constructor(message: string, publicStatus = 400) { super(message); this.status = publicStatus }
+  constructor(message: string, publicStatus = 400, sourceStatus?:number) { super(message); this.status = publicStatus;this.sourceStatus=sourceStatus }
   status: number
+  sourceStatus?:number
 }
 const MAX_BYTES = 4 * 1024 * 1024
 const object = (value: unknown): Data => value && typeof value === 'object' && !Array.isArray(value) ? value as Data : {}
@@ -39,7 +41,10 @@ export async function fetchDmvCharacter(input: string) {
   try {
     // Only this fixed public host/path is fetched. No credentials or redirects are forwarded.
     const response = await fetch(dataUrl, { headers: { Accept: 'application/edn, application/json' }, redirect: 'error', signal: AbortSignal.timeout(15000) })
-    if (!response.ok) throw new DmvImportError('That character is not publicly available. Check the link or upload its character data instead.', response.status === 404 || response.status === 403 ? 422 : 502)
+    if (!response.ok) {
+      await response.body?.cancel().catch(()=>{})
+      throw new DmvImportError(response.status===403?'Dungeon Master’s Vault refused this server’s request. Upload the character data file instead.':'That character is not publicly available. Check the link or upload its character data instead.',response.status===404?422:502,response.status)
+    }
     if (/text\/html/i.test(response.headers.get('content-type') ?? '')) throw new DmvImportError('The source returned a web page instead of character data. Try a character data file instead.', 502)
     if (Number(response.headers.get('content-length')) > MAX_BYTES) { await response.body?.cancel(); throw new DmvImportError('The character data exceeds the 4 MB import limit.') }
     const chunks: Uint8Array[] = []
@@ -102,11 +107,23 @@ export async function previewDmvCharacter(source: string, sourceUrl: string, cat
   const first = (key: string) => find(key)?.options[0]
   const sourceNames = new Set<string>()
   const requests = new Map<string, Promise<Data | null>>()
-  async function srd(kind: string, key: string) {
-    if (!/^[a-z0-9-]+$/i.test(key)) return null
+  const failedRules=new Set<string>()
+  function requestRule(kind:string,key:string):Promise<Data|null>{
+    if (!/^[a-z0-9-]+$/i.test(key)) return Promise.resolve(null)
     const path = `${kind}/${key}`
-    if (!requests.has(path)) requests.set(path, readSrdRule(srdBase,path).then(value=>value?object(value):null).catch(() => { warnings.add(`The rules entry ${path} could not be loaded. Review its imported details.`); return null }))
+    // Reuse the site's pinned 2014 definitions for known public rules. Missing
+    // snapshot entries and explicitly configured alternate services retain the
+    // original upstream lookup, including its queue, retries and custom fallback.
+    const local=srdBase.replace(/\/$/,'')==='https://www.dnd5eapi.co/api/2014'?localSrdRule(path):undefined
+    if (!requests.has(path)) requests.set(path, (local?Promise.resolve(local):readSrdRule(srdBase,path)).then(value=>value?object(value):null).catch(() => { failedRules.add(path); return null }))
     return requests.get(path)!
+  }
+  async function srd(kind:string,key:string){
+    const value=await requestRule(kind,key)
+    // Eager reads have no visible side effects. Report failures only when the
+    // original conversion order consumes the rule, preserving warning order.
+    if(failedRules.has(`${kind}/${key}`))warnings.add(`The rules entry ${kind}/${key} could not be loaded. Review its imported details.`)
+    return value
   }
   async function resolve(kind: string, choice: Choice) {
     let custom = (catalog[kind] ?? []).filter((entry) => local(text(entry.contentKey)) === choice.key || text(entry.name).toLowerCase() === label(choice.key).toLowerCase())
@@ -139,6 +156,15 @@ export async function previewDmvCharacter(source: string, sourceUrl: string, cat
     const levels = choice.selections.find((selection) => selection.key === 'levels')?.options ?? []
     return integer(field(classSummaries[index], 'level'), levels.length || 1, 1, 20)
   })
+  // These exact level/feature reads are all consumed below. Overlap a bounded
+  // window with the remaining conversion work, keeping the shared SRD queue's
+  // request pace and leaving character assembly in its original stable order.
+  const levelJobs:{key:string;level:number}[]=[]
+  for(const [index,choice]of classChoices.entries())if(/^[a-z0-9-]+$/i.test(choice.key))for(let level=1;level<=classLevels[index]!&&levelJobs.length<128;level++)levelJobs.push({key:choice.key,level})
+  let nextLevelJob=0
+  const warmingLevels=Promise.all(Array.from({length:Math.min(4,levelJobs.length)},async()=>{
+    for(;;){const job=levelJobs[nextLevelJob++];if(!job)return;const progression=await requestRule(`classes/${job.key}/levels`,String(job.level));for(const reference of list(progression?.features))await requestRule('features',text(field(reference,'index')))}
+  }))
   const totalLevel = classLevels.reduce((sum, level) => sum + level, 0) || classSummaries.reduce((sum, record) => sum + integer(field(record, 'level'), 0, 0, 20), 0)
   character.meta.level = integer(totalLevel, 1, 1, 20)
   if (!totalLevel) warnings.add('The character level was missing. Review the level before importing.')
@@ -321,6 +347,7 @@ export async function previewDmvCharacter(source: string, sourceUrl: string, cat
       }
     }
   }
+  await warmingLevels
   if(classChoices.length>1){
     let casterLevel=0
     for(const [i,choice] of classChoices.entries())if(['bard','cleric','druid','sorcerer','wizard'].includes(choice.key))casterLevel+=classLevels[i]!;else if(['paladin','ranger'].includes(choice.key))casterLevel+=Math.floor(classLevels[i]!/2)

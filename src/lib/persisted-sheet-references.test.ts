@@ -15,6 +15,10 @@ beforeEach(()=>{
 })
 afterEach(()=>{vi.restoreAllMocks();vi.useRealTimers()})
 describe('authorized owner sheet persistence',()=>{
+ it('accepts selected invocation/boon projections and rejects malformed optional reference rows',async()=>{
+  await persist({...refs(),invocations:[{index:'invocation-id',name:'Invocation',url:'',description:'Rules',details:{}}],boons:[]});expect(await read()).toMatchObject({invocations:[{index:'invocation-id'}],boons:[]})
+  vi.mocked(storage.write).mockClear();await persist({...refs(),invocations:'corrupt' as never});expect(storage.write).not.toHaveBeenCalled()
+ })
  it('does not reuse references from before the selected-rule projection changed',async()=>{
   const oldKey=JSON.stringify(JSON.parse(key).slice(0,5))
   await persist(refs(),oldKey);expect(storage.write).not.toHaveBeenCalled()

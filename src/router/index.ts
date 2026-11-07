@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { installNavigationRecovery } from '../lib/navigation-recovery'
+import {beginForegroundWork} from '../lib/foreground-work'
+import {preparePageDuringSignIn} from './page-preparation'
 
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
@@ -26,15 +28,22 @@ export const router = createRouter({
     { path: '/rooms/:roomId', name: 'room', component: RoomView },
     { path:'/rooms/:roomId/characters/:sourceCharacterId/champions/:id',name:'room-champion',component:CharacterSheetView,props:route=>({characterId:String(route.params.id),roomId:String(route.params.roomId),championFor:String(route.params.sourceCharacterId),role:'player',playerPreview:true}) },
     { path: '/join', name: 'room-join', component: RoomJoinView },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFoundView.vue') },
   ],
 })
 
 installNavigationRecovery(router)
+let finishNavigation:(()=>void)|undefined
+router.beforeEach(()=>{finishNavigation?.();finishNavigation=beginForegroundWork()})
+router.afterEach(()=>{finishNavigation?.();finishNavigation=undefined})
+router.onError(()=>{finishNavigation?.();finishNavigation=undefined})
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   if (!auth.initialized) {
-    await auth.fetchMe()
+    const verification=auth.fetchMe()
+    preparePageDuringSignIn(to)
+    await verification
   }
   if (to.name !== 'login' && to.name!=='builder-preview' && !auth.user) {
     return { name: 'login', query: { next: to.fullPath } }

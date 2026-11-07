@@ -7,10 +7,15 @@ import { CustomContent } from '../models/CustomContent'
 import { parsedPack } from '../lib/orcbrew-library'
 import { sourceHash } from '../lib/orcbrew'
 import { packSource,storedPackData,MAX_PACK_BYTES } from '../lib/pack-storage'
+import {restoreAccountBackup,BackupError} from '../lib/account-backup'
 
 const router = Router()
 router.use(requireAuth)
 router.post('/', requestLimit('library-restore', 5, 3600), async (req, res) => {
+  if(req.body?.format==='codex-of-heroes-backup'&&req.body?.version===2){
+    try{return res.status(201).json(await restoreAccountBackup(req.userId!,req.body))}
+    catch(e){if(e instanceof BackupError)return res.status(e.status).json({error:e.message});if(e instanceof Error&&['ValidationError','CastError','ZodError'].includes(e.name))return res.status(400).json({error:'The backup contains invalid data. No data was imported.'});throw e}
+  }
   let backup: Record<string, unknown>
   try { backup = mongo.BSON.EJSON.parse(JSON.stringify(req.body)) as Record<string, unknown> } catch { return res.status(400).json({ error: 'This backup could not be read.' }) }
   if (!['codex-public-migration', 'codex-of-heroes-backup'].includes(String(backup.format)) || backup.version !== 1 || !Array.isArray(backup.characters) || !Array.isArray(backup.content) || backup.characters.length > 1000 || backup.content.length > 200) return res.status(400).json({ error: 'Choose a complete Codex library backup.' })
@@ -36,9 +41,9 @@ router.post('/', requestLimit('library-restore', 5, 3600), async (req, res) => {
       if (record.type === 'orcbrew') {
         const pack = record.data
         if (!pack || typeof pack.source !== 'string' || Buffer.byteLength(packSource(pack), 'utf8') > MAX_PACK_BYTES || typeof pack.filename !== 'string' || !/\.orcbrew$/i.test(pack.filename)) throw new Error('An Orcbrew pack is invalid or exceeds 64 MB.')
-        parsedPack(pack)
+        const parsed=parsedPack(pack)
         data.sourceHash = sourceHash(packSource(pack))
-        data.data=storedPackData(pack)
+        data.data=storedPackData(pack,{report:parsed.report})
       }
       const doc = new CustomContent({...data,_id:identity(record),userId})
       await doc.validate()

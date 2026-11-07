@@ -3,9 +3,20 @@ import {workshopFromEntry,type PublishedWorkshopRule,type WorkshopDraft} from '.
 import type {OrcbrewEntries} from './orcbrew'
 
 /** Full definitions needed by character play. Never masquerades as a full pack library. */
-export const CHARACTER_RULE_KINDS=['classes','subclasses','races','backgrounds','feats','spells'] as const
+export const CHARACTER_RULE_BASE_KINDS=['classes','subclasses','races','backgrounds','feats','spells'] as const
+export const CHARACTER_RULE_EXTRA_KINDS=['invocations','boons','selections','languages','other','subraces'] as const
+export type CharacterRuleExtraKind=typeof CHARACTER_RULE_EXTRA_KINDS[number]
+export const CHARACTER_RULE_KINDS=[...CHARACTER_RULE_BASE_KINDS,...CHARACTER_RULE_EXTRA_KINDS] as const
+/** Additional categories are read only for selections this character actually uses. */
+export function characterRuleExtraKinds(character:unknown,include:readonly unknown[]=[]):CharacterRuleExtraKind[]{
+ const c=(character??{}) as {meta?:{subrace?:string;subraceIndex?:string};features?:{definition?:{kind?:string}}[];compendiumRules?:{kind?:string}[];proficiencies?:{languages?:unknown[]}}
+ const wanted=new Set<unknown>([...include,...(Array.isArray(c.features)?c.features:[]).map(f=>f?.definition?.kind),...(Array.isArray(c.compendiumRules)?c.compendiumRules:[]).map(d=>d?.kind)])
+ if(c.meta?.subraceIndex||typeof c.meta?.subrace==='string'&&c.meta.subrace.trim())wanted.add('subraces')
+ if(Array.isArray(c.proficiencies?.languages)&&c.proficiencies.languages.length)wanted.add('languages')
+ return CHARACTER_RULE_EXTRA_KINDS.filter(k=>wanted.has(k))
+}
 export type CharacterRuleKind=typeof CHARACTER_RULE_KINDS[number]
-export type CharacterRuleCatalog=Pick<OrcbrewEntries,CharacterRuleKind>
+export type CharacterRuleCatalog=Pick<OrcbrewEntries,Exclude<CharacterRuleKind,'invocations'|'boons'|'selections'|'languages'|'other'|'subraces'>>&Partial<Pick<OrcbrewEntries,'invocations'|'boons'|'selections'|'languages'|'other'|'subraces'>>
 export interface CharacterRuleLibrary {catalog:CharacterRuleCatalog;rules:PublishedWorkshopRule[];initial:Record<string,WorkshopDraft>;warnings:string[]}
 /** Shared by the original full library and scoped reader. Ordering, race spell
  * disambiguation, lineage revisions and original baselines stay identical. */

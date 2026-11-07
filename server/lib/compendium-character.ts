@@ -4,6 +4,9 @@ import { workshopFromEntry, type WorkshopDraft, type PublishedWorkshopRule } fro
 import { cloneEntry, sameEntry, type CompendiumDefinition, type EntryData } from '../../shared/compendium-editing'
 import { equipmentFrom, magicEquipmentFrom, type EquipmentDefinition, type MagicItemDefinition } from '../../shared/equipment-definitions'
 import { sourceHash } from './orcbrew'
+import {optionHasId,optionLabelMatches} from '../../shared/option-reference'
+import {choiceDescription,type ChoiceGroup} from '../../shared/choice-groups'
+import {isFeatureOptionKind} from '../../shared/option-kinds'
 import { characterBenefits, characterBenefitRows, benefitSummary, benefitKey, benefitField } from '../../shared/rule-benefits'
 
 const record=(v:unknown):EntryData=>v&&typeof v==='object'&&!Array.isArray(v)?v as EntryData:{}
@@ -19,8 +22,9 @@ export function characterUsesDefinition(c:Character,d:CompendiumDefinition,inclu
   if(d.kind==='classes')return c.meta.classLevels?.length?c.meta.classLevels.some(e=>e.index?refs.includes(e.index):named(e.name)):c.meta.classIndex?refs.includes(c.meta.classIndex):named(c.meta.klass)
   if(d.kind==='subclasses')return c.meta.classLevels?.length?c.meta.classLevels.some(e=>e.subclassIndex?refs.includes(e.subclassIndex):named(e.subclass)):c.meta.subclassIndex?refs.includes(c.meta.subclassIndex):named(c.meta.subclass)
   if(d.kind==='races')return c.meta.raceIndex?refs.includes(c.meta.raceIndex):named(c.meta.race)
-  if(d.kind==='subraces')return named(c.meta.subrace)
-  if(d.kind==='backgrounds')return named(c.meta.background)
+  if(d.kind==='subraces')return c.meta.subraceIndex?refs.includes(c.meta.subraceIndex):named(c.meta.subrace)
+  if(d.kind==='backgrounds')return c.meta.backgroundIndex?refs.includes(c.meta.backgroundIndex):optionLabelMatches({...d.before,index:d.index,name:String(d.before.name)},c.meta.background)
+  if(isFeatureOptionKind(d.kind))return c.features.some(f=>f.definition?f.definition.kind===d.kind&&optionHasId({...d.before,index:d.index,name:String(d.before.name)},f.definition.index):optionLabelMatches({...d.before,index:d.index,name:String(d.before.name)},f.name)||d.kind==='feats'&&/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(named))
   if(d.kind==='languages')return c.proficiencies.languages.some(named)
   if(d.kind==='monsters')return false
   return c.features.some(f=>named(f.name)||/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(named))
@@ -92,15 +96,17 @@ export function applyReviewedDefinitions(c:Character):Character{
     }
     const before=entryFeatures(d.before,d.kind),after=entryFeatures(d.entry,d.kind)
     c.features=c.features.map(f=>{
-      const i=before.findIndex(old=>name(old.name)===name(f.name)&&(old.origin==='other'||!f.origin||f.origin==='other'||f.origin===old.origin))
+      const selectedFeat=isFeatureOptionKind(d.kind)&&f.definition?.kind===d.kind&&optionHasId({...d.entry,index:d.index,name:String(d.entry.name)},f.definition.index)
+      const i=selectedFeat&&before.length===1?0:before.findIndex(old=>name(old.name)===name(f.name)&&(old.origin==='other'||!f.origin||f.origin==='other'||f.origin===old.origin))
       if(i<0)return f
       const old=before[i]!,next=after.find(v=>name(v.name)===name(old.name))??(before.length===after.length?after[i]:undefined)
       if(before.filter(v=>name(v.name)===name(old.name)).length>1)return f
-      if(!next||f.description&&f.description!==old.description&&f.description!==next.description)return f
-      return {...f,name:next.name,description:next.description,level:next.level??f.level,origin:next.origin==='other'?f.origin:next.origin}
+      const selectedText=(entry:EntryData,description:string)=>{const group=(entry.optionBuilder as {choiceGroup?:ChoiceGroup}|undefined)?.choiceGroup;return d.kind==='selections'&&group?[description,choiceDescription(group,f.definition?.choiceIds??[])].filter(Boolean).join('\n\n'):description}
+      if(!next||f.description&&f.description!==selectedText(d.before,old.description)&&f.description!==selectedText(d.entry,next.description)&&f.description!==old.description)return f
+      return {...f,name:next.name,description:selectedText(d.entry,next.description),level:next.level??f.level,origin:next.origin==='other'?f.origin:next.origin}
     })
-    if(d.kind==='backgrounds'&&name(c.meta.background)===name(d.before.name))c.meta.background=String(d.entry.name)
-    if(d.kind==='subraces'&&name(c.meta.subrace)===name(d.before.name))c.meta.subrace=String(d.entry.name)
+    if(d.kind==='backgrounds'&&(c.meta.backgroundIndex?optionHasId({...d.entry,index:d.index,name:String(d.entry.name)},c.meta.backgroundIndex):optionLabelMatches({...d.before,index:d.index,name:String(d.before.name)},c.meta.background)))c.meta.background=String(d.entry.name)
+    if(d.kind==='subraces'&&(c.meta.subraceIndex?optionHasId({...d.entry,index:d.index,name:String(d.entry.name)},c.meta.subraceIndex):name(c.meta.subrace)===name(d.before.name)))c.meta.subrace=String(d.entry.name)
   }
   return c
 }

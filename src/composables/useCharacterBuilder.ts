@@ -1,3 +1,4 @@
+import {subraceMatchesRace} from '../../shared/subrace-options'
 import { workshopSlots } from '../../shared/homebrew-workshop'
 import { classSpellDefaults } from '../../shared/class-rules'
 import { slotMaximums } from '../../shared/character-progression'
@@ -7,7 +8,9 @@ import { featOpportunities, selectedFeatIndexes } from '../lib/advancements'
 import { equipmentFrom } from '../lib/character-sheet'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
-import { loadCreationOptions } from '../lib/creation-options-cache'
+import { creationSelectionClient } from '../lib/creation-selection-client'
+import type {CreationSelection,CreationKind} from '../../shared/creation-selection'
+import {manualOptionProblem} from '../../shared/manual-options'
 import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, maxHP, profBonus, type AbilityKey } from '../lib/calc'
 import {
   abilityTotals, armorClass, builderIssues, composeCharacter, newBuilderDraft, restoreBuilderDraft, skillKey,
@@ -16,7 +19,7 @@ import {
 import {
   contentLabel, srd, type HomebrewBackground, type HomebrewClass, type HomebrewFeat,
   type HomebrewRace, type HomebrewSpell, type HomebrewSubclass, type HomebrewSubrace,
-  type SrdBackground, type SrdClass, type SrdEquipment, type SrdLevel, type SrdRace, type SrdRef, type SrdSpell, type SrdSubrace,
+  type SrdBackground, type SrdClass, type SrdEquipment, type SrdLevel, type SrdRace, type SrdRef, type SrdSpell, type SrdSubrace,type CreationOptions,
 } from '../lib/srd'
 
 type Race = SrdRace & { homebrew_traits?: BuilderTrait[]; details?: Record<string, unknown> }
@@ -36,8 +39,25 @@ export function useCharacterBuilder() {
   const subrace = ref<Subrace | null>(null), subclass = ref<SrdRef | null>(null)
   const background = ref<BuilderBackground | null>(null)
   const races = ref<SrdRef[]>([]), classes = ref<SrdRef[]>([]), backgrounds = ref<SrdRef[]>([]), equipment = ref<SrdRef[]>([]), languages = ref<SrdRef[]>([])
-  const customClasses = ref<HomebrewClass[]>([]), customRaces = ref<HomebrewRace[]>([]), customBackgrounds = ref<HomebrewBackground[]>([])
-  const customSubraces = ref<HomebrewSubrace[]>([]), customSubclasses = ref<HomebrewSubclass[]>([]), feats = ref<HomebrewFeat[]>([]), customSpells = ref<HomebrewSpell[]>([])
+  const customClasses = ref<(HomebrewClass|CreationSelection)[]>([]), customRaces = ref<(HomebrewRace|CreationSelection)[]>([]), customBackgrounds = ref<(HomebrewBackground|CreationSelection)[]>([])
+  const customSubraces = ref<(HomebrewSubrace|CreationSelection)[]>([]), customSubclasses = ref<(HomebrewSubclass|CreationSelection)[]>([]), feats = ref<HomebrewFeat[]>([]), customSpells = ref<(HomebrewSpell|CreationSelection)[]>([])
+  const selectionClient=creationSelectionClient(()=>useAuthStore().user?.id),featChoices=ref<CreationSelection[]>([]),featsLoading=ref(false)
+  let featsTask:Promise<void>|undefined,featsComplete=false,librarySequence=0
+  async function customDefinition<K extends CreationKind>(kind:K,index:string,choices:(CreationOptions[K][number]|CreationSelection)[]):Promise<CreationOptions[K][number]|undefined>{
+    const matches=choices.filter(entry=>entry.index===index||entry.aliases?.includes(index))
+    if(matches.length!==1){if(matches.length)throw Error('This source identity is ambiguous. Reload the library.');return}
+    const entry=matches[0]!
+    return 'selectionOnly'in entry?selectionClient.definition(kind,entry as CreationSelection):entry as CreationOptions[K][number]
+  }
+  async function loadFeats(){
+    if(featsComplete)return
+    if(featsTask)return featsTask
+    const sequence=librarySequence;featsLoading.value=true
+    const task=(async()=>{try{const value=await selectionClient.featDefinitions();if(!disposed&&sequence===librarySequence){feats.value=value;featsComplete=true}}
+      catch{if(!disposed&&sequence===librarySequence)detailError.value='Feat rules could not load. Retry the library before creating your character.'}
+      finally{if(sequence===librarySequence){featsLoading.value=false;featsTask=undefined}}})()
+    featsTask=task;return task
+  }
   const raceTraits = ref<BuilderTrait[]>([]), subraceTraits = ref<BuilderTrait[]>([]), classTraits = ref<BuilderTrait[]>([]), subclassTraits = ref<BuilderTrait[]>([])
   const racialProficiencies = ref<SrdRef[]>([]), subracialProficiencies = ref<SrdRef[]>([])
   const levels = ref<SrdLevel[]>([])
@@ -55,13 +75,13 @@ export function useCharacterBuilder() {
     if (!cache.has(id)) cache.set(id, load().catch((error) => { cache.delete(id); throw error }))
     return cache.get(id) as Promise<T>
   }
-  const loadingDetails = computed(() => raceLoading.value || classLoading.value || featureLoading.value || subraceLoading.value || subclassLoading.value || backgroundLoading.value)
+  const loadingDetails = computed(() => raceLoading.value || classLoading.value || featureLoading.value || subraceLoading.value || subclassLoading.value || backgroundLoading.value || featsLoading.value || selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).some(id=>!feats.value.some(feat=>feat.index===id)))
   const subclassOptions = computed(() => {
     return [...(klass.value?.subclasses ?? []), ...customSubclasses.value.filter((entry) => subclassMatchesClass(entry,{...klass.value,index:draft.klass,name:klass.value?.name??draft.klass}))]
   })
   const subraceOptions = computed(() => {
     const parent = (race.value?.contentKey ?? draft.race).replace(/^.*\//, '')
-    return [...(race.value?.subraces ?? []), ...customSubraces.value.filter((entry) => entry.race.replace(/^.*\//, '') === parent)]
+    return [...(race.value?.subraces ?? []), ...customSubraces.value.filter((entry) => subraceMatchesRace(entry,{...race.value,index:draft.race,contentKey:parent,name:race.value?.name??draft.race}))]
   })
   const classLevel = computed(() => levels.value.find((entry) => entry.level === draft.level))
   const skillChoice = computed(() => {
@@ -98,16 +118,20 @@ export function useCharacterBuilder() {
     if(klass.value?.workshop)for(const group of ['armor','weapons','tools'] as const)proficiencies[group]=[...new Set([...proficiencies[group],...klass.value.workshop[group]])]
     const defaults = classSpellDefaults(klass.value?.name??'')
     const slots: Record<string, number> = {}
-    for (let level = 1; level <= 9; level++) slots[`l${level}`] = authored?workshopSlots(authored,draft.level)[`l${level}`]!:defaults ? slotMaximums(defaults.progression,draft.level)[`l${level}`]! : classLevel.value?.spellcasting?.[`spell_slots_level_${level}`] ?? 0
+    const maximums=authored?workshopSlots(authored,draft.level):defaults?slotMaximums(defaults.progression,draft.level):undefined
+    for (let level = 1; level <= 9; level++) slots[`l${level}`] = maximums?maximums[`l${level}`]!:classLevel.value?.spellcasting?.[`spell_slots_level_${level}`] ?? 0
     const classCasting = object(klass.value?.details?.[':spellcasting'])
     const ability = String(authored?.magic.ability??defaults?.ability ?? klass.value?.spellcasting?.spellcasting_ability.index ?? classCasting[':ability'] ?? 'int').replace(/^:/, '').replace(/^.*\//, '') as AbilityKey
+    const featContext={klass:klass.value,race:race.value,subrace:subrace.value}
+    const selectedFeats=new Set(selectedFeatIndexes(draft,featContext)),featSlots=featOpportunities(draft,featContext).slots
     return {
+      featIndexes:[...new Set([...featChoices.value,...feats.value].map(entry=>entry.index))],
       ruleDefinitions:definitions,
       spellPolicy: spellSelectionPolicy(draft, { klass: klass.value, subrace: subrace.value, subclass: subclass.value, progression: classLevel.value, scores: abilityTotals(draft, { race: race.value, subrace: subrace.value, klass: klass.value }) }),
       race: race.value, subrace: subrace.value, klass: klass.value, subclass: subclass.value, background: background.value,
       fixedSkills: fixedSkills.value, skillChoice: skillChoice.value, proficiencies, slots, spellAbility: ABILITY_KEYS.includes(ability) ? ability : 'int',
-      features: [...raceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...subraceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...classTraits.value.map(f=>({...f,origin:'class' as const})), ...subclassTraits.value.map(f=>({...f,origin:'subclass' as const})), ...(background.value?.traits ?? []).map(f=>({...f,origin:'background' as const,level:1})),
-        ...feats.value.filter((entry) => selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).includes(entry.index)).map((entry) => ({ name: contentLabel(entry), description: entry.description, origin:'feat' as const, level:featOpportunities(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).slots.find(s=>draft.advancements[s.key]?.feat===entry.index)?.level??1 }))],
+      features: [...raceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...subraceTraits.value.map(f=>({...f,origin:'racial' as const,level:f.level??1})), ...classTraits.value.map(f=>({...f,origin:'class' as const})), ...subclassTraits.value.map(f=>({...f,origin:'subclass' as const})), ...(background.value?.traits ?? []).map(f=>({...f,origin:'background' as const,level:1})),...draft.manualOptions.filter(f=>!manualOptionProblem(f)),
+        ...feats.value.filter((entry) => selectedFeats.has(entry.index)).map((entry) => ({ name: contentLabel(entry), description: entry.description, origin:'feat' as const, definition:{version:1 as const,kind:'feats' as const,index:entry.index}, level:featSlots.find(s=>draft.advancements[s.key]?.feat===entry.index)?.level??1 }))],
     }
   })
   const spellPolicy = computed(() => context.value.spellPolicy!)
@@ -138,7 +162,7 @@ export function useCharacterBuilder() {
     if (!draft.race) return
     raceLoading.value = true
     try {
-      const detail: Race = customRaces.value.find((entry) => entry.index === draft.race) ?? await cached(`race:${draft.race}`, () => srd.race(draft.race))
+      const detail: Race = await customDefinition('races',draft.race,customRaces.value) ?? await cached(`race:${draft.race}`, () => srd.race(draft.race))
       const traits = detail.homebrew_traits ? [] : await Promise.allSettled(detail.traits.map((entry) => cached(`trait:${entry.index}`, () => srd.trait(entry.index))))
       if (disposed || sequence !== raceSequence) return
       race.value = detail
@@ -170,7 +194,7 @@ export function useCharacterBuilder() {
     if (!draft.klass) return
     classLoading.value = true
     try {
-      const custom = customClasses.value.find((entry) => entry.index === draft.klass||entry.aliases?.includes(draft.klass))
+      const custom = await customDefinition('classes',draft.klass,customClasses.value)
       const detail = custom ?? await cached(`class:${draft.klass}`, () => srd.class(draft.klass))
       const progression = custom ? [] : await cached(`levels:${draft.klass}`, () => srd.classLevels(draft.klass))
       if (disposed || sequence !== classSequence) return
@@ -191,7 +215,7 @@ export function useCharacterBuilder() {
     if (!draft.subrace) return
     subraceLoading.value = true
     try {
-      const detail: Subrace = customSubraces.value.find((entry) => entry.index === draft.subrace) ?? await cached(`subrace:${draft.subrace}`, () => srd.subrace(draft.subrace))
+      const detail: Subrace = await customDefinition('subraces',draft.subrace,customSubraces.value) ?? await cached(`subrace:${draft.subrace}`, () => srd.subrace(draft.subrace))
       const traits = detail.homebrew_traits ? [] : await Promise.allSettled(detail.racial_traits.map((entry) => cached(`trait:${entry.index}`, () => srd.trait(entry.index))))
       if (disposed || sequence !== subraceSequence) return
       subrace.value = detail
@@ -207,7 +231,7 @@ export function useCharacterBuilder() {
     if (!draft.subclass) return
     subclassLoading.value = true
     try {
-      const custom = customSubclasses.value.find((entry) => entry.index === draft.subclass||entry.aliases?.includes(draft.subclass))
+      const custom = await customDefinition('subclasses',draft.subclass,customSubclasses.value)
       const detail = custom ?? await cached(`subclass:${draft.subclass}`, () => srd.subclass(draft.subclass))
       if (disposed || sequence !== subclassSequence) return
       if(custom&&draft.subclass!==custom.index)draft.subclass=custom.index
@@ -223,7 +247,7 @@ export function useCharacterBuilder() {
     if (!draft.background) return
     backgroundLoading.value = true
     try {
-      const custom = customBackgrounds.value.find((entry) => entry.index === draft.background)
+      const custom = await customDefinition('backgrounds',draft.background,customBackgrounds.value)
       let normalized: BuilderBackground
       if (custom) {
         const details = object((custom as HomebrewBackground & { details?: unknown }).details)
@@ -264,7 +288,7 @@ export function useCharacterBuilder() {
     for (const values of Object.values(authored?{}:rawList)) if (Array.isArray(values)) for (const value of values) allowed.add(String(value).replace(/^:/, ''))
     const parent = klass.value?.contentKey ?? draft.klass
     const custom = customSpells.value.filter((spell) => (spellLevel.value === 'all' || spell.level === Number(spellLevel.value))
-      && (!classSpellsOnly.value || !canCast.value || allowed.has(spell.index)||(!authored&&(spell.classes.some((entry) => entry.index === parent) || allowed.has(spell.contentKey ?? '')))))
+      && (!classSpellsOnly.value || !canCast.value || allowed.has(spell.index)||(!authored&&((spell.classes??[]).some((entry) => entry.index === parent) || allowed.has(spell.contentKey ?? '')))))
     spellResults.value = [...(standard.status === 'fulfilled' ? standard.value.filter((entry) => !classSpellsOnly.value || !canCast.value || allowed.has(entry.index)) : []), ...custom]
       .filter((entry) => !spellQuery.value || contentLabel(entry).toLowerCase().includes(spellQuery.value.toLowerCase()))
     if (standard.status === 'rejected') spellError.value = 'The SRD spell list could not be loaded. Imported spells remain available.'
@@ -274,7 +298,7 @@ export function useCharacterBuilder() {
     const sequence = ++spellDetailSequence
     spellDetailLoading.value = true; spellDetail.value = null
     try {
-      const detail = customSpells.value.find((entry) => entry.index === index) ?? await cached(`spell:${index}`, () => srd.spell(index))
+      const detail = await customDefinition('spells',index,customSpells.value) ?? await cached(`spell:${index}`, () => srd.spell(index))
       if (sequence === spellDetailSequence && !disposed) spellDetail.value = detail
     } catch { spellError.value = 'Could not load that spell.' }
     finally { if (sequence === spellDetailSequence) spellDetailLoading.value = false }
@@ -315,6 +339,7 @@ export function useCharacterBuilder() {
   watch(() => draft.subclass, () => { if (ready.value) void loadSubclass() })
   watch(() => draft.background, () => { if (ready.value) void loadBackground() })
   watch(() => draft.level, () => { if (ready.value) void loadClassFeatures() })
+  watch(()=>[draft.step,selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).join('|')],()=>{if(ready.value&&(draft.step==='feats'||selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).length))void loadFeats()})
   watch(fixedSkills, (fixed) => { const filtered = draft.skills.filter((key) => !fixed.includes(key)); if (filtered.join() !== draft.skills.join()) draft.skills = filtered })
   watch([spellQuery, spellLevel, classSpellsOnly, classSpellIndexes, () => draft.step], () => {
     if (draft.step !== 'spells' || !ready.value) return
@@ -328,13 +353,14 @@ export function useCharacterBuilder() {
     } catch { /* A corrupt draft must not prevent starting a new character. */ }
     await reloadLibrary(false)
   })
-  async function reloadLibrary(force=true) {
+  async function reloadLibrary(_force=true) {
     if(libraryLoading.value||disposed)return
-    libraryLoading.value=true
+    libraryLoading.value=true;++librarySequence
+    cache.clear();featsTask=undefined;featsComplete=false;feats.value=[];featsLoading.value=false;detailError.value=''
     try {
     const results = await Promise.allSettled([
       srd.classes(), srd.races(), srd.backgrounds(), srd.equipment(), srd.languages(),
-      loadCreationOptions(useAuthStore().user?.id,force),
+      selectionClient.load(),
     ] as const)
     if (disposed) return
     const value = <T>(result: PromiseSettledResult<T>, fallback: T): T => result.status === 'fulfilled' ? result.value : fallback
@@ -342,8 +368,11 @@ export function useCharacterBuilder() {
     if(imported.status==='fulfilled'){
       const options=imported.value
       customClasses.value=options.classes;customRaces.value=options.races;customBackgrounds.value=options.backgrounds
-      customSubraces.value=options.subraces;customSubclasses.value=options.subclasses;feats.value=options.feats;customSpells.value=options.spells
+      customSubraces.value=options.subraces;customSubclasses.value=options.subclasses;featChoices.value=options.feats;customSpells.value=options.spells
     }
+    const currentBackground=customBackgrounds.value.filter(e=>e.index===draft.background||e.aliases?.includes(draft.background));if(currentBackground.length===1)draft.background=currentBackground[0]!.index
+    const currentFeat=(id:string)=>{const matches=featChoices.value.filter(e=>e.index===id||e.aliases?.includes(id));return matches.length===1?matches[0]!.index:id}
+    draft.feats=draft.feats.map(currentFeat);for(const choice of Object.values(draft.advancements??{}))if(choice.feat)choice.feat=currentFeat(choice.feat)
     classes.value = [...value(results[0], classes.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customClasses.value]
     races.value = [...value(results[1], races.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customRaces.value]
     backgrounds.value = [...value(results[2], backgrounds.value.filter(e=>!e.index.startsWith('homebrew-'))), ...customBackgrounds.value]; equipment.value = value(results[3], equipment.value)
@@ -362,14 +391,14 @@ export function useCharacterBuilder() {
       draft.equipment[index]={...equipmentFrom(detail),...item,armor:item.armor??equipmentFrom(detail).armor,weapon:item.weapon??equipmentFrom(detail).weapon,armor_class:item.armor_class??detail.armor_class,armor_category:item.armor_category??detail.armor_category}
     }))
     ready.value = true
-    await Promise.allSettled([loadRace(), loadClass(), loadSubrace(), loadSubclass(), loadBackground()])
+    await Promise.allSettled([loadRace(), loadClass(), loadSubrace(), loadSubclass(), loadBackground(),...(draft.step==='feats'||selectedFeatIndexes(draft,{klass:klass.value,race:race.value,subrace:subrace.value}).length?[loadFeats()]:[])])
     if (draft.step === 'spells') void searchSpells()
     saveDraft()
     } finally { libraryLoading.value=false }
   }
-  onBeforeUnmount(() => { disposed = true; clearTimeout(saveTimer); clearTimeout(spellTimer); saveDraft(); ++raceSequence; ++classSequence; ++subraceSequence; ++subclassSequence; ++backgroundSequence; ++featureSequence; ++spellSequence; ++spellDetailSequence })
+  onBeforeUnmount(() => { disposed = true; selectionClient.reset();++librarySequence;clearTimeout(saveTimer); clearTimeout(spellTimer); saveDraft(); ++raceSequence; ++classSequence; ++subraceSequence; ++subclassSequence; ++backgroundSequence; ++featureSequence; ++spellSequence; ++spellDetailSequence })
 
-  return { draft, ready, libraryLoading, reloadLibrary, warnings, detailError, race, klass, subrace, subclass, background, races, classes, backgrounds, equipment, languages, feats,
+  return { draft, ready, libraryLoading, reloadLibrary, warnings, detailError, race, klass, subrace, subclass, background, races, classes, backgrounds, equipment, languages, feats,featsLoading,
     raceTraits, classTraits, subraceTraits, subclassTraits, subclassOptions, subraceOptions, skillChoice, fixedSkills, context, scores, issues, stats, canCreate, canCast, loadingDetails,
     spellPolicy, spellCounts, spellProblems, spellAddProblem, canPrepareSpell,
     spellQuery, spellLevel, classSpellsOnly, spellResults, spellLoading, spellError, spellDetail, spellDetailLoading, classLevel,

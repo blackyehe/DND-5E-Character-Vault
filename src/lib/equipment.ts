@@ -2,6 +2,7 @@ import type { Attack, Character, EquipmentItem } from '../../shared/character'
 import { abilityMod } from './calc'
 import { attackValues, sheetAC } from './character-sheet'
 import { itemActive,itemKind } from '../../shared/item-rules'
+import { characterBenefits,type CharacterBenefits } from '../../shared/rule-benefits'
 
 export type InventoryKind = NonNullable<EquipmentItem['kind']>
 const denominations = {
@@ -24,7 +25,7 @@ export function inventoryKind(item: EquipmentItem, character: Character): Invent
   if (coinType(item) || /\b(treasure|currency|coins?|valuables?|gems?)\b/.test(category) || /^currency\s*\/\s*treasure imported/i.test(item.notes)) return 'treasure'
   return itemKind(item)
 }
-export function equipmentAttacks(character: Character, item: EquipmentItem) {
+export function equipmentAttacks(character: Character, item: EquipmentItem, benefits?:CharacterBenefits) {
   const saved = character.attacks.filter(a => nameKey(a.name) === nameKey(item.name))
   let attacks = saved
   if (!attacks.length && item.weapon) {
@@ -35,14 +36,18 @@ export function equipmentAttacks(character: Character, item: EquipmentItem) {
     }
     attacks = [attack]
   }
-  return attacks.map(attack => {const effective={...attack,magicBonus:itemActive(item)?item.magicBonus??attack.magicBonus:0};return {...effective,...attackValues(character,effective,item.weapon?.category),...(item.weapon?.noDamage?{damage:0,text:'No direct damage'}:{})}})
+  const effects=attacks.length?benefits??characterBenefits(character):undefined
+  return attacks.map(attack => {const effective={...attack,magicBonus:itemActive(item)?item.magicBonus??attack.magicBonus:0};return {...effective,...attackValues(character,effective,item.weapon?.category,effects),...(item.weapon?.noDamage?{damage:0,text:!String(item.weapon.dice??'').trim()&&!String(item.weapon.damageType??'').trim()?'Special rules · see description':'No direct damage'}:{})}})
 }
 /** Inventory weapons follow equip state; independently entered attacks remain available. */
-export function combatAttacks(character:Character) {
+export function combatAttacks(character:Character,benefits?:CharacterBenefits) {
+  // Share only within this calculation; later calls always use current rules.
+  let effects=benefits
+  const currentBenefits=()=>effects??=characterBenefits(character)
   const custom=character.attacks.filter(attack=>!character.equipment.some(item=>inventoryKind(item,character)==='weapon'&&nameKey(item.name)===nameKey(attack.name)))
-    .map(attack=>({...attack,...attackValues(character,attack),item:undefined as EquipmentItem|undefined}))
+    .map(attack=>({...attack,...attackValues(character,attack,undefined,currentBenefits()),item:undefined as EquipmentItem|undefined}))
   const weapons=character.equipment.filter(item=>item.equipped&&item.qty>0&&inventoryKind(item,character)==='weapon')
-    .flatMap(item=>equipmentAttacks(character,item).map(attack=>({...attack,item})))
+    .flatMap(item=>equipmentAttacks(character,item,currentBenefits()).map(attack=>({...attack,item})))
   return [...weapons,...custom]
 }
 export function armourValues(character: Character, item: EquipmentItem, index: number) {

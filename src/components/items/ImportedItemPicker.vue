@@ -5,7 +5,7 @@ import type { EquipmentItem } from '../../../shared/character'
 import { importedEquipment } from '../../../shared/imported-items'
 import { useCompendiumBrowse } from '../../composables/useCompendiumBrowse'
 import { useAuthStore } from '../../stores/auth'
-import { api } from '../../lib/api'
+import { loadCompendiumDetail } from '../../lib/compendium-detail-cache'
 import { emptyItemFilters } from '../../lib/magic-item-filters'
 import ItemFilters from './ItemFilters.vue'
 
@@ -22,7 +22,8 @@ async function choose(entry:BrowseEntry){
  const run=++generation,owner=auth.user?.id,category=kind.value
  selecting.value=true;error.value='';emit('busy',true)
  try{
-  const full=await api.get<BrowseEntry>(`/api/compendium-browse/${category}/${encodeURIComponent(entry.index)}`,{timeoutMs:60000})
+  if(!owner)throw Error('Sign in to choose imported items.')
+  const full=await loadCompendiumDetail(owner,category,entry.index)
   if(disposed||run!==generation||owner!==auth.user?.id)return
   if(full.index!==entry.index)throw Error('The item definition changed. Refresh the imported items and choose it again.')
   emit('choose',importedEquipment(full,category),full.sourcePack??'Imported content')
@@ -39,7 +40,6 @@ onUnmounted(()=>{disposed=true;generation++;clearTimeout(timer);browse.cancel();
   <details class="sheet-details"><summary>Filter imported items</summary><ItemFilters v-model="filters" :extra-tags="browse.response.value?.extraTags??[]" /></details>
   <p v-if="browse.loading.value||selecting" class="sheet-small" role="status">{{selecting?'Loading the selected item’s full rules…':'Finding imported items…'}}</p>
   <p v-if="browse.error.value||error" class="sheet-alert" role="alert">{{error||browse.error.value}} <button type="button" class="sheet-button" :disabled="selecting" @click="search(true)">Retry imported items</button></p>
-  <p v-if="browse.localState.value==='outdated'" class="sheet-small">Your saved category has changed. These results use your current server library.</p>
   <div class="item-result-list"><button v-for="entry in browse.response.value?.entries??[]" :key="entry.index" type="button" :disabled="selecting||browse.loading.value" @click="choose(entry)"><strong>{{entry.displayName??entry.name}}</strong><small>{{entry.sourcePack??'Imported content'}}</small></button></div>
   <p v-if="browse.response.value&&!browse.loading.value" class="sheet-small">{{browse.response.value.matchedEntries}} matching source entries. <template v-if="!browse.response.value.entries.length">Import an equipment or magic-item pack in the Compendium, or try another search.</template></p>
   <div v-if="browse.response.value&&browse.response.value.pages>1" class="sheet-filter-buttons"><button type="button" class="sheet-button" :disabled="selecting||browse.loading.value||browse.response.value.page<=1" @click="paginate(browse.response.value!.page-1)">Previous imported items</button><span class="sheet-small">Page {{browse.response.value.page}} / {{browse.response.value.pages}}</span><button type="button" class="sheet-button" :disabled="selecting||browse.loading.value||browse.response.value.page>=browse.response.value.pages" @click="paginate(browse.response.value!.page+1)">Next imported items</button></div>

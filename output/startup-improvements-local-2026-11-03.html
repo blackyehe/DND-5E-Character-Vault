@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local startup checks</title>
+<style>
+html,body{margin:0;background:transparent;color:var(--foreground);font-family:var(--font-sans)}
+#startup-checks{display:grid;gap:20px}#startup-checks h3,#startup-checks p{margin:0;font:inherit}#startup-checks h3{font-weight:500}
+#startup-checks .pair{display:grid;gap:8px}#startup-checks .label{display:flex;justify-content:space-between;gap:12px}#startup-checks .value{white-space:nowrap;font-variant-numeric:tabular-nums}
+#startup-checks .track{height:12px;background:color-mix(in srgb,var(--muted) 35%,transparent)}#startup-checks .bar{height:12px;background:var(--chart-1)}#startup-checks .old{background:var(--muted-foreground)}#startup-checks .note{color:var(--muted-foreground)}
+</style></head><body><figure id="startup-checks" style="margin:0" aria-label="Local checks: creator initial JSON drops from 2.70 to 0.51 megabytes; Compendium fallback wait drops from 1.49 to 0.20 seconds in the stalled-validation fixture; Notebook unrelated sheet reads drop from two to zero. These changes are not deployed.">
+<div class="pair"><h3>Creator · initial imported JSON</h3><div class="label"><span>Previous</span><span class="value">2.70 MB</span></div><div class="track"><div class="bar old" style="width:100%"></div></div><div class="label"><span>Local candidate</span><span class="value">0.51 MB</span></div><div class="track"><div class="bar" style="width:18.789%"></div></div></div>
+<div class="pair"><h3>Compendium · wait before fallback starts</h3><div class="label"><span>Previous</span><span class="value">1.49 s</span></div><div class="track"><div class="bar old" style="width:100%"></div></div><div class="label"><span>Local candidate</span><span class="value">0.20 s</span></div><div class="track"><div class="bar" style="width:13.68%"></div></div></div>
+<div class="pair"><h3>Notebook · unrelated startup sheet reads</h3><div class="label"><span>Previous player opening</span><span class="value">2 requests</span></div><div class="track"><div class="bar old" style="width:100%"></div></div><div class="label"><span>Local candidate</span><span class="value">0 requests</span></div><div class="track"><div class="bar" style="width:0%"></div></div></div>
+<figcaption class="note">Local results; nothing deployed. Creator uses the same real catalogue. Compendium and Notebook use controlled built-browser fixtures.</figcaption>
+</figure></body></html>

@@ -5,7 +5,7 @@ import {useVisiblePolling} from '../../composables/useVisiblePolling'
 import {useAuthStore} from '../../stores/auth'
 import {vMotionPanel} from '../../directives/siteMotion'
 import {prepareNotebookCover} from '../../lib/notebook-cover'
-import type {NotebookAudience, NotebookDraft, NotebookEntry, NotebookFolder, NotebookFolderDraft, NotebookIndex, NotebookSection, NotebookSummary, NotebookVersion, NotebookEntryType, NotebookQuestStatus} from '../../../shared/notebook'
+import type {NotebookAudience, NotebookDraft, NotebookEntry, NotebookFolder, NotebookFolderDraft, NotebookIndex, NotebookInitial, NotebookNavigation, NotebookPage, NotebookSection, NotebookSummary, NotebookVersion, NotebookEntryType, NotebookQuestStatus} from '../../../shared/notebook'
 import {folderDescendants, notebookFolderRows, validFolderParent} from '../../../shared/notebook-folders'
 import NotebookText from './NotebookText.vue'
 import NotebookGallery from './NotebookGallery.vue'
@@ -44,7 +44,7 @@ const previewAsCharacter = ref('')
 const navigation = ref<{id:string;tab:typeof dossierTab.value;scroll:number}[]>([])
 let returning = false
 const kindLabel = (kind: CodexType) => categories.find(c=>c.id===kind)?.label ?? 'Entry'
-const props = defineProps<{roomId: string; previewCharacter?: string; initialCharacter?: string; initialEntry?: string; localPreview?: boolean}>()
+const props = defineProps<{roomId: string; role?: 'dm' | 'player'; accessScope?: string; previewCharacter?: string; initialCharacter?: string; initialEntry?: string; localPreview?: boolean}>()
 const auth = useAuthStore(), section = ref<NotebookSection>('journal'), index = ref<NotebookIndex | null>(null)
 const selected = ref<NotebookEntry | null>(null), editing = ref(false), draft = ref<NotebookDraft | null>(null), baseline = ref('')
 const dossierTabs = computed(() => selected.value?.codexType==='quests' ? ['description','clues','encounters','connections'] as const : selected.value?.codexType==='places' ? ['description','gallery','encounters','connections'] as const : ['description','encounters','connections'] as const)
@@ -60,7 +60,9 @@ const bodyEditor = ref<InstanceType<typeof NotebookEditor> | null>(null)
 const textArea = computed(() => bodyEditor.value?.textarea ?? null)
 const linkTargets = ref<NotebookLinkTarget[]>([]), targetsBusy = ref(false), targetsError = ref('')
 const readerLinks = computed(() => [...new Map([...(selected.value?.connections ?? []), ...linkTargets.value].map(item => [item.id,item])).values()])
-let targetsLoadedAt = 0, targetsRun = 0, targetsAbort: AbortController | undefined
+let targetsLoaded = false, targetsNavigation: string | undefined, targetsRun = 0, targetsAbort: AbortController | undefined
+interface NavigationSnapshot {data:NotebookNavigation;scope:string|null;version:string|null;deleted:boolean}
+let navigationSnapshot:NavigationSnapshot|undefined,navigationTask:Promise<NavigationSnapshot|undefined>|undefined,navigationAbort:AbortController|undefined,navigationRun=0,accessScope:string|null|undefined
 const pinned = ref<string[]>([]), labels = ref<Record<string, string>>({})
 const reader = ref<HTMLElement | null>(null)
 const focused = ref(false), focusClueId = ref<string | undefined>()
@@ -83,7 +85,8 @@ let editOrigin: {tab:typeof dossierTab.value;scroll:number} | null = null
 const coverBusy = ref(false), galleryBusy=ref(false)
 const galleryEditor=ref<InstanceType<typeof NotebookGalleryEditor>|null>(null)
 let generation = 0, listRun = 0, openRun = 0, linkRun = 0, disposed = false
-let searchTimer: ReturnType<typeof setTimeout>, linkTimer: ReturnType<typeof setTimeout>
+let listAbort: AbortController | undefined, linkAbort: AbortController | undefined
+let searchTimer: ReturnType<typeof setTimeout> | undefined, linkTimer: ReturnType<typeof setTimeout> | undefined
 const dirty = computed(() => quickSharingDirty.value || quickTagsDirty.value || editing.value && !!draft.value && (!selected.value || JSON.stringify(draft.value) !== baseline.value))
 const libraryEntryCount = computed(() => index.value?.entryCount ?? Object.values(index.value?.counts ?? {}).reduce((a,b)=>a+b,0))
 const encounterReading = computed(() => selected.value ? notebookReading(selected.value.body, index.value?.sessionEntries ?? []).encounters : '')
@@ -107,7 +110,12 @@ const audienceLabel = (entry: Pick<NotebookSummary,'audience'>) => entry.audienc
 const sharingValid=computed(()=>!!quickSharing.value&&(quickSharing.value.audience!=='characters'||quickSharing.value.characterIds.length>0&&quickSharing.value.characterIds.every(id=>filterCharacters.value.some(c=>c.id===id))))
 function path(tail = '', query: Record<string, string> = {}) {const values = new URLSearchParams(query); if (props.previewCharacter || previewAsCharacter.value) values.set('previewCharacter', props.previewCharacter || previewAsCharacter.value); return `/api/rooms/${props.roomId}/notebook${tail}${values.size ? '?' + values : ''}`}
 function rememberLabels(values: {id: string; title: string}[]) {for (const item of values) labels.value[item.id] = item.title}
-function clearPrivate() {focused.value=false;resetQuickSharing();resetQuickTags();targetsRun++;targetsAbort?.abort();targetsBusy.value=false;linkTargets.value=[];targetsError.value='';targetsLoadedAt=0;index.value = null; selected.value = null; draft.value = null; editing.value = false; opening.value = false; remote.value = null; versions.value = []; linkResults.value = []; labels.value = {};tagFilter.value=[]}
+function invalidateLinkTargets(){targetsRun++;targetsAbort?.abort();targetsBusy.value=false;targetsLoaded=false;targetsNavigation=undefined}
+function invalidateNavigation(){navigationRun++;navigationAbort?.abort();navigationSnapshot=undefined;navigationTask=undefined}
+function notebookChanged(){invalidateNavigation();invalidateLinkTargets()}
+function cancelListing(){listRun++;listAbort?.abort();listAbort=undefined;clearTimeout(searchTimer);searchTimer=undefined}
+function cancelConnections(){linkRun++;linkAbort?.abort();linkAbort=undefined;linkBusy.value=false;clearTimeout(linkTimer);linkTimer=undefined}
+function clearPrivate() {focused.value=false;resetQuickSharing();resetQuickTags();cancelListing();cancelConnections();openRun++;loading.value=false;notebookChanged();accessScope=undefined;linkTargets.value=[];targetsError.value='';index.value = null; selected.value = null; draft.value = null; editing.value = false; opening.value = false; remote.value = null; versions.value = []; linkResults.value = []; labels.value = {};tagFilter.value=[]}
 function failure(value: unknown) {error.value = value instanceof Error ? value.message : 'The notebook could not be updated. Try Refresh.'; if (value instanceof ApiError && [401, 404].includes(value.status)) {clearPrivate(); notice.value = 'Notebook access changed. Refresh to check your current access.'}}
 function resetQuickTags(){quickTags.value=null;quickTagsBase.value=[];quickTagsRevision.value=0;quickTagsError.value='';quickTagsConflict.value=false}
 function resetQuickSharing(){quickSharing.value=null;quickSharingBase.value='';quickSharingRevision.value=0;quickSharingError.value='';quickSharingConflict.value=false}
@@ -127,21 +135,79 @@ async function uploadCover(event: Event) {
     if (!disposed && gen === generation && draft.value === current) error.value = e instanceof Error ? e.message : 'The image could not be prepared.'
   } finally { coverBusy.value = false; input.value = '' }
 }
-async function loadIndex(append = false, quiet = false, animate = false) {
+async function loadNavigation():Promise<NavigationSnapshot|undefined> {
+  if(navigationSnapshot?.deleted===trash.value)return navigationSnapshot
+  if(navigationTask)return navigationTask
+  const controller=new AbortController(),run=++navigationRun,gen=generation,deleted=trash.value
+  navigationAbort=controller
+  let scope:string|null=null,version:string|null=null
+  const task=(async()=>{
+    try{
+      const data=await api.get<NotebookNavigation>(path('/navigation',{section:'all',deleted:String(deleted)}),{signal:controller.signal,onResponse:response=>{scope=response.headers.get('X-Notebook-Scope');version=response.headers.get('X-Notebook-Navigation')}})
+      if(disposed||gen!==generation||run!==navigationRun||controller.signal.aborted)return
+      return navigationSnapshot={data,scope,version,deleted}
+    }catch(e){if(!disposed&&gen===generation&&run===navigationRun&&!controller.signal.aborted){if(e instanceof ApiError&&e.status===403)clearPrivate();failure(e)}}
+    finally{if(run===navigationRun)navigationTask=undefined}
+  })()
+  navigationTask=task
+  return task
+}
+async function loadIndex(append = false, quiet = false, animate = false, attempt=0):Promise<boolean> {
+  cancelListing()
+  const controller=new AbortController();listAbort=controller
   const run = ++listRun, gen = generation
   if (!quiet) loading.value = true
   const offset = append ? index.value?.nextOffset ?? 0 : 0
+  let scope:string|null=null,version:string|null=null
+  const query:Record<string,string>={section:'all',navigation:'false', type:category.value, ...(category.value==='quests'?{questStatus:questFilter.value}:{}), ...(category.value==='pinned'&&pinned.value.length?{ids:pinned.value.join(',')}:{}),tags:JSON.stringify(tagFilter.value), search: search.value.trim(), deleted: String(trash.value), character: category.value==='quests'?'':relevant.value, offset: String(offset)}
+  const options={signal:controller.signal,onResponse:(response:Response)=>{scope=response.headers.get('X-Notebook-Scope');version=response.headers.get('X-Notebook-Navigation')}}
+  const needsNavigation=navigationSnapshot?.deleted!==trash.value
+  let initial:Promise<NotebookInitial>|undefined
+  if(needsNavigation){invalidateNavigation();navigationAbort=controller;initial=api.get<NotebookInitial>(path('/initial',query),options)}
+  const pendingNavigation=initial?initial.then(value=>({data:value.navigation,scope,version,deleted:trash.value}),()=>undefined):loadNavigation()
+  if(!targetsLoaded&&!targetsBusy.value)void loadLinkTargets()
   try {
-    const result = await api.get<NotebookIndex>(path('', {section:'all', type:category.value, ...(category.value==='quests'?{questStatus:questFilter.value}:{}), ...(category.value==='pinned'&&pinned.value.length?{ids:pinned.value.join(',')}:{}),tags:JSON.stringify(tagFilter.value), search: search.value.trim(), deleted: String(trash.value), character: category.value==='quests'?'':relevant.value, offset: String(offset)}))
-    if (disposed || gen !== generation || run !== listRun) return
-    if (!index.value && category.value==='people' && (result.role==='player'||!result.counts.people)) {category.value='all';await loadIndex(false,quiet,animate);return}
+    const page = initial?(await initial).listing:await api.get<NotebookPage>(path('',query),options)
+    if (disposed || gen !== generation || run !== listRun) return false
+    if(accessScope!==undefined&&accessScope!==scope){clearPrivate();relevant.value='';if(attempt<2)return loadIndex(false,quiet,animate,attempt+1);return false}
+    accessScope=scope
+    let metadata=await pendingNavigation
+    if(disposed||gen!==generation||run!==listRun||!metadata)return false
+    if(metadata.scope!==scope){clearPrivate();relevant.value='';if(attempt<2)return loadIndex(false,quiet,animate,attempt+1);return false}
+    if(metadata.version!==version){
+      // Drop old counts/sessions immediately, including changes from another tab.
+      notebookChanged();index.value=null;linkTargets.value=[];labels.value={}
+      if(append&&attempt<2)return loadIndex(false,quiet,animate,attempt+1)
+      metadata=await loadNavigation()
+      if(disposed||gen!==generation||run!==listRun||!metadata)return false
+      if(metadata.scope!==scope||metadata.version!==version){clearPrivate();if(attempt<2)return loadIndex(false,quiet,animate,attempt+1);return false}
+    }
+    navigationSnapshot=metadata
+    if (!index.value && category.value==='people' && (metadata.data.role==='player'||!metadata.data.counts.people)) {category.value='all';return loadIndex(false,quiet,animate,attempt)}
+    const result:NotebookIndex={...metadata.data,...page}
+    const navigation=JSON.stringify([metadata.scope,metadata.version,metadata.deleted])
+    const knownTargets=new Map(linkTargets.value.map(target=>[target.id,target]))
+    const renamed=result.entries.some(entry=>{const old=knownTargets.get(entry.id);return old&&(old.title!==entry.title||old.section!==entry.section||old.codexType!==entry.codexType)})
+    if((targetsNavigation!==undefined&&targetsNavigation!==navigation)||renamed)invalidateLinkTargets()
+    targetsNavigation=navigation
     if (append && index.value) result.entries = [...new Map([...index.value.entries, ...result.entries].map(item => [item.id, item])).values()]
     index.value = result; rememberLabels(result.entries)
-    if (!targetsBusy.value && Date.now()-targetsLoadedAt >= 15000) void loadLinkTargets()
+    if (!targetsBusy.value && !targetsLoaded) void loadLinkTargets()
     if (relevant.value && !result.characters.some(c => c.id === relevant.value && c.assigned)) relevant.value = ''
     if (animate && gen === generation && run === listRun) listMotion.value++
-  } catch (e) {if (gen === generation && run === listRun) failure(e)}
-  finally {if (run === listRun) loading.value = false}
+    return true
+  } catch (e) {
+    if(gen!==generation||run!==listRun||controller.signal.aborted)return false
+    if(scope&&accessScope!==undefined&&accessScope!==scope){clearPrivate();relevant.value='';if(e instanceof ApiError&&e.status===400&&attempt<2)return loadIndex(false,quiet,animate,attempt+1);failure(e);return false}
+    if(e instanceof ApiError&&e.status===400&&relevant.value){
+      const metadata=await pendingNavigation??await loadNavigation()
+      if(gen!==generation||run!==listRun||controller.signal.aborted)return false
+      if(metadata&&!metadata.data.characters.some(c=>c.id===relevant.value&&c.assigned)){clearPrivate();relevant.value='';if(attempt<2)return loadIndex(false,quiet,animate,attempt+1)}
+    }
+    if(e instanceof ApiError&&e.status===403)clearPrivate()
+    failure(e);return false
+  }
+  finally {if (run === listRun) {loading.value = false;listAbort=undefined;if(navigationAbort===controller)navigationAbort=undefined}}
 }
 async function loadLinkTargets() {
   const run=++targetsRun, gen=generation
@@ -149,7 +215,7 @@ async function loadLinkTargets() {
   try {
     const result=await api.get<{entries:NotebookLinkTarget[]}>(path('/link-targets'),{signal:controller.signal})
     if(disposed||gen!==generation||run!==targetsRun)return
-    linkTargets.value=result.entries;targetsLoadedAt=Date.now();rememberLabels(result.entries)
+    linkTargets.value=result.entries;targetsLoaded=true;rememberLabels(result.entries)
   } catch(e) {
     if(disposed||gen!==generation||run!==targetsRun||controller.signal.aborted)return
     targetsError.value='Note links could not be checked.'
@@ -222,7 +288,7 @@ async function save() {
     editing.value = false; draft.value = null; busy.value = false
     if (category.value==='quests' && draftQuestStatus) questFilter.value=draftQuestStatus
     const origin=editOrigin
-    targetsLoadedAt=0
+    notebookChanged()
     notice.value = props.localPreview?'Local changes saved.':'Changes saved.'; await openEntry(id); await restoreReader(origin); await loadIndex()
   } catch (e) {
     if (e instanceof ApiError && e.status === 409 && selected.value) {
@@ -238,7 +304,7 @@ async function entryAction(action: 'delete' | 'recover' | 'restore-version', ent
   busy.value = true; error.value = ''
   try {
     await api.post(path(`/entries/${entry.id}/${action}`), {expectedRevision: entry.revision, ...(revision ? {revision} : {})})
-    targetsLoadedAt=0
+    notebookChanged()
     notice.value = action === 'delete' ? 'Moved to Recently deleted.' : action === 'recover' ? 'Recovered.' : 'Earlier text restored as a new version.'
     busy.value = false
     if ('body' in entry) {await openEntry(entry.id); if (action === 'restore-version') await loadHistory()}
@@ -253,7 +319,7 @@ async function saveFolder(rename = false) {
   try {
     if (rename && activeFolder.value) await api.patch(path(`/folders/${activeFolder.value.id}`), {...folderEdit.value, expectedRevision: folderRevision.value})
     else {const result = await api.post<{id: string}>(path('/folders'), {...folderDraft.value, section: section.value}); folder.value = result.id}
-    targetsLoadedAt=0
+    notebookChanged()
     folderDraft.value = emptyFolder(); newFolderOpen.value = false; folderTools.value = false; await loadIndex(); notice.value = rename ? 'Folder settings saved.' : 'Folder created.'
   } catch (e) {failure(e)} finally {busy.value = false}
 }
@@ -303,7 +369,7 @@ async function saveQuickTags(){
   try{
     const result=await api.patch<{tags:string[];revision:number;updatedAt:string;editedBy:string}>(path(`/entries/${entry.id}/tags`),{expectedRevision:quickTagsRevision.value,tags:[...tags]})
     if(disposed||gen!==generation||selected.value?.id!==entry.id)return
-    selected.value={...selected.value,...result};resetQuickTags();notice.value='Tags saved.';await loadIndex(false,true);busy.value=false;await nextTick();quickTagsToggle.value?.focus({preventScroll:true})
+    selected.value={...selected.value,...result};resetQuickTags();notebookChanged();notice.value='Tags saved.';await loadIndex(false,true);busy.value=false;await nextTick();quickTagsToggle.value?.focus({preventScroll:true})
   }catch(e){if(gen!==generation||disposed)return;quickTagsError.value=e instanceof Error?e.message:'Tags could not be saved. Try again.';quickTagsConflict.value=e instanceof ApiError&&e.status===409;if(e instanceof ApiError&&[401,403,404].includes(e.status)){if(e.status===403)resetQuickTags();failure(e)}}
   finally{if(gen===generation)busy.value=false}
 }
@@ -336,7 +402,7 @@ async function saveQuickSharing(){
   try{
     const result=await api.patch<Pick<NotebookEntry,'audience'|'characterIds'|'revision'|'updatedAt'|'editedBy'>>(path(`/entries/${entry.id}/sharing`),{expectedRevision:quickSharingRevision.value,audience:choice.audience,characterIds:choice.audience==='characters'?[...choice.characterIds]:[]})
     if(disposed||gen!==generation||selected.value?.id!==entry.id)return
-    selected.value={...selected.value,...result};resetQuickSharing();historyOpen.value=false;targetsLoadedAt=0;notice.value='Visibility saved. '+(result.audience==='dm'?'This entry is DM only.':result.audience==='room'?'Shared with the whole room.':'Shared with the selected characters.')
+    selected.value={...selected.value,...result};resetQuickSharing();historyOpen.value=false;notebookChanged();notice.value='Visibility saved. '+(result.audience==='dm'?'This entry is DM only.':result.audience==='room'?'Shared with the whole room.':'Shared with the selected characters.')
     await loadIndex(false,true);busy.value=false;await nextTick();quickSharingToggle.value?.focus({preventScroll:true})
   }catch(e){if(gen!==generation||disposed)return;quickSharingError.value=e instanceof Error?e.message:'Visibility could not be saved. Try again.';quickSharingConflict.value=e instanceof ApiError&&e.status===409;if(e instanceof ApiError&&[401,403,404].includes(e.status)){if(e.status===403)resetQuickSharing();failure(e)}}
   finally{if(gen===generation)busy.value=false}
@@ -361,6 +427,7 @@ async function createTag(name:string):Promise<boolean> {
     const result=await api.post<{name:string}>(path('/tags'),{name})
     if(disposed||gen!==generation)return false
     // Keep an unsaved entry draft intact while refreshing tag suggestions.
+    notebookChanged()
     await loadIndex(false,true)
     if(disposed||gen!==generation)return false
     notice.value='Tag “'+result.name+'” is available. Add it to an entry when needed.'
@@ -380,6 +447,7 @@ async function changeQuestStatus() {
     selected.value=latest;historyOpen.value=false
     if(category.value==='quests')questFilter.value=next
     notice.value=next==='finished'?'Quest marked finished.':'Quest returned to Active.'
+    notebookChanged()
     await loadIndex(false,false,true)
   } catch(e) {failure(e);if(e instanceof ApiError&&e.status===409){busy.value=false;await refreshSelected()}}
   finally {busy.value=false}
@@ -395,6 +463,7 @@ async function toggleQuestVisibility() {
     if(disposed||gen!==generation||run!==openRun)return
     selected.value=latest;historyOpen.value=false
     notice.value=audience==='room'?'Quest shown to players. Only Whole room clues are shared.':'Quest and its clues hidden from players.'
+    notebookChanged()
     await loadIndex(false,false,true)
   } catch(e) {failure(e);if(e instanceof ApiError&&e.status===409){busy.value=false;await refreshSelected()}}
   finally {busy.value=false}
@@ -413,15 +482,16 @@ async function toggleQuestClue(id: string) {
     if(disposed||gen!==generation||run!==openRun)return
     selected.value=latest;historyOpen.value=false
     notice.value=next==='room'?'Clue shown to players.':'Clue hidden from players.'
+    notebookChanged()
     await loadIndex(false,false,true)
   } catch(e) {failure(e);if(e instanceof ApiError&&e.status===409){busy.value=false;await refreshSelected()}}
   finally {busy.value=false}
 }
-async function resetLocal() {if(!props.localPreview||!mayLeave()||!window.confirm('Reset every local notebook change to the approved copies?'))return;await api.post(path('/reset'));pinned.value=[];try{localStorage.removeItem(pinKey.value)}catch{/* Preferences are optional. */}navigation.value=[];selected.value=null;category.value='people';folder.value='all';search.value='';trash.value=false;await loadIndex();notice.value='Local preview reset.'}
+async function resetLocal() {if(!props.localPreview||!mayLeave()||!window.confirm('Reset every local notebook change to the approved copies?'))return;await api.post(path('/reset'));notebookChanged();pinned.value=[];try{localStorage.removeItem(pinKey.value)}catch{/* Preferences are optional. */}navigation.value=[];selected.value=null;category.value='people';folder.value='all';search.value='';trash.value=false;await loadIndex();notice.value='Local preview reset.'}
 function switchPlayer(event: Event) {const target=event.target as HTMLSelectElement;if(!mayLeave()){target.value=previewAsCharacter.value;return}previewAsCharacter.value=target.value}
 function moveTab(direction: number) {const tabs: readonly typeof dossierTab.value[]=dossierTabs.value;dossierTab.value=tabs[(tabs.indexOf(dossierTab.value)+direction+tabs.length)%tabs.length]!;void nextTick(()=>document.getElementById('codex-tab-'+dossierTab.value)?.focus())}
 function toggleTrash() {if (!mayLeave()) return; openRun++; opening.value = false; trash.value = !trash.value; category.value='all';folder.value = 'all'; selected.value = null; historyOpen.value = false; void loadIndex(false,false,true)}
-function refresh() {if (!busy.value) {error.value = ''; void loadLinkTargets(); void loadIndex(); void refreshSelected()}}
+function refresh() {if (!busy.value) {error.value = '';notebookChanged(); void loadIndex(); void refreshSelected()}}
 async function refreshSelected() {
   if (!selected.value || busy.value || opening.value || historyBusy.value) return
   const id = selected.value.id, gen = generation, revision = selected.value.revision, run = openRun
@@ -433,28 +503,30 @@ async function refreshSelected() {
   } catch (e) {if (generation === gen) failure(e)}
 }
 async function findConnections() {
+  cancelConnections()
+  const controller=new AbortController();linkAbort=controller
   const run = ++linkRun, gen = generation; linkBusy.value = true
   try {
-    const results = await Promise.all((['journal', 'story-items'] as const).map(value => api.get<NotebookIndex>(path('', {section: value, search: linkQuery.value.trim()}))))
+    const results = await Promise.all((['journal', 'story-items'] as const).map(value => api.get<NotebookPage>(path('', {section: value, navigation:'false', search: linkQuery.value.trim()}),{signal:controller.signal})))
     if (run !== linkRun || gen !== generation || disposed) return
     linkResults.value = results.flatMap(value => value.entries).filter(item => item.id !== selected.value?.id).slice(0, 100); rememberLabels(linkResults.value)
-  } catch (e) {if (gen === generation) failure(e)} finally {if (run === linkRun) linkBusy.value = false}
+  } catch (e) {if (gen === generation&&run===linkRun&&!controller.signal.aborted) failure(e)} finally {if (run === linkRun) linkBusy.value = false}
 }
 function acceptLatestBase() {if (!remote.value) return; if (remote.value.deletedAt) {notice.value = 'The entry was deleted elsewhere. Copy your draft before discarding it, then recover the entry.'; return} selected.value = remote.value; remote.value = null; notice.value = 'Your draft is kept. Saving will replace the latest text, artwork and settings with this draft.'}
-watch(search, () => {clearTimeout(searchTimer); searchTimer = setTimeout(() => {void loadIndex()}, 250)})
-watch(linkQuery, () => {clearTimeout(linkTimer); linkTimer = setTimeout(() => {void findConnections()}, 250)})
-watch(() => [props.roomId, props.previewCharacter, previewAsCharacter.value] as const, () => {
-  generation++; listRun++; openRun++; navigation.value=[]; category.value=previewAsCharacter.value||props.previewCharacter?'all':'people'; clearPrivate(); search.value = ''; folder.value = 'all'; trash.value = false; relevant.value = props.initialCharacter ?? ''; error.value = ''; notice.value = ''; browse.value = true; pinned.value = []; folderDraft.value=emptyFolder(); folderEdit.value=emptyFolder(); newFolderOpen.value=false; folderTools.value=false
+watch(search, () => {cancelListing(); searchTimer = setTimeout(() => {searchTimer=undefined;void loadIndex()}, 250)}, {flush:'sync'})
+watch(linkQuery, () => {cancelConnections(); linkTimer = setTimeout(() => {linkTimer=undefined;void findConnections()}, 250)}, {flush:'sync'})
+watch(() => [props.roomId, props.role, props.accessScope, props.previewCharacter, previewAsCharacter.value, auth.user?.id] as const, () => {
+  generation++; listRun++; openRun++; navigation.value=[]; category.value=props.role==='player'||previewAsCharacter.value||props.previewCharacter?'all':'people'; clearPrivate(); search.value = '';linkQuery.value='';cancelListing();cancelConnections(); folder.value = 'all'; trash.value = false; relevant.value = props.initialCharacter ?? ''; error.value = ''; notice.value = ''; browse.value = true; pinned.value = []; folderDraft.value=emptyFolder(); folderEdit.value=emptyFolder(); newFolderOpen.value=false; folderTools.value=false
   try {const saved: unknown = JSON.parse(localStorage.getItem(pinKey.value) ?? '[]'); if (Array.isArray(saved)) pinned.value = saved.filter((id): id is string => typeof id === 'string' && /^[a-f0-9]{24}$/i.test(id)).slice(0, 12)} catch { /* Pins are optional. */ }
   const gen=generation
-  void loadIndex().then(() => {if(disposed||gen!==generation)return;if(props.initialEntry) void openEntry(props.initialEntry);else if(!previewAsCharacter.value&&!props.previewCharacter){const first=index.value?.entries[0];if(first)void openEntry(first.id,true).then(()=>{if((reader.value?.parentElement?.clientWidth??1000)<=540)browse.value=true})}})
+  void loadIndex().then(loaded => {if(!loaded||disposed||gen!==generation)return;if(props.initialEntry) void openEntry(props.initialEntry);else if(!previewAsCharacter.value&&!props.previewCharacter){const first=index.value?.entries[0];if(first)void openEntry(first.id,true).then(()=>{if((reader.value?.parentElement?.clientWidth??1000)<=540)browse.value=true})}})
 }, {immediate: true})
 watch(() => props.initialCharacter, value => {if (!dirty.value) {relevant.value = value ?? ''; void loadIndex()}})
 const beforeUnload = (event: BeforeUnloadEvent) => {if (dirty.value || busy.value) {event.preventDefault(); event.returnValue = ''}}
-const visibleRefresh = () => {if (document.visibilityState === 'visible' && !busy.value) {void loadIndex(false, true); void refreshSelected()}}
+const visibleRefresh = () => {if (document.visibilityState === 'visible' && !busy.value) {if(searchTimer===undefined&&!listAbort)void loadIndex(false, true); void refreshSelected()}}
 useVisiblePolling(visibleRefresh, 15000, {visibility:false})
 onMounted(() => {window.addEventListener('beforeunload', beforeUnload)})
-onUnmounted(() => {disposed = true; generation++; targetsAbort?.abort(); clearTimeout(searchTimer); clearTimeout(linkTimer); window.removeEventListener('beforeunload', beforeUnload)})
+onUnmounted(() => {disposed = true; generation++;cancelListing();cancelConnections();invalidateNavigation();targetsAbort?.abort(); window.removeEventListener('beforeunload', beforeUnload)})
 </script>
 
 <template>

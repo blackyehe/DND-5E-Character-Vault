@@ -14,6 +14,28 @@ function context(): BuilderContext {
 function draft() { const value = newBuilderDraft(); Object.assign(value, { name: 'Lyra', race: 'elf', subrace: 'high-elf', klass: 'wizard', level: 3, skills: ['arcana', 'investigation'] }); return value }
 
 describe('character builder validation', () => {
+  it('persists subrace identity while adding parent and subrace bonuses once and inheriting parent speed',()=>{
+    const value=draft(),ctx=context();ctx.race!.speed=25
+    const c=composeCharacter(value,ctx);expect(c.meta.subraceIndex).toBe('high-elf');expect(c.abilities).toMatchObject({dex:16,int:13});expect(c.combat.speed).toBe(25);expect(value.scores).toMatchObject({dex:14,int:12})
+  })
+  it('keeps confirmed invocations/boons separate from feat slots and preserves future-level selections',()=>{
+    const value=draft(),ctx=context();value.manualOptions=[{name:'Future invocation',description:'Copied rules',origin:'other',level:5,definition:{version:1,kind:'invocations',index:'inv-id',grantConfirmed:true}}];ctx.features.push(...value.manualOptions)
+    expect(builderIssues(value,ctx).filter(i=>i.step==='feats')).toEqual([]);expect(composeCharacter(value,ctx).features.find(f=>f.definition?.kind==='invocations')).toMatchObject({level:5,definition:{index:'inv-id'}});expect(value.advancements).toEqual({})
+    const restored=restoreBuilderDraft(JSON.parse(JSON.stringify(value)));expect(restored.manualOptions).toEqual(value.manualOptions)
+  })
+  it('preserves corrupt manual draft entries for explicit repair and rejects unconfirmed choices',()=>{
+    const restored=restoreBuilderDraft({...draft(),manualOptions:[null]});expect(restored.manualOptions).toEqual([null]);expect(builderIssues(restored,context())).toEqual(expect.arrayContaining([expect.objectContaining({step:'feats',message:expect.stringContaining('unreadable')})]))
+    const value=draft();value.manualOptions=[{name:'Boon',description:'Rules',level:1,definition:{version:1,kind:'boons',index:'boon-id'}}];expect(builderIssues(value,context())).toEqual(expect.arrayContaining([expect.objectContaining({step:'feats',message:expect.stringContaining('Confirm')})]))
+  })
+  it('keeps a missing saved feat in the draft but prevents silently creating without it',()=>{
+    const value=draft(),ctx=context();value.featLimitOverride=true;value.feats=['homebrew-feats-missing'];ctx.featIndexes=[]
+    expect(builderIssues(value,ctx)).toEqual(expect.arrayContaining([expect.objectContaining({step:'feats',message:expect.stringContaining('unavailable')})]));expect(value.feats).toEqual(['homebrew-feats-missing']);expect(()=>composeCharacter(value,ctx)).toThrow()
+  })
+  it('carries background and feat identities independently of their source-qualified labels',()=>{
+    const value=draft(),ctx=context();value.background='background-id';ctx.background={index:'background-id',name:'Scholar',displayName:'Scholar — Source',url:'',description:'Rules',traits:[],skills:[],languages:0,equipment:[],suggestions:{}}
+    ctx.features.push({name:'Scholar Feat — Source',description:'Feat text',definition:{version:1,kind:'feats',index:'feat-id'}})
+    const character=composeCharacter(value,ctx);expect(character.meta.backgroundIndex).toBe('background-id');expect(character.features.find(f=>f.definition)?.definition).toEqual({version:1,kind:'feats',index:'feat-id'})
+  })
   it('keeps racial, subracial, and manual bonuses separate from base scores', () => {
     const value = draft(); value.adjustments.int = 2
     expect(abilityTotals(value, context())).toMatchObject({ dex: 16, int: 15, str: 15 })

@@ -7,6 +7,27 @@ vi.mock('./orcbrew',async original=>({...await original<object>(),buildOrcbrewCa
 vi.mock('./workshop-schema',()=>({activeWorkshopEntries:(entries:any[])=>entries.filter(e=>!e.superseded)}))
 beforeEach(()=>{vi.resetModules();state.metadata=[{_id:'pack',data:{filename:'rules.orcbrew'}}];state.reads.mockClear();state.legacy.mockClear();state.enabled=true;state.catalog=Object.fromEntries(['classes','races','backgrounds','subraces','subclasses','feats','languages','spells'].map(k=>[k,[]]))})
 describe('character creation catalogue',()=>{
+ it('projects every identity into lists and returns complete definitions only at the matching revision',async()=>{
+  state.catalog.classes=[{index:'class',name:'Class',aliases:['old'],sourcePack:'Book',homebrew_traits:[{name:'Full rule',description:'Full text'}],details:{':profs':{skill:true}}}]
+  const module=await import('./creation-catalog'),initial=await module.creationSelectionsResponse('owner')
+  expect(initial.value?.options.classes).toEqual([{index:'class',name:'Class',url:'',selectionOnly:true,homebrew:true,aliases:['old'],sourcePack:'Book'}])
+  const selected=await module.creationDefinitions('owner',initial.value!.revision,'classes','class')
+  expect(selected).toEqual((await module.creationCatalog('owner')).classes[0]);expect(selected).toHaveProperty('homebrew_traits')
+  await expect(module.creationDefinitions('owner',initial.value!.revision,'classes','removed')).rejects.toMatchObject({status:404})
+ })
+ it('validates cold selection-list conditionals without reading definitions and separates the full-response namespace',async()=>{
+  const module=await import('./creation-catalog'),first=await module.creationSelectionsResponse('owner'),full=await module.creationCatalogResponse('owner')
+  expect(first.etag).not.toBe(full.etag);vi.resetModules();state.reads.mockClear()
+  const cold=await import('./creation-catalog');expect(await cold.creationSelectionsResponse('owner','W/'+first.etag)).toEqual({etag:first.etag});expect(state.reads).not.toHaveBeenCalled()
+  expect((await cold.creationSelectionsResponse('stranger',first.etag)).value).toBeDefined()
+ })
+ it('rejects definitions after a source change rather than mixing new rules with old selection lists',async()=>{
+  state.catalog.feats=[{index:'feat',name:'Feat',description:'Complete feat'}]
+  const module=await import('./creation-catalog'),first=await module.creationSelectionsResponse('owner')
+  expect(await module.creationDefinitions('owner',first.value!.revision,'feats')).toEqual((await module.creationCatalog('owner')).feats)
+  state.metadata=[{_id:'changed',data:{filename:'updated'}}]
+  await expect(module.creationDefinitions('owner',first.value!.revision,'feats')).rejects.toMatchObject({status:409})
+ })
  it('coalesces one scoped load and retains creation rules and stable source identities',async()=>{
   state.catalog.classes=[{index:'homebrew-classes-test',name:'Test class',aliases:['old'],sourcePack:'Book',homebrew_traits:[{name:'Rule'}],details:{':profs':{skill:true},':spellcasting':{ability:'int'},':raw-editor-copy':'discard'}}]
   const {creationCatalog,CREATION_KINDS}=await import('./creation-catalog')

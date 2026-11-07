@@ -7,6 +7,7 @@ export interface ReadingDocument { text: string; facts: ReadingField[]; sections
 export const record = (value: unknown): RuleRecord => value && typeof value === 'object' && !Array.isArray(value) ? value as RuleRecord : {}
 export const list = (value: unknown): unknown[] => Array.isArray(value) ? value : []
 export const field = (value: unknown, key: string): unknown => record(value)[key] ?? record(value)[`:${key}`]
+export const readingKey = (key:string) => key.replace(/^:/,'').replace(/_/g,'-').replace(/([a-z])([A-Z])/g,'$1-$2').toLowerCase()
 export const hasReadingValue = (value: unknown): boolean => value !== null && value !== undefined && value !== '' &&
   (Array.isArray(value) ? value.some(hasReadingValue) : typeof value === 'object' ? Object.values(record(value)).some(hasReadingValue) : true)
 const labels: Record<string, string> = {
@@ -21,6 +22,7 @@ const labels: Record<string, string> = {
   'lizardfolk-ac':'Lizardfolk natural armour','resource-list':'Available options',
   'num-attacks':'Number of attacks','skill-prof':'Skill proficiency',save:'Saving throws',
   'level-selections':'Choices by level','starts-at':'Starts at level','spellcasting-level':'Spellcasting starts at level',
+  progression:'Slot progression',startsAt:'Starts at class level',learning:'Spell learning',preparedLevel:'Prepared class level contribution',preparedBase:'Prepared spell base',spellList:'Spell list',
 }
 export function readingLabel(value: string): string {
   const key = value.replace(/^:/,'').split('/').pop()!.replace(/_/g,'-').replace(/\?$/,'')
@@ -37,10 +39,10 @@ export function readingText(value: unknown): string {
   return ''
 }
 const firstText = (...values: unknown[]) => values.map(readingText).find(Boolean) ?? ''
-const metadata = new Set(['index','url','updated-at','key','option-pack','source','source-pack','source-packs','sources','content-key','aliases','legacy-key','display-name','disabled','disabled?','homebrew','definition-available','workshop','workshop-revision','id','version','edit-event','option-type','option-set-type','class-levels','subclass-levels'])
+const metadata = new Set(['index','url','updated-at','key','option-pack','source','source-pack','source-packs','sources','content-key','aliases','legacy-key','display-name','disabled','disabled?','homebrew','definition-available','workshop','workshop-revision','id','version','edit-event','option-type','option-set-type','class-levels','subclass-levels','spell-builder','option-builder','monster-draft','monster-view','workshop-item','item-view','filter-facets','builder-features','builder-levels','option-id','option-revision'])
 export function readingFields(value: unknown): ReadingField[] {
   return Object.entries(record(value)).filter(([key,child])=>{
-    const plain=key.replace(/^:/,'').replace(/_/g,'-').replace(/([a-z])([A-Z])/g,'$1-$2').toLowerCase()
+    const plain=readingKey(key)
     return !metadata.has(plain)&&!plain.startsWith('codex/')&&!(typeof child==='string'&&/^\/api\//.test(child))&&hasReadingValue(child)
   }).map(([key,child])=>({key,label:readingLabel(key),value:child}))
 }
@@ -51,7 +53,7 @@ export function compendiumReading(entry: RuleRecord, kind: string, levels: SrdLe
   const raw=record(entry.details),workshop=record(entry.workshop)
   const get=(key:string)=>entry[key]??field(raw,key)
   const result:ReadingDocument={text:firstText(workshop.description,entry.description,entry.desc,field(raw,'description'),field(raw,'help')),facts:[],sections:[],rules:[]}
-  const canonical=(key:string)=>key.replace(/^:/,'').replace(/_/g,'-')
+  const canonical=readingKey
   const used=new Set<string>(['name','description','desc','help','traits','homebrew-traits','racial-traits','options','details'])
   const add=(label:string,value:unknown,fact=false,key?:string)=>{if(hasReadingValue(value))(fact?result.facts:result.sections).push({label,value,key})}
   const take=(key:string,label:string,fact=false,transform?:(value:unknown)=>unknown)=>{used.add(canonical(key));const value=get(key);add(label,transform?transform(value):value,fact,key)}
@@ -109,25 +111,40 @@ export function compendiumReading(entry: RuleRecord, kind: string, levels: SrdLe
     for(const row of [...levels].sort((a,b)=>a.level-b.level))for(const feature of row.features??[]){const key=`${row.level}:${feature.index}`;if(!seen.has(key)){seen.add(key);addRule(feature,'Class feature','feature',row.level)}}
   }
   used.add('spellcasting')
-  const casting=record(get('spellcasting')),info=list(casting.info)
-  if(hasReadingValue(casting)){
+  const authoredBenefits=Array.isArray(entry.benefits)?entry.benefits:Array.isArray(workshop.benefits)?workshop.benefits:undefined
+  // The same explicit replacement rule is used by entryBenefits, including [].
+  if(authoredBenefits){used.add('level-modifiers');used.add('benefits')}
+  const casting=record(get('spellcasting')),info=list(field(casting,'info'))
+  const magic=record(workshop.magic),publishedMagic=typeof magic.enabled==='boolean'
+  if(publishedMagic){
+    const replaced=new Set(['ability','spellcasting-ability','level-factor','known-mode','spells-known','cantrips-known','cantrips?','spell-list','spellcasting-level','info'])
+    const additional=Object.fromEntries(Object.entries(casting).filter(([key])=>!replaced.has(canonical(key))))
+    if(magic.enabled){
+      add('Spellcasting ability',typeof magic.ability==='string'?readingLabel(magic.ability):readingName(magic.ability),true)
+      add('Spellcasting',{...Object.fromEntries(Object.entries(magic).filter(([key])=>!['enabled','ability'].includes(key))),...additional},false,'spellcasting')
+    }else add('Source spellcasting notes',additional,false,'spellcasting')
+    info.forEach(value=>addRule(value,'Spellcasting'))
+  }else if(hasReadingValue(casting)){
     const ability=field(casting,'spellcasting_ability')??field(casting,'ability')
     add('Spellcasting ability',readingName(ability),true)
     const remaining=Object.fromEntries(Object.entries(casting).filter(([key])=>!['info','spellcasting_ability','ability'].includes(key.replace(/^:/,''))))
-    add('Spellcasting',remaining)
+    add('Spellcasting',remaining,false,'spellcasting')
     info.forEach(value=>addRule(value,'Spellcasting'))
   }
   if(hasReadingValue(workshop)){
     // These are the published Workshop fields, rather than an inferred ruleset.
     add('Published training',{Armour:workshop.armor,Weapons:workshop.weapons,Tools:workshop.tools})
-    if(field(workshop.magic,'enabled')===true)add('Published spellcasting',Object.fromEntries(Object.entries(record(workshop.magic)).filter(([key])=>key!=='enabled')))
-    add('Resource trackers',workshop.resources)
+    add('Resource trackers',workshop.resources,false,'resources')
   }
   // Keep unusual imported rules readable too, while hiding file/editor identifiers.
   const extra=new Map<string,ReadingField>()
   for(const source of [raw,entry])for(const [key,value] of Object.entries(source))if(!used.has(canonical(key))){
-    for(const row of readingFields({[key]:value}))extra.set(row.label,row)
+    // Authored benefits replace the original resistance grants as well. Keep
+    // unrelated imported properties readable instead of hiding the whole map.
+    const readable=authoredBenefits&&canonical(key)==='props'?Object.fromEntries(Object.entries(record(value)).filter(([name])=>!['damage-resistance','damage-immunity','condition-immunity','saving-throw-advantage'].includes(canonical(name)))):value
+    for(const row of readingFields({[key]:readable}))extra.set(row.label,row)
   }
   for(const row of extra.values())add(row.label,row.value,false,row.key)
+  if(authoredBenefits)add('Benefits',authoredBenefits,false,'benefits')
   return result
 }

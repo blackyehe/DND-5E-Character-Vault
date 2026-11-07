@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, h, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { api, ApiError } from '../../lib/api'
 import { cloneEntry, sameEntry, entryProblems, type CompendiumEditState, type CompendiumKind, type EntryData } from '../../../shared/compendium-editing'
-import EntryBuilder from './EntryBuilder.vue'
 import ReferenceValue from './ReferenceValue.vue'
 import './entry-editor.css'
+// This component mounts only after Edit entry. Load the form alongside the
+// source request so a first-time editor does not pay both waits in sequence.
+const builderRequest=import('./EntryBuilder.vue')
+void builderRequest.catch(()=>{}) // The async component displays the failure.
+const EntryBuilder=defineAsyncComponent({
+  loader:()=>builderRequest,
+  delay:0,
+  loadingComponent:{render:()=>h('p',{class:'entry-hint',role:'status'},'Loading the entry form…')},
+  errorComponent:{render:()=>h('p',{class:'entry-error',role:'alert'},'The entry form could not load. Reload the page to try again.')},
+})
 const props=defineProps<{kind:CompendiumKind;index:string}>()
 const emit=defineEmits<{close:[];saved:[CompendiumEditState]}>()
 const state=ref<CompendiumEditState|null>(null),draft=ref<EntryData>({}),busy=ref(false),loading=ref(true),error=ref(''),notice=ref(''),conflict=ref(false),confirmDiscard=ref(false),confirmRestore=ref(false)
@@ -18,7 +27,7 @@ const previousOverflow=document.body.style.overflow
 const path=`/api/compendium/${props.kind}/${encodeURIComponent(props.index)}`
 const dirty=computed(()=>!!state.value&&!sameEntry(draft.value,state.value.entry))
 const problems=computed(()=>state.value?entryProblems(state.value.source,draft.value):[])
-interface ReviewRow { id:string;name:string;updatedAt:string;reviewHash:string;alreadyReviewed:boolean;sourceConfirmation:boolean;warnings:string[];changes:{field:string;before:unknown;after:unknown}[] }
+interface ReviewRow { id:string;name:string;updatedAt:string;reviewHash:string;alreadyReviewed:boolean;blocked?:boolean;sourceConfirmation:boolean;warnings:string[];changes:{field:string;before:unknown;after:unknown}[] }
 const review=ref<{revision:number;characters:ReviewRow[]}|null>(null),reviewBusy=ref(false),reviewError=ref(''),confirmed=ref<Record<string,boolean>>({}),applied=ref<Record<string,boolean>>({})
 async function load(){loading.value=true;error.value='';try{state.value=await api.get<CompendiumEditState>(path,{timeoutMs:60000});draft.value=cloneEntry(state.value.entry);conflict.value=false;confirmDiscard.value=false;confirmRestore.value=false;review.value=null;await nextTick();pane.value?.focus()}catch(e){error.value=(e as Error).message}finally{loading.value=false}}
 function close(){if(busy.value||reviewBusy.value)return;if(dirty.value){confirmDiscard.value=true;return}emit('close')}
@@ -52,7 +61,7 @@ onBeforeUnmount(()=>{background.forEach(({element,inert})=>{element.inert=inert}
     <div v-if="confirmRestore" class="entry-callout" role="alert"><p>Restore the source definition in your Compendium? Existing characters keep their reviewed rules until you review them again.</p><p v-if="dirty">This will replace your unsaved draft.</p><button v-if="dirty" class="btn-ghost" @click="download">Download draft</button><button class="btn-ghost" :disabled="busy" @click="confirmRestore=false">Keep edition</button><button class="btn-ghost" :disabled="busy" @click="save(true)">Restore source definition</button></div>
     <details class="entry-field-group" @toggle="showSource=($event.target as HTMLDetailsElement).open"><summary>Compare with source</summary><div v-if="showSource" class="entry-review-body"><ReferenceValue :value="displayValue(state.source)" /></div></details>
     <section class="entry-review"><h3 class="font-display">Review existing characters</h3><p class="entry-hint">Compare each affected character before applying this saved edition. Current HP, spent uses, inventory quantities and player choices are preserved.</p><button type="button" class="btn-ghost" :disabled="dirty||busy||reviewBusy" @click="loadReview">{{reviewBusy?'Preparing review…':review?'Refresh character review':'Find affected characters'}}</button><p v-if="dirty" class="entry-hint">Save your entry changes before reviewing characters.</p><p v-if="reviewError" class="entry-error" role="alert">{{reviewError}}</p><p v-if="review&&!review.characters.length" role="status">No existing characters use this entry.</p>
-    <details v-for="row in review?.characters??[]" :key="row.id" class="entry-field-group"><summary>{{row.name}} <small>{{applied[row.id]||row.alreadyReviewed?'Reviewed':'Review required'}}</small></summary><div class="entry-review-body"><p v-for="warning in row.warnings" :key="warning" class="entry-callout">{{warning}}</p><p v-if="!row.changes.length" class="entry-hint">No saved statistics need changing. Applying records this definition for the character’s reference rules.</p><div v-for="change in row.changes" :key="change.field" class="entry-review-change"><h4>{{change.field}}</h4><div class="entry-comparison"><section><h5>Current</h5><ReferenceValue :value="displayValue(change.before)" /></section><section><h5>Proposed</h5><ReferenceValue :value="displayValue(change.after)" /></section></div></div><label v-if="row.sourceConfirmation" class="entry-check"><input v-model="confirmed[row.id]" type="checkbox" :disabled="dirty||reviewBusy||!!applied[row.id]"/>This is the intended source for {{row.name}}.</label><button type="button" class="btn-primary" :disabled="dirty||busy||reviewBusy||!!applied[row.id]||row.alreadyReviewed||row.sourceConfirmation&&!confirmed[row.id]" @click="apply(row)">{{applied[row.id]?'Applied':`Apply reviewed rules to ${row.name}`}}</button></div></details>
+    <details v-for="row in review?.characters??[]" :key="row.id" class="entry-field-group"><summary>{{row.name}} <small>{{applied[row.id]||row.alreadyReviewed?'Reviewed':'Review required'}}</small></summary><div class="entry-review-body"><p v-for="warning in row.warnings" :key="warning" class="entry-callout">{{warning}}</p><p v-if="!row.changes.length" class="entry-hint">No saved statistics need changing. Applying records this definition for the character’s reference rules.</p><div v-for="change in row.changes" :key="change.field" class="entry-review-change"><h4>{{change.field}}</h4><div class="entry-comparison"><section><h5>Current</h5><ReferenceValue :value="displayValue(change.before)" /></section><section><h5>Proposed</h5><ReferenceValue :value="displayValue(change.after)" /></section></div></div><label v-if="row.sourceConfirmation" class="entry-check"><input v-model="confirmed[row.id]" type="checkbox" :disabled="dirty||reviewBusy||!!applied[row.id]"/>This is the intended source for {{row.name}}.</label><button type="button" class="btn-primary" :disabled="dirty||busy||reviewBusy||!!applied[row.id]||row.alreadyReviewed||row.blocked||row.sourceConfirmation&&!confirmed[row.id]" @click="apply(row)">{{applied[row.id]?'Applied':`Apply reviewed rules to ${row.name}`}}</button></div></details>
     </section>
   </template>
 </section></div></Teleport></template>

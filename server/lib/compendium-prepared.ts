@@ -11,7 +11,7 @@ import {targetedCompendiumSource} from './compendium-entry-source'
 import {browseIndex,type BrowseIndex,type BrowseEntry,type BrowseKind} from '../../shared/compendium-browse'
 import type {EquipmentItem} from '../../shared/character'
 
-export interface PreparedProbeContext {failed:Set<string>;deadline?:number}
+export interface PreparedProbeContext {failed:Set<string>;deadline?:number;targetedFallbackEligible?:boolean}
 const users=new Set(env.COMPENDIUM_PREPARED_USERS.split(',').map(s=>s.trim()).filter(Boolean))
 // Reuse only an exact ordered pack composition. Personal editions/templates are
 // deliberately excluded and overlaid afresh below. No full sources are retained.
@@ -27,13 +27,13 @@ function rememberComposition(key:string,entries:OrcbrewEntry[]){
  compositions.set(key,{entries,bytes});compositionBytes+=bytes
 }
 export const preparedReaderEnabled=(userId:string)=>env.COMPENDIUM_READER==='prepared'&&(users.has('*')||users.has(userId))
-export async function readPreparedIndex(userId:string,revision:string,kind:BrowseKind,context?:PreparedProbeContext):Promise<BrowseIndex|null> {
- const key=JSON.stringify([userId,revision,kind,'components']);if(context?.failed.has(key))return null
+export async function readPreparedIndex(userId:string,revision:string,kind:BrowseKind,context?:PreparedProbeContext,readOnlyFallback=false):Promise<BrowseIndex|null> {
+ const key=JSON.stringify([userId,revision,kind,readOnlyFallback?'targeted-fallback':'components']);if(context?.failed.has(key))return null
  try{
   // A cold category contains 126 independently checked components in the live
   // library. Keep a real overall bound without forcing healthy cold reads into
   // a much more expensive full-source rebuild after only 2.5 seconds.
-  const deadline=context?(context.deadline??=performance.now()+15000):performance.now()+15000
+  const deadline=readOnlyFallback?Infinity:context?(context.deadline??=performance.now()+15000):performance.now()+15000
   const metadata=await componentMetadata(userId,deadline),contexts=metadata.map(componentContext)
   if(contexts.some(c=>!c)){context?.failed.add(key);return null}
   const compositionKey=JSON.stringify([userId,kind,sourceHash(JSON.stringify(contexts))]),cached=compositions.get(compositionKey),warm=warmWorkshopCatalog(userId,metadata)
@@ -46,7 +46,7 @@ export async function readPreparedIndex(userId:string,revision:string,kind:Brows
   if(cached){compositions.delete(compositionKey);compositions.set(compositionKey,cached);imported=cached.entries}
   else if(warm){imported=kind==='classes'||kind==='subclasses'||kind==='races'?activeWorkshopEntries(warm[kind],kind):warm[kind];compactImported=false}
   else{
-   const packs=await readComponentCatalogues(userId,kind,metadata,true,deadline)
+   const packs=await readComponentCatalogues(userId,kind,metadata,!readOnlyFallback,deadline,{readOnlyFallback,onLargeRepair:()=>{if(context)context.targetedFallbackEligible=true}})
    if(!packs){context?.failed.add(key);return null}
    const catalog=buildOrcbrewCatalog(packs)
    imported=kind==='classes'||kind==='subclasses'||kind==='races'?activeWorkshopEntries(catalog[kind],kind):catalog[kind]

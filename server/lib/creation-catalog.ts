@@ -4,6 +4,7 @@ import {COMPONENT_VERSION,componentMetadata,readComponentCatalogues} from './com
 import {preparedReaderEnabled} from './compendium-prepared'
 import {workshopLibrary} from './workshop-library'
 import {withDatabaseStage} from './database-error'
+import {creationSelection,type CreationSelections,type CreationKind} from '../../shared/creation-selection'
 
 export const CREATION_KINDS=['classes','races','backgrounds','subraces','subclasses','feats','languages','spells'] as const
 export type CreationCatalog=Pick<OrcbrewEntries,typeof CREATION_KINDS[number]>
@@ -12,6 +13,24 @@ const pending=new Map<string,Promise<CreationSnapshot>>()
 const cache=new Map<string,{signature:string;catalog:CreationCatalog}>()
 // Bump when creation projection or interpretation changes, even if packs do not.
 const creationTag=(userId:string,signature:string)=>`"${sourceHash(JSON.stringify(['creation-options-1',COMPONENT_VERSION,userId,signature]))}"`
+const selectionTag=(fullTag:string)=>`"${sourceHash(JSON.stringify(['creation-selections-1',fullTag]))}"`
+export async function creationSelectionsResponse(userId:string,ifNoneMatch?:string):Promise<{etag:string;value?:CreationSelections}>{
+ if(ifNoneMatch&&/^(?:W\/)?"[a-f0-9]{64}"$/.test(ifNoneMatch)){
+  const metadata=await withDatabaseStage('library-metadata',()=>componentMetadata(userId,performance.now()+2000))
+  const etag=selectionTag(creationTag(userId,sourceHash(JSON.stringify(metadata))))
+  if(etag===ifNoneMatch.replace(/^W\//,''))return{etag}
+ }
+ const snapshot=await creationSnapshot(userId),etag=selectionTag(snapshot.etag)
+ return{etag,value:{revision:etag.slice(1,-1),options:Object.fromEntries(CREATION_KINDS.map(kind=>[kind,snapshot.catalog[kind].map(entry=>creationSelection(kind,entry))])) as CreationSelections['options']}}
+}
+export async function creationDefinitions(userId:string,revision:string,kind:CreationKind,index?:string){
+ const snapshot=await creationSnapshot(userId)
+ if(selectionTag(snapshot.etag).slice(1,-1)!==revision)throw Object.assign(new Error('Your character library changed. Reload the library before selecting rules.'),{status:409})
+ if(!index)return snapshot.catalog[kind]
+ const entry=snapshot.catalog[kind].find(entry=>entry.index===index)
+ if(!entry)throw Object.assign(new Error('This character option is no longer available. Reload the library.'),{status:404})
+ return entry
+}
 /** A conditional hit still checks the authenticated owner's current pack set.
  * No browser value is used offline or before this authoritative check. */
 export async function creationCatalogResponse(userId:string,ifNoneMatch?:string):Promise<{etag:string;catalog?:CreationCatalog}>{

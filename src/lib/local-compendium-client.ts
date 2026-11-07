@@ -1,104 +1,162 @@
+import {reactive} from 'vue'
 import {api} from './api'
-import type {BrowseKind,BrowsePage,BrowseQuery} from '../../shared/compendium-browse'
+import {beginForegroundWork} from './foreground-work'
+import {BROWSE_KINDS,type BrowseKind} from '../../shared/compendium-kinds'
+import type {BrowsePage,BrowseQuery} from '../../shared/compendium-browse'
 import {LOCAL_COMPENDIUM_VERSION,type LocalCompendiumRevision,type LocalCompendiumSnapshot} from '../../shared/local-compendium'
 import type {LocalWorkerCommand} from './local-compendium.worker'
 
-// Saving stays explicit. A build can hide the optional controls with `false`.
 export const localCompendiumEnabled=import.meta.env.VITE_LOCAL_COMPENDIUM!=='false'
-let worker:Worker|undefined,sequence=0,generation=0
-let unavailableUntil=0
-let validated:{owner:string;kind:BrowseKind;revision:string;until:number}|undefined
-const pending=new Map<number,{resolve:(v:unknown)=>void;reject:(e:Error)=>void;timer:ReturnType<typeof setTimeout>}>()
+export type LocalCompendiumState='not-saved'|'checking'|'saved'|'outdated'|'missing'|'downloading'|'unavailable'
+export const localCategoryStates=reactive<Record<string,LocalCompendiumState>>({})
+const key=(owner:string,kind:BrowseKind)=>`${owner}:${kind}`
 const markerKey='codex:local-compendium:v1'
-export type LocalCompendiumState='not-saved'|'saved'|'outdated'|'missing'
-const ineligible=new Map<string,'outdated'|'missing'>()
-const categoryKey=(owner:string,kind:BrowseKind)=>`${owner}:${kind}`
-function rejectCategory(owner:string,kind:BrowseKind,state:'outdated'|'missing'){
- const key=categoryKey(owner,kind)
- ineligible.delete(key);ineligible.set(key,state)
- while(ineligible.size>15)ineligible.delete(ineligible.keys().next().value!)
+const listeners=new Set<()=>void>()
+let generation=0,unavailableUntil=0
+let validated:{owner:string;revision:string;until:number}|undefined
+const changed=()=>{for(const listener of listeners)listener()}
+export function onLocalCompendiumChange(listener:()=>void){listeners.add(listener);return ()=>{listeners.delete(listener)}}
+export function savedLocalKinds(owner:string):BrowseKind[]{
+ try{const marker=JSON.parse(localStorage.getItem(markerKey)??'null');return marker?.owner===owner&&Array.isArray(marker.kinds)?BROWSE_KINDS.filter(kind=>marker.kinds.includes(kind)):[]}catch{return []}
 }
 export function localCompendiumState(owner:string,kind:BrowseKind):LocalCompendiumState{
- return savedKinds(owner).includes(kind)?ineligible.get(categoryKey(owner,kind))??'saved':'not-saved'
+ return localCategoryStates[key(owner,kind)]??(savedLocalKinds(owner).includes(kind)?'checking':'not-saved')
 }
-function savedKinds(owner:string):BrowseKind[]{
- try{const marker=JSON.parse(localStorage.getItem(markerKey)??'null');return marker?.owner===owner&&Array.isArray(marker.kinds)?marker.kinds:[]}catch{return []}
-}
-function stop(){
- ++generation;worker?.terminate();worker=undefined;validated=undefined
- for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Local catalogue operation cancelled'))}
- pending.clear()
-}
-// Account/logout/removal changes in another tab invalidate parsed device data
-// immediately; the receiving tab never writes the marker back.
-if(typeof window!=='undefined')window.addEventListener('storage',event=>{if(event.key===markerKey||event.key===null){ineligible.clear();unavailableUntil=0;stop()}})
-export function clearLocalCompendium(){
- ineligible.clear();unavailableUntil=0;stop()
- try{localStorage.removeItem(markerKey)}catch{/* Storage is optional. */}
- // Do not import worker query/filter data into the application entry bundle.
- try{const request=indexedDB.deleteDatabase('codex-compendium-index-v1');request.onerror=()=>{}}catch{/* Storage is optional. */}
-}
-function request<T>(command:Omit<LocalWorkerCommand,'id'>):Promise<T>{
- if(!worker){
-  worker=new Worker(new URL('./local-compendium.worker.ts',import.meta.url),{type:'module'})
-  worker.onmessage=event=>{const p=pending.get(event.data.id);if(!p)return;pending.delete(event.data.id);clearTimeout(p.timer);event.data.error?p.reject(Error(event.data.error)):p.resolve(event.data.value)}
-  worker.onerror=()=>stop()
+export function setLocalCategoryState(owner:string,kind:BrowseKind,state:LocalCompendiumState){localCategoryStates[key(owner,kind)]=state}
+class Channel {
+ private worker?:Worker
+ private sequence=0
+ private pending=new Map<number,{resolve:(v:unknown)=>void;reject:(e:Error)=>void;cleanup:()=>void}>()
+ stop(){
+  this.worker?.terminate();this.worker=undefined
+  for(const p of this.pending.values()){p.cleanup();p.reject(Error('Local catalogue operation cancelled'))}
+  this.pending.clear()
  }
- const id=++sequence
- return new Promise((resolve,reject)=>{
-  const timer=setTimeout(()=>stop(),command.action==='save'?10000:3000)
-  pending.set(id,{resolve:v=>resolve(v as T),reject,timer});worker!.postMessage({...command,id})
- })
+ request<T>(command:Omit<LocalWorkerCommand,'id'>,signal?:AbortSignal):Promise<T>{
+  if(signal?.aborted)return Promise.reject(Error('Local operation cancelled'))
+  if(!this.worker){
+   this.worker=new Worker(new URL('./local-compendium.worker.ts',import.meta.url),{type:'module'})
+   this.worker.onmessage=event=>{const p=this.pending.get(event.data.id);if(!p)return;this.pending.delete(event.data.id);p.cleanup();event.data.error?p.reject(Error(event.data.error)):p.resolve(event.data.value)}
+   this.worker.onerror=()=>this.stop()
+  }
+  const id=++this.sequence
+  return new Promise((resolve,reject)=>{
+   const abort=()=>this.stop()
+   const timer=setTimeout(abort,command.action==='save'?10000:3000)
+   const cleanup=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
+   this.pending.set(id,{resolve:v=>resolve(v as T),reject,cleanup})
+   signal?.addEventListener('abort',abort,{once:true})
+   try{this.worker!.postMessage({...command,id})}catch{this.stop()}
+  })
+ }
 }
-async function validate(owner:string,kind:BrowseKind,revision:string,signal?:AbortSignal){
+const browsing=new Channel(),maintenance=new Channel()
+export function cancelLocalPreparation(){maintenance.stop()}
+export function releaseLocalCompendium(){browsing.stop()}
+function reset(){++generation;browsing.stop();maintenance.stop();validated=undefined;unavailableUntil=0;for(const id of Object.keys(localCategoryStates))delete localCategoryStates[id]}
+export function suspendLocalCompendium(){reset();changed()}
+export function adoptLocalCompendiumOwner(owner:string){
+ try{const marker=JSON.parse(localStorage.getItem(markerKey)??'null');if(marker&&marker.owner!==owner){clearLocalCompendium();return}}catch{/* Invalid hints never authorize data. */}
+ reset();changed()
+}
+if(typeof window!=='undefined')window.addEventListener('storage',event=>{if(event.key===markerKey||event.key===null){reset();changed()}})
+export function clearLocalCompendium(){
+ reset()
+ try{localStorage.removeItem(markerKey)}catch{/* Optional storage. */}
+ try{const request=indexedDB.deleteDatabase('codex-compendium-index-v1');request.onerror=()=>{}}catch{/* Optional storage. */}
+ changed()
+}
+export function invalidateLocalCompendium(){validated=undefined;for(const id of Object.keys(localCategoryStates))if(localCategoryStates[id]==='saved')localCategoryStates[id]='checking';changed()}
+export function acceptCompendiumRevision(owner:string,revision:string){
+ if(!/^[a-f0-9]{64}$/.test(revision))return
+ if(validated?.owner===owner&&validated.revision!==revision){
+  for(const kind of BROWSE_KINDS)if(localCompendiumState(owner,kind)==='saved')setLocalCategoryState(owner,kind,'checking')
+ }
+ validated={owner,revision,until:Date.now()+30000}
+}
+async function currentRevision(owner:string,kind:BrowseKind,signal:AbortSignal,force=false,idle=false){
+ if(!force&&validated?.owner===owner&&validated.until>Date.now())return validated.revision
  const current=generation
- const result=await api.get<LocalCompendiumRevision>(`/api/compendium-browse/${kind}/local-revision`,{signal,timeoutMs:5000})
- if(current!==generation||signal?.aborted||result.owner!==owner||result.version!==LOCAL_COMPENDIUM_VERSION)return false
- if(result.revision!==revision){rejectCategory(owner,kind,'outdated');validated=undefined;return false}
- validated={owner,kind,revision,until:Date.now()+30000};return true
+ const result=await api.get<LocalCompendiumRevision>(`/api/compendium-browse/${kind}/local-revision`,{signal,timeoutMs:5000,background:true,...(idle?{idle:true}:{})})
+ if(current!==generation||signal.aborted||result.owner!==owner||result.version!==LOCAL_COMPENDIUM_VERSION||!/^[a-f0-9]{64}$/.test(result.revision))throw Error('Library validation unavailable')
+ acceptCompendiumRevision(owner,result.revision)
+ return result.revision
 }
 export async function queryLocalCompendium(owner:string,kind:BrowseKind,query:BrowseQuery,signal:AbortSignal):Promise<BrowsePage|undefined>{
- // An absent hint skips worker download entirely on ordinary unsaved visits.
- // This hint never authorizes cached data: disk identity and server revision do.
- if(signal.aborted||Date.now()<unavailableUntil||!savedKinds(owner).includes(kind)||ineligible.has(categoryKey(owner,kind)))return
- const current=generation
- const controller=new AbortController(),localSignal=AbortSignal.any([signal,controller.signal])
- let timer:ReturnType<typeof setTimeout>|undefined,onAbort:()=>void=()=>{}
- const fallback=new Promise<undefined>(resolve=>{
-  onAbort=()=>resolve(undefined)
-  signal.addEventListener('abort',onAbort,{once:true})
-  // Optional storage must not add its separate worker, disk and network
-  // timeouts before ordinary browsing. Back off after a stalled attempt.
-  timer=setTimeout(()=>{unavailableUntil=Date.now()+30000;controller.abort();stop();resolve(undefined)},1500)
- })
- const attempt=async()=>{try{
-  const revision=await request<string|null>({action:'open',owner,kind})
+ const state=localCompendiumState(owner,kind)
+ if(signal.aborted||Date.now()<unavailableUntil||!savedLocalKinds(owner).includes(kind)||state==='missing'||state==='outdated'||state==='unavailable')return
+ const finish=beginForegroundWork(),current=generation,controller=new AbortController()
+ const localSignal=AbortSignal.any([signal,controller.signal])
+ const timer=setTimeout(()=>{unavailableUntil=Date.now()+30000;controller.abort()},1500)
+ let onAbort:()=>void=()=>{}
+ const cancelled=new Promise<undefined>(resolve=>{onAbort=()=>resolve(undefined);localSignal.addEventListener('abort',onAbort,{once:true})})
+ const attempt=async()=>{
+ try{
+  // Disk opening and authenticated revision validation overlap. The atomic browse
+  // command reopens its own category before querying, even with concurrent pickers.
+  const [disk,revision]=await Promise.all([browsing.request<string|null>({action:'open',owner,kind},localSignal),currentRevision(owner,kind,localSignal)])
   if(localSignal.aborted||current!==generation)return
-  if(!revision){rejectCategory(owner,kind,'missing');return}
-  if(!(validated?.owner===owner&&validated.kind===kind&&validated.revision===revision&&validated.until>Date.now())&&!await validate(owner,kind,revision,localSignal))return
-  if(localSignal.aborted||current!==generation)return
-  const result=await request<BrowsePage>({action:'query',owner,kind,revision,query})
-  if(!localSignal.aborted&&current===generation)return result
- }catch{/* Disk, worker or revision failures use ordinary authenticated browsing. */}}
- try{return await Promise.race([attempt(),fallback])}
- finally{clearTimeout(timer);signal.removeEventListener('abort',onAbort);controller.abort()}
+  if(!disk||disk!==revision){setLocalCategoryState(owner,kind,disk?'outdated':'missing');changed();return}
+  const result=await browsing.request<{revision:string|null;page?:BrowsePage}>({action:'browse',owner,kind,revision,query},localSignal)
+  if(!localSignal.aborted&&current===generation&&result.page){setLocalCategoryState(owner,kind,'saved');return result.page}
+ }catch{/* Optional disk, worker and metadata failures fall back to server browsing. */}
+ }
+ try{return await Promise.race([attempt(),cancelled])}
+ finally{clearTimeout(timer);localSignal.removeEventListener('abort',onAbort);controller.abort();finish()}
 }
-/** Overlap a previously requested device index with the ordinary first page.
- * No speculative database/API read, no worker for users without saved data. */
 export function prepareSavedCompendium(owner:string){
- const kind=savedKinds(owner).find(kind=>!ineligible.has(categoryKey(owner,kind)))
- try{if(kind)void request({action:'open',owner,kind}).catch(()=>{})}catch{/* Unsupported/blocked workers use server browsing. */}
+ const kind=savedLocalKinds(owner)[0]
+ try{if(kind)void browsing.request({action:'open',owner,kind}).catch(()=>{})}catch{/* Workers may be blocked. */}
+}
+export async function checkSavedCompendium(owner:string,kind:BrowseKind,signal:AbortSignal){
+ const current=generation
+ const revision=await currentRevision(owner,kind,signal,false,true)
+ const disk=await maintenance.request<string|null>({action:'open',owner,kind},signal)
+ if(signal.aborted||current!==generation)throw Error('Local check cancelled')
+ let valid=!!disk&&disk===revision
+ if(disk&&!valid){
+  const identity=await maintenance.request<{revision:string;digest:string}|null>({action:'identity',owner,kind},signal)
+  if(identity&&identity.revision===disk){
+   const content=await api.get<LocalCompendiumRevision&{kind?:string}>(`/api/compendium-browse/${kind}/local-revision?content=true`,{signal,timeoutMs:60000,background:true})
+   if(signal.aborted||current!==generation)throw Error('Local check cancelled')
+   if(content.owner!==owner||content.kind!==kind||content.version!==LOCAL_COMPENDIUM_VERSION||!/^[a-f0-9]{64}$/.test(content.revision)||!/^[a-f0-9]{64}$/.test(content.digest??''))throw Error('Category validation unavailable')
+   if(content.digest===identity.digest){
+    // As for a new export, reject a mutation during validation before writing.
+    if(await currentRevision(owner,kind,signal,true,true)!==content.revision)throw Error('Library changed during category validation')
+    if(signal.aborted||current!==generation)throw Error('Local check cancelled')
+    const result=await maintenance.request<{revision:string|null;kinds?:BrowseKind[]}>({action:'revalidate',owner,kind,previous:disk,digest:identity.digest,revision:content.revision},signal)
+    if(signal.aborted||current!==generation)throw Error('Local check cancelled')
+    valid=result.revision===content.revision
+    if(valid){
+     const before=savedLocalKinds(owner),kinds=result.kinds??[...new Set([...before,kind])]
+     localStorage.setItem(markerKey,JSON.stringify({owner,kinds,update:crypto.randomUUID()}))
+     for(const old of before)if(!kinds.includes(old))setLocalCategoryState(owner,old,'unavailable')
+     browsing.stop();changed()
+    }
+   }
+  }
+ }
+ // An interrupted download may have committed to IndexedDB before its marker
+ // was written. Reuse that verified copy instead of exporting it again.
+ if(valid&&!savedLocalKinds(owner).includes(kind)){
+  localStorage.setItem(markerKey,JSON.stringify({owner,kinds:[...savedLocalKinds(owner),kind],update:crypto.randomUUID()}))
+ }
+ setLocalCategoryState(owner,kind,valid?'saved':disk?'outdated':'missing')
+ return valid
 }
 export async function saveLocalCompendium(owner:string,kind:BrowseKind,signal:AbortSignal){
  const current=generation
- const snapshot=await api.get<LocalCompendiumSnapshot>(`/api/compendium-browse/${kind}/local-index`,{signal,timeoutMs:60000})
+ const snapshot=await api.get<LocalCompendiumSnapshot>(`/api/compendium-browse/${kind}/local-index`,{signal,timeoutMs:60000,background:true})
  if(signal.aborted||current!==generation)throw Error('Local download cancelled')
- const revision=await request<string>({action:'save',owner,kind,snapshot})
+ const result=await maintenance.request<{revision:string;kinds?:BrowseKind[]}>({action:'save',owner,kind,snapshot},signal)
  if(signal.aborted||current!==generation)throw Error('Local download cancelled')
- if(!await validate(owner,kind,revision,signal))throw Error('Your library changed while saving. Please save this category again.')
- // A resave of the same kinds must still notify other tabs to reopen their copy.
- try{localStorage.setItem(markerKey,JSON.stringify({owner,kinds:[...new Set([...savedKinds(owner),kind])],update:crypto.randomUUID()}))}catch{throw Error('This browser could not enable local browsing. Server browsing remains available.')}
- ineligible.delete(categoryKey(owner,kind));unavailableUntil=0
+ // A forced post-export read detects mutations during the download/write.
+ if(await currentRevision(owner,kind,signal,true,true)!==result.revision)throw Error('Library changed while preparing this category')
+ if(signal.aborted||current!==generation)throw Error('Local download cancelled')
+ const before=savedLocalKinds(owner),kinds=result.kinds??[...new Set([...before,kind])]
+ try{localStorage.setItem(markerKey,JSON.stringify({owner,kinds,update:crypto.randomUUID()}))}catch{throw Error('Local storage unavailable')}
+ for(const old of before)if(!kinds.includes(old))setLocalCategoryState(owner,old,'unavailable')
+ setLocalCategoryState(owner,kind,'saved');unavailableUntil=0
+ // A separate browsing worker may hold the previous version in memory.
+ browsing.stop();changed()
 }
-export function invalidateLocalCompendium(){validated=undefined}
-export function releaseLocalCompendium(){stop()}

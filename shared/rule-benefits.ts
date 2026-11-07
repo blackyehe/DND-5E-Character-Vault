@@ -1,6 +1,8 @@
 import type { Character } from './character'
 import { itemActive } from './item-rules'
-import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, type AbilityKey, type Proficiency } from './calc'
+import {choiceBenefits,choiceSelectionProblem,type ChoiceGroup} from './choice-groups'
+import {isFeatureOptionKind} from './option-kinds'
+import { ABILITY_KEYS, SKILL_ABILITY, abilityMod, profBonus, type AbilityKey } from './calc'
 
 export const DAMAGE_TYPES=['acid','bludgeoning','cold','fire','force','lightning','necrotic','piercing','poison','psychic','radiant','slashing','thunder'] as const
 export const CONDITIONS=['blinded','charmed','deafened','exhaustion','frightened','grappled','incapacitated','invisible','paralyzed','petrified','poisoned','prone','restrained','stunned','unconscious'] as const
@@ -82,24 +84,31 @@ export function benefitDefinitionLevel(c:Character,kind:string,index:string,entr
   return rows.find(r=>{const id=kind==='classes'?r.index:r.subclassIndex;return id?sameSource(entry,index,id):nameMatches(kind==='classes'?r.name:r.subclass,entry.name)})?.level??0
  }
  if(kind==='races')return (c.meta.raceIndex?sameSource(entry,index,c.meta.raceIndex):nameMatches(c.meta.race,entry.name))?c.meta.level:0
- if(kind==='subraces')return nameMatches(c.meta.subrace,entry.name)?c.meta.level:0
- if(kind==='backgrounds')return nameMatches(c.meta.background,entry.name)?c.meta.level:0
+ if(kind==='subraces')return (c.meta.subraceIndex?sameSource(entry,index,c.meta.subraceIndex):nameMatches(c.meta.subrace,entry.name))?c.meta.level:0
+ if(kind==='backgrounds')return (c.meta.backgroundIndex?sameSource(entry,index,c.meta.backgroundIndex):nameMatches(c.meta.background,entry.name))?c.meta.level:0
+ if(isFeatureOptionKind(kind))return c.features.some(f=>(f.level??1)<=c.meta.level&&(f.definition?f.definition.kind===kind&&sameSource(entry,index,f.definition.index):nameMatches(f.name,entry.name)||kind==='feats'&&/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(n=>nameMatches(n,entry.name))))?c.meta.level:0
  if(kind==='languages')return c.proficiencies.languages.some(n=>nameMatches(n,entry.name))?c.meta.level:0
  if(kind==='equipment'||kind==='magic-items')return c.equipment.some(i=>itemActive(i)&&(i.index||i.magicIndex||i.templateId?sameSource(entry,index,i.index)||sameSource(entry,index,i.magicIndex)||index===`workshop-item-${i.templateId}`:nameMatches(i.name,entry.name)))?c.meta.level:0
  if(kind==='spells')return benefitKnownSpellIds(c).some(id=>sameSource(entry,index,id))&&c.spellcasting.activeEffects?.includes(index)?c.meta.level:0
  if(kind==='monsters')return 0
  return feature?c.meta.level:0
 }
+export function selectedEntryBenefits(c:Character,d:{kind:string;index:string;entry:Record<string,unknown>}){
+ const base=entryBenefits(d.entry),group=benefitObject(d.entry.optionBuilder).choiceGroup as ChoiceGroup|undefined
+ if(d.kind!=='selections'||!group)return base
+ const feature=c.features.find(f=>f.definition?.kind==='selections'&&sameSource(d.entry,d.index,f.definition.index))
+ const ids=feature?.definition?.choiceIds??[];return choiceSelectionProblem(group,ids)?[]:[...base,...choiceBenefits(group,ids)]
+}
 export function benefitKnownSpellIds(c:Character):string[]{
  const ids=[...c.spellcasting.known,...c.spellcasting.prepared,...(c.homebrew?.bindings??[]).filter(b=>b.rule.kind==='race').flatMap(b=>(b.rule.race?.spells??[]).filter(s=>s.level<=c.meta.level).map(s=>s.index))]
- for(const d of c.compendiumRules??[]){if(d.kind==='spells')continue;const level=benefitDefinitionLevel(c,d.kind,d.index,d.entry)||benefitDefinitionLevel(c,d.kind,d.index,d.before);if(!level)continue;for(const row of entryBenefits(d.entry))if(benefitKey(benefitField(row,'type'))==='spell'&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0)ids.push(benefitKey(benefitField(benefitField(row,'value'),'key')))}
+ for(const d of c.compendiumRules??[]){if(d.kind==='spells')continue;const level=benefitDefinitionLevel(c,d.kind,d.index,d.entry)||benefitDefinitionLevel(c,d.kind,d.index,d.before);if(!level)continue;for(const row of selectedEntryBenefits(c,d))if(benefitKey(benefitField(row,'type'))==='spell'&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0)ids.push(benefitKey(benefitField(benefitField(row,'value'),'key')))}
  return [...new Set(ids)]
 }
 export const availableBenefitSpells=(c:Character)=>(c.compendiumRules??[]).filter(d=>d.kind==='spells'&&entryBenefits(d.entry).length&&benefitKnownSpellIds(c).some(id=>sameSource(d.entry,d.index,id)))
 export interface ActiveBenefit {source:string;kind:string;index:string;row:unknown;level:number;active:boolean}
 export function characterBenefitRows(c:Character):ActiveBenefit[]{
  const rows:ActiveBenefit[]=[],approved=c.compendiumRules??[]
- for(const d of approved){const level=benefitDefinitionLevel(c,d.kind,d.index,d.entry)||benefitDefinitionLevel(c,d.kind,d.index,d.before);for(const row of entryBenefits(d.entry))rows.push({source:String(d.entry.name),kind:d.kind,index:d.index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0})}
+ for(const d of approved){const level=benefitDefinitionLevel(c,d.kind,d.index,d.entry)||benefitDefinitionLevel(c,d.kind,d.index,d.before);for(const row of selectedEntryBenefits(c,d))rows.push({source:String(d.entry.name),kind:d.kind,index:d.index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0})}
  for(const b of c.homebrew?.bindings??[]){if(approved.some(d=>d.index===b.index||d.entry.workshop&&benefitObject(d.entry.workshop).id===b.ruleId))continue;const kind=b.rule.kind==='class'?'classes':b.rule.kind==='race'?'races':'subclasses',entry={...b.rule.imported?.raw,name:b.rule.name,details:b.rule.imported?.raw,workshop:b.rule},level=benefitDefinitionLevel(c,kind,b.index,entry);for(const row of entryBenefits(entry))rows.push({source:b.rule.name,kind,index:b.index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0})}
  return rows
 }
@@ -128,7 +137,6 @@ export function characterBenefits(c:Character){
  return effects
 }
 export type CharacterBenefits=ReturnType<typeof characterBenefits>
-export function benefitSkillRank(c:Character,key:string):Proficiency{return characterBenefits(c).skills[key]??'none'}
 export function benefitSpellAttack(c:Character,benefits:CharacterBenefits=characterBenefits(c)){return abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+benefits.spellAttack}
 export function benefitSpellDC(c:Character,benefits:CharacterBenefits=characterBenefits(c)){return 8+abilityMod(c.abilities[c.spellcasting.ability])+profBonus(c.meta.level)+benefits.spellDC}
 export function benefitDamage(amount:number,type:string,defenses:Pick<ReturnType<typeof characterBenefits>,'resistances'|'immunities'|'vulnerabilities'>){

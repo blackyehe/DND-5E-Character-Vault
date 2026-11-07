@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { requireAuth } from './auth'
 import { requestLimit } from './request-limit'
 import { Upload, UploadPart } from '../models/Upload'
+import { MAP_LIMITS } from '../../shared/room-maps'
 
 const CHUNK_BYTES = 768 * 1024
 const MAX_BYTES = 50 * 1024 * 1024
@@ -58,11 +59,18 @@ export const finishUpload: RequestHandler = async (req, res, next) => {
 }
 
 /** Stream large catalogs and backups without a buffered gateway response. */
-export const streamLargeResponses: RequestHandler = (_req, res, next) => {
+export const streamLargeResponses: RequestHandler = (req, res, next) => {
   const send = res.send.bind(res)
   res.send = ((body: unknown) => {
     const bytes = typeof body === 'string' ? Buffer.from(body, 'utf8') : Buffer.isBuffer(body) ? body : undefined
-    if (!bytes || bytes.length < 2 * 1024 * 1024) return send(body)
+    // Map images are already bounded to 3 MiB, below the buffered Function
+    // response limit. Keep Express's ordinary binary response/Content-Length;
+    // the catalog/back-up streaming workaround is unnecessary for this route.
+    const mapImage = Buffer.isBuffer(body) && body.length <= MAP_LIMITS.imageBytes
+      && ['GET', 'HEAD'].includes(req.method) && res.statusCode === 200
+      && /^\/api\/rooms\/[a-f0-9]{24}\/maps\/[a-f0-9]{24}\/image\/?$/i.test(req.originalUrl.split('?')[0]!)
+      && String(res.getHeader('Content-Type')).split(';')[0]?.trim().toLowerCase() === 'image/webp'
+    if (!bytes || bytes.length < 2 * 1024 * 1024 || mapImage) return send(body)
     if (!res.getHeader('Content-Type')) res.type(typeof body === 'string' ? 'html' : 'application/octet-stream')
     res.removeHeader('Content-Length')
     res.flushHeaders()

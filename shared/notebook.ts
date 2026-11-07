@@ -38,6 +38,9 @@ export interface NotebookIndex {
   entryCount?: number
   tags: {name:string; count:number}[]
 }
+export type NotebookPage = Pick<NotebookIndex, 'entries' | 'total' | 'nextOffset'>
+export type NotebookNavigation = Omit<NotebookIndex, keyof NotebookPage>
+export interface NotebookInitial {listing:NotebookPage;navigation:NotebookNavigation}
 export interface NotebookVersion {
   revision: number; title: string; body: string; editedBy: string; savedAt: string; action: string
 }

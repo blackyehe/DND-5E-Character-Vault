@@ -11,6 +11,8 @@ import { folderLabel, type LibraryAction } from '../../shared/character-library'
 import { api } from '../lib/api'
 import { cancelMotionWithin, vMotionCharacter } from '../directives/siteMotion'
 import { useCharacterSwitchScroll } from '../composables/useCharacterSwitchScroll'
+import {validateBackupDevice,restoreBackupDevice} from '../lib/account-backup'
+import {BACKUP_FILE_BYTES,type BackupRestoreResult} from '../../shared/account-backup'
 import '../dashboard.css'
 
 const CharacterSheetView = defineAsyncComponent(() => import('./CharacterSheetView.vue'))
@@ -181,14 +183,19 @@ async function onImportFile(event: Event) {
   if (!maySwitch()) { input.value = ''; return }
   importBusy.value = true; importMessage.value = ''; actionError.value = ''
   try {
+    if(file.size>BACKUP_FILE_BYTES)throw Error('Choose a backup no larger than 50 MiB.')
     const data = JSON.parse(await file.text())
     if (['codex-public-migration', 'codex-of-heroes-backup'].includes(data?.format)) {
-      if (!window.confirm(`Restore ${data.characters?.length ?? 0} characters and ${data.content?.length ?? 0} content entries into this account? The account must be empty; no existing data will be overwritten.`)) return
-      const restored = await api.post<{ characters: number; content: number }>('/api/library-restore', data)
+      const device=validateBackupDevice(data.device),counts=data.version===2?data.summary:data
+      if (!window.confirm(`Restore ${counts?.characters?.length??counts?.characters??0} characters, ${counts?.content?.length??counts?.content??0} library entries and ${data.summary?.rooms??0} owned rooms into this empty account? Existing data will not be overwritten. Restored rooms get fresh invitations; players must rejoin and be reassigned.`)) return
+      const restored = await api.post<BackupRestoreResult>('/api/library-restore', data)
       await store.fetchList()
+      await folders.load()
       listReady.value = true; query.value = ''
       openCharacter('', false)
-      importMessage.value = `Restored ${restored.characters} characters and ${restored.content} content entries.`
+      importMessage.value = `Restored ${restored.characters} characters, ${restored.content} library entries and ${restored.rooms??0} rooms, including their Notebook history and Maps.${restored.playersMustRejoin?' Players must rejoin through the new invitation links.':''}`
+      try{const local=restoreBackupDevice(device,auth.user!.id,restored);if(local.saved)importMessage.value+=` Restored ${local.saved} device drafts/settings.`;if(local.kept)importMessage.value+=' Existing device drafts/settings were preserved.'}catch{importMessage.value+=' Saved account data was restored. Some device drafts could not be saved; keep the backup file and your existing device data.'}
+      window.dispatchEvent(new Event('codex:library-changed'))
     } else imported(await store.importCharacter(data))
   } catch (error) { actionError.value = error instanceof Error ? error.message : 'That file could not be imported.' }
   finally { input.value = ''; importBusy.value = false }

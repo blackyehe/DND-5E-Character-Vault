@@ -1,20 +1,28 @@
 import {randomUUID} from 'node:crypto'
-import {Types} from 'mongoose'
+import {Types,mongo} from 'mongoose'
 import {gunzipSync} from 'node:zlib'
 import {CustomContent} from '../models/CustomContent'
 import {CompendiumComponent,CompendiumComponentObject} from '../models/CompendiumComponent'
 import {sourceHash,inspectOrcbrew,buildOrcbrewCatalog,ORCBREW_KINDS,type OrcbrewEntry,type OrcbrewEntries,type CatalogPack,type ParsedOrcbrew} from './orcbrew'
 import {readPackDocuments} from './pack-source'
-import {parsedPack} from './orcbrew-library'
+import {parsedPack,cachedParsedPack} from './orcbrew-library'
+import {parseBackgroundPack} from './background-pack-parser'
 import {compactBrowseEntry} from './compendium-browse'
 import {compendiumFacets} from '../../shared/compendium-facets'
-import {encodePrepared,decodePrepared,PREPARED_SOURCE_MAX,type StoredPreparedChunk} from './compendium-prepared-codec'
+import {encodePrepared,encodePreparedAsync,decodePrepared,PREPARED_SOURCE_MAX,type StoredPreparedChunk} from './compendium-prepared-codec'
 import type {BrowseEntry,BrowseKind} from '../../shared/compendium-browse'
 
 export const COMPONENT_VERSION='compendium-components-3-families'
 export const COMPONENT_METADATA='_catalogue'
 const MAX_CATEGORY_BYTES=64*1024*1024,MAX_COMPRESSED_BYTES=32*1024*1024,MAX_COMPONENT_ENTRIES=100000
 const REQUEST_SOURCE_BYTES=1024*1024,REQUEST_PROJECTION_BYTES=8*1024*1024,REQUEST_ENTRIES=5000
+const READ_ONLY_SOURCE_BYTES=16*1024*1024,READ_ONLY_STORED_BYTES=32*1024*1024
+class LargeRepairSource extends Error {
+ readonly bytes:number
+ readonly stored:number
+ constructor(bytes:number,stored:number){super('Changed source requires explicit preparation');this.bytes=bytes;this.stored=stored}
+}
+interface CatalogueReadOptions {onLargeRepair?:()=>void;readOnlyFallback?:boolean}
 // Most of a multi-category read is verified empty objects. Small batches made
 // 126 packs require dozens of network round trips before any catalogue loaded.
 // MongoDB still caps each wire batch at 16 MiB; total compressed/decoded bytes
@@ -22,6 +30,10 @@ const REQUEST_SOURCE_BYTES=1024*1024,REQUEST_PROJECTION_BYTES=8*1024*1024,REQUES
 const CATALOGUE_BATCH_SIZE=128,CHUNK_BYTES=512*1024
 const checkedEmptyChunk=encodePrepared([],2)[0]!
 interface RepairBudget {deadline:number;attempts:number;sourceBytes:number;projectionBytes:number;entries:number;chunks:number}
+export interface BackgroundComponentWork {
+ generation:string;deadline:number;maxSourceBytes:number;maxStoredBytes:number;maxBytes:number;maxObjects:number
+ checkpoint:(progress?:{bytes:number;objects:number})=>Promise<void>
+}
 function remaining(deadline:number,max=1000) {
  const ms=Math.min(max,Math.floor(deadline-performance.now()))
  if(ms<=0)throw Error('Component request budget exhausted')
@@ -40,9 +52,9 @@ export async function componentMetadata(userId:string,deadline=Infinity):Promise
  return CustomContent.find({userId,type:'orcbrew'}).select('_id userId sourceHash updatedAt data.filename data.includeDisabled data.sourceEncoding data.sourceBytes').sort({_id:1}).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean() as unknown as Promise<PackMetadata[]>
 }
 function emptyEntries():OrcbrewEntries{return Object.fromEntries(ORCBREW_KINDS.map(k=>[k,[]])) as unknown as OrcbrewEntries}
-function projection(parsed:ParsedOrcbrew):OrcbrewEntries {
+function projection(parsed:ParsedOrcbrew,kinds:readonly BrowseKind[]=ORCBREW_KINDS):OrcbrewEntries {
  const result=emptyEntries()
- for(const kind of ORCBREW_KINDS)for(const entry of parsed.entries[kind]){
+ for(const kind of kinds)for(const entry of parsed.entries[kind]){
   // Workshop lineage/facet derivation requires complete class/race material.
   // Fingerprints are the original parser IDs; never hash omitted rule fields.
   if(kind!=='monsters'&&kind!=='equipment'&&kind!=='magic-items'){result[kind].push(entry);continue}
@@ -62,7 +74,9 @@ async function boundedRequestPack(p:PackMetadata,budget:RepairBudget) {
  const [size]=await CustomContent.aggregate<{stored:number;decoded:number}>([
   {$match:packFilter(p)},{$project:{_id:0,stored:{$strLenBytes:{$ifNull:['$data.source','']}},decoded:{$cond:[{$eq:['$data.sourceEncoding','gzip-base64']},'$data.sourceBytes',{$strLenBytes:{$ifNull:['$data.source','']}}]}}},
  ]).option({maxTimeMS:remaining(deadline),timeoutMS:remaining(deadline)})
- if(!size||!Number.isInteger(size.decoded)||size.decoded<=0||size.decoded>REQUEST_SOURCE_BYTES||size.stored>2*REQUEST_SOURCE_BYTES||budget.sourceBytes+size.decoded>2*REQUEST_SOURCE_BYTES)throw Error('Changed source requires explicit preparation')
+ if(!size||!Number.isSafeInteger(size.decoded)||size.decoded<=0||!Number.isSafeInteger(size.stored)||size.stored<=0)throw Error('Changed source requires explicit preparation')
+ if(size.decoded>REQUEST_SOURCE_BYTES)throw new LargeRepairSource(size.decoded,size.stored)
+ if(size.stored>2*REQUEST_SOURCE_BYTES||budget.sourceBytes+size.decoded>2*REQUEST_SOURCE_BYTES)throw Error('Changed source requires explicit preparation')
  budget.sourceBytes+=size.decoded
  if(performance.now()>deadline)throw Error('Component request budget exhausted')
  const doc=await CustomContent.findOne(packFilter(p)).select('data').setOptions({maxTimeMS:remaining(deadline),timeoutMS:remaining(deadline)}).lean()
@@ -72,24 +86,42 @@ async function boundedRequestPack(p:PackMetadata,budget:RepairBudget) {
  if(typeof source!=='string'||Buffer.byteLength(source)>REQUEST_SOURCE_BYTES||sourceHash(source)!==p.sourceHash)throw Error('Invalid bounded component source')
  return source
 }
-export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;replace?:boolean;budget?:RepairBudget;expectedGeneration?:string}={}):Promise<ComponentProjection> {
+export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;replace?:boolean;budget?:RepairBudget;expectedGeneration?:string;background?:BackgroundComponentWork}={}):Promise<ComponentProjection> {
  const context=componentContext(p);if(!context)throw Error('Source has no exact reusable component identity')
  // Request repairs are not allowed to wait for an unbounded operator job.
- const key=String(p.userId)+':'+context+':'+!!options.sources+':'+(options.budget?'request':'operator'),previous=pending.get(key)
+ const key=String(p.userId)+':'+context+':'+!!options.sources+':'+(options.budget?'request':options.background?'background:'+options.background.generation:'operator'),previous=pending.get(key)
  if(previous){if(options.budget)throw Error('Component repair already in progress');return previous}
  const task=(async()=>{
-  const deadline=options.budget?.deadline??Infinity
-  let source:string
-  if(options.budget){if(++options.budget.attempts>2)throw Error('Component repair count exhausted');source=await boundedRequestPack(p,options.budget)}
+  const deadline=options.budget?.deadline??options.background?.deadline??Infinity
+  let source:string,parsed:ParsedOrcbrew
+  if(options.background){
+   const work=options.background
+   await work.checkpoint()
+   const [size]=await CustomContent.aggregate<{stored:number;decoded:number}>([
+    {$match:packFilter(p)},{$project:{stored:{$strLenBytes:{$ifNull:['$data.source','']}},decoded:{$cond:[{$eq:['$data.sourceEncoding','gzip-base64']},'$data.sourceBytes',{$strLenBytes:{$ifNull:['$data.source','']}}]}}},
+   ]).option({maxTimeMS:2000,timeoutMS:remaining(deadline,4000)})
+   if(!size||!Number.isSafeInteger(size.decoded)||size.decoded<=0||size.decoded>work.maxSourceBytes||!Number.isSafeInteger(size.stored)||size.stored<=0||size.stored>work.maxStoredBytes)throw Error('Background component source exceeds its limit')
+   const cached=cachedParsedPack(p.sourceHash)
+   if(cached)parsed=cached
+   else{
+    const doc=(await readPackDocuments(String(p.userId),String(p._id),{maxDecodedBytes:work.maxSourceBytes,maxStoredBytes:work.maxStoredBytes,checkpoint:()=>work.checkpoint()}))[0]
+    if(!doc||componentContext(doc as unknown as PackMetadata)!==context)throw Error('Source changed before component preparation')
+    source=(doc.data as {source:string}).source
+    if(sourceHash(source)!==p.sourceHash)throw Error('Source fingerprint mismatch')
+    parsed=Buffer.byteLength(source)>=1024*1024?await parseBackgroundPack(source,deadline):parsedPack({source})
+   }
+   await work.checkpoint()
+  }else if(options.budget){if(++options.budget.attempts>2)throw Error('Component repair count exhausted');source=await boundedRequestPack(p,options.budget);parsed=parsedPack({source})}
   else{
    const doc=(await readPackDocuments(String(p.userId),String(p._id)))[0]
    if(!doc||componentContext(doc as unknown as PackMetadata)!==context)throw Error('Source changed before component preparation')
    source=(doc.data as {source:string}).source
    if(sourceHash(source)!==p.sourceHash)throw Error('Source fingerprint mismatch')
+   parsed=inspectOrcbrew(source)
   }
   // Reuse the current parser's bounded cache for a small repair. If later
   // persistence/composition falls back, the legacy reader can reuse this parse.
-  const parsed=options.budget?parsedPack({source}):inspectOrcbrew(source),entries=projection(parsed)
+  const entries=projection(parsed)
   const counts=Object.fromEntries(ORCBREW_KINDS.map(k=>[k,entries[k].length])),bytes=Object.fromEntries(ORCBREW_KINDS.map(k=>[k,Buffer.byteLength(JSON.stringify(entries[k]))]))
   if(options.budget){
    options.budget.entries+=Object.values(counts).reduce((a,b)=>a+b,0)
@@ -97,14 +129,20 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
    if(options.budget.entries>REQUEST_ENTRIES||options.budget.projectionBytes>REQUEST_PROJECTION_BYTES)throw Error('Changed source projection exceeds request budget')
    remaining(deadline)
   }
-  const ready:ReadyComponent={version:COMPONENT_VERSION,userId:p.userId,context,generation:randomUUID(),counts,bytes,sources:options.sources===true}
+  const ready:ReadyComponent={version:COMPONENT_VERSION,userId:p.userId,context,generation:options.background?.generation??randomUUID(),counts,bytes,sources:options.sources===true}
   type ObjectWrite={version:string;userId:Types.ObjectId;generation:string;kind:BrowseKind;role:string;index:string;part:number;parts:number;digest:string;payload:Buffer;createdAt:Date}
-  let batch:ObjectWrite[]=[],batchBytes=0
+  let batch:ObjectWrite[]=[],batchBytes=0,storedBytes=0,storedObjects=0
   const flush=async()=>{
    if(!batch.length)return
    const group=batch;batch=[];batchBytes=0
    if(performance.now()>deadline)throw Error('Component request budget exhausted')
    const timeout=Number.isFinite(deadline)?remaining(deadline):4000
+   if(options.background){
+    for(const object of group)Object.assign(object,{_id:new Types.ObjectId()})
+    storedBytes+=group.reduce((total,object)=>total+mongo.BSON.calculateObjectSize(object),0);storedObjects+=group.length
+    if(storedBytes>options.background.maxBytes||storedObjects>options.background.maxObjects)throw Error('Background component storage exceeds its limit')
+    await options.background.checkpoint({bytes:storedBytes,objects:storedObjects})
+   }
    await CompendiumComponentObject.collection.insertMany(group,{ordered:true,timeoutMS:timeout})
    const stored=await CompendiumComponentObject.find({userId:p.userId,generation:ready.generation,$or:group.map(o=>({kind:o.kind,role:o.role,index:o.index}))}).select('kind role index part parts digest payload').setOptions({maxTimeMS:timeout,timeoutMS:Number.isFinite(deadline)?remaining(deadline):4000}).lean()
    for(const object of group){
@@ -114,7 +152,7 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
    }
   }
   const persist=async(kind:BrowseKind,role:string,index:string,value:unknown,max:number)=>{
-   const chunks=encodePrepared(value,max),size=chunks.reduce((n,c)=>n+c.payload.length,0)
+   const chunks=options.background?await encodePreparedAsync(value,max):encodePrepared(value,max),size=chunks.reduce((n,c)=>n+c.payload.length,0)
    if(options.budget&&((options.budget.chunks+=chunks.length)>32))throw Error('Component repair chunk budget exceeded')
    if(batch.length&&(batch.length+chunks.length>32||batchBytes+size>512*1024))await flush()
    batch.push(...chunks.map(chunk=>({version:COMPONENT_VERSION,userId:p.userId,generation:ready.generation,kind,role,index,...chunk,createdAt:new Date()})));batchBytes+=size
@@ -130,6 +168,7 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
     for(const kind of ORCBREW_KINDS)for(const entry of catalog[kind])await persist(kind,'source',entry.index,entry,PREPARED_SOURCE_MAX)
    }
    await flush()
+   await options.background?.checkpoint()
    const current=await CustomContent.findOne(packFilter(p)).select('_id userId sourceHash updatedAt data.filename data.includeDisabled').setOptions({maxTimeMS:1000,timeoutMS:Number.isFinite(deadline)?remaining(deadline):4000}).lean()
    if(!current||componentContext(current as unknown as PackMetadata)!==context)throw Error('Source changed during component preparation')
    if(performance.now()>deadline)throw Error('Component request budget exhausted')
@@ -147,7 +186,7 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
    // Another immutable attempt won. Our verified projection still belongs to
    // this exact input; caller must perform its final global revision validation.
   }catch(error){
-   if(!Number.isFinite(deadline))throw error
+   if(options.background||!Number.isFinite(deadline))throw error
    console.warn('Component persistence unavailable; using verified request projection',{name:(error as Error).name})
   }
   return {ready,entries}
@@ -156,7 +195,7 @@ export async function prepareComponent(p:PackMetadata,options:{sources?:boolean;
  try{return await task}finally{if(pending.get(key)===task)pending.delete(key)}
 }
 
-export async function readComponentCatalogues(userId:string,kind:BrowseKind|readonly BrowseKind[],packs:PackMetadata[],repair=true,deadline=performance.now()+2500):Promise<CatalogPack[]|null> {
+export async function readComponentCatalogues(userId:string,kind:BrowseKind|readonly BrowseKind[],packs:PackMetadata[],repair=true,deadline=performance.now()+2500,options:CatalogueReadOptions={}):Promise<CatalogPack[]|null> {
  const kinds:readonly BrowseKind[]=typeof kind==='string'?[kind]:[...new Set(kind)]
  if(!kinds.length||kinds.some(k=>!ORCBREW_KINDS.includes(k)))return null
  const contexts=packs.map(componentContext);if(contexts.some(c=>!c))return null
@@ -220,11 +259,38 @@ export async function readComponentCatalogues(userId:string,kind:BrowseKind|read
  // A multi-category read shares the same two-component repair and total byte,
  // chunk and time budgets as one category. No repair per category multiplication.
  if(bad.size){
+  if(options.readOnlyFallback){
+   // This tier replaces a full legacy-library rebuild. Reuse every verified
+   // unchanged catalogue and parse at most one bounded current source. It
+   // writes no component generation and does not raise inline-repair budgets.
+   if(repair||kinds.length!==1||bad.size!==1)return null
+   const p=packs.find(p=>bad.has(componentContext(p)!))!
+   if(String(p.userId)!==userId)return null
+   const [size]=await CustomContent.aggregate<{stored:number;decoded:number}>([
+    {$match:packFilter(p)},{$project:{_id:0,stored:{$strLenBytes:{$ifNull:['$data.source','']}},decoded:{$cond:[{$eq:['$data.sourceEncoding','gzip-base64']},'$data.sourceBytes',{$strLenBytes:{$ifNull:['$data.source','']}}]}}},
+   ]).option({maxTimeMS:2000,timeoutMS:2000})
+   if(!size||!Number.isSafeInteger(size.decoded)||size.decoded<=0||size.decoded>READ_ONLY_SOURCE_BYTES||!Number.isSafeInteger(size.stored)||size.stored<=0||size.stored>READ_ONLY_STORED_BYTES)return null
+   let parsed=cachedParsedPack(p.sourceHash)
+   if(!parsed){
+    const doc=(await readPackDocuments(userId,String(p._id),{maxDecodedBytes:READ_ONLY_SOURCE_BYTES,maxStoredBytes:READ_ONLY_STORED_BYTES}))[0]
+    if(!doc||componentContext(doc as unknown as PackMetadata)!==componentContext(p))return null
+    const source=(doc.data as {source:string}).source
+    if(typeof source!=='string'||Buffer.byteLength(source)>READ_ONLY_SOURCE_BYTES||sourceHash(source)!==p.sourceHash)return null
+    parsed=parsedPack(doc.data)
+   }
+   const projected=projection(parsed,kinds),entries=emptyEntries()
+   for(const k of kinds){if(!validEntries(projected[k],k,MAX_COMPONENT_ENTRIES))return null;entries[k]=projected[k]}
+   results.set(componentContext(p)!,entries)
+  }else{
   if(!repair||bad.size>2)return null
   const budget:RepairBudget={deadline,attempts:0,sourceBytes:0,projectionBytes:0,entries:0,chunks:0}
   for(const p of packs)if(bad.has(componentContext(p)!)){
    try{const refreshed=await prepareComponent(p,{replace:byContext.has(componentContext(p)!),expectedGeneration:byContext.get(componentContext(p)!)?.generation,budget});const entries=emptyEntries();for(const k of kinds)entries[k]=refreshed.entries[k];results.set(componentContext(p)!,entries)}
-   catch(error){console.warn('Compendium component requires legacy reader',{name:(error as Error).name});return null}
+   catch(error){
+    if(bad.size===1&&error instanceof LargeRepairSource&&error.bytes<=READ_ONLY_SOURCE_BYTES&&error.stored<=READ_ONLY_STORED_BYTES)options.onLargeRepair?.()
+    console.warn('Compendium component requires legacy reader',{name:(error as Error).name});return null
+   }
+  }
   }
  }
  if([...results.values()].reduce((n,entries)=>n+kinds.reduce((bytes,k)=>bytes+Buffer.byteLength(JSON.stringify(entries[k])),0),0)>MAX_CATEGORY_BYTES)return null
@@ -232,7 +298,7 @@ export async function readComponentCatalogues(userId:string,kind:BrowseKind|read
  return packs.map(p=>({id:String(p._id),filename:p.data.filename,includeDisabled:p.data.includeDisabled,parsed:{entries:results.get(componentContext(p)!)!,report:{packCount:1,entryCount:0,disabledCount:0,duplicateCount:0,nonFiniteCount:0,counts:Object.fromEntries(ORCBREW_KINDS.map(k=>[k,0])) as ParsedOrcbrew['report']['counts'],warnings:[]}}}))
 }
 
-export async function readComponentSource(userId:string,kind:BrowseKind,index:string,locator:BrowseEntry):Promise<BrowseEntry|null> {
+export async function readComponentSource(userId:string,kind:BrowseKind,index:string,locator:BrowseEntry,maxBytes=PREPARED_SOURCE_MAX):Promise<BrowseEntry|null> {
  const deadline=performance.now()+2500,packs=await componentMetadata(userId,deadline),names=Array.isArray(locator.sourcePacks)?locator.sourcePacks:[],ids=(Array.isArray(locator.aliases)?locator.aliases:[]).flatMap(a=>typeof a==='string'?a.match(/^homebrew-([a-f0-9]{24})-/i)?.[1]??[]:[])
  const candidates=packs.filter(p=>names.length?names.includes(p.data.filename):ids.includes(String(p._id)))
  const ready=await CompendiumComponent.find({userId,context:{$in:candidates.map(componentContext).filter(Boolean)}}).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean()
@@ -241,8 +307,8 @@ export async function readComponentSource(userId:string,kind:BrowseKind,index:st
   // corrupt component must fall back to targeted parsing, never skip to a later
   // duplicate whose raw rule payload/provenance could differ.
   const m=ready.find(r=>r.context===componentContext(p));if(!m?.sources)return null
-  const chunks=await CompendiumComponentObject.find({userId,generation:m.generation,kind,role:'source',index}).select('part parts digest payload').sort({part:1}).limit(10).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean()
-  const value=decodePrepared(chunks as unknown as StoredPreparedChunk[],PREPARED_SOURCE_MAX) as BrowseEntry|null
+  const chunks=await CompendiumComponentObject.find({userId,generation:m.generation,kind,role:'source',index}).select('part parts digest payload').sort({part:1}).limit(maxBytes===PREPARED_SOURCE_MAX?10:Math.min(10,Math.ceil(maxBytes/CHUNK_BYTES)+1)).setOptions({maxTimeMS:2000,timeoutMS:remaining(deadline,2000)}).lean()
+  const value=decodePrepared(chunks as unknown as StoredPreparedChunk[],maxBytes) as BrowseEntry|null
   remaining(deadline)
   if(!value||value.index!==index||value.homebrew!==true||typeof value.name!=='string')return null
   // Preserve the baseline's global active-lineage normalization for the winner.

@@ -2,6 +2,7 @@ import express from 'express'
 import cookieParser from 'cookie-parser'
 import { env } from './env'
 import { connectDb } from './db'
+import {requestTiming} from './middleware/request-timing'
 import { databaseErrorDetails } from './lib/database-error'
 import authRoutes from './routes/auth'
 import characterRoutes from './routes/characters'
@@ -25,10 +26,13 @@ import { localSrdRule } from './lib/srd-snapshot'
 import { enrichedStandardMonster } from './lib/monster-enrichment'
 import { MAP_UPLOAD_JSON_BYTES } from '../shared/room-maps'
 import cityLibraryRoutes from './routes/city-libraries'
+import {packPreparation} from './middleware/pack-preparation'
 
 const app = express()
 let sampledSheetReads=0
 app.disable('x-powered-by')
+app.use(requestTiming)
+app.use(packPreparation)
 app.use(streamLargeResponses)
 app.use((req,res,next)=>{
   const started=performance.now()

@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/functions": "3.10.5",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",

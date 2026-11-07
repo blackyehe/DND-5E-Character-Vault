@@ -1,8 +1,8 @@
-import {afterAll,beforeAll,beforeEach,describe,it,expect,vi} from 'vitest'
+import {afterAll,afterEach,beforeAll,beforeEach,describe,it,expect,vi} from 'vitest'
 import express,{type Request,type Response,type NextFunction} from 'express'
 import type {Server} from 'node:http'
 import mongoose from 'mongoose'
-const state=vi.hoisted(()=>({docs:[] as any[],versions:[] as any[],sequence:100,catalog:[] as {key:string;name:string}[]}))
+const state=vi.hoisted(()=>({docs:[] as any[],versions:[] as any[],written:[] as any[],sequence:100,catalog:[] as {key:string;name:string}[],members:[] as string[],assignments:[] as {characterId:string;userId:string}[],owned:[] as string[],readyVersion:undefined as number|undefined,changes:{} as any}))
 const ids=vi.hoisted(()=>({room:'1'.repeat(24),owner:'a'.repeat(24),player:'b'.repeat(24),other:'c'.repeat(24),fade:'2'.repeat(24),volenta:'3'.repeat(24),root:'4'.repeat(24),child:'5'.repeat(24),secret:'6'.repeat(24),publicNote:'7'.repeat(24),privateNote:'8'.repeat(24)}))
 const valueAt=(o:any,key:string)=>key.split('.').reduce((v,k)=>v?.[k],o)
 const eq=(a:any,b:any):boolean=>Array.isArray(a)?a.some(v=>eq(v,b)):a==null&&b==null||String(a)===String(b)
@@ -13,24 +13,210 @@ function matches(doc:any,query:any):boolean{return Object.entries(query).every((
   if(condition&&typeof condition==='object'&&!Array.isArray(condition)&&!condition._bsontype)return Object.entries(condition).every(([op,c]:[string,any])=>op==='$in'?c.some((v:any)=>eq(value,v)):op==='$nin'?!c.some((v:any)=>eq(value,v)):op==='$ne'?!eq(value,c):op==='$lt'?value<c:op==='$exists'?(value!==undefined)===c:op==='$regex'?new RegExp(c,condition.$options).test(value):op==='$options')
   return eq(value,condition)
 })}
-function query(read:()=>any){let skip=0,limit=Infinity,order:any;const q:any={session:()=>q,select:()=>q,sort:(v:any)=>{order=v;return q},skip:(v:number)=>{skip=v;return q},limit:(v:number)=>{limit=v;return q},lean:async()=>{const value=read();if(!Array.isArray(value))return value;const values=[...value];if(order?.revision)values.sort((a,b)=>(a.revision-b.revision)*order.revision);return values.slice(skip,skip+limit)},then:(resolve:any,reject:any)=>q.lean().then(resolve,reject)};return q}
+function query(read:()=>any){let skip=0,limit=Infinity,order:any;const q:any={session:()=>q,select:()=>q,collation:()=>q,comment:()=>q,sort:(v:any)=>{order=v;return q},skip:(v:number)=>{skip=v;return q},limit:(v:number)=>{limit=v;return q},lean:async()=>{const value=read();if(!Array.isArray(value))return value;const values=[...value];if(order?.revision)values.sort((a,b)=>(a.revision-b.revision)*order.revision);return values.slice(skip,skip+limit)},then:(resolve:any,reject:any)=>q.lean().then(resolve,reject)};return q}
 vi.mock('../middleware/auth',()=>({requireAuth:(req:Request,res:Response,next:NextFunction)=>{req.userId=req.get('x-test-user');if(!req.userId)return res.status(401).json({error:'Unauthorized'});next()}}))
 vi.mock('../middleware/request-limit',()=>({requestLimit:()=> (_req:Request,_res:Response,next:NextFunction)=>next()}))
-vi.mock('../models/Room',()=>({Room:{findOne:(q:any)=>query(()=>q._id===ids.room&&q.$or.some((v:any)=>v.ownerId===ids.owner||[ids.player,ids.other].includes(v.members))?{_id:ids.room,ownerId:ids.owner,members:[ids.player,ids.other],assignments:[{characterId:ids.fade,userId:ids.player},{characterId:ids.volenta,userId:ids.other}],notebookTagCatalog:state.catalog}:null),findById:()=>query(()=>({notebookTagCatalog:state.catalog})),updateOne:async(q:any,u:any)=>{if(q._id!==ids.room||q.ownerId!==ids.owner||state.catalog.length>=500||state.catalog.some(t=>t.key===q['notebookTagCatalog.key'].$ne))return {modifiedCount:0};state.catalog.push(u.$push.notebookTagCatalog);return {modifiedCount:1}}}}))
-vi.mock('../models/Character',()=>({Character:{find:(q:any)=>query(()=>[{_id:ids.fade,userId:ids.owner,meta:{name:'Fade'}},{_id:ids.volenta,userId:ids.owner,meta:{name:'Volenta'}}].filter(c=>matches(c,q)))}}))
+vi.mock('../models/Room',()=>({Room:{findOne:(q:any)=>query(()=>q._id===ids.room&&q.$or.some((v:any)=>v.ownerId===ids.owner||state.members.includes(v.members))?{_id:ids.room,ownerId:ids.owner,members:state.members,assignments:state.assignments,notebookTagCatalog:state.catalog,notebookListingVersion:state.readyVersion,notebookChanges:state.changes}:null),findById:()=>query(()=>({notebookTagCatalog:state.catalog})),updateOne:async(q:any,u:any)=>{if(u.$inc){for(const [path,inc]of Object.entries(u.$inc)){const keys=path.split('.').slice(1),last=keys.pop()!;let target=state.changes;for(const key of keys)target=target[key]??=( {} );target[last]=(target[last]??0)+Number(inc)}return {matchedCount:1,modifiedCount:1}}if(q._id!==ids.room||q.ownerId!==ids.owner||state.catalog.length>=500||state.catalog.some(t=>t.key===q['notebookTagCatalog.key'].$ne))return {modifiedCount:0};state.catalog.push(u.$push.notebookTagCatalog);return {modifiedCount:1}}}}))
+vi.mock('../models/Character',()=>({Character:{find:(q:any)=>query(()=>[{_id:ids.fade,userId:ids.owner,meta:{name:'Fade'}},{_id:ids.volenta,userId:ids.owner,meta:{name:'Volenta'}}].filter(c=>state.owned.includes(c._id)&&matches(c,q)))}}))
 vi.mock('../models/User',()=>({User:{findById:()=>query(()=>({displayName:'Test DM'}))}}))
-vi.mock('../models/Notebook',()=>({Notebook:{init:async()=>{},find:(q:any)=>query(()=>state.docs.filter(d=>matches(d,q))),findOne:(q:any)=>query(()=>state.docs.find(d=>matches(d,q))??null),exists:(q:any)=>query(()=>state.docs.some(d=>matches(d,q))),countDocuments:async(q:any)=>state.docs.filter(d=>matches(d,q)).length,create:async(values:any[])=>values.map(v=>{const d={body:'',folderId:null,parentId:null,audience:'room',characterIds:[],relevantCharacterIds:[],relatedIds:[],revision:1,deletedAt:null,updatedAt:new Date(),...v,_id:(state.sequence++).toString(16).padStart(24,'0')};state.docs.push(d);return {toObject:()=>d,_id:d._id}}),findOneAndUpdate:(q:any,update:any)=>query(()=>{const d=state.docs.find(d=>matches(d,q));if(!d)return null;Object.assign(d,update.$set);d.revision+=update.$inc?.revision??0;return d})},NotebookRevision:{init:async()=>{},create:async(values:any[])=>state.versions.push(...values.map(v=>({...v,snapshot:structuredClone(v.snapshot),savedAt:new Date()}))),find:(q:any)=>query(()=>state.versions.filter(v=>matches(v,q))),findOne:(q:any)=>query(()=>state.versions.find(v=>matches(v,q))??null)}}))
+// Existing fixtures intentionally have no derived metadata: verify the legacy fallback.
+vi.mock('../models/Notebook',()=>({Notebook:{aggregate:()=>({collation:()=>({option:async()=>[{unprepared:[{}]}]})}),init:async()=>{},find:(q:any)=>query(()=>state.docs.filter(d=>matches(d,q))),findOne:(q:any)=>query(()=>{const d=state.docs.find(d=>matches(d,q));return d?{...d}:null}),exists:(q:any)=>query(()=>state.docs.some(d=>matches(d,q))),countDocuments:(q:any)=>query(()=>state.docs.filter(d=>matches(d,q)).length),create:async(values:any[])=>values.map(v=>{const d={body:'',folderId:null,parentId:null,audience:'room',characterIds:[],relevantCharacterIds:[],relatedIds:[],revision:1,deletedAt:null,updatedAt:new Date(),...v,_id:(state.sequence++).toString(16).padStart(24,'0')};state.docs.push(d);state.written.push(d);return {toObject:()=>d,_id:d._id}}),findOneAndUpdate:(q:any,update:any)=>query(()=>{const d=state.docs.find(d=>matches(d,q));if(!d)return null;Object.assign(d,update.$set);state.written.push(d);d.revision+=update.$inc?.revision??0;return d})},NotebookRevision:{init:async()=>{},create:async(values:any[])=>state.versions.push(...values.map(v=>({...v,snapshot:structuredClone(v.snapshot),savedAt:new Date()}))),find:(q:any)=>query(()=>state.versions.filter(v=>matches(v,q))),findOne:(q:any)=>query(()=>state.versions.find(v=>matches(v,q))??null)}}))
 import router from './notebook'
 import {libraryContext,notebookScope} from '../lib/room-library-access'
 import {Notebook} from '../models/Notebook'
+import {Character} from '../models/Character'
+import {Room} from '../models/Room'
+import {NOTEBOOK_LISTING_VERSION, notebookDerived, notebookDerivedConsistent} from '../lib/notebook-derived'
+import {env} from '../env'
 let server:Server,base:string
 type TestResponse = Omit<Awaited<ReturnType<typeof fetch>>,'json'> & {json():Promise<any>}
 const request=(path='',user=ids.player,method='GET',body?:unknown)=>fetch(base+path,{method,headers:{'x-test-user':user,'Content-Type':'application/json',connection:'close'},...(body?{body:JSON.stringify(body)}:{})}) as Promise<TestResponse>
 const record=(id:string,kind='entry',extra:any={})=>({_id:id,roomId:ids.room,kind,section:'journal',title:id,body:'text',folderId:null,parentId:null,audience:'room',characterIds:[],relevantCharacterIds:[],relatedIds:[],revision:1,deletedAt:null,updatedAt:new Date(),editedBy:'DM',...extra})
 beforeAll(async()=>{vi.spyOn(mongoose.connection,'transaction').mockImplementation(async(fn:any)=>fn({}));const app=express();app.use(express.json());app.use('/rooms/:roomId/notebook',router);server=await new Promise<Server>(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});base='http://127.0.0.1:'+(server.address() as any).port+'/rooms/'+ids.room+'/notebook'})
 afterAll(()=>new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve())))
-beforeEach(()=>{state.docs=[record(ids.root,'folder',{title:'Country'}),record(ids.child,'folder',{parentId:ids.root,title:'City',audience:'characters',characterIds:[ids.fade]}),record(ids.secret,'folder',{title:'Secret NPC',audience:'dm'}),record(ids.publicNote,'entry',{title:'Shared clue',folderId:ids.child,relatedIds:[ids.privateNote]}),record(ids.privateNote,'entry',{title:'Secret truth',folderId:ids.secret,audience:'dm'})];state.versions=[];state.sequence=100;state.catalog=[]})
+afterEach(()=>{for(const doc of state.written)expect(notebookDerivedConsistent(doc)).toBe(true)})
+beforeEach(()=>{env.NOTEBOOK_DB_ROOMS='*';state.readyVersion=undefined;state.changes={};state.docs=[record(ids.root,'folder',{title:'Country'}),record(ids.child,'folder',{parentId:ids.root,title:'City',audience:'characters',characterIds:[ids.fade]}),record(ids.secret,'folder',{title:'Secret NPC',audience:'dm'}),record(ids.publicNote,'entry',{title:'Shared clue',folderId:ids.child,relatedIds:[ids.privateNote]}),record(ids.privateNote,'entry',{title:'Secret truth',folderId:ids.secret,audience:'dm'})];state.versions=[];state.written=[];state.sequence=100;state.catalog=[];state.members=[ids.player,ids.other];state.assignments=[{characterId:ids.fade,userId:ids.player},{characterId:ids.volenta,userId:ids.other}];state.owned=[ids.fade,ids.volenta]})
+describe('additive notebook navigation',()=>{
+  it('refreshes navigation when an older writer advances source revision without counters or derived metadata',async()=>{
+    state.readyVersion=NOTEBOOK_LISTING_VERSION
+    for(const doc of state.docs)doc.listing=notebookDerived(doc)
+    const before=await request('/navigation?section=all'),token=before.headers.get('x-notebook-navigation')
+    const entry=state.docs.find(d=>d._id===ids.publicNote);entry.revision++;entry.title='Session 99';entry.body='## Session sources\n- 99. session.'
+    const first=await request('/navigation?section=all'),second=await request('/navigation?section=all')
+    expect(first.headers.get('x-notebook-navigation')).not.toBe(token)
+    expect(second.headers.get('x-notebook-navigation')).toBe(first.headers.get('x-notebook-navigation'))
+    expect((await first.json()).sessionEntries.some((e:any)=>e.id===entry._id&&e.sessions.includes(99))).toBe(true)
+    expect(state.changes).toEqual({})
+  })
+  it.each([0,59,60,61,120,121])('preserves exact filtered totals and page boundaries for %i visible entries',async size=>{
+    const original=env.NOTEBOOK_DB_LISTING
+    try{
+      for(const user of [ids.owner,ids.player]){
+        state.docs=Array.from({length:size},(_,n)=>record((1000+n).toString(16).padStart(24,'0'),'entry',{title:`Person ${String(n).padStart(3,'0')}`,codexType:'people'}))
+        state.docs.push(record('d'.repeat(24),'entry',{codexType:'people',deletedAt:new Date()}),record('e'.repeat(24),'entry',{codexType:'sessions'}))
+        if(user===ids.player)state.docs.push(record('f'.repeat(24),'entry',{codexType:'people',audience:'dm'}),record('9'.repeat(24),'entry',{codexType:'people',audience:'characters',characterIds:[ids.volenta]}))
+        for(const doc of state.docs)doc.listing=notebookDerived(doc)
+        state.readyVersion=NOTEBOOK_LISTING_VERSION
+        for(const offset of [0,60,120,180]){
+          const path=`?section=all&type=people&offset=${offset}`
+          env.NOTEBOOK_DB_LISTING='off';const old=await(await request(path,user)).json()
+          env.NOTEBOOK_DB_LISTING='on';const response=await request(path+'&navigation=false',user),page=await response.json()
+          expect(response.status).toBe(200)
+          expect(page).toEqual({entries:old.entries,total:old.total,nextOffset:old.nextOffset})
+          expect(page.total).toBe(size)
+          expect(page.entries.map((e:any)=>e.id)).toEqual(state.docs.slice(0,size).slice(offset,offset+60).map(d=>d._id))
+          expect(page.nextOffset).toBe(offset+60<size?offset+60:null)
+        }
+      }
+    }finally{env.NOTEBOOK_DB_LISTING=original}
+  })
+  it('keeps the missing/old marker fallback identical to flag-off legacy responses for both roles',async()=>{
+    const original=env.NOTEBOOK_DB_LISTING
+    try{
+      for(const user of [ids.owner,ids.player]){
+        env.NOTEBOOK_DB_LISTING='off';state.readyVersion=NOTEBOOK_LISTING_VERSION
+        const expected=await(await request('/initial?section=all',user)).json()
+        for(const version of [undefined,NOTEBOOK_LISTING_VERSION-1]){
+          env.NOTEBOOK_DB_LISTING='on';state.readyVersion=version
+          expect(await(await request('/initial?section=all',user)).json()).toEqual(expected)
+        }
+      }
+    }finally{env.NOTEBOOK_DB_LISTING=original}
+  })
+  it('maintains a ready room through writes and invalidates both audiences when sharing changes',async()=>{
+    state.readyVersion=NOTEBOOK_LISTING_VERSION
+    for(const doc of state.docs)doc.listing=notebookDerived(doc)
+    const before=await request('/navigation?section=all')
+    const response=await request('/entries/'+ids.publicNote+'/sharing',ids.owner,'PATCH',{expectedRevision:1,audience:'characters',characterIds:[ids.volenta]})
+    expect(response.status).toBe(200)
+    expect(state.changes).toMatchObject({dm:{all:1,journal:1},room:{all:1,journal:1},characters:{[ids.volenta]:{all:1,journal:1}}})
+    expect(state.readyVersion).toBe(NOTEBOOK_LISTING_VERSION)
+    expect(state.docs.every(notebookDerivedConsistent)).toBe(true)
+    const after=await request('/navigation?section=all')
+    expect(after.headers.get('x-notebook-navigation')).not.toBe(before.headers.get('x-notebook-navigation'))
+    expect((await after.json()).entryCount).toBe((await before.json()).entryCount-1)
+    const token=after.headers.get('x-notebook-navigation')
+    expect((await request('/entries/'+ids.privateNote+'/tags',ids.owner,'PATCH',{expectedRevision:1,tags:['Secret']})).status).toBe(200)
+    expect((await request('/navigation?section=all')).headers.get('x-notebook-navigation')).toBe(token)
+  })
+  it('keeps a ready room consistent across create, folder moves, edits, tags, restore, trash and recovery',async()=>{
+    state.readyVersion=NOTEBOOK_LISTING_VERSION
+    for(const doc of state.docs)doc.listing=notebookDerived(doc)
+    const draft={title:'Session 17',body:'## Session sources\n- 17. session.',section:'journal',codexType:'sessions',folderId:null,audience:'room',characterIds:[],relevantCharacterIds:[],relatedIds:[]}
+    const created=await request('/entries',ids.owner,'POST',draft)
+    expect(created.status).toBe(201);const {id}=await created.json()
+    const folder=await request('/folders',ids.owner,'POST',{title:'New folder',section:'journal'})
+    expect(folder.status).toBe(201);const folderId=(await folder.json()).id
+    expect((await request('/folders/'+folderId,ids.owner,'PATCH',{expectedRevision:1,title:'Renamed',parentId:ids.root})).status).toBe(200)
+    expect((await request('/entries/'+id,ids.owner,'PATCH',{expectedRevision:1,draft:{...draft,title:'Session 23',body:'## Session sources\n- 23. session.',folderId}})).status).toBe(200)
+    expect((await request('/entries/'+id+'/tags',ids.owner,'PATCH',{expectedRevision:2,tags:['Plot']})).status).toBe(200)
+    expect((await request('/entries/'+id+'/restore-version',ids.owner,'POST',{expectedRevision:3,revision:1})).status).toBe(200)
+    expect((await request('/entries/'+id+'/delete',ids.owner,'POST',{expectedRevision:4})).status).toBe(200)
+    expect((await request('/entries/'+id+'/recover',ids.owner,'POST',{expectedRevision:5})).status).toBe(200)
+    expect(state.docs.find(d=>d._id===id).listing).toMatchObject({sessions:[17],tagNames:['Plot']})
+    expect(state.docs.every(notebookDerivedConsistent)).toBe(true);expect(state.readyVersion).toBe(NOTEBOOK_LISTING_VERSION)
+  })
+  it('shares initial-load context without changing either response or retaining authorization',async()=>{
+    for(const user of [ids.owner,ids.player]){
+      const roomRead=vi.spyOn(Room,'findOne'),characterRead=vi.spyOn(Character,'find'),folderRead=vi.spyOn(Notebook,'find')
+      try{
+        const initialResponse=await request('/initial?section=all&navigation=false',user),initial=await initialResponse.json()
+        expect(initialResponse.status).toBe(200)
+        expect(roomRead).toHaveBeenCalledOnce();expect(characterRead).toHaveBeenCalledOnce()
+        expect(folderRead.mock.calls.filter(([filter])=>(filter as unknown as {kind?:string}|undefined)?.kind==='folder')).toHaveLength(1)
+        const fullResponse=await request('?section=all',user),full=await fullResponse.json()
+        expect({...initial.navigation,...initial.listing}).toEqual(full)
+        expect(initialResponse.headers.get('x-notebook-scope')).toBe(fullResponse.headers.get('x-notebook-scope'))
+        expect(initialResponse.headers.get('x-notebook-navigation')).toBe(fullResponse.headers.get('x-notebook-navigation'))
+      }finally{roomRead.mockRestore();characterRead.mockRestore();folderRead.mockRestore()}
+    }
+    state.members=state.members.filter(id=>id!==ids.player)
+    expect((await request('/initial?section=all')).status).toBe(404)
+  })
+  it('omits names and unused legacy sharing context on slim reads while keeping freshness headers',async()=>{
+    const charFields:string[]=[],folderFields:string[]=[],roomFields:string[]=[],originalCharacters=Character.find,originalNotebook=Notebook.find,originalRoom=Room.findOne
+    const roomSpy=vi.spyOn(Room,'findOne').mockImplementation(((...args:any[])=>{const q=(originalRoom as any)(...args),select=q.select.bind(q);q.select=(fields:string)=>{roomFields.push(fields);return select(fields)};return q}) as any)
+    const characterSpy=vi.spyOn(Character,'find').mockImplementation(((...args:any[])=>{const q=(originalCharacters as any)(...args),select=q.select.bind(q);q.select=(fields:string)=>{charFields.push(fields);return select(fields)};return q}) as any)
+    const folderSpy=vi.spyOn(Notebook,'find').mockImplementation(((...args:any[])=>{const q=(originalNotebook as any)(...args),select=q.select.bind(q);q.select=(fields:string)=>{if(args[0].kind==='folder')folderFields.push(fields);return select(fields)};return q}) as any)
+    try{
+      for(const user of [ids.owner,ids.player]){
+        const slim=await request('?section=all&navigation=false',user),navigation=await request('/navigation?section=all',user)
+        expect(slim.status).toBe(200)
+        expect(slim.headers.get('x-notebook-scope')).toBe(navigation.headers.get('x-notebook-scope'))
+        expect(slim.headers.get('x-notebook-navigation')).toBe(navigation.headers.get('x-notebook-navigation'))
+      }
+      expect(charFields).toEqual(['_id','meta.name','_id','meta.name'])
+      expect(roomFields).toEqual(['ownerId members assignments notebookTagCatalog notebookListingVersion notebookChanges','ownerId members assignments notebookTagCatalog notebookListingVersion notebookChanges'])
+      expect(folderFields).toEqual(['_id title section parentId deletedAt revision','_id title section parentId deletedAt audience characterIds revision','_id title section parentId deletedAt revision','_id title section parentId deletedAt audience characterIds revision'])
+    }finally{characterSpy.mockRestore();folderSpy.mockRestore();roomSpy.mockRestore()}
+  })
+  it('keeps old-client defaults unchanged and reconstructs them from navigation plus a slim page',async()=>{
+    state.catalog=[{key:'unused',name:'Unused'}]
+    for(const user of [ids.owner,ids.player])for(const section of ['all','journal','story-items'])for(const deleted of ['false','true']){
+      const path=`?section=${section}&deleted=${deleted}`
+      const full=await(await request(path,user)).json(),explicit=await(await request(path+'&navigation=true',user)).json()
+      expect(explicit).toEqual(full)
+      expect(Object.keys(full).sort()).toEqual(['entries','total','nextOffset','entryCount','counts','questCounts','tags','sessionEntries','folders','characters','role','readOnly'].sort())
+      const slim=await(await request(path+'&navigation=false',user)).json()
+      expect(Object.keys(slim).sort()).toEqual(['entries','nextOffset','total'])
+      const navResponse=await request(`/navigation${path}`,user),nav=await navResponse.json()
+      expect({...nav,...slim}).toEqual(full)
+      expect(navResponse.headers.get('cache-control')).toBe('private, no-store')
+      expect(navResponse.headers.get('x-notebook-scope')).toBeTruthy()
+      expect(navResponse.headers.get('x-notebook-navigation')).toBeTruthy()
+    }
+    expect((await request('?section=all&navigation=invalid')).status).toBe(400)
+  })
+  it('retains search, pinned, pagination and unmigrated-row behavior in slim listings',async()=>{
+    for(const user of [ids.owner,ids.player])for(const query of ['section=all&search=Shared','section=all&type=pinned&ids='+ids.publicNote,'section=journal&offset=60','section=all&type=quests&questStatus=finished']){
+      const full=await(await request('?'+query,user)).json(),slim=await(await request('?'+query+'&navigation=false',user)).json()
+      expect(slim).toEqual({entries:full.entries,total:full.total,nextOffset:full.nextOffset})
+    }
+  })
+  it('does not reveal hidden entries through counts, tags, sessions or change tokens',async()=>{
+    const initial=await request('/navigation?section=all'),before=await initial.json(),token=initial.headers.get('x-notebook-navigation')
+    state.docs.push(record('9'.repeat(24),'entry',{title:'Hidden session',audience:'characters',characterIds:[ids.volenta],codexType:'sessions',body:'## Session sources\n- 99. session.',tags:['Secret tag']}))
+    state.docs.push(record('d'.repeat(24),'entry',{title:'Hidden trash',audience:'room',deletedAt:new Date(),tags:['Deleted secret']}))
+    state.docs.find(d=>d._id===ids.privateNote).revision++
+    state.docs.find(d=>d._id===ids.privateNote).updatedAt=new Date('2026-11-03')
+    const response=await request('/navigation?section=all'),after=await response.json()
+    expect(after).toEqual(before);expect(response.headers.get('x-notebook-navigation')).toBe(token)
+    const oldClient=await(await request('?section=all')).json()
+    expect(after.counts).toEqual(oldClient.counts);expect(after.questCounts).toEqual(oldClient.questCounts)
+    expect(JSON.stringify(after)).not.toContain('Hidden session');expect(JSON.stringify(after)).not.toContain('Secret tag')
+    expect((await(await request('/navigation?section=all',ids.owner)).json()).entryCount).toBeGreaterThan(after.entryCount)
+  })
+  it.each(['assignment','ownership'] as const)('recomputes player navigation immediately after character %s revocation',async revoked=>{
+    const note=record('9'.repeat(24),'entry',{title:'Assigned secret',audience:'characters',characterIds:[ids.fade],codexType:'sessions',body:'## Session sources\n- 42. session.'})
+    state.docs.push(note)
+    const initial=await request('/navigation?section=all'),before=await initial.json()
+    expect(before.sessionEntries.some((entry:any)=>entry.id===note._id)).toBe(true)
+    if(revoked==='assignment')state.assignments=state.assignments.filter(a=>a.userId!==ids.player)
+    else state.owned=state.owned.filter(id=>id!==ids.fade)
+    const response=await request('/navigation?section=all'),after=await response.json()
+    expect(response.headers.get('x-notebook-scope')).not.toBe(initial.headers.get('x-notebook-scope'))
+    expect(after.characters).toEqual([]);expect(after.entryCount).toBe(before.entryCount-1)
+    expect(after.sessionEntries.some((entry:any)=>entry.id===note._id)).toBe(false)
+    const legacy=await(await request('?section=all')).json()
+    expect(after.counts).toEqual(legacy.counts)
+    expect((await(await request('?section=all&navigation=false')).json()).entries.some((entry:any)=>entry.id===note._id)).toBe(false)
+  })
+  it('denies all subsequent navigation and listing reads after room membership revocation',async()=>{
+    expect((await request('/navigation?section=all')).status).toBe(200)
+    state.members=state.members.filter(id=>id!==ids.player)
+    for(const path of ['/navigation?section=all','?section=all&navigation=false','?section=all','/link-targets'])expect((await request(path)).status).toBe(404)
+  })
+})
+
 describe('notebook access across nested folders',()=>{
+  it('uses alphabetical mixed browsing, chronological Sessions, and the original search ordering',async()=>{
+    state.docs.push(record('9'.repeat(24),'entry',{title:'Session 2',body:'## Session sources\n- 2. session.'}),record('d'.repeat(24),'entry',{title:'Session 10',body:'## Session sources\n- 10. session.'}))
+    const sessionIds=new Set(['9'.repeat(24),'d'.repeat(24)])
+    const order=async(path:string)=>(await(await request(path,ids.owner)).json()).entries.filter((e:any)=>sessionIds.has(e.id)).map((e:any)=>e.sessions[0])
+    expect(await order('?section=all')).toEqual([10,2])
+    expect(await order('?section=all&type=sessions')).toEqual([2,10])
+    expect(await order('?section=all&search=Session')).toEqual([2,10])
+  })
   it('offers a complete title-only link catalog across categories, respecting room, entry and preview access',async()=>{
     for(let n=0;n<72;n++)state.docs.push(record((n+500).toString(16).padStart(24,'0'),'entry',{title:'Object '+n,section:'story-items',codexType:'objects',body:'Private description not returned'}))
     state.docs.push(record('d'.repeat(24),'entry',{title:'Deleted',deletedAt:new Date()}))
@@ -56,6 +242,20 @@ describe('notebook access across nested folders',()=>{
     expect((await(await request('?section=journal&folder='+ids.root)).json()).entries).toHaveLength(1)
     expect((await(await request('?section=journal',ids.other)).json()).entries.map((e:any)=>e.id)).toEqual([ids.publicNote])
     expect((await(await request('?section=journal',ids.owner)).json()).folders).toHaveLength(3)
+  })
+  it('denies deleted note text, conditional reads, history and recovery to players and player preview',async()=>{
+    const deleted='d'.repeat(24)
+    state.docs.push(record(deleted,'entry',{title:'Deleted shared note',audience:'room',deletedAt:new Date()}))
+    for(const [user,preview] of [[ids.player,''],[ids.owner,'?previewCharacter='+ids.fade]] as const){
+      for(const suffix of ['',preview?'&knownRevision=1':'?knownRevision=1','/history']){
+        const path=suffix==='/history'?'/entries/'+deleted+'/history'+preview:'/entries/'+deleted+preview+suffix
+        expect((await request(path,user)).status).toBe(404)
+      }
+    }
+    expect((await request('/entries/'+deleted+'/recover',ids.player,'POST',{expectedRevision:1})).status).toBe(404)
+    expect((await request('/entries/'+deleted,ids.owner)).status).toBe(200)
+    expect((await request('/entries/'+deleted+'/recover',ids.owner,'POST',{expectedRevision:1})).status).toBe(200)
+    expect((await request('/entries/'+deleted,ids.player)).status).toBe(200)
   })
   it('ignores legacy folder privacy and keeps shared entries accessible after folder removal',async()=>{
     state.docs.find(d=>d._id===ids.root).audience='dm'
@@ -166,7 +366,7 @@ describe('place galleries',()=>{
   const id=(await(await request('/entries',ids.owner,'POST',draft())).json()).id
   expect(await(await request('/entries/'+id+'?knownRevision=1')).json()).toEqual({unchanged:true,revision:1})
   expect((await request('/entries/'+id+'?knownRevision=1',ids.other)).status).toBe(200)
-  state.docs.find(d=>d._id===id).revision=2
+  const changed=state.docs.find(d=>d._id===id);changed.revision=2;changed.listing=notebookDerived(changed)
   expect((await(await request('/entries/'+id+'?knownRevision=1')).json()).gallery).toEqual([art])
   state.docs.find(d=>d._id===id).audience='dm'
   expect((await request('/entries/'+id+'?knownRevision=2')).status).toBe(404)

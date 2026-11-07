@@ -40,6 +40,16 @@ it('preserves the deepest initialization stage and successful return value', asy
   } catch (e) { expect(initializationDiagnostic(e, 'boundary').stage).toBe('renewal-indexes') }
 })
 
+it('classifies known failures without logging messages, getters or arbitrary labels', () => {
+  const error = new TypeError('Cannot read properties of undefined (reading private-token) ' + privateValue)
+  expect(initializationDiagnostic(error, 'pairing-indexes')).toEqual({event:'owlbear-initialization-failed',stage:'pairing-indexes',kind:'TypeError',reason:'runtime-type'})
+  const timeout = new Error('Connection operation buffering timed out after 10000ms ' + privateValue)
+  expect(initializationDiagnostic(timeout, 'pairing-indexes').reason).toBe('buffering-timeout')
+  Object.defineProperty(timeout, 'message', {get(){throw new Error('Do not invoke this getter')}})
+  expect(initializationDiagnostic(timeout, 'pairing-indexes')).not.toHaveProperty('reason')
+  expect(JSON.stringify(initializationDiagnostic(error, 'pairing-indexes'))).not.toContain(privateValue)
+})
+
 it('logs failed stages once, preserves generic denial and never handles ordinary routes', async () => {
   const records: InitializationDiagnostic[] = []
   let configFails = false, loadFails = true, loads = 0

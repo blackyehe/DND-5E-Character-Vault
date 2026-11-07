@@ -18,6 +18,9 @@ export function importedEquipment(entry:Record<string,unknown>,kind:'equipment'|
  else item=equipmentFrom({equipment_category:{index:'adventuring-gear',name:'Adventuring Gear'},...entry} as unknown as EquipmentDefinition)
  const raw=object(object(object(entry.details)[':codex/item']).item)
  item={...item,name:String(entry.name),description:text(view.description)||item.description||text(entry.description??entry.desc),magical,kind:itemKind(item),qty:1,equipped:false,attuned:false,notes:item.notes??''}
+ // An import without any listed base damage remains usable through its special
+ // description. Do not invent dice, a damage type or automatic damage bonuses.
+ if(item.weapon&&typeof item.weapon.dice==='string'&&typeof item.weapon.damageType==='string'&&!item.weapon.dice.trim()&&!item.weapon.damageType.trim())item.weapon={...item.weapon,noDamage:true}
  // Imported base indexes keep weapon training/base stats; the full source index
  // identifies the magical definition independently of a mundane SRD base.
  if(magical)item.magicIndex=String(entry.index)

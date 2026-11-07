@@ -1,10 +1,11 @@
+import {recordTimingCache} from '../middleware/request-timing'
 import {createHash} from 'node:crypto'
 import {gzipSync,gunzipSync} from 'node:zlib'
 import {CustomContent} from '../models/CustomContent'
 import {CompendiumEntryCache} from '../models/CompendiumEntryCache'
 import {recoverableModelInitialization} from './model-initialization'
 import {readPackDocuments} from './pack-source'
-import {parsedPack} from './orcbrew-library'
+import {parsedPack,cachedParsedPack} from './orcbrew-library'
 import {buildOrcbrewCatalog} from './orcbrew'
 import {activeWorkshopEntries} from './workshop-schema'
 import type {BrowseEntry,BrowseKind} from '../../shared/compendium-browse'
@@ -19,12 +20,12 @@ function binary(value:unknown):Buffer {
   if(bson?.buffer instanceof Uint8Array&&Number.isInteger(bson.position))return Buffer.from(bson.buffer.subarray(0,bson.position))
   throw new Error('Invalid source cache payload')
 }
-function decoded(doc:{payload?:unknown;digest?:unknown}|null,index:string):BrowseEntry|null {
+function decoded(doc:{payload?:unknown;digest?:unknown}|null,index:string,maxBytes=MAX_BYTES):BrowseEntry|null {
   if(!doc)return null
   try {
     const data=binary(doc.payload)
     if(digest(data)!==doc.digest)return null
-    const value=JSON.parse(gunzipSync(data,{maxOutputLength:MAX_BYTES}).toString('utf8')) as BrowseEntry
+    const value=JSON.parse(gunzipSync(data,{maxOutputLength:maxBytes}).toString('utf8')) as BrowseEntry
     return value.index===index&&typeof value.name==='string'&&value.homebrew===true?value:null
   }catch{return null}
 }
@@ -36,12 +37,15 @@ export async function targetedCompendiumSource(userId:string,kind:BrowseKind,ind
   const aliases=Array.isArray(locator.aliases)?locator.aliases:[]
   const ids=[...new Set(aliases.flatMap(a=>typeof a==='string'?a.match(/^homebrew-([a-f0-9]{24})-/i)?.[1]??[]:[]))]
   if(!names.length&&!ids.length)return null
-  const docs=await CustomContent.find({userId,type:'orcbrew',...(names.length?{'data.filename':{$in:names}}:{_id:{$in:ids}})}).select('_id').sort({_id:1}).lean()
+  const docs=await CustomContent.find({userId,type:'orcbrew',...(names.length?{'data.filename':{$in:names}}:{_id:{$in:ids}})}).select('_id sourceHash data.filename data.includeDisabled').sort({_id:1}).lean()
   for(const doc of docs){
-    const sources=await readPackDocuments(userId,String(doc._id))
-    if(!sources.length)continue
-    const pack=sources[0]!,data=pack.data as {filename:string;includeDisabled?:boolean}
-    const catalog=buildOrcbrewCatalog([{id:String(pack._id),filename:data.filename,includeDisabled:data.includeDisabled,parsed:parsedPack(pack.data)}])
+    let pack=doc,data=doc.data as {filename:string;includeDisabled?:boolean},parsed=cachedParsedPack(doc.sourceHash)
+    if(!parsed){
+      const sources=await readPackDocuments(userId,String(doc._id))
+      if(!sources.length)continue
+      pack=sources[0]!;data=pack.data as typeof data;parsed=parsedPack(pack.data)
+    }
+    const catalog=buildOrcbrewCatalog([{id:String(pack._id),filename:data.filename,includeDisabled:data.includeDisabled,parsed}])
     const entries=kind==='classes'||kind==='subclasses'||kind==='races'?activeWorkshopEntries(catalog[kind],kind):catalog[kind]
     const source=entries.find(e=>e.index===index)
     if(!source)continue
@@ -54,6 +58,20 @@ export async function targetedCompendiumSource(userId:string,kind:BrowseKind,ind
   }
   return null
 }
+/** Optional preload reads never build, parse, repair, or write a source. */
+export async function cachedCompendiumSource(userId:string,kind:BrowseKind,index:string,revision:string,maxBytes=MAX_BYTES):Promise<BrowseEntry|null>{
+ const versions=[`source-1:${revision}`,`source-components-3-families:${revision}`]
+ const rows=await CompendiumEntryCache.find({userId,kind,index,revision:{$in:versions},expiresAt:{$gt:new Date()}}).select('revision payload digest').limit(2).setOptions({maxTimeMS:1000,timeoutMS:1500}).lean()
+ for(const version of versions){
+  const row=rows.find(r=>r.revision===version),entry=decoded(row??null,index,maxBytes)
+  if(entry){recordTimingCache('hit');return entry}
+  // The foreground reader gives a valid legacy row priority. If optional size
+  // limits cannot verify it, defer the entry rather than select another winner.
+  if(row&&version===versions[0])throw Error('Legacy source requires a foreground read')
+ }
+ recordTimingCache('miss')
+ return null
+}
 /** A source projection survives function cold starts; edits/enrichment are applied
  * separately so cached source can never replace the account's latest rules. */
 export async function importedCompendiumSource(userId:string,kind:BrowseKind,index:string,revision:string,locate:()=>Promise<BrowseEntry|null>,resolvePrepared?:()=>Promise<BrowseEntry|null>):Promise<BrowseEntry|null> {
@@ -62,15 +80,23 @@ export async function importedCompendiumSource(userId:string,kind:BrowseKind,ind
   const previous=pending.get(key);if(previous)return previous
   const task=(async()=>{
     try {
-      if(resolvePrepared){
-        const legacy=decoded(await CompendiumEntryCache.findOne({...legacyFilter,expiresAt:{$gt:new Date()}}).select('payload digest').lean(),index)
-        if(legacy)return legacy
+      // Both exact namespace keys use the existing compound index. Their fixed
+      // prefixes sort legacy first; limit-one avoids downloading both payloads
+      // when the preferred legacy value is valid.
+      const row=resolvePrepared
+        ?await CompendiumEntryCache.findOne({...filter,revision:{$in:[legacyFilter.revision,filter.revision]},expiresAt:{$gt:new Date()}}).select('revision payload digest').sort({revision:1}).lean()
+        :await CompendiumEntryCache.findOne({...filter,expiresAt:{$gt:new Date()}}).select('payload digest').lean()
+      const cached=decoded(row,index);if(cached){recordTimingCache('hit');return cached}
+      // Preserve the current fallback for corrupt/invalid legacy values. This
+      // uncommon path still needs two reads, just as the previous reader did.
+      if(resolvePrepared&&row?.revision===legacyFilter.revision){
+        const current=decoded(await CompendiumEntryCache.findOne({...filter,expiresAt:{$gt:new Date()}}).select('payload digest').lean(),index)
+        if(current){recordTimingCache('hit');return current}
       }
-      const cached=decoded(await CompendiumEntryCache.findOne({...filter,expiresAt:{$gt:new Date()}}).select('payload digest').lean(),index)
-      if(cached)return cached
     }catch(error){console.warn('Compendium source cache read unavailable',{name:(error as Error).name})}
     // Prepared data shares the same revisioned, bounded base-source cache.
     // Personal changes and enrichment are applied by the returning caller.
+    recordTimingCache('miss')
     let entry=await resolvePrepared?.()
     if(!entry){
       const locator=await locate()

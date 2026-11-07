@@ -22,7 +22,11 @@ const database = vi.hoisted(() => {
     model: {
       init: vi.fn(async () => {}),
       createIndexes: vi.fn(async () => {}),
-      find: vi.fn((query: Record<string, unknown>) => ({ lean: async () => docs.filter((doc) => matches(doc, query)) })),
+      find: vi.fn((query: Record<string, unknown>) => {
+        let fields:string|undefined
+        const result={select:(value:string)=>{fields=value;return result},sort:()=>result,setOptions:()=>result,lean:async()=>docs.filter(doc=>matches(doc,query)).map(doc=>fields?{_id:doc._id,userId:doc.userId,type:doc.type,sourceHash:doc.sourceHash,data:{filename:doc.data.filename,includeDisabled:doc.data.includeDisabled,packReport:doc.data.packReport}}:doc)}
+        return result
+      }),
       findOne: vi.fn((query: Record<string, unknown>) => ({ lean: async () => docs.find((doc) => matches(doc, query)) ?? null })),
       create: vi.fn(async (value: Omit<Doc, '_id'>) => {
         if (value.sourceHash && docs.some((doc) => doc.sourceHash === value.sourceHash && doc.userId === value.userId && doc.type === value.type)) {
@@ -56,13 +60,15 @@ vi.mock('../models/CustomContent', () => ({ CustomContent: database.model }))
 vi.mock('../models/Character', () => ({ Character: { collection: { updateMany: database.updateCharacters } } }))
 vi.mock('../lib/pack-source',async()=>{
   const {decodedPackData}=await import('../lib/pack-storage')
-  return {readPackDocuments:async(userId:string,packId?:string)=>database.docs.filter(d=>d.userId===userId&&d.type==='orcbrew'&&(!packId||d._id===packId)).map(d=>{try{return {...d,data:decodedPackData(d.data)}}catch{return d}})}
+  return {readPackDocuments:async(userId:string,packId?:string,options:{packIds?:string[]}={})=>database.docs.filter(d=>d.userId===userId&&d.type==='orcbrew'&&(!packId||d._id===packId)&&(!options.packIds||options.packIds.includes(d._id))).map(d=>{try{return {...d,data:decodedPackData(d.data)}}catch{return d}})}
 })
 vi.mock('../lib/workshop-library',async()=>{
   const {buildOrcbrewCatalog}=await import('../lib/orcbrew'),{parsedPack}=await import('../lib/orcbrew-library')
+  const {characterRules}=await import('../lib/workshop-rules'),{decodedPackData}=await import('../lib/pack-storage')
   return {workshopLibrary:async(userId:string)=>{
     const packs=database.docs.filter(d=>d.userId===userId&&d.type==='orcbrew').flatMap(d=>{try{return [{id:d._id,filename:String(d.data.filename),includeDisabled:d.data.includeDisabled===true,parsed:parsedPack(d.data)}]}catch{return []}})
-    return {catalog:buildOrcbrewCatalog(packs)}
+    const catalog=buildOrcbrewCatalog(packs),docs=database.docs.filter(d=>d.userId===userId&&d.type==='orcbrew').map(d=>{try{return{...d,data:decodedPackData(d.data)}}catch{return d}})
+    return {catalog,packs,docs,...characterRules(catalog),warnings:[]}
   }}
 })
 vi.mock('../lib/monster-enrichment',()=>({enrichedMonsterEntries:async(_user:unknown,entries:unknown)=>entries}))

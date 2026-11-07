@@ -9,19 +9,21 @@ const READ_OPTIONS={maxTimeMS:10000,timeoutMS:12000}
 /** Bound each database reply instead of receiving a multi-megabyte cursor batch.
  * Every piece belongs to the same owner, document version and source hash.
  * Code-point offsets preserve Unicode at piece boundaries. */
-export async function readPackDocuments(userId:string|undefined,packId?:string) {
-  const records=await CustomContent.find({userId,type:'orcbrew',...(packId?{_id:packId}:{})}).select('_id userId type data.filename data.includeDisabled data.sourceEncoding data.sourceBytes sourceHash createdAt updatedAt').sort({_id:1}).lean()
+export async function readPackDocuments(userId:string|undefined,packId?:string,options:{packIds?:readonly string[];maxDecodedBytes?:number;maxStoredBytes?:number;checkpoint?:()=>Promise<void>}={}) {
+  await options.checkpoint?.()
+  const records=await CustomContent.find({userId,type:'orcbrew',...(packId?{_id:packId}:options.packIds?{_id:{$in:options.packIds}}:{})}).select('_id userId type data.filename data.includeDisabled data.sourceEncoding data.sourceBytes sourceHash createdAt updatedAt').sort({_id:1}).lean()
   const docs=[]
   for(let start=0;start<records.length;start+=PACK_BATCH_SIZE){
+   await options.checkpoint?.()
    const batch=records.slice(start,start+PACK_BATCH_SIZE)
    const guard=(record:typeof records[number])=>({_id:record._id,userId:record.userId,type:'orcbrew',updatedAt:record.updatedAt,...(record.sourceHash?{sourceHash:record.sourceHash}:{})})
    const source={$cond:[{$eq:[{$type:'$data.source'},'string']},'$data.source','']}
    // One bounded first-chunk query per batch, rather than one round trip per
    // pack. Even twelve full chunks remain below three MiB. Match every exact
    // revision so racing replacements cannot be combined with old metadata.
-   const firstParts=await CustomContent.aggregate<{_id:unknown;part:string;length:number;valid:boolean}>([
+   const firstParts=await CustomContent.aggregate<{_id:unknown;part:string;length:number;valid:boolean;storedBytes?:number}>([
     {$match:{$or:batch.map(guard)}},
-    {$project:{_id:1,valid:{$eq:[{$type:'$data.source'},'string']},part:{$substrCP:[source,0,PACK_SOURCE_CHARS]},length:{$strLenCP:source}}},
+    {$project:{_id:1,valid:{$eq:[{$type:'$data.source'},'string']},part:{$substrCP:[source,0,PACK_SOURCE_CHARS]},length:{$strLenCP:source},...(options.maxStoredBytes===undefined?{}:{storedBytes:{$strLenBytes:source}})}},
    ]).option(READ_OPTIONS)
    const byId=new Map(firstParts.map(part=>[String(part._id),part]))
    for(const record of batch){
@@ -39,15 +41,17 @@ export async function readPackDocuments(userId:string|undefined,packId?:string) 
     }
     const first=byId.get(String(record._id))
     if(!first)throw new Error('A homebrew pack changed while reading. Please refresh.')
+    if(options.maxStoredBytes!==undefined&&(!Number.isSafeInteger(first.storedBytes)||first.storedBytes!>options.maxStoredBytes))throw new Error('Pack exceeds request source limit')
     const pieces=[first.part]
     if(!first.valid){docs.push({...record,data:{...(record.data as {filename:string;includeDisabled?:boolean}),source:undefined}});continue}
     for(let start=PACK_SOURCE_CHARS;start<first.length;start+=PACK_SOURCE_CHARS*PARALLEL_READS){
+      await options.checkpoint?.()
       const offsets=Array.from({length:PARALLEL_READS},(_,i)=>start+i*PACK_SOURCE_CHARS).filter(offset=>offset<first.length)
       const group=await Promise.all(offsets.map(read))
       if(group.some(part=>part.length!==first.length))throw new Error('A homebrew pack changed while reading. Please refresh.')
       pieces.push(...group.map(part=>part.part))
     }
-    docs.push({...record,data:decodedPackData({...(record.data as {filename:string;includeDisabled?:boolean}),source:pieces.join('')})})
+    docs.push({...record,data:decodedPackData({...(record.data as {filename:string;includeDisabled?:boolean}),source:pieces.join('')},{maxBytes:options.maxDecodedBytes})})
    }
   }
   return docs

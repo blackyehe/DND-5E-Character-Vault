@@ -5,12 +5,15 @@ import { useRouter } from 'vue-router'
 import { api } from '../lib/api'
 import { useCharactersStore, type Character } from '../stores/characters'
 import { ABILITY_KEYS } from '../lib/calc'
+import { dmvDataLink } from '../lib/dmv-data-link'
 
 const props = defineProps<{ stayOnPage?: boolean; beforeImport?: () => boolean }>()
 const emit = defineEmits<{ close: []; imported: [character: Character]; saving: [value: boolean] }>()
 interface Preview { character: Omit<Character, '_id' | 'updatedAt'>; warnings: string[]; matchedSpells: number; unresolvedSpells: string[]; sourceUrl: string }
 const router = useRouter(), store = useCharactersStore()
 const url = ref(''), error = ref(''), busy = ref(false), saving = ref(false)
+const pastedSource = ref('')
+const dataLink = computed(() => dmvDataLink(url.value))
 watch(saving, value => emit('saving', value), { flush: 'sync' })
 const preview = ref<Preview | null>(null), file = ref<HTMLInputElement | null>(null)
 const valid = computed(() => {
@@ -21,11 +24,19 @@ const valid = computed(() => {
     && Number.isInteger(c.combat.speed) && c.combat.speed >= 0
 })
 async function load(input: { url: string } | { source: string }) {
-  if (busy.value || saving.value) return
+  if (busy.value || saving.value) return false
   error.value = ''; preview.value = null; busy.value = true
-  try { preview.value = await api.post<Preview>('/api/characters/import/dmv/preview', input) }
-  catch (failure) { error.value = failure instanceof Error ? failure.message : 'Could not read that character.' }
+  try { preview.value = await api.post<Preview>('/api/characters/import/dmv/preview', input); return true }
+  catch (failure) { error.value = failure instanceof Error ? failure.message : 'Could not read that character.'; return false }
   finally { busy.value = false }
+}
+async function readPastedSource() {
+  if (busy.value || saving.value) return
+  if (!pastedSource.value.trim()) { error.value = 'Paste EDN or JSON character data first.'; return }
+  if (new Blob([pastedSource.value]).size > 4 * 1024 * 1024) { error.value = 'Character data must be 4 MB or smaller.'; return }
+  // Submit the exact text to the existing preview-only endpoint. Keep it on
+  // failure so the user can correct it; never persist it as a device draft.
+  if (await load({ source: pastedSource.value })) pastedSource.value = ''
 }
 async function readFile(event: Event) {
   const input = event.target as HTMLInputElement, selected = input.files?.[0]
@@ -65,6 +76,17 @@ function downloadSource() {
     <header><div><span class="eyebrow">BRING YOUR HERO WITH YOU</span><h2 id="link-import-title">Import from Dungeon Master’s Vault</h2><p>Paste a shared character link, review the result, then import it as a new character.</p></div><button class="btn-ghost" :disabled="busy || saving" aria-label="Close character import" @click="$emit('close')">✕</button></header>
     <form class="source" @submit.prevent="load({ url: url.trim() })"><label>Character link<input v-model="url" class="input-base" type="url" required maxlength="2048" placeholder="https://www.dungeonmastersvault.com/pages/dnd/5e/characters/…" :disabled="busy || saving" /></label><button class="btn-primary" :disabled="busy || saving || !url.trim()">{{ busy ? 'Reading character…' : 'Preview character' }}</button></form>
     <div class="fallback"><span>Have character data instead?</span><button class="btn-ghost text-xs" type="button" :disabled="busy || saving" @click="file?.click()">Choose EDN / JSON file</button><input ref="file" class="hidden" type="file" accept=".edn,.json,.orc,.orcpub,application/edn,application/json,text/plain" @change="readFile" /></div>
+    <details class="paste-source">
+      <summary>Use copied character data</summary>
+      <p>If the character link cannot be read here, open its data below. If your browser downloads a file, choose it above; otherwise copy all the text and paste it below. You can also paste an EDN / JSON character export. A PDF or homebrew pack will not work.</p>
+      <a v-if="dataLink" :href="dataLink" target="_blank" rel="noopener noreferrer" class="btn-ghost">Open or download character data</a>
+      <p v-else>Enter a valid character link above to open its data.</p>
+      <form @submit.prevent="readPastedSource">
+        <label for="dmv-pasted-source">EDN / JSON character data</label>
+        <textarea id="dmv-pasted-source" v-model="pastedSource" class="input-base" rows="5" spellcheck="false" autocapitalize="off" autocomplete="off" :disabled="busy || saving" />
+        <button class="btn-primary" :disabled="busy || saving || !pastedSource.trim()">Preview copied data</button>
+      </form>
+    </details>
     <p v-if="busy" class="status" role="status">Reading the saved choices and matching them with your available content…</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <div v-if="preview" class="preview">
@@ -83,5 +105,6 @@ function downloadSource() {
 </template>
 
 <style scoped>
+.paste-source p{margin:12px 0;font-size:13px;line-height:1.7;color:var(--cb-muted)}.paste-source>a{display:inline-block;margin-bottom:14px}.paste-source form{display:grid;gap:10px}.paste-source label{font-size:12px;color:var(--cb-muted)}.paste-source textarea{width:100%;min-width:0;resize:vertical;font-family:monospace;font-size:13px;overflow-wrap:anywhere}.paste-source button{justify-self:start}
 .link-import{padding:26px}.link-import header{display:flex;justify-content:space-between;gap:18px}.link-import h2{font:26px Georgia,serif;margin:7px 0 10px}.link-import header p,.summary p{font-size:13px;color:var(--cb-muted);line-height:1.7}.eyebrow{font-size:10px;letter-spacing:.13em;color:var(--cb-accent-text);font-weight:600}.link-import header>.btn-ghost{align-self:start}.source{display:flex;gap:12px;align-items:end;margin-top:23px}.source>label{flex:1}.source label,fieldset label{font-size:12px;color:var(--cb-muted);display:flex;flex-direction:column;gap:7px}.source input{font-size:13px;padding:11px}.source>.btn-primary{min-height:43px}.fallback{display:flex;align-items:center;gap:12px;color:var(--cb-muted);font-size:12px;margin-top:14px;flex-wrap:wrap}.status{margin:20px 0;color:var(--cb-muted)}.error{color:var(--site-danger);font-size:13px;margin-top:18px;line-height:1.7}.preview{margin-top:24px;padding-top:24px;border-top:1px solid var(--cb-line)}.summary{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}.summary h3{font:29px Georgia,serif;margin:5px 0;color:var(--cb-ink)}.pill{background:var(--cb-accent-soft);color:var(--cb-accent-text);padding:8px 11px;border-radius:5px;font-size:12px}.review{background:var(--cb-soft);border:1px solid var(--cb-line);border-left:3px solid var(--cb-accent-mark);padding:17px 20px;margin:20px 0;border-radius:5px;font-size:12px;line-height:1.8}.review>strong{font-size:14px;color:var(--cb-ink)}.review p,.review ul{margin-top:9px;color:var(--cb-muted)}.review ul{list-style:disc;padding-left:18px}.review li+li{margin-top:5px}fieldset{border:0;margin-top:24px;padding:0;min-width:0}legend{font:21px Georgia,serif;margin-bottom:15px}.meta{display:grid;grid-template-columns:1fr 120px;gap:15px}.abilities{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:13px;margin:17px 0}.abilities input{text-align:center;font-size:21px;padding:10px}.combat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.link-import details{margin-top:24px;border-top:1px solid var(--cb-line);padding-top:18px}.link-import summary{cursor:pointer;color:var(--cb-accent-text);font-size:13px}.link-import details>div{border-bottom:1px solid var(--cb-line);padding:14px 0;font-size:12px}.link-import details p{white-space:pre-wrap;line-height:1.8;color:var(--cb-muted);margin-top:8px;overflow-wrap:anywhere}.link-import footer{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;border-top:1px solid var(--cb-line);padding-top:20px;margin-top:22px}.link-import footer p{color:var(--cb-muted);font-size:11px;flex:1}.link-import footer button{font-size:13px}@media(max-width:650px){.link-import{padding:18px}.source{flex-direction:column;align-items:stretch}.abilities{grid-template-columns:repeat(3,minmax(0,1fr))}.meta{grid-template-columns:1fr 75px}.link-import footer{align-items:stretch;flex-direction:column}.combat{gap:9px}.link-import h2{font-size:23px}}
 </style>

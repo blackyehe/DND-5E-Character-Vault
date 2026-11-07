@@ -218,6 +218,7 @@ export const homebrew = {
   other: () => api.get<HomebrewReference[]>('/api/content/homebrew/other'),
 }
 const BASE = '/api/2014'
+const selectionListsUrl=new URL('./srd-selection-lists.json',import.meta.url).href
 
 const ruleCache=new Map<string,Promise<unknown>>()
 async function getJson<T>(path: string): Promise<T> {
@@ -231,6 +232,21 @@ async function getJson<T>(path: string): Promise<T> {
   ruleCache.set(path,task)
   try{return await task}catch(error){ruleCache.delete(path);throw error}
 }
+/** Small public selection lists share the pinned SRD snapshot. Their lazy asset
+ * avoids several startup requests; full definitions still use the normal API. */
+let selectionLists:Promise<typeof import('./srd-selection-lists.json')>|undefined
+async function selectionList(kind:'classes'|'races'|'backgrounds'|'languages'|'equipment'):Promise<SrdRef[]>{
+  try{
+    selectionLists??=fetch(selectionListsUrl,{signal:AbortSignal.timeout(6500)}).then(response=>{
+      if(!response.ok)throw Error('Selection lists unavailable')
+      return response.json() as Promise<typeof import('./srd-selection-lists.json')>
+    }).catch(error=>{selectionLists=undefined;throw error})
+    const rows=(await selectionLists)[kind]
+    if(!Array.isArray(rows))throw Error('Selection lists unavailable')
+    return rows
+  }
+  catch{return (await getJson<SrdListResponse<SrdRef>>('/'+kind)).results}
+}
 
 export const srd = {
   async compendium(kind: string) { return (await getJson<SrdListResponse<SrdRef & { filterFacets:import('../../shared/compendium-facets').FacetValues }>>(`/compendium/${kind}`)).results },
@@ -241,7 +257,7 @@ export const srd = {
   language: (index: string) => getJson<SrdRef & Record<string, unknown>>(`/languages/${index}`),
   subclassLevels: (index: string) => getJson<SrdLevel[]>(`/subclasses/${index}/levels`),
   async backgrounds() {
-    return (await getJson<SrdListResponse<SrdRef>>('/backgrounds')).results
+    return selectionList('backgrounds')
   },
   background: (index: string) => getJson<SrdBackground>(`/backgrounds/${index}`),
   subclass: (index: string) => getJson<SrdRef & { desc: string[] }>(`/subclasses/${index}`),
@@ -252,18 +268,16 @@ export const srd = {
     return (await getJson<SrdListResponse<SrdRef>>(`/classes/${index}/spells`)).results
   },
   async languages() {
-    return (await getJson<SrdListResponse<SrdRef>>('/languages')).results
+    return selectionList('languages')
   },
   async classes() {
-    const data = await getJson<SrdListResponse<SrdRef>>('/classes')
-    return data.results
+    return selectionList('classes')
   },
   async class(index: string) {
     return getJson<SrdClass>(`/classes/${index}`)
   },
   async races() {
-    const data = await getJson<SrdListResponse<SrdRef>>('/races')
-    return data.results
+    return selectionList('races')
   },
   async race(index: string) {
     return getJson<SrdRace>(`/races/${index}`)
@@ -284,8 +298,7 @@ export const srd = {
     return getJson<SrdSpell>(`/spells/${index}`)
   },
   async equipment() {
-    const data = await getJson<SrdListResponse<SrdRef>>('/equipment')
-    return data.results
+    return selectionList('equipment')
   },
   async equipmentItem(index: string) {
     return getJson<SrdEquipment>(`/equipment/${index}`)

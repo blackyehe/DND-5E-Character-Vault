@@ -7,7 +7,10 @@ import {CityLibrary} from '../models/CityLibrary'
 import {requireAuth} from '../middleware/auth'
 import {requestLimit} from '../middleware/request-limit'
 import {libraryContext, libraryScope, libraryVisible, notebookScope, libraryFail as fail, RoomLibraryError, type LibraryContext} from '../lib/room-library-access'
-import {MAP_LIMITS, PIN_VISIBILITIES, PIN_COLORS, PIN_SYMBOLS, PIN_LABELS, pinDisplay} from '../../shared/room-maps'
+import {MAP_LIMITS, MAP_OVERVIEW_EDGES, MAP_OVERVIEW_VERSION, PIN_VISIBILITIES, PIN_COLORS, PIN_SYMBOLS, PIN_LABELS, pinDisplay} from '../../shared/room-maps'
+import {prepareMapOverviews} from '../lib/map-overviews'
+import {reserveMapStorage} from '../lib/map-storage'
+import {backfillMapOverviews} from '../lib/map-overview-backfill'
 import {regionProblem} from '../../shared/map-regions'
 import {recoverableModelInitialization} from '../lib/model-initialization'
 import {withDatabaseStage} from '../lib/database-error'
@@ -40,7 +43,8 @@ async function mapFor(value: unknown, ctx: LibraryContext, session?: ClientSessi
 }
 function summary(map: MapRecord, ctx: LibraryContext) {return {id: String(map._id), title: map.title, audience: map.audience,
   characterIds: map.characterIds.map(String).filter(id => ctx.dm || ctx.allowed.includes(id)), revision: map.revision,
-  updatedAt: map.updatedAt.toISOString(), width: map.width, height: map.height, bytes: map.bytes}}
+    updatedAt: map.updatedAt.toISOString(), width: map.width, height: map.height, bytes: map.bytes,
+    ...(map.imageVariants?.length ? {imageVariants: map.imageVariants.map(v => ({edge: v.edge, width: v.width, height: v.height, bytes: v.bytes}))} : {})}}
 async function detail(map: MapRecord, ctx: LibraryContext) {
   // Old pins inherit room access; intersect pin and note/folder access for every player response.
   const visiblePins = map.pins.filter(p => libraryVisible({...p, audience: p.audience ?? 'room'}, ctx))
@@ -53,18 +57,6 @@ const initializeMaps = recoverableModelInitialization(() => [RoomMap, MapAsset, 
 async function transaction<T>(fn: (session: ClientSession) => Promise<T>) {
   await withDatabaseStage('map-initialization', initializeMaps)
   return withDatabaseStage('map-transaction', () => mongoose.connection.transaction(fn))
-}
-async function reserve(ctx: LibraryContext, bytes: number, session: ClientSession) {
-  const budgets = [
-    {key: 'site', max: MAP_LIMITS.siteBytes, count: Number.MAX_SAFE_INTEGER, message: 'Map image storage is full. Ask the DM to remove unused maps.'},
-    {key: `owner:${ctx.room.ownerId}`, max: MAP_LIMITS.ownerBytes, count: Number.MAX_SAFE_INTEGER, message: 'Your map images have reached the 25 MiB account limit. Remove an unused map first.'},
-    {key: `room:${ctx.room._id}`, max: MAP_LIMITS.roomBytes, count: MAP_LIMITS.mapsPerRoom, message: 'This room has reached its map limit (10 MiB or 25 maps). Remove an unused map first.'},
-  ]
-  for (const b of budgets) {
-    await MapQuota.updateOne({_id: b.key}, {$setOnInsert: {bytes: 0, count: 0}}, {upsert: true, session})
-    const result = await MapQuota.updateOne({_id: b.key, bytes: {$lte: b.max - bytes}, count: {$lt: b.count}}, {$inc: {bytes, count: 1}}, {session})
-    if (!result.modifiedCount) fail(413, b.message)
-  }
 }
 async function validateSharing(data: z.infer<typeof draft>, ctx: LibraryContext) {
   if (data.characterIds.some(id => !ctx.characters.some(c => String(c._id) === id))) fail(400, 'Choose characters currently owned by this room’s DM.')
@@ -84,23 +76,44 @@ router.get('/', async (req, res) => {
 })
 router.get('/:mapId/image', async (req, res) => {
   const ctx = await ctxFor(req), map = await mapFor(req.params.mapId, ctx)
+  const requested = req.query.size
+  if (requested !== undefined && (typeof requested !== 'string' || !MAP_OVERVIEW_EDGES.some(edge => String(edge) === requested))) return fail(400, 'Choose an available map image size.')
+  const variant = map.imageVariants?.find(v => String(v.edge) === requested)
   // Assets are immutable for a map ID. Revalidate access on every request, then
   // allow the browser to reuse bytes without rereading the image from MongoDB.
-  const etag=`"map-${map._id}"`
+  const etag = variant ? `"map-${map._id}-overview-v${MAP_OVERVIEW_VERSION}-${variant.edge}"` : `"map-${map._id}"`
   res.setHeader('Cache-Control','private, no-cache')
   res.vary('Cookie')
   res.setHeader('ETag',etag)
+  res.setHeader('X-Map-Image-Edge', variant?.edge ?? Math.max(map.width, map.height))
   if(req.get('if-none-match')?.split(',').some(value=>value.trim().replace(/^W\//,'')===etag))return res.status(304).end()
-  const asset = await MapAsset.findOne({_id: map._id, roomId: ctx.room._id}).lean()
+  // A derivative request does not fetch the original Mongo binary as well.
+  const asset = await MapAsset.findOne({_id: map._id, roomId: ctx.room._id}).select(variant ? {overviews: {$elemMatch: {edge: variant.edge}}} : {data: 1}).lean()
   if (!asset) return fail(404, 'Map image is unavailable.')
+  let data: typeof asset.data | undefined = variant ? asset.overviews?.[0]?.data : asset.data
+  if (!data && variant) {
+    // An incomplete migration must not strand a map. Authorization above is current.
+    const original = await MapAsset.findOne({_id: map._id, roomId: ctx.room._id}).select('data').lean()
+    data = original?.data
+    res.setHeader('ETag', `"map-${map._id}"`)
+    res.setHeader('X-Map-Image-Edge', Math.max(map.width, map.height))
+  }
+  if (!data) return fail(404, 'Map image is unavailable.')
   res.setHeader('Content-Type', 'image/webp')
   res.setHeader('Content-Disposition', 'inline; filename="map.webp"')
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin')
-  res.send(Buffer.from(asset.data.buffer))
+  res.send(Buffer.from(data.buffer))
 })
 router.get('/:mapId', async (req, res) => {const ctx = await ctxFor(req); res.json(await detail(await mapFor(req.params.mapId, ctx), ctx))})
 router.use(requestLimit('map-write', 60, 60))
 router.use(async (req, _res, next) => {dm(await ctxFor(req)); next()})
+router.post('/:mapId/prepare', async (req, res) => {
+  const input = parsed(z.object({expectedRevision: expected}).strict(), req.body)
+  const ctx = await ctxFor(req), map = await mapFor(req.params.mapId, ctx)
+  if (map.revision !== input.expectedRevision) return fail(409, 'This map changed. Refresh before preparing its opening views.')
+  await withDatabaseStage('map-initialization', initializeMaps)
+  res.json(await backfillMapOverviews(String(map._id), true))
+})
 router.post('/', requestLimit('map-upload', 10, 60), async (req, res) => {
   if (typeof req.body?.image === 'string' && req.body.image.length > Math.ceil(MAP_LIMITS.imageBytes / 3) * 4) return fail(413, 'Prepare this map to 3 MiB or less before uploading.')
   const input = parsed(draft.safeExtend({image: z.string().min(4).max(Math.ceil(MAP_LIMITS.imageBytes / 3) * 4)}).strict(), req.body)
@@ -128,12 +141,14 @@ router.post('/', requestLimit('map-upload', 10, 60), async (req, res) => {
     }
   } catch (e) {if (e instanceof RoomLibraryError) throw e; return fail(400, 'This image could not be read. Use a still PNG, JPEG or WebP under 16 megapixels.')}
   if (image.data.length > MAP_LIMITS.imageBytes) return fail(413, 'This map is still over 3 MiB at high quality. Choose a more compressed image or resize it.')
+  const overviews = await prepareMapOverviews(image.data)
+  const storageBytes = image.data.length + overviews.reduce((bytes, v) => bytes + v.bytes, 0)
   const result = await transaction(async session => {
     const ctx = await ctxFor(req, session); dm(ctx)
     const sharing = await validateSharing(input, ctx)
-    await reserve(ctx, image.data.length, session)
-    const [map] = await RoomMap.create([{...sharing, roomId: ctx.room._id, ownerId: ctx.room.ownerId, width: image.info.width, height: image.info.height, bytes: image.data.length}], {session})
-    await MapAsset.create([{_id: map!._id, roomId: ctx.room._id, data: image.data}], {session})
+    await reserveMapStorage(ctx.room.ownerId, ctx.room._id, storageBytes, session)
+    const [map] = await RoomMap.create([{...sharing, roomId: ctx.room._id, ownerId: ctx.room.ownerId, width: image.info.width, height: image.info.height, bytes: image.data.length, storageBytes, imageVariants: overviews.map(({data: _data, ...meta}) => meta)}], {session})
+    await MapAsset.create([{_id: map!._id, roomId: ctx.room._id, data: image.data, overviews: overviews.map(({edge, data}) => ({edge, data}))}], {session})
     return String(map!._id)
   })
   res.status(201).json({id: result})
@@ -204,7 +219,7 @@ router.post('/:mapId/delete', async (req, res) => {
     const r = await RoomMap.deleteOne({_id: map._id, revision: input.expectedRevision}, {session})
     if (!r.deletedCount) fail(409, 'This map changed elsewhere. Refresh before deleting it.')
     await MapAsset.deleteOne({_id: map._id, roomId: ctx.room._id}, {session})
-    for (const key of ['site', `owner:${map.ownerId}`, `room:${map.roomId}`]) await MapQuota.updateOne({_id: key}, {$inc: {bytes: -map.bytes, count: -1}}, {session})
+    for (const key of ['site', `owner:${map.ownerId}`, `room:${map.roomId}`]) await MapQuota.updateOne({_id: key}, {$inc: {bytes: -(map.storageBytes ?? map.bytes), count: -1}}, {session})
   })
   res.json({ok: true})
 })

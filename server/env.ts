@@ -10,6 +10,10 @@ const envSchema = z.object({
   // Rollback switch. Derived records do not change any source or saved character.
   COMPENDIUM_READER: z.enum(['legacy','prepared']).default('legacy'),
   COMPENDIUM_PREPARED_USERS: z.string().default(''),
+  COMPENDIUM_PACK_PREPARATION:z.enum(['off','on']).default('off'),
+  NOTEBOOK_DB_LISTING:z.enum(['off','on']).default('off'),
+  // Name canary rooms explicitly; '*' deliberately admits all certified rooms.
+  NOTEBOOK_DB_ROOMS:z.string().max(3000).default('').refine(value=>value.trim()==='*'||value.split(',').filter(id=>id.trim()).every(id=>/^[a-f\d]{24}$/i.test(id.trim())),'Use comma-separated room IDs, or * for all certified rooms.'),
 })
 
 const production = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL)

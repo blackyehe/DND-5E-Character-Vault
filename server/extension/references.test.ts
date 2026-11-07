@@ -18,7 +18,7 @@ import { createExtensionApp } from './api'
 
 const owner = 'a'.repeat(24), player = 'b'.repeat(24), characterId = 'c'.repeat(24)
 const origin = 'http://localhost:5174'
-let server: Server, base: string, details = true, assigned = true
+let server: Server, base: string, details = true, assigned = true, optionalSelections = false
 const library: CharacterRuleLibrary = {
   catalog: { classes: [], subclasses: [], races: [], backgrounds: [], feats: [], spells: [{
     index: 'homebrew-spells-fixture', name: 'Fixture spell', contentKey: 'fixture', source: 'Fixture',
@@ -38,6 +38,7 @@ describe('expanded reference library boundary', () => {
     vi.spyOn(Character, 'findOne').mockImplementation(() => ({ lean: async () => {
       const c = { ...emptyCharacter(), _id: characterId, updatedAt: '2026-10-27T00:00:00Z' }
       c.spellcasting.known = ['old-fixture', 'shield', 'missing-fixture']
+      if(optionalSelections){c.meta.subraceIndex='homebrew-subraces-fixture';c.features=[{name:'Fixture invocation',description:'Selected invocation rules',definition:{version:1,kind:'invocations',index:'homebrew-invocations-fixture',grantConfirmed:true}}]}
       return c
     } }) as any)
     const app = await createExtensionApp({ websiteOrigin: 'http://localhost:5184', extensionOrigins: [origin] })
@@ -45,7 +46,7 @@ describe('expanded reference library boundary', () => {
     base = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/extension/v1/characters/${characterId}`
   })
   beforeEach(() => {
-    details = true; assigned = true
+    details = true; assigned = true; optionalSelections = false
     loaders.focused.mockReset().mockResolvedValue(library)
     loaders.full.mockReset().mockRejectedValue(Error('Expanded sheets must use the character rule reader'))
   })
@@ -61,9 +62,15 @@ describe('expanded reference library boundary', () => {
     expect(body.magic.spells.find((s: { id: string }) => s.id === 'old-fixture')).toMatchObject({ description: ['Complete imported spell prose'], available: true })
     expect(body.magic.spells.find((s: { id: string }) => s.id === 'shield')).toMatchObject({ available: true })
     expect(body.magic.spells.find((s: { id: string }) => s.id === 'missing-fixture')).toMatchObject({ available: false })
-    expect(loaders.focused.mock.calls).toEqual([[owner], [owner]])
+    expect(loaders.focused.mock.calls).toEqual([[owner], [owner,[]]])
     expect(loaders.full).not.toHaveBeenCalled()
     expect(response.headers.get('server-timing')).toMatch(/^snapshot;dur=/)
+  })
+  it('requests optional categories selected by this character without requesting unrelated options',async()=>{
+    optionalSelections=true
+    expect((await request()).status).toBe(200)
+    expect(loaders.focused.mock.calls.at(-1)).toEqual([owner,['invocations','subraces']])
+    expect(loaders.full).not.toHaveBeenCalled()
   })
   it('checks expanded-detail approval before loading any library', async () => {
     details = false

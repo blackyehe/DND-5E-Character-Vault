@@ -1,10 +1,8 @@
 import {createHash} from 'node:crypto'
-import {gzipSync,gunzipSync} from 'node:zlib'
-import type {BrowseEntry,BrowseIndex,BrowseKind} from '../../shared/compendium-browse'
+import {gzip,gzipSync,gunzipSync} from 'node:zlib'
+import {promisify} from 'node:util'
+import type {BrowseIndex} from '../../shared/compendium-browse'
 
-// Bump for parser, source snapshot, projection, grouping or filter changes.
-export const PREPARED_VERSION='compendium-prepared-1'
-export const PREPARED_INDEX_KEY='catalogue'
 const CHUNK_BYTES=512*1024
 export interface PreparedChunk {part:number;parts:number;digest:string;payload:Buffer}
 export interface StoredPreparedChunk extends Omit<PreparedChunk,'payload'> {payload:unknown}
@@ -12,6 +10,14 @@ export function encodePrepared(value:unknown,maxBytes:number):PreparedChunk[] {
   const json=JSON.stringify(value)
   if(Buffer.byteLength(json)>maxBytes)throw new Error('Prepared object exceeds its supported size.')
   const data=gzipSync(json),digest=createHash('sha256').update(data).digest('hex'),parts=Math.ceil(data.length/CHUNK_BYTES)
+  return Array.from({length:parts},(_,part)=>({part,parts,digest,payload:data.subarray(part*CHUNK_BYTES,(part+1)*CHUNK_BYTES)}))
+}
+const compress=promisify(gzip)
+/** Background preparation uses the zlib pool rather than blocking HTTP work. */
+export async function encodePreparedAsync(value:unknown,maxBytes:number):Promise<PreparedChunk[]> {
+  const json=JSON.stringify(value)
+  if(Buffer.byteLength(json)>maxBytes)throw new Error('Prepared object exceeds its supported size.')
+  const data=await compress(json),digest=createHash('sha256').update(data).digest('hex'),parts=Math.ceil(data.length/CHUNK_BYTES)
   return Array.from({length:parts},(_,part)=>({part,parts,digest,payload:data.subarray(part*CHUNK_BYTES,(part+1)*CHUNK_BYTES)}))
 }
 export function decodePrepared(chunks:StoredPreparedChunk[],maxBytes:number):unknown|null {
@@ -34,10 +40,4 @@ export function preparedIndex(value:unknown):BrowseIndex|null {
   const index=value as BrowseIndex
   return Array.isArray(index.records)&&index.records.every(r=>r&&typeof r.search==='string'&&r.facts&&typeof r.facts==='object'&&r.entry&&typeof r.entry.index==='string'&&typeof r.entry.name==='string')&&Array.isArray(index.categoryFields)&&Array.isArray(index.commonFields)&&Array.isArray(index.extraTags)&&typeof index.unclassifiedMagicItems==='number'?index:null
 }
-export function preparedSource(value:unknown,kind:BrowseKind,index:string):BrowseEntry|null {
-  if(!value||typeof value!=='object'||!index.startsWith(`homebrew-${kind}-`))return null
-  const entry=value as BrowseEntry
-  return entry.index===index&&typeof entry.name==='string'&&entry.homebrew===true?entry:null
-}
-export const PREPARED_INDEX_MAX=64*1024*1024
 export const PREPARED_SOURCE_MAX=4*1024*1024

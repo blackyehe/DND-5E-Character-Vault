@@ -5,27 +5,28 @@ import { isValidObjectId } from 'mongoose'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth'
 import { CustomContent } from '../models/CustomContent'
-import { Character } from '../models/Character'
 import { workshopDraftSchema, validatedDraft } from '../lib/workshop-schema'
 import { workshopLibrary, synchronizeWorkshopCharacters } from '../lib/workshop-library'
 import { compactDraft, compileWorkshopEntry, placeWorkshopEntry, workshopKey } from '../lib/workshop-pack'
 import { inspectOrcbrew, sourceHash } from '../lib/orcbrew'
 import { workshopFromEntry, workshopSection, type WorkshopDraft } from '../../shared/homebrew-workshop'
-import { applyWorkshopRules } from '../../shared/workshop-character'
+import optionRoutes from './option-workshop'
+import {workshopStartup} from '../lib/workshop-startup'
+import {createAccountBackup,BackupError} from '../lib/account-backup'
 
 const router=Router();router.use(requireAuth)
+router.use('/options',optionRoutes)
 const filename=z.string().min(1).max(255).regex(/^[^<>:"/\\|?*\x00-\x1f]+\.orcbrew$/i)
 const saveSchema=z.object({draft:workshopDraftSchema,target:z.object({packId:z.string().optional(),filename:filename.optional(),expectedHash:z.string().optional()}),expectedRevision:z.number().int().min(0)})
 const queues=new Map<string,Promise<unknown>>()
+router.get('/initial',async(req,res)=>{res.json(await workshopStartup(req.userId!,reader=>res.setHeader('X-Workshop-Reader',reader)))})
 async function locked<T>(key:string,run:()=>Promise<T>){const previous=queues.get(key)??Promise.resolve();let release!:()=>void;const own=new Promise<void>(resolve=>{release=resolve});const chain=previous.catch(()=>{}).then(()=>own);queues.set(key,chain);await previous.catch(()=>{});try{return await run()}finally{release();if(queues.get(key)===chain)queues.delete(key)}}
 router.get('/library',async(req,res)=>{
-  const lib=await workshopLibrary(req.userId)
-  res.json({packs:lib.packs.map(p=>({id:p.id,filename:p.filename,hash:sourceHash(String((lib.docs.find(d=>String(d._id)===p.id)!.data as {source:string}).source)),entries:[...p.parsed.entries.classes,...p.parsed.entries.subclasses,...p.parsed.entries.races].map(e=>e.index)})),rules:lib.rules.filter(r=>r.revision>0).map(r=>({id:r.id,revision:r.revision,index:r.index,previousIndexes:r.previousIndexes})),warnings:lib.warnings})
+  res.json((await workshopStartup(req.userId!,reader=>res.setHeader('X-Workshop-Reader',reader))).library)
 })
 router.get('/backup',async(req,res)=>{
-  const [content,characters,lib]=await Promise.all([CustomContent.find({userId:req.userId}).lean(),Character.find({userId:req.userId}).lean(),workshopLibrary(req.userId)])
-  const strip=(value:unknown)=>{const {_id,userId,__v,...record}=value as Record<string,unknown>;return {id:String(_id),...record}}
-  res.attachment('codex-of-heroes-backup.json').json({format:'codex-of-heroes-backup',version:1,createdAt:new Date().toISOString(),content:content.map(strip),characters:characters.map(c=>strip(applyWorkshopRules(c as never,lib.rules,lib.initial)))})
+  try{res.attachment('codex-of-heroes-backup.json').json(await createAccountBackup(req.userId!))}
+  catch(e){if(e instanceof BackupError)return res.status(e.status).json({error:e.message});throw e}
 })
 async function prepare(draft:WorkshopDraft,userId:string|undefined){
   const lib=await workshopLibrary(userId),kind=workshopSection(draft.kind)
@@ -85,7 +86,7 @@ router.post('/publish',async(req,res)=>{
       if(Buffer.byteLength(source,'utf8')>MAX_PACK_BYTES)return res.status(400).json({error:'The revised pack exceeds 64 MB. Save into a new pack instead.'})
       const inspected=inspectOrcbrew(source),entry=inspected.entries[workshopSection(draft.kind)].find(e=>(e.details as Record<string,unknown>)[':codex/workshop']&&( (e.details as Record<string,unknown>)[':codex/workshop'] as WorkshopDraft).id===draft.id)
       if(!entry)throw new Error('The revised pack could not be read back.')
-      const data=storedPackData({...oldData,filename:oldData?.filename??target.filename!,source,includeDisabled:oldData?.includeDisabled??false}),hash=sourceHash(source)
+      const data=storedPackData({...oldData,filename:oldData?.filename??target.filename!,source,includeDisabled:oldData?.includeDisabled??false},{report:inspected.report}),hash=sourceHash(source)
       if(entry.disabled&&!data.includeDisabled)return res.status(400).json({error:'This pack is disabled. Enable its disabled content in the Compendium or choose another pack.'})
       const duplicate=await CustomContent.findOne({userId:req.userId,type:'orcbrew',sourceHash:hash,...(targetDoc?{_id:{$ne:targetDoc._id}}:{})}).lean()
       if(duplicate)return res.status(409).json({error:'An identical pack is already in your library.'})

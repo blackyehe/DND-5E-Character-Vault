@@ -18,18 +18,22 @@ const point=new mongoose.Schema({x:{type:Number,required:true,min:0,max:1},y:{ty
 const region=new mongoose.Schema({id:{type:String,required:true},name:{type:String,required:true,maxlength:120},
   color:{type:String,required:true},opacity:{type:Number,required:true,min:.05,max:.6},fadeZoom:{type:Number,required:true,min:1.3,max:3},
   points:{type:[point],required:true}}, {_id:false,id:false})
+const variant = new mongoose.Schema({edge: {type: Number, required: true}, width: {type: Number, required: true}, height: {type: Number, required: true}, bytes: {type: Number, required: true}}, {_id: false})
 const schema = new mongoose.Schema({
   roomId: {type: oid, required: true}, ownerId: {type: oid, required: true},
   title: {type: String, required: true, maxlength: 120}, audience: {type: String, enum: ['room','characters','dm'], default: 'dm'},
   characterIds: {type: [oid], default: []}, revision: {type: Number, default: 1, required: true},
   width: {type: Number, required: true}, height: {type: Number, required: true}, bytes: {type: Number, required: true},
+  // Original byte count remains stable. Total includes all persisted derivatives.
+  storageBytes: {type: Number, required: false}, imageVariants: {type: [variant], default: []},
   pins: {type: [pin], default: []},
   regions: {type:[region],default:[]},
 }, {timestamps: true})
 schema.index({roomId: 1, title: 1})
 export const RoomMap = mongoose.model('RoomMap', schema)
 // Assets never appear in map indexes, notebook documents or revision snapshots.
-const assetSchema = new mongoose.Schema({roomId: {type: oid, required: true}, data: {type: Buffer, required: true}}, {timestamps: true})
+const overview = new mongoose.Schema({edge: {type: Number, required: true}, data: {type: Buffer, required: true}}, {_id: false})
+const assetSchema = new mongoose.Schema({roomId: {type: oid, required: true}, data: {type: Buffer, required: true}, overviews: {type: [overview], default: []}}, {timestamps: true})
 export const MapAsset = mongoose.model('MapAsset', assetSchema)
 const quotaSchema = new mongoose.Schema({_id: {type: String, required: true}, bytes: {type: Number, default: 0}, count: {type: Number, default: 0}})
 export const MapQuota = mongoose.model('MapQuota', quotaSchema)

@@ -4,7 +4,7 @@ import type {Server} from 'node:http'
 import {browseIndex,browseRecord,type BrowsePage} from '../../shared/compendium-browse'
 const fixture=vi.hoisted(()=>({load:vi.fn(),detail:vi.fn()}))
 vi.mock('../middleware/auth',()=>({requireAuth:(req:any,res:any,next:any)=>{if(!req.headers['x-test-user'])return res.status(401).json({error:'Sign in'});req.userId=req.headers['x-test-user'];next()}}))
-vi.mock('../lib/compendium-browse',()=>({compendiumBrowseIndex:fixture.load,personalBrowseEntry:fixture.detail}))
+vi.mock('../lib/compendium-browse',()=>({compendiumBrowseIndex:fixture.load,personalBrowseEntry:fixture.detail,personalBrowseEntryAtRevision:fixture.detail,preloadBrowseEntry:fixture.detail,cachedBrowseIndex:async()=>null,BrowseRevisionChanged:class extends Error{},browseRevision:async()=>'a'.repeat(64)}))
 import router from './compendium-browse'
 let server:Server,base:string
 beforeAll(async()=>{
@@ -16,6 +16,25 @@ beforeAll(async()=>{
 })
 afterAll(()=>new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve())))
 describe('authenticated Compendium browse HTTP contract',()=>{
+ it('authenticates and bounds the read-only batch contract without exposing foreign rules',async()=>{
+  const path='/spells/detail-batch?indexes='+encodeURIComponent(JSON.stringify(['exists']))
+  expect((await fetch(base+path)).status).toBe(401)
+  const r=await fetch(base+path,{headers:{'x-test-user':'owner'}});expect(r.status).toBe(200);expect(r.headers.get('cache-control')).toBe('private, no-store');expect(await r.json()).toMatchObject({owner:'owner',entries:[{index:'exists',entry:{desc:['Full rules']}}],skipped:[]})
+  const foreign=await fetch(base+path,{headers:{'x-test-user':'stranger'}});expect(await foreign.json()).toMatchObject({owner:'stranger',entries:[],skipped:['exists']})
+  for(const indexes of ['bad','[]','["a","a"]','["a","b","c","d"]'])expect((await fetch(base+'/spells/detail-batch?indexes='+encodeURIComponent(indexes),{headers:{'x-test-user':'owner'}})).status).toBe(400)
+  expect((await fetch(base+path+'&bytes=99999999',{headers:{'x-test-user':'owner'}})).status).toBe(400)
+ })
+ it('protects category fingerprints and full-detail validation with authentication and account scope',async()=>{
+  for(const path of ['/spells/local-revision?content=true','/spells/detail-revision','/spells/saved-detail/exists'])expect((await fetch(base+path)).status).toBe(401)
+  const headers={'x-test-user':'owner'}
+  const category=await(await fetch(base+'/spells/local-revision?content=true',{headers})).json() as {digest:string}
+  expect(category).toMatchObject({owner:'owner',kind:'spells',version:'local-compendium-1'})
+  expect(category.digest).toMatch(/^[a-f0-9]{64}$/);expect(category).not.toHaveProperty('payload')
+  expect((await fetch(base+'/spells/local-revision?content=bad',{headers})).status).toBe(400)
+  const detail=await(await fetch(base+'/spells/saved-detail/exists',{headers})).json()
+  expect(detail).toMatchObject({owner:'owner',kind:'spells',index:'exists',entry:{desc:['Full rules']}})
+  expect((await fetch(base+'/spells/saved-detail/exists',{headers:{'x-test-user':'stranger'}})).status).toBe(404)
+ })
   it('requires authentication and rejects malformed category/page/filter inputs',async()=>{
     expect((await fetch(`${base}/spells`)).status).toBe(401)
     for(const path of ['/unknown','/spells?page=0','/spells?facets=%7Bbad','/spells?items=%7B%22weapon%22%3A%5B%22sword%22%5D%7D'])expect((await fetch(base+path,{headers:{'x-test-user':'owner'}})).status).toBe(path==='/unknown'?404:400)

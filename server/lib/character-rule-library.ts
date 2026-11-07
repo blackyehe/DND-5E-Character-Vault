@@ -1,7 +1,7 @@
 import {CustomContent} from '../models/CustomContent'
 import {env} from '../env'
 import {sourceHash,buildOrcbrewCatalog} from './orcbrew'
-import {characterRules,CHARACTER_RULE_KINDS,type CharacterRuleLibrary} from './workshop-rules'
+import {characterRules,CHARACTER_RULE_KINDS,CHARACTER_RULE_BASE_KINDS,type CharacterRuleExtraKind,type CharacterRuleLibrary} from './workshop-rules'
 import {workshopLibrary,workshopRevision,warmWorkshopRules} from './workshop-library'
 
 const libraries=new Map<string,{signature:string;value:CharacterRuleLibrary;bytes:number}>()
@@ -27,24 +27,26 @@ function remember(userId:string,signature:string,value:CharacterRuleLibrary){
 /** Character play needs full rule definitions, not monsters, items or raw pack
  * trees. Default/rollback uses the original library. Authoring stays on that
  * library explicitly; no partial result is typed as a full WorkshopLibrary. */
-export async function characterRuleLibrary(userId:string|undefined):Promise<CharacterRuleLibrary>{
+export async function characterRuleLibrary(userId:string|undefined,extras:readonly CharacterRuleExtraKind[]=[]):Promise<CharacterRuleLibrary>{
   if(!userId||env.COMPENDIUM_READER!=='prepared'||(!enabledOwners.has('*')&&!enabledOwners.has(userId)))return workshopLibrary(userId)
-  const active=pending.get(userId);if(active)return active
+  const required=[...CHARACTER_RULE_BASE_KINDS,...new Set(extras)]
+  const active=pending.get(userId);if(active){const value=await active;if(required.every(k=>value.catalog[k]!==undefined))return value}
   const task=(async()=>{
     // Same authoritative small revision query as the original warm library.
     const revisions=await CustomContent.find({userId,type:'orcbrew'}).select('_id updatedAt sourceHash data.includeDisabled').sort({_id:1}).lean()
     const signature=JSON.stringify(revisions),cached=libraries.get(userId)
-    if(cached?.signature===signature){libraries.delete(userId);libraries.set(userId,cached);return cached.value}
+    if(cached?.signature===signature&&required.every(k=>cached.value.catalog[k]!==undefined)){libraries.delete(userId);libraries.set(userId,cached);return cached.value}
     const full=warmWorkshopRules(userId,signature)
     if(full)return full
     try{
       const {componentMetadata,readComponentCatalogues}=await import('./compendium-components')
       const deadline=performance.now()+15000,metadata=await componentMetadata(userId,deadline)
-      // All six categories in one bounded cursor; one shared repair budget.
-      const packs=await readComponentCatalogues(userId,CHARACTER_RULE_KINDS,metadata,true,deadline)
+      // Required character-rule categories in one bounded cursor; one shared repair budget.
+      const kinds=CHARACTER_RULE_KINDS.filter(k=>required.includes(k as typeof required[number])||cached?.signature===signature&&cached.value.catalog[k]!==undefined)
+      const packs=await readComponentCatalogues(userId,kinds,metadata,true,deadline)
       if(packs){
         const composed=buildOrcbrewCatalog(packs)
-        const catalog=Object.fromEntries(CHARACTER_RULE_KINDS.map(kind=>[kind,composed[kind]])) as CharacterRuleLibrary['catalog']
+        const catalog=Object.fromEntries(kinds.map(kind=>[kind,composed[kind]])) as CharacterRuleLibrary['catalog']
         const value:CharacterRuleLibrary={catalog,...characterRules(catalog),warnings:[]}
         // Publish RAM only after proving the complete current pack set again.
         // A racing edit never relabels an old composition as the new revision.

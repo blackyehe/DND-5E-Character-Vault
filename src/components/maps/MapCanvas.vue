@@ -6,7 +6,7 @@ import MapRegionLayer from './MapRegionLayer.vue'
 import {inRegion,regionBounds} from '../../../shared/map-regions'
 type Position = {x: number; y: number}
 const props = defineProps<{map: RoomMap; imageUrl: string; placing: boolean; selectedPin: string; drawerOpen: boolean; canManage?: boolean; disabled?: boolean; draftPosition?: Position | null; editingPin?: string; draftLabel?: string; draftDisplay?: MapPinDisplay; regions?:MapRegion[]; activeRegion?:string; editingRegions?:boolean; drawingRegion?:boolean; selectedRegionPoint?:number; focused?:boolean}>()
-const emit = defineEmits<{open: [id: string]; place: [position: Position]; movePin: [id: string, position: Position]; moveDraft: [position: Position]; context: [id: string, x: number, y: number]; gesture: [active: boolean]; imageError: []; selectRegion:[id:string]; regionPoint:[position:Position]; moveRegionPoint:[index:number,position:Position]; insertRegionPoint:[index:number,position:Position]; selectRegionPoint:[index:number]; removeRegionPoint:[]}>()
+const emit = defineEmits<{open: [id: string]; place: [position: Position]; movePin: [id: string, position: Position]; moveDraft: [position: Position]; context: [id: string, x: number, y: number]; gesture: [active: boolean]; imageError: []; resolution: [edge: number]; selectRegion:[id:string]; regionPoint:[position:Position]; moveRegionPoint:[index:number,position:Position]; insertRegionPoint:[index:number,position:Position]; selectRegionPoint:[index:number]; removeRegionPoint:[]}>()
 const draftId = '__draft__'
 const pins = computed(() => {
   const result = props.map.pins.map(pin => pin.id === props.editingPin && props.draftPosition ? {...pin, ...props.draftPosition, label: props.draftLabel || pin.label, display: props.draftDisplay ?? pinDisplay(pin)} : pin)
@@ -25,6 +25,8 @@ const regions=computed(()=>props.regions??[]), currentRegion=computed(()=>region
 const shownPins = computed(() => props.editingRegions?[]:pins.value.filter(pin => isDraft(pin.id) || movingPin.value===pin.id || props.canManage && showAll.value || pin.display.visibility==='always' || zoom.value + .0001 >= pinZoom(pin.display)))
 const visibleCount = computed(() => shownPins.value.filter(pin=>pin.id!==draftId).length)
 const scale = computed(() => baseScale.value * zoom.value)
+function reportResolution() {if(size.value.width)emit('resolution', Math.max(props.map.width,props.map.height)*Math.min(1,scale.value*(window.devicePixelRatio||1)))}
+watch(scale,reportResolution)
 const style = computed(() => ({width: `${props.map.width}px`, height: `${props.map.height}px`, transform: `translate(${offset.value.x}px,${offset.value.y}px) scale(${scale.value})`}))
 let observer: ResizeObserver, pointer: {id: number; pin: string; regionId?:string; vertex?:number; x: number; y: number; ox: number; oy: number; px: number; py: number; moved: boolean} | null = null
 let suppressClickUntil = 0
@@ -96,13 +98,13 @@ function pinEntering(element: Element) {(element as HTMLElement).inert=false}
 function pinPosition(id:string,x:number,y:number) {return id===movingPin.value&&movingPosition.value?movingPosition.value:{x,y}}
 function measure() {const r=viewport.value?.getBoundingClientRect();if(!r?.width||!r.height)return;const previous=size.value;if(previous.width===r.width&&previous.height===r.height)return;const wasAnimating=!!cameraFrame;stopCamera();size.value={width:r.width,height:r.height};if(!previous.width)fit();else {offset.value={x:offset.value.x+(r.width-previous.width)/2,y:offset.value.y+(r.height-previous.height)/2};if(wasAnimating&&currentRegion.value&&!props.drawingRegion)centerRegion(currentRegion.value.id);else if(zoom.value<=1.03&&!props.drawingRegion)fit(false)}}
 defineExpose({positionAt,centerPin,focusPin,fit,cancel,measure,centerRegion})
-onMounted(() => {observer = new ResizeObserver(measure);if (viewport.value) observer.observe(viewport.value);measure();window.addEventListener('resize',measure);window.addEventListener('blur',cancel)})
+onMounted(() => {observer = new ResizeObserver(measure);if (viewport.value) observer.observe(viewport.value);measure();window.addEventListener('resize',measure);window.addEventListener('resize',reportResolution);window.addEventListener('blur',cancel)})
 watch(()=>props.activeRegion,id=>{if(skipRegionFocus){skipRegionFocus=false;return}if(!props.drawingRegion)centerRegion(id??'')})
 watch(()=>regions.value.map(r=>r.id).join(','),()=>{if(props.activeRegion&&!currentRegion.value)emit('selectRegion','')})
 watch(() => props.drawerOpen, async () => {await nextTick();measure()})
 watch(() => props.map.id, () => {cancel();showAll.value=false;fit()})
 watch(() => props.disabled,value=>{if(value)cancel()})
-onUnmounted(() => {stopCamera();cancel();observer?.disconnect();window.removeEventListener('resize',measure);window.removeEventListener('blur',cancel)})
+onUnmounted(() => {stopCamera();cancel();observer?.disconnect();window.removeEventListener('resize',measure);window.removeEventListener('resize',reportResolution);window.removeEventListener('blur',cancel)})
 </script>
 <template>
   <div class="map-canvas-shell" :data-focused="!!focused">

@@ -2,7 +2,7 @@ import { CustomContent } from '../models/CustomContent'
 import { Character } from '../models/Character'
 import { buildOrcbrewCatalog, sourceHash, type CatalogPack } from './orcbrew'
 import { parsedPack } from './orcbrew-library'
-import { characterRules, type CharacterRuleLibrary } from './workshop-rules'
+import { characterRules, characterRuleExtraKinds, type CharacterRuleLibrary } from './workshop-rules'
 import type { Character as CharacterData } from '../../shared/character'
 import { readPackDocuments } from './pack-source'
 import { reviewedCharacter, reviewedWorkshopRules } from './compendium-character'
@@ -68,7 +68,8 @@ async function buildLibrary(userId:string|undefined) {
 }
 export type WorkshopLibrary=Awaited<ReturnType<typeof workshopLibrary>>
 export async function resolveWorkshopCharacter(character:unknown,userId:string|undefined,library?:Pick<CharacterRuleLibrary,'rules'|'initial'>) {
-  const data=library??await (await import('./character-rule-library')).characterRuleLibrary(userId)
+  const extra=characterRuleExtraKinds(character),reader=await import('./character-rule-library')
+  const data=library??await (extra.length?reader.characterRuleLibrary(userId,extra):reader.characterRuleLibrary(userId))
   const resolved=reviewedCharacter(character as CharacterData,data.rules,data.initial)
   const knownRules=reviewedWorkshopRules(resolved,data.rules,data.initial).rules
   if(resolved.homebrew){

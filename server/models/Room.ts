@@ -8,6 +8,10 @@ const roomSchema = new mongoose.Schema({
   assignments: { type: [new mongoose.Schema({ characterId: { type: objectId, required: true }, userId: { type: objectId, required: true } }, { _id: false })], default: [] },
   // Unassigned notebook tags are visible only to the DM.
   notebookTagCatalog: {type: [new mongoose.Schema({key: {type: String, required: true}, name: {type: String, required: true, maxlength: 48}}, {_id: false})], default: []},
+  // No default: hydrating an existing room must never certify its notebook.
+  notebookListingVersion: {type: Number, default: undefined},
+  // Transactional, permission-scoped change counters; never returned as room data.
+  notebookChanges: {type: mongoose.Schema.Types.Mixed, default: undefined},
   // The link is a capability to join, never a capability to read a character.
   joinToken: { type: String, required: true, unique: true },
 }, { timestamps: true, optimisticConcurrency: true })

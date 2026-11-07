@@ -16,6 +16,11 @@ export { equipmentFrom } from '../../shared/equipment-definitions'
 export const XP_THRESHOLDS = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000]
 export const signed = (n: number) => n >= 0 ? `+${n}` : String(n)
 export const pretty = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/-/g, ' ').replace(/^./, c => c.toUpperCase())
+export function sheetSkillRows(c:Character,benefits:CharacterBenefits=characterBenefits(c)) {
+  return Object.entries(SKILL_ABILITY).map(([key,ability])=>({
+    key,ability,name:pretty(key),rank:benefits.skills[key]??'none',modifier:sheetSkill(c,key,benefits),
+  })).sort((a,b)=>a.name.localeCompare(b.name))
+}
 export const ORIGINS = { racial: 'Racial traits', class: 'Class features', subclass: 'Subclass features', background: 'Background', feat: 'Feats', other: 'Other / unclassified' } as const
 export function sheetProficiencies(c: Character, benefits:CharacterBenefits=characterBenefits(c)) {
   const p=benefits.proficiencies;return { ...p, weapons: compactWeaponProficiencies(p.weapons) }
@@ -34,20 +39,20 @@ export function sheetAC(c: Character, benefits:CharacterBenefits=characterBenefi
 }
 const SIMPLE = new Set(['club', 'dagger', 'greatclub', 'handaxe', 'javelin', 'light hammer', 'mace', 'quarterstaff', 'sickle', 'spear', 'light crossbow', 'crossbow, light', 'dart', 'shortbow', 'sling'])
 const MARTIAL = new Set(['battleaxe','flail','glaive','greataxe','greatsword','halberd','lance','longsword','maul','morningstar','pike','rapier','scimitar','shortsword','trident','war pick','warhammer','whip','blowgun','hand crossbow','crossbow, hand','heavy crossbow','crossbow, heavy','longbow','net'])
-export function weaponProficient(c: Character, attack: Attack, weaponCategory?: string) {
+export function weaponProficient(c: Character, attack: Attack, weaponCategory?: string, benefits?:CharacterBenefits) {
   if (attack.proficient !== undefined) return attack.proficient
   const item=c.equipment.find(item=>item.name.toLowerCase()===attack.name.toLowerCase())
   const name = (item?.weapon&&item.index?item.index.replace(/-/g,' '):attack.name).toLowerCase().replace(/\s*\+\d+.*$/, '').trim()
   const category = (weaponCategory ?? item?.weapon?.category ?? '').toLowerCase()
-  return characterBenefits(c).proficiencies.weapons.some(p => {
+  return (benefits??characterBenefits(c)).proficiencies.weapons.some(p => {
     const prof = p.toLowerCase().replace(/\s*\([^)]*\)/g, '').trim().replace(/^all\s+/, '')
     return prof === name || (prof === 'simple weapons' && (SIMPLE.has(name) || category === 'simple')) || (prof === 'martial weapons' && (MARTIAL.has(name) || category === 'martial'))
   })
 }
-export function attackValues(c: Character, a: Attack, weaponCategory?: string) {
-  const mod = abilityMod(c.abilities[a.ability]), proficient = weaponProficient(c, a, weaponCategory)
-  const damage = (a.addAbilityDamage === false ? 0 : mod) + a.damageBonus + a.magicBonus + characterBenefits(c).damageBonus
-  return { proficient, toHit: attackBonus(c.meta.level, c.abilities[a.ability], proficient, a.magicBonus) + characterBenefits(c).attackBonus, damage, text: `${a.damageDice || '—'}${damage ? signed(damage) : ''}` }
+export function attackValues(c: Character, a: Attack, weaponCategory?: string, benefits:CharacterBenefits=characterBenefits(c)) {
+  const mod = abilityMod(c.abilities[a.ability]), proficient = weaponProficient(c, a, weaponCategory, benefits)
+  const damage = (a.addAbilityDamage === false ? 0 : mod) + a.damageBonus + a.magicBonus + benefits.damageBonus
+  return { proficient, toHit: attackBonus(c.meta.level, c.abilities[a.ability], proficient, a.magicBonus) + benefits.attackBonus, damage, text: `${a.damageDice || '—'}${damage ? signed(damage) : ''}` }
 }
 export function combatSuggested(f: CharacterFeature) {
   // Legacy hidden flags are ignored now that Combat uses pinning for prioritisation.

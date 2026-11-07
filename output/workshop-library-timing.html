@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workshop library timing</title>
+<style>
+html,body{margin:0;background:transparent;color:var(--foreground);font-family:var(--font-sans)}
+#workshop-timing{display:grid;gap:16px}
+#workshop-timing h3{margin:0;font:inherit;font-weight:500}
+#workshop-timing .row{display:grid;gap:6px}
+#workshop-timing .label{display:flex;justify-content:space-between;gap:12px}
+#workshop-timing .value{font-variant-numeric:tabular-nums;white-space:nowrap}
+#workshop-timing .track{height:20px;background:color-mix(in srgb,var(--muted) 35%,transparent)}
+#workshop-timing .bar{height:20px;background:var(--chart-1)}
+#workshop-timing .old{background:var(--muted-foreground)}
+#workshop-timing .axis{display:flex;justify-content:space-between;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+#workshop-timing .note{margin:0;color:var(--muted-foreground)}
+</style>
+</head>
+<body>
+<figure id="workshop-timing" style="margin:0" aria-label="Median complete Workshop library response in six alternating paired reads: old five-request path 430 milliseconds; new single-request path 200 milliseconds. Caches were not forcibly cleared.">
+<h3>Workshop library · median of 6 paired reads</h3>
+<div class="row"><div class="label"><span>Previous · five requests</span><span class="value">430 ms</span></div><div class="track"><div class="bar old" style="width:86.02506%"></div></div></div>
+<div class="row"><div class="label"><span>Live · one request</span><span class="value">200 ms</span></div><div class="track"><div class="bar" style="width:40.00226%"></div></div></div>
+<div class="axis" aria-hidden="true"><span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500 ms</span></div>
+<figcaption class="note">Complete response bodies, same account and content. Caches were not forcibly cleared; these are finite observations.</figcaption>
+</figure>
+</body>
+</html>

@@ -1,5 +1,6 @@
-import {Router} from 'express'
+import {Router, type Request, type Response} from 'express'
 import mongoose, {isValidObjectId, type ClientSession} from 'mongoose'
+import {createHash} from 'node:crypto'
 import {z} from 'zod'
 import {libraryContext, libraryScope, RoomLibraryError as NotebookError, libraryFail as fail} from '../lib/room-library-access'
 import {Character} from '../models/Character'
@@ -10,6 +11,9 @@ import {requireAuth} from '../middleware/auth'
 import {requestLimit} from '../middleware/request-limit'
 import {recoverableModelInitialization} from '../lib/model-initialization'
 import {withDatabaseStage} from '../lib/database-error'
+import {NOTEBOOK_LISTING_VERSION, notebookDerived, notebookChanges} from '../lib/notebook-derived'
+import {notebookListing, notebookNavigation, type NotebookListQuery} from '../lib/notebook-listing'
+import {notebookChangeIdentity, notebookChangeIncrements} from '../lib/notebook-changes'
 import {audienceAllows, folderDescendants, validFolderParent, type FolderAccess} from '../../shared/notebook-folders'
 import {notebookEntryType, notebookEntryTypes, notebookIsEvent, notebookQuestStatus, notebookQuestStatuses, notebookReading, notebookSearchText, notebookSessionNumbers, notebookSectionForType} from '../../shared/notebook-codex'
 import type {NotebookSection} from '../../shared/notebook'
@@ -46,11 +50,13 @@ const folderCreateSchema = z.object({...folderFields, section, parentId: folderF
 const folderPatchSchema = z.object(folderFields).partial().extend({expectedRevision: z.number().int().min(1)}).strict()
 type Draft = z.infer<typeof draftSchema>
 type RecordData = mongoose.InferSchemaType<typeof Notebook.schema> & {_id: mongoose.Types.ObjectId}
-async function context(roomId: string, userId: string, previewCharacter?: string, session?: ClientSession) {
-  const base = await libraryContext(roomId,userId,previewCharacter,session)
+async function context(roomId: string, userId: string, previewCharacter?: string, session?: ClientSession, listingOnly = false) {
+  const base = await libraryContext(roomId,userId,previewCharacter,session,{characterNames:!listingOnly,roomIdentityOnly:listingOnly})
   const {room} = base
-  const folderRecords = await Notebook.find({roomId: room._id, kind: 'folder'}).session(session ?? null).lean()
-  const folders = new Map<string, FolderAccess>(folderRecords.map(f => [String(f._id), {id:String(f._id), parentId:f.parentId ? String(f.parentId) : null, section:f.section, deletedAt:f.deletedAt, audience:f.audience, characterIds:f.characterIds.map(String)}]))
+  // Slim pages still need folder identity for freshness/filtering, but neither
+  // character names nor the legacy folder-sharing fields affect their output.
+  const folderRecords = await Notebook.find({roomId: room._id, kind: 'folder'}).select(listingOnly?'_id title section parentId deletedAt revision':'_id title section parentId deletedAt audience characterIds revision').session(session ?? null).lean()
+  const folders = new Map<string, FolderAccess>(folderRecords.map(f => [String(f._id), {id:String(f._id), parentId:f.parentId ? String(f.parentId) : null, section:f.section, deletedAt:f.deletedAt, audience:f.audience??'room', characterIds:(f.characterIds??[]).map(String)}]))
   return {...base, folders, folderRecords}
 }
 type Context = Awaited<ReturnType<typeof context>>
@@ -126,22 +132,53 @@ async function transaction<T>(fn: (session: ClientSession) => Promise<T>) {
   await withDatabaseStage('notebook-initialization', initializeNotebook)
   return withDatabaseStage('notebook-transaction', () => mongoose.connection.transaction(fn))
 }
-async function saveRevision(entry: RecordData, session: ClientSession, action: string) {
+async function saveRevision(entry: RecordData, session: ClientSession, action: string, before?: RecordData) {
   // History restores text only; keep the raster on the current entry rather than copying it into every version.
   await NotebookRevision.create([{roomId: entry.roomId, entryId: entry._id, revision: entry.revision, snapshot: {...entry, coverImage: undefined, gallery:undefined, questClues: undefined}, editedBy: entry.editedBy, action}], {session})
+  const increments = notebookChangeIncrements(before, entry)
+  if (Object.keys(increments).length) {
+    // Same transaction as the source/history write. Hidden/deleted changes never
+    // advance player counters; changing sharing invalidates both old/new scopes.
+    const result = await Room.updateOne({_id: entry.roomId}, {$inc: increments}, {session})
+    if (!result.matchedCount) return fail(409, 'Room access changed. Refresh before saving.')
+  }
 }
 const expectedSchema = z.object({expectedRevision: z.number().int().min(1)}).strict()
 const actor = async (userId: string) => (await User.findById(userId).select('displayName').lean())?.displayName ?? 'Room member'
 function parsed<T>(schema: z.ZodType<T>, body: unknown): T {const result = schema.safeParse(body); if (!result.success) return fail(400, result.error.issues[0]?.message ?? 'Invalid notebook values.'); return result.data}
 async function entryFor(entryId: string, ctx: Context, session?: ClientSession, projection='') {
   if (!isValidObjectId(entryId)) return fail(404, 'Entry not found or access has ended.')
-  const query = Notebook.findOne({_id: entryId, roomId: ctx.room._id}).session(session ?? null)
+  const query = Notebook.findOne({_id: entryId, roomId: ctx.room._id, ...(!ctx.dm ? {deletedAt: null} : {})}).session(session ?? null)
   if(projection)query.select(projection)
   const entry = await query.lean()
   if (!entry || !visible(entry, ctx)) return fail(404, 'Entry not found or access has ended.')
   return entry
 }
 const params = (req: {params: Record<string, unknown>}) => String(req.params.roomId)
+function scopeIdentity(ctx: Context) {
+  // Permission identity only, never notebook contents/counts. The lean body
+  // stays exactly entries/total/nextOffset while clients detect revocation.
+  return createHash('sha256').update(JSON.stringify([String(ctx.room._id),ctx.userId,ctx.dm,ctx.readOnly,String(ctx.room.ownerId),ctx.room.members.map(String).sort(),ctx.room.assignments.map(a=>[String(a.userId),String(a.characterId)]).sort(),[...ctx.allowed].sort()])).digest('hex')
+}
+function sectionFolders(ctx: Context, section: NotebookListQuery['section']) {
+  return ctx.folderRecords.filter(f => (section === 'all' || f.section === section) && (ctx.dm || validFolderParent(null,String(f._id),f.section,ctx.folders))).sort((a,b) => a.title.localeCompare(b.title))
+}
+function navigationIdentity(ctx:Context,section:NotebookListQuery['section'],folders:Context['folderRecords'],sourceIdentity?:string) {
+  // An old deployment can edit a certified room without advancing its counters.
+  // Legacy fallback must then invalidate cached navigation on every read.
+  // Only visible rows contribute. Hidden edits must not change a player's token.
+  return createHash('sha256').update(JSON.stringify([notebookChangeIdentity(ctx.room.notebookChanges,ctx.dm,ctx.allowed,section),folders.map(f=>[String(f._id),f.title,f.section,String(f.parentId??''),f.deletedAt,f.revision]),ctx.dm?ctx.room.notebookTagCatalog:undefined,sourceIdentity])).digest('hex')
+}
+router.get('/navigation', async (req, res) => {
+  const ctx = await context(params(req), req.userId!, typeof req.query.previewCharacter === 'string' ? req.query.previewCharacter : undefined)
+  res.set('X-Notebook-Scope',scopeIdentity(ctx)).set('Cache-Control','private, no-store')
+  const query = parsed(z.object({section:z.enum(['journal','story-items','all']).default('all'),deleted:z.enum(['true','false']).default('false')}).strict(),Object.fromEntries(Object.entries(req.query).filter(([key])=>key!=='previewCharacter')))
+  const folders=sectionFolders(ctx,query.section),navigation=await notebookNavigation(ctx,query,folders)
+  if(navigation)return res.set('X-Notebook-Reader','indexed').set('X-Notebook-Navigation',navigationIdentity(ctx,query.section,folders)).json(navigation.body)
+  const legacy=await legacyListing(ctx,{...query,type:'all',questStatus:'all',offset:0,folder:'all',character:'',ids:'',search:''},[],folders)
+  const {entries:_entries,total:_total,nextOffset:_nextOffset,...metadata}=legacy.body
+  res.set('X-Notebook-Reader','legacy').set('X-Notebook-Navigation',navigationIdentity(ctx,query.section,folders,legacy.sourceIdentity)).json(metadata)
+})
 router.get('/link-targets', async (req, res) => {
   const ctx = await context(params(req), req.userId!, typeof req.query.previewCharacter === 'string' ? req.query.previewCharacter : undefined)
   // No descriptions, clues, covers or sharing metadata are loaded for autocomplete.
@@ -150,19 +187,40 @@ router.get('/link-targets', async (req, res) => {
   const folders = new Map(ctx.folderRecords.map(folder => [String(folder._id),folder.title]))
   res.json({entries:entries.map(entry=>({id:String(entry._id),title:entry.title,section:entry.section,codexType:notebookEntryType({...entry,section:entry.section as NotebookSection}),folder:entry.folderId&&validFolderParent(null,String(entry.folderId),entry.section,ctx.folders)?folders.get(String(entry.folderId))??'':''})).sort((a,b)=>a.title.localeCompare(b.title,'hu')||a.id.localeCompare(b.id))})
 })
-router.get('/', async (req, res) => {
-  const ctx = await context(params(req), req.userId!, typeof req.query.previewCharacter === 'string' ? req.query.previewCharacter : undefined)
-  const query = parsed(z.object({section: z.enum(['journal','story-items','all']), type: z.enum([...notebookEntryTypes,'all','pinned']).default('all'), questStatus: z.enum(['all',...notebookQuestStatuses]).default('all'), offset: z.coerce.number().int().min(0).max(100000).default(0), search: z.string().max(120).default(''), tags:z.string().max(2500).default('[]'), folder: z.string().max(30).default('all'), deleted: z.enum(['true', 'false']).default('false'), character: z.string().max(24).default(''), ids: z.string().max(2600).default('')}).strict(), Object.fromEntries(Object.entries(req.query).filter(([key]) => key !== 'previewCharacter')))
+function listingOutput(res:Response,body:{entries:unknown[];total:number;nextOffset:number|null},initial:boolean) {
+  if(!initial)return res.json(body)
+  const {entries,total,nextOffset,...navigation}=body
+  return res.json({listing:{entries,total,nextOffset},navigation})
+}
+async function listingRequest(req:Request,res:Response,initial=false) {
+  // One initial-load HTTP request owns this context and readiness read. Never
+  // retain an authorization result for an independent/subsequent request.
+  const ctx = await context(params(req), req.userId!, typeof req.query.previewCharacter === 'string' ? req.query.previewCharacter : undefined,undefined,!initial&&req.query.navigation==='false')
+  res.set('X-Notebook-Scope',scopeIdentity(ctx)).set('Cache-Control','private, no-store')
+  const {navigation,...query} = parsed(z.object({section: z.enum(['journal','story-items','all']), type: z.enum([...notebookEntryTypes,'all','pinned']).default('all'), questStatus: z.enum(['all',...notebookQuestStatuses]).default('all'), offset: z.coerce.number().int().min(0).max(100000).default(0), search: z.string().max(120).default(''), tags:z.string().max(2500).default('[]'), folder: z.string().max(30).default('all'), deleted: z.enum(['true', 'false']).default('false'), character: z.string().max(24).default(''), ids: z.string().max(2600).default(''),navigation:z.enum(['true','false']).default('true')}).strict(), Object.fromEntries(Object.entries(req.query).filter(([key]) => key !== 'previewCharacter')))
   let selectedTags:string[]=[]
   try {selectedTags=parsed(tagsSchema,JSON.parse(typeof req.query.tags==='string'?req.query.tags:'[]'))}catch{return fail(400,'Choose valid tags.')}
   if (query.character && (!isValidObjectId(query.character) || !ctx.characters.some(c => String(c._id) === query.character))) return fail(400, 'Character filter is unavailable.')
+  const folders = sectionFolders(ctx,query.section)
+  if (!query.search) {
+    const page = await notebookListing(ctx, query, selectedTags, folders,initial||navigation!=='false')
+    if (page) {res.set('X-Notebook-Reader','indexed').set('X-Notebook-Navigation',navigationIdentity(ctx,query.section,folders));return listingOutput(res,page.body,initial)}
+  }
+  const legacy=await legacyListing(ctx,query,selectedTags,folders,initial||navigation!=='false')
+  res.set('X-Notebook-Reader','legacy').set('X-Notebook-Navigation',navigationIdentity(ctx,query.section,folders,legacy.sourceIdentity));return listingOutput(res,legacy.body,initial)
+}
+router.get('/initial',(req,res)=>listingRequest(req,res,true))
+router.get('/',(req,res)=>listingRequest(req,res))
+async function legacyListing(ctx:Context,query:NotebookListQuery & {search:string},selectedTags:string[],folders:Context['folderRecords'],includeNavigation=true) {
   const assignedCharacters = new Set(ctx.room.assignments.filter(a => ctx.room.members.some(member => String(member) === String(a.userId))).map(a => String(a.characterId)))
-  const folders = ctx.folderRecords.filter(f => (query.section === 'all' || f.section === query.section) && (ctx.dm || validFolderParent(null,String(f._id),f.section,ctx.folders))).sort((a,b) => a.title.localeCompare(b.title))
   // Apply entry visibility in Mongo before deriving any navigation metadata.
   // Legacy entries have no persisted category or session metadata, so derive it from
   // their existing title/body without a migration or rewriting the saved Markdown.
   const accessible = await Notebook.find({roomId:ctx.room._id,kind:'entry',...(query.section==='all'?{}:{section:query.section}),...scope(ctx)}).select('-coverImage -gallery').lean()
   const active = accessible.filter(entry => !entry.deletedAt)
+  const visibleSources=accessible.filter(entry=>ctx.dm||!entry.deletedAt)
+  const metadataStale=visibleSources.some(entry=>entry.listing?.version!==NOTEBOOK_LISTING_VERSION||entry.listing.sourceRevision!==entry.revision)
+  const sourceIdentity=metadataStale&&ctx.room.notebookListingVersion===NOTEBOOK_LISTING_VERSION?createHash('sha256').update(JSON.stringify(visibleSources.map(entry=>[String(entry._id),entry.revision]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))))).digest('hex'):undefined
   const metadata = new Map(accessible.map(entry=>[String(entry._id),summary(entry,ctx)]))
   let matching = accessible.filter(entry => query.deleted==='true' ? ctx.dm && !!entry.deletedAt : !entry.deletedAt)
   if (notebookEntryTypes.includes(query.type as typeof notebookEntryTypes[number])) matching=matching.filter(entry=>query.type==='events'?notebookIsEvent(entry):metadata.get(String(entry._id))!.codexType===query.type)
@@ -176,15 +234,19 @@ router.get('/', async (req, res) => {
   if (query.ids) {const requested=parsed(z.array(id).max(100),query.ids.split(','));matching=matching.filter(entry=>requested.includes(String(entry._id)))}
   else if(query.type==='pinned') matching=[]
   const compare=(a:RecordData,b:RecordData)=>{const am=metadata.get(String(a._id))!,bm=metadata.get(String(b._id))!;return am.codexType==='sessions'&&bm.codexType==='sessions'?(am.sessions[0]??Infinity)-(bm.sessions[0]??Infinity)||a.title.localeCompare(b.title,'hu'):a.title.localeCompare(b.title,'hu')||String(a._id).localeCompare(String(b._id))}
-  matching.sort(compare)
+  // Search retains its existing comparator. Unmigrated browsing follows the
+  // same alphabetical mixed-list rule as the new indexed reader.
+  matching.sort(!query.search && query.type !== 'sessions' ? (a,b) => a.title.localeCompare(b.title,'hu') || String(a._id).localeCompare(String(b._id)) : compare)
   const total=matching.length,entries=matching.slice(query.offset,query.offset+60)
+  const page={entries:entries.map(entry=>metadata.get(String(entry._id))!),total,nextOffset:query.offset+entries.length<total?query.offset+entries.length:null}
+  if(!includeNavigation)return {body:page,sourceIdentity}
   const counts=Object.fromEntries(notebookEntryTypes.map(type=>[type,active.filter(entry=>type==='events'?notebookIsEvent(entry):metadata.get(String(entry._id))!.codexType===type).length]))
   const questCounts=Object.fromEntries(notebookQuestStatuses.map(status=>[status,active.filter(entry=>notebookQuestStatus(entry)===status).length]))
-  res.json({entries:entries.map(entry=>metadata.get(String(entry._id))), total, entryCount:active.length, nextOffset: query.offset + entries.length < total ? query.offset + entries.length : null,counts,questCounts,tags:notebookTagOptions(accessible.filter(entry=>query.deleted==='true'?ctx.dm&&!!entry.deletedAt:!entry.deletedAt),ctx.dm?(ctx.room.notebookTagCatalog??[]).map(tag=>tag.name):[]),
+  return {sourceIdentity,body:{...page, entryCount:active.length,counts,questCounts,tags:notebookTagOptions(accessible.filter(entry=>query.deleted==='true'?ctx.dm&&!!entry.deletedAt:!entry.deletedAt),ctx.dm?(ctx.room.notebookTagCatalog??[]).map(tag=>tag.name):[]),
     sessionEntries:active.filter(entry=>metadata.get(String(entry._id))!.codexType==='sessions').sort(compare).map(entry=>metadata.get(String(entry._id))),
     folders: folders.map(f => {const descendants=folderDescendants(String(f._id), [...ctx.folders.values()]); return {id: String(f._id), title: f.title, section: f.section, revision: f.revision, parentId:f.parentId ? String(f.parentId) : null, audience:'room', characterIds:[], deletedAt: f.deletedAt?.toISOString() ?? null, count: active.filter(e => descendants.has(String(e.folderId))).length}}),
-    characters: ctx.characters.map(c => ({id: String(c._id), name: c.meta.name, assigned: assignedCharacters.has(String(c._id))})), role: ctx.dm ? 'dm' : 'player', readOnly: ctx.readOnly})
-})
+    characters: ctx.characters.map(c => ({id: String(c._id), name: c.meta.name, assigned: assignedCharacters.has(String(c._id))})), role: ctx.dm ? 'dm' : 'player', readOnly: ctx.readOnly}}
+}
 router.get('/entries/:entryId', async (req, res) => {
   const ctx = await context(params(req), req.userId!, typeof req.query.previewCharacter === 'string' ? req.query.previewCharacter : undefined)
   if(req.query.knownRevision!==undefined){
@@ -227,7 +289,7 @@ router.post('/entries', async (req, res) => {
     const ctx = await context(params(req), req.userId!, undefined, session)
     if (!editable(data, ctx)) return fail(403, 'Only the DM can manage story items.')
     const value = await validateDraft(data, ctx, undefined, session)
-    const [entry] = await Notebook.create([{...value, roomId: ctx.room._id, kind: 'entry', editedBy, createdBy: req.userId!}], {session})
+    const [entry] = await Notebook.create([{...value, listing: notebookDerived(value), roomId: ctx.room._id, kind: 'entry', editedBy, createdBy: req.userId!}], {session})
     await saveRevision(entry!.toObject(), session, 'Created')
     return String(entry!._id)
   })
@@ -239,9 +301,9 @@ router.patch('/entries/:entryId/tags', async (req, res) => {
     const ctx=await context(params(req),req.userId!,undefined,session),entry=await entryFor(String(req.params.entryId),ctx,session)
     if(!ctx.dm||ctx.readOnly||entry.kind!=='entry'||entry.deletedAt)return fail(403,'Only the DM can tag active notebook entries.')
     if(entry.revision!==data.expectedRevision)return fail(409,'This entry changed elsewhere. Load the latest tags before saving.')
-    const saved=await Notebook.findOneAndUpdate({_id:entry._id,roomId:ctx.room._id,revision:data.expectedRevision,deletedAt:null},{$set:{tags:data.tags,editedBy},$inc:{revision:1}},{new:true,session}).lean()
+    const saved=await Notebook.findOneAndUpdate({_id:entry._id,roomId:ctx.room._id,revision:data.expectedRevision,deletedAt:null},{$set:notebookChanges(entry,{tags:data.tags,editedBy}),$inc:{revision:1}},{new:true,session}).lean()
     if(!saved)return fail(409,'This entry changed elsewhere. Load the latest tags before saving.')
-    await saveRevision(saved,session,'Tags updated')
+    await saveRevision(saved,session,'Tags updated',entry)
     return {tags:notebookTags(saved.tags??[]),revision:saved.revision,updatedAt:saved.updatedAt.toISOString(),editedBy:saved.editedBy}
   })
   res.json(result)
@@ -257,9 +319,9 @@ router.patch('/entries/:entryId/sharing', async (req, res) => {
     const owned=new Set(ctx.characters.map(character=>String(character._id)))
     const assigned=new Set(ctx.room.assignments.filter(a=>ctx.room.members.some(member=>String(member)===String(a.userId))&&owned.has(String(a.characterId))).map(a=>String(a.characterId)))
     if(characterIds.some(id=>!assigned.has(id)))return fail(400,'Choose characters currently assigned to room members. An assignment may have changed.')
-    const saved=await Notebook.findOneAndUpdate({_id:entry._id,roomId:ctx.room._id,revision:data.expectedRevision,deletedAt:null},{$set:{audience:data.audience,characterIds,editedBy},$inc:{revision:1}},{new:true,session}).lean()
+    const saved=await Notebook.findOneAndUpdate({_id:entry._id,roomId:ctx.room._id,revision:data.expectedRevision,deletedAt:null},{$set:notebookChanges(entry,{audience:data.audience,characterIds,editedBy}),$inc:{revision:1}},{new:true,session}).lean()
     if(!saved)return fail(409,'This entry changed elsewhere. Load the latest sharing before saving.')
-    await saveRevision(saved,session,'Sharing updated')
+    await saveRevision(saved,session,'Sharing updated',entry)
     return {audience:saved.audience,characterIds:saved.characterIds.map(String),revision:saved.revision,updatedAt:saved.updatedAt.toISOString(),editedBy:saved.editedBy}
   })
   res.json(result)
@@ -271,9 +333,9 @@ router.patch('/entries/:entryId', async (req, res) => {
     if (entry.kind !== 'entry' || !editable(entry, ctx) || entry.deletedAt) return fail(403, 'This entry cannot be edited.')
     if (entry.revision !== data.expectedRevision) return fail(409, 'This entry changed elsewhere. Your draft is kept. Compare it with the latest version before saving.')
     const value = await validateDraft(data.draft, ctx, entry, session)
-    const saved = await Notebook.findOneAndUpdate({_id: entry._id, revision: entry.revision}, {$set: {...value, editedBy}, $inc: {revision: 1}}, {new: true, session}).lean()
+    const saved = await Notebook.findOneAndUpdate({_id: entry._id, revision: entry.revision}, {$set: notebookChanges(entry,{...value, editedBy}), $inc: {revision: 1}}, {new: true, session}).lean()
     if (!saved) return fail(409, 'The entry changed. Refresh before saving.')
-    await saveRevision(saved, session, 'Edited')
+    await saveRevision(saved, session, 'Edited', entry)
   })
   res.json({ok: true})
 })
@@ -283,7 +345,7 @@ router.post('/folders', async (req, res) => {
     const ctx = await context(params(req), req.userId!, undefined, session)
     if (!ctx.dm || ctx.readOnly) return fail(403, 'Only the DM can manage folders.')
     validateFolder(data, ctx, null)
-    const [entry] = await Notebook.create([{...data, audience:'room', characterIds:[], kind: 'folder', roomId: ctx.room._id, editedBy, createdBy: req.userId!}], {session})
+    const [entry] = await Notebook.create([{...data, listing: notebookDerived(data), audience:'room', characterIds:[], kind: 'folder', roomId: ctx.room._id, editedBy, createdBy: req.userId!}], {session})
     await saveRevision(entry!.toObject(), session, 'Created')
     return String(entry!._id)
   })
@@ -297,9 +359,9 @@ router.patch('/folders/:entryId', async (req, res) => {
     if (entry.kind !== 'folder' || !ctx.dm || ctx.readOnly || entry.deletedAt) return fail(403, 'Only the DM can manage folders.')
     const value = parsed(z.object(folderFields).strict(), {title:data.title??entry.title,parentId:data.parentId===undefined?(entry.parentId?String(entry.parentId):null):data.parentId,audience:data.audience??entry.audience,characterIds:data.characterIds??entry.characterIds.map(String)})
     validateFolder({...value,section:entry.section},ctx,String(entry._id))
-    const saved = await Notebook.findOneAndUpdate({_id: entry._id, revision: data.expectedRevision}, {$set: {...value,audience:'room',characterIds:[], editedBy}, $inc: {revision: 1}}, {new: true, session}).lean()
+    const saved = await Notebook.findOneAndUpdate({_id: entry._id, revision: data.expectedRevision}, {$set: notebookChanges(entry,{...value,audience:'room',characterIds:[], editedBy}), $inc: {revision: 1}}, {new: true, session}).lean()
     if (!saved) return fail(409, 'The folder changed. Refresh first.')
-    await saveRevision(saved, session, 'Folder updated')
+    await saveRevision(saved, session, 'Folder updated', entry)
   })
   res.json({ok: true})
 })
@@ -320,9 +382,9 @@ router.post('/entries/:entryId/:action', async (req, res) => {
       // Revert text only: never restore old sharing, links or character assignments implicitly.
       changes = {title: version.snapshot.title, body: version.snapshot.body, editedBy}
     }
-    const saved = await Notebook.findOneAndUpdate({_id: entry._id, revision: entry.revision}, {$set: changes, $inc: {revision: 1}}, {new: true, session}).lean()
+    const saved = await Notebook.findOneAndUpdate({_id: entry._id, revision: entry.revision}, {$set: notebookChanges(entry,changes), $inc: {revision: 1}}, {new: true, session}).lean()
     if (!saved) return fail(409, 'The entry changed. Refresh first.')
-    await saveRevision(saved, session, action === 'delete' ? 'Deleted' : action === 'recover' ? 'Recovered' : `Restored text from version ${data.revision}`)
+    await saveRevision(saved, session, action === 'delete' ? 'Deleted' : action === 'recover' ? 'Recovered' : `Restored text from version ${data.revision}`, entry)
   })
   res.json({ok: true})
 })

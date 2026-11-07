@@ -1,5 +1,6 @@
 import { ApiError } from './api'
 import type { CreationOptions } from './srd'
+import {beginForegroundWork} from './foreground-work'
 
 interface StoredOptions {owner:string;etag:string;expires:number;digest:string;value:CreationOptions}
 export interface CreationOptionsStorage {
@@ -73,6 +74,8 @@ async function persist(owner:string,etag:string,value:CreationOptions,current:nu
  }catch{/* Quota or blocked storage must not prevent character creation. */}
 }
 export async function loadCreationOptions(owner:string|undefined,force=false,storage:CreationOptionsStorage=creationOptionsStorage):Promise<CreationOptions>{
+ const finish=beginForegroundWork()
+ try{
  const current=epoch
  let cached:StoredOptions|undefined
  if(owner&&!force)try{
@@ -99,4 +102,5 @@ export async function loadCreationOptions(owner:string|undefined,force=false,sto
  // Optional hashing and disk writes run after returning the usable response.
  if(owner&&etag&&revisionTag(etag))setTimeout(()=>{void persist(owner,etag,value,current,storage)},0)
  return value
+ }finally{finish()}
 }

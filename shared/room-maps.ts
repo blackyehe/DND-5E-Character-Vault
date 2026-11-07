@@ -6,6 +6,9 @@ export const MAP_LIMITS = {
   dimension: 4096, inputPixels: 16 * 1024 * 1024, mapsPerRoom: 25, pinsPerMap: 100,
   regionsPerMap: 32, pointsPerRegion: 256,
 } as const
+export const MAP_OVERVIEW_EDGES = [1024, 2048] as const
+export const MAP_OVERVIEW_VERSION = 1
+export interface MapImageVariant {edge: number; width: number; height: number; bytes: number}
 // Base64 expands image bytes by 4/3. Leave bounded space for map metadata;
 // this complete request stays below Vercel's 4.5 MB Function payload limit.
 export const MAP_UPLOAD_JSON_BYTES = Math.ceil(MAP_LIMITS.imageBytes / 3) * 4 + 16 * 1024
@@ -29,6 +32,7 @@ export interface MapPin {id: string; label: string; entryId: string; x: number; 
 export interface MapSummary {
   id: string; title: string; audience: NotebookAudience; characterIds: string[]
   revision: number; updatedAt: string; width: number; height: number; bytes: number
+  imageVariants?: MapImageVariant[]
 }
 export interface MapPoint {x:number; y:number}
 export interface MapRegion {id:string; name:string; color:string; opacity:number; fadeZoom:number; points:MapPoint[]}

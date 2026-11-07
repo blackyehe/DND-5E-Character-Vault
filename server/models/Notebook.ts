@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import {NOTEBOOK_COVER_MAX_LENGTH} from '../../shared/notebook-cover'
 import {NOTEBOOK_CLUE_BODY_LIMIT} from '../../shared/notebook-clues'
 import {NOTEBOOK_ARTWORK_MAX_LENGTH} from '../../shared/notebook-gallery'
+import {NOTEBOOK_COLLATION} from '../lib/notebook-derived'
 
 const oid = mongoose.Schema.Types.ObjectId
 const artworkSchema = new mongoose.Schema({
@@ -37,9 +38,28 @@ const notebookSchema = new mongoose.Schema({
   editedBy: {type: String, required: true, maxlength: 100},
   createdBy: {type: oid, required: true},
   deletedAt: {type: Date, default: null},
+  // Optional until the resumable backfill has verified each existing entry.
+  listing: {type: new mongoose.Schema({
+    version: {type: Number, required: true},
+    sourceRevision: {type: Number, required: true},
+    type: {type: String, required: true},
+    event: {type: Boolean, required: true},
+    questStatus: {type: String, default: null},
+    sessions: {type: [Number], required: true},
+    firstSession: {type: Number, required: true},
+    tagNames: {type: [String], required: true},
+    tagKeys: {type: [String], required: true},
+  }, {_id: false}), default: undefined},
 }, {timestamps: true})
 notebookSchema.index({roomId: 1, kind: 1, section: 1, deletedAt: 1, title: 1, _id: 1})
 notebookSchema.index({roomId: 1, relatedIds: 1})
+notebookSchema.index({roomId: 1, kind: 1, section: 1, deletedAt: 1, title: 1, _id: 1}, {name: 'notebook_section_title_hu', collation: NOTEBOOK_COLLATION})
+notebookSchema.index({roomId: 1, kind: 1, deletedAt: 1, title: 1, _id: 1}, {name: 'notebook_title_hu', collation: NOTEBOOK_COLLATION})
+notebookSchema.index({roomId: 1, kind: 1, section: 1, deletedAt: 1, 'listing.type': 1, 'listing.firstSession': 1, title: 1, _id: 1}, {name: 'notebook_section_session_hu', collation: NOTEBOOK_COLLATION})
+notebookSchema.index({roomId: 1, kind: 1, deletedAt: 1, 'listing.type': 1, 'listing.firstSession': 1, title: 1, _id: 1}, {name: 'notebook_session_hu', collation: NOTEBOOK_COLLATION})
+// Exact player counts can evaluate both visibility branches without fetching
+// entries. Keep section/category in the index for the common filtered lists.
+notebookSchema.index({roomId: 1, kind: 1, deletedAt: 1, audience: 1, characterIds: 1, section: 1, 'listing.type': 1}, {name: 'notebook_count_scope_hu', collation: NOTEBOOK_COLLATION})
 export const Notebook = mongoose.model('Notebook', notebookSchema)
 
 const revisionSchema = new mongoose.Schema({

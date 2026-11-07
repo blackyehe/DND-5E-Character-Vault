@@ -1,4 +1,5 @@
-import {isValidObjectId, type ClientSession} from 'mongoose'
+import {recordTimingRole} from '../middleware/request-timing'
+import {isValidObjectId, Types, type ClientSession} from 'mongoose'
 import {Room} from '../models/Room'
 import {Character} from '../models/Character'
 
@@ -9,24 +10,28 @@ export class RoomLibraryError extends Error {
 export const libraryFail = (status: number, message: string): never => {throw new RoomLibraryError(status, message)}
 
 /** Notebook and Maps use the same current membership/assignment and preview rules. */
-export async function libraryContext(roomId: string, userId: string, previewCharacter?: string, session?: ClientSession) {
+export async function libraryContext(roomId: string, userId: string, previewCharacter?: string, session?: ClientSession, options: {characterNames?: boolean;roomIdentityOnly?:boolean} = {}) {
   if (!isValidObjectId(roomId)) return libraryFail(404, 'Room not found or access has ended.')
-  const room = await Room.findOne({_id: roomId, $or: [{ownerId: userId}, {members: userId}]}).session(session ?? null).lean()
+  const roomQuery = Room.findOne({_id: roomId, $or: [{ownerId: userId}, {members: userId}]}).session(session ?? null)
+  if(options.roomIdentityOnly)roomQuery.select('ownerId members assignments notebookTagCatalog notebookListingVersion notebookChanges')
+  const room = await roomQuery.lean()
   if (!room) return libraryFail(404, 'Room not found or access has ended.')
   const owner = String(room.ownerId) === userId
   if (previewCharacter && (!owner || !isValidObjectId(previewCharacter))) return libraryFail(403, 'Player preview is unavailable.')
   const previewUser = previewCharacter ? room.assignments.find(a => String(a.characterId) === previewCharacter && room.members.some(m => String(m) === String(a.userId)))?.userId : undefined
   const assigned = room.assignments.filter(a => String(a.userId) === String(previewUser ?? userId) && room.members.some(m => String(m) === String(a.userId))).map(a => a.characterId)
-  const characters = await Character.find({userId: room.ownerId, ...(!owner ? {_id: {$in: assigned}} : {})}).select('meta.name').session(session ?? null).lean()
+  const characters = await Character.find({userId: room.ownerId, ...(!owner ? {_id: {$in: assigned}} : {})}).select(options.characterNames===false?'_id':'meta.name').session(session ?? null).lean()
   const validIds = characters.map(c => String(c._id))
   const allowed = previewCharacter ? (previewUser ? assigned.map(String) : [previewCharacter]).filter(value => validIds.includes(value)) : validIds
   if (previewCharacter && !validIds.includes(previewCharacter)) return libraryFail(404, 'Character access has ended.')
   const dm = owner && !previewCharacter
+  recordTimingRole(dm ? 'DM' : 'player')
   return {room, dm, owner, readOnly: !!previewCharacter, allowed, characters: characters.filter(c => dm || allowed.includes(String(c._id))), userId}
 }
 export type LibraryContext = Awaited<ReturnType<typeof libraryContext>>
-export function libraryScope(ctx: LibraryContext): Record<string, unknown> {
-  return ctx.dm ? {} : {$or: [{audience: 'room'}, {audience: 'characters', characterIds: {$in: ctx.allowed}}]}
+export function libraryScope(ctx: LibraryContext, aggregate = false): Record<string, unknown> {
+  // Mongoose casts find filters, but deliberately does not cast aggregation stages.
+  return ctx.dm ? {} : {$or: [{audience: 'room'}, {audience: 'characters', characterIds: {$in: aggregate ? ctx.allowed.map(id => new Types.ObjectId(id)) : ctx.allowed}}]}
 }
 export function libraryVisible(entry: {audience?: unknown; characterIds?: unknown}, ctx: LibraryContext) {
   return ctx.dm || entry.audience === 'room' || entry.audience === 'characters' && Array.isArray(entry.characterIds) && entry.characterIds.some(value => ctx.allowed.includes(String(value)))

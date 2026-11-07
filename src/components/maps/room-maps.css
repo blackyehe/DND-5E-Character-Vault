@@ -117,3 +117,4 @@
 .room-maps .map-focus-region{display:flex;flex-direction:row;align-items:center;gap:6px;margin-right:auto;min-width:0;font-size:12px}
 .room-maps .map-focus-region select{max-width:220px;padding:5px;font-size:12px;min-width:0}
 @container room-map-popup (max-width:700px){.map-popup[data-focus=true] .map-popup-heading h2{font-size:16px}.map-popup[data-focus=true] .map-popup-heading>div:first-child{min-width:0;overflow-wrap:anywhere}.map-popup[data-focus=true] .map-popup-heading>.map-actions{flex-shrink:0}.map-popup[data-focus=true] .map-canvas-tools .map-actions{gap:5px}.map-popup[data-focus=true] .map-canvas-tools{justify-content:space-between}.room-maps .map-focus-region select{max-width:160px}}
+.map-main{position:relative}.map-image-feedback{position:absolute;inset:64px 12px auto;z-index:8;margin:0;padding:8px 12px;background:var(--cb-paper);border:1px solid var(--cb-line);border-radius:6px}

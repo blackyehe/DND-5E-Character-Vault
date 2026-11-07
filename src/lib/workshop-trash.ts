@@ -3,7 +3,7 @@ import { api } from './api'
 type Pack = { id: string; filename: string; hash: string }
 export type DeleteCreation =
   | { scope: 'record'; id: string; kind: 'item' | 'monster-action'; revision: number; name: string }
-  | { scope: 'pack'; index: string; kind: 'class' | 'subclass' | 'race' | 'monster'; name: string; packs: Pack[] }
+  | { scope: 'pack'; index: string; kind: 'class' | 'subclass' | 'race' | 'monster' | 'feat' | 'background' | 'invocation' | 'boon' | 'selection' | 'language' | 'reference' | 'subrace'; name: string; packs: Pack[] }
   | { scope: 'draft'; id: string; name: string; storageKey: string }
 export type DeletedCreation = { scope: 'record' | 'pack' | 'draft'; id: string; name: string; kind: string; deletedAt: string; revision?: number; packId?: string; packName?: string }
 type DeviceEntry = DeletedCreation & { scope: 'draft'; storageKey: string; value: Record<string, unknown> }
@@ -38,7 +38,7 @@ export async function restoreCreation(entry: DeletedCreation, userId: string) {
   if (entry.scope === 'pack') return api.post<{ message: string }>(`/api/workshop-trash/packs/${entry.packId}/restore/${entry.id}`)
   const trash = deviceTrash(userId), saved = trash.find(d => d.id === entry.id)
   if (!saved) throw new Error('This draft was already restored. Reload Recently deleted.')
-  const allowed = [`codex:homebrew-workshop:v1:${userId}`, `codex:monster-workshop:v1:${userId}`]
+  const allowed = [`codex:homebrew-workshop:v1:${userId}`, `codex:monster-workshop:v1:${userId}`,`codex:option-workshop:v1:${userId}`]
   if (!allowed.includes(saved.storageKey)) throw new Error('This draft belongs to another library.')
   const active = JSON.parse(localStorage.getItem(saved.storageKey) ?? '[]') as Record<string, unknown>[]
   if (!Array.isArray(active) || active.some(d => identity(d) === identity(saved.value))) throw new Error('A draft with this identity already exists. The current draft has been kept.')

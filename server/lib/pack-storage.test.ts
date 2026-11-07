@@ -5,6 +5,15 @@ import { mongo } from 'mongoose'
 import { packSource,storedPackData,decodedPackData,PLAIN_PACK_BYTES,MAX_STORED_PACK_BYTES } from './pack-storage'
 
 describe('large Orcbrew storage',()=>{
+  it('honors a stricter read limit for plain and compressed sources without changing the default',()=>{
+    const original={filename:'bounded.orcbrew',source:'x'.repeat(4096)},compressed={...original,source:gzipSync(Buffer.from(original.source)).toString('base64'),sourceEncoding:'gzip-base64',sourceBytes:4096}
+    expect(packSource(compressed)).toBe(original.source)
+    expect(()=>packSource(original,{maxBytes:1024})).toThrow('request source limit')
+    expect(()=>packSource(compressed,{maxBytes:1024})).toThrow('request source limit')
+    expect(()=>packSource({...compressed,sourceBytes:1},{maxBytes:1024})).toThrow()
+    expect(()=>packSource(original,{maxBytes:0})).toThrow('Invalid pack read limit')
+    expect(()=>packSource({source:'é'.repeat(6)},{maxBytes:10})).toThrow('request source limit')
+  })
   it('round-trips portable collections above the former compressed cap with BSON headroom',()=>{
     const original={filename:'All homebrew.orcbrew',source:randomBytes(8*1024*1024).toString('base64')}
     const stored=storedPackData(original)
