@@ -1,9 +1,21 @@
 # Recovery checkpoints — 7 November 2026
 
-Two distinct application states are preserved before disk cleanup. The working
+Two distinct application states were preserved before disk cleanup. The working
 checkout contains accumulated development changes; it is not identical to the
 last documented production release. Creating these checkpoints does not deploy
 either state or change campaign data.
+
+## Post-cleanup checkpoint
+
+- Branch: `codex/recovery-checkpoint-20261107`
+- Annotated tag: `recovery/post-cleanup-20261107`
+- Application source is unchanged from `recovery/working-state-20261107`.
+- The completed cleanup removed only reviewed, ignored development artifacts.
+  Its subsequent build/types, tests, retained-file checks and live read-only
+  data comparisons pass.
+- See [Workspace cleanup and preservation checks](audits/workspace-cleanup-2026-11-07.md)
+  for the validation scope and recovery details. The two original recovery tags
+  remain intact.
 
 ## Current working state
 
