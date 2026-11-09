@@ -15,6 +15,7 @@ import { attunementError } from '../../shared/item-rules'
 import { resolveEquipmentItem } from '../lib/equipment-references'
 import { CustomContent } from '../models/CustomContent'
 import {pinSelectedOptions} from '../lib/selected-options'
+import {templateBenefitEdition} from '../lib/item-benefits'
 import type {Character as CharacterData} from '../../shared/character'
 
 const router = Router()
@@ -70,7 +71,7 @@ router.post('/:id/items',async(req,res)=>{
   const parsed=grantSchema.safeParse(req.body)
   if(!parsed.success)return res.status(400).json({error:parsed.error.issues[0]?.message??'Check the item details.'})
   let item=parsed.data.item
-  if(item.templateId){const source=await CustomContent.findOne({_id:item.templateId,userId:req.userId,type:'item'}).lean();if(!source)return res.status(404).json({error:'That item template is no longer in your library.'});item={...source.data as typeof item,templateId:String(source._id),templateRevision:source.__v??0,qty:item.qty,equipped:item.equipped,attuned:item.attuned}}
+  if(item.templateId){const source=await CustomContent.findOne({_id:item.templateId,userId:req.userId,type:'item'}).lean();if(!source)return res.status(404).json({error:'That item template is no longer in your library.'});const definition=await templateBenefitEdition(req.userId,String(source._id),source.data as typeof item);item={...definition,templateId:String(source._id),templateRevision:source.__v??0,qty:item.qty,equipped:item.equipped,attuned:item.attuned}}
   for(let attempt=0;attempt<4;attempt++){
     const raw=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
     if(!raw)return res.status(404).json({error:'Character not found.'})

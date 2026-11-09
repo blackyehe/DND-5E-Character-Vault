@@ -1,4 +1,4 @@
-import type { Character } from './character'
+import type { Character, EquipmentItem } from './character'
 import { itemActive } from './item-rules'
 import {choiceBenefits,choiceSelectionProblem,type ChoiceGroup} from './choice-groups'
 import {isFeatureOptionKind} from './option-kinds'
@@ -51,7 +51,7 @@ export function newRuleBenefit(type='damage-resistance'):RuleBenefit {const s=BE
 export function entryBenefits(entry:unknown):unknown[]{
  const e=benefitObject(entry),w=benefitObject(e.workshop),raw=benefitObject(e.details)
  // An authored edition replaces the imported modifier list, including an empty list.
- for(const v of [e.benefits,w.benefits])if(Array.isArray(v))return v
+ for(const v of [e.benefits,w.benefits,benefitObject(e.workshopItem).benefits])if(Array.isArray(v))return v
  const rows=Array.isArray(raw[':level-modifiers']??raw['level-modifiers'])?[...(raw[':level-modifiers']??raw['level-modifiers']) as unknown[]]:[]
  const props=benefitObject(raw[':props']??raw.props),race=benefitObject(w.race)
  for(const type of ['damage-resistance','damage-immunity','condition-immunity','saving-throw-advantage'])for(const [key,enabled]of Object.entries(benefitObject(props[':'+type]??props[type])))if(enabled===true)rows.push({type,value:key,level:1})
@@ -77,6 +77,9 @@ const normalized=(v:unknown)=>String(v??'').trim().replace(/([a-z])([A-Z])/g,'$1
 const optionKey=(v:unknown)=>benefitKey(v).toLowerCase().replace(/[^a-z0-9]/g,'')
 function sameSource(e:Record<string,unknown>,index:string,v:unknown){return typeof v==='string'&&v.length>0&&[index,e.index,e.contentKey,...(Array.isArray(e.aliases)?e.aliases:[])].includes(v)}
 function nameMatches(a:unknown,b:unknown){return normalized(a)===normalized(b)}
+function benefitItemMatches(item:EquipmentItem,index:string,entry:Record<string,unknown>){
+ return item.index||item.magicIndex||item.templateId?sameSource(entry,index,item.index)||sameSource(entry,index,item.magicIndex)||index===`workshop-item-${item.templateId}`:nameMatches(item.name,entry.name)
+}
 export function benefitDefinitionLevel(c:Character,kind:string,index:string,entry:Record<string,unknown>):number{
  const feature=c.features.some(f=>nameMatches(f.name,entry.name)||/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(n=>nameMatches(n,entry.name)))
  if(kind==='classes'||kind==='subclasses'){
@@ -88,7 +91,7 @@ export function benefitDefinitionLevel(c:Character,kind:string,index:string,entr
  if(kind==='backgrounds')return (c.meta.backgroundIndex?sameSource(entry,index,c.meta.backgroundIndex):nameMatches(c.meta.background,entry.name))?c.meta.level:0
  if(isFeatureOptionKind(kind))return c.features.some(f=>(f.level??1)<=c.meta.level&&(f.definition?f.definition.kind===kind&&sameSource(entry,index,f.definition.index):nameMatches(f.name,entry.name)||kind==='feats'&&/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(n=>nameMatches(n,entry.name))))?c.meta.level:0
  if(kind==='languages')return c.proficiencies.languages.some(n=>nameMatches(n,entry.name))?c.meta.level:0
- if(kind==='equipment'||kind==='magic-items')return c.equipment.some(i=>itemActive(i)&&(i.index||i.magicIndex||i.templateId?sameSource(entry,index,i.index)||sameSource(entry,index,i.magicIndex)||index===`workshop-item-${i.templateId}`:nameMatches(i.name,entry.name)))?c.meta.level:0
+ if(kind==='equipment'||kind==='magic-items')return c.equipment.some(i=>itemActive(i)&&benefitItemMatches(i,index,entry))?c.meta.level:0
  if(kind==='spells')return benefitKnownSpellIds(c).some(id=>sameSource(entry,index,id))&&c.spellcasting.activeEffects?.includes(index)?c.meta.level:0
  if(kind==='monsters')return 0
  return feature?c.meta.level:0
@@ -102,15 +105,25 @@ export function selectedEntryBenefits(c:Character,d:{kind:string;index:string;en
 export function benefitKnownSpellIds(c:Character):string[]{
  const ids=[...c.spellcasting.known,...c.spellcasting.prepared,...(c.homebrew?.bindings??[]).filter(b=>b.rule.kind==='race').flatMap(b=>(b.rule.race?.spells??[]).filter(s=>s.level<=c.meta.level).map(s=>s.index))]
  for(const d of c.compendiumRules??[]){if(d.kind==='spells')continue;const level=benefitDefinitionLevel(c,d.kind,d.index,d.entry)||benefitDefinitionLevel(c,d.kind,d.index,d.before);if(!level)continue;for(const row of selectedEntryBenefits(c,d))if(benefitKey(benefitField(row,'type'))==='spell'&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0)ids.push(benefitKey(benefitField(benefitField(row,'value'),'key')))}
+ for(const {row,active} of inventoryBenefitRows(c))if(active&&benefitKey(benefitField(row,'type'))==='spell')ids.push(benefitKey(benefitField(benefitField(row,'value'),'key')))
  return [...new Set(ids)]
 }
 export const availableBenefitSpells=(c:Character)=>(c.compendiumRules??[]).filter(d=>d.kind==='spells'&&entryBenefits(d.entry).length&&benefitKnownSpellIds(c).some(id=>sameSource(d.entry,d.index,id)))
 export interface ActiveBenefit {source:string;kind:string;index:string;row:unknown;level:number;active:boolean}
+function inventoryBenefitRows(c:Character):ActiveBenefit[]{
+ return c.equipment.flatMap(item=>{
+  if(!item.benefits?.length)return []
+  // A reviewed edition replaces the copy's captured grants, even with [].
+  if(c.compendiumRules?.some(d=>(d.kind==='equipment'||d.kind==='magic-items')&&(benefitItemMatches(item,d.index,d.entry)||benefitItemMatches(item,d.index,d.before))))return []
+  const kind=item.magical||item.magicIndex?'magic-items':'equipment',index=item.magicIndex??(item.templateId?`workshop-item-${item.templateId}`:item.index)??`inventory:${normalized(item.name)}`,level=itemActive(item)?c.meta.level:0
+  return (item.benefits??[]).map(row=>({source:item.name,kind,index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0}))
+ })
+}
 export function characterBenefitRows(c:Character):ActiveBenefit[]{
  const rows:ActiveBenefit[]=[],approved=c.compendiumRules??[]
  for(const d of approved){const level=benefitDefinitionLevel(c,d.kind,d.index,d.entry)||benefitDefinitionLevel(c,d.kind,d.index,d.before);for(const row of selectedEntryBenefits(c,d))rows.push({source:String(d.entry.name),kind:d.kind,index:d.index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0})}
  for(const b of c.homebrew?.bindings??[]){if(approved.some(d=>d.index===b.index||d.entry.workshop&&benefitObject(d.entry.workshop).id===b.ruleId))continue;const kind=b.rule.kind==='class'?'classes':b.rule.kind==='race'?'races':'subclasses',entry={...b.rule.imported?.raw,name:b.rule.name,details:b.rule.imported?.raw,workshop:b.rule},level=benefitDefinitionLevel(c,kind,b.index,entry);for(const row of entryBenefits(entry))rows.push({source:b.rule.name,kind,index:b.index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0})}
- return rows
+ return [...rows,...inventoryBenefitRows(c)]
 }
 export function characterBenefits(c:Character){
  const skills={...c.skills},saves={...c.saves},proficiencies={armor:[...c.proficiencies.armor],weapons:[...c.proficiencies.weapons],tools:[...c.proficiencies.tools],languages:[...c.proficiencies.languages]}

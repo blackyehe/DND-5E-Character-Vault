@@ -2,6 +2,7 @@ import type { EquipmentItem } from './character'
 import { equipmentFrom, magicEquipmentFrom, type EquipmentDefinition, type MagicItemDefinition } from './equipment-definitions'
 import { itemKind } from './item-rules'
 import { itemRarities } from './item-classification'
+import { benefitProblems, entryBenefits } from './rule-benefits'
 
 const object=(value:unknown):Record<string,unknown>=>value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{}
 const text=(value:unknown):string=>Array.isArray(value)?value.map(text).filter(Boolean).join('\n\n'):typeof value==='string'?value:''
@@ -29,6 +30,14 @@ export function importedEquipment(entry:Record<string,unknown>,kind:'equipment'|
  item.rarity=itemRarities.find(value=>value===rarity)
  item.magicBonus=bonus(raw.bonusWeapon)??(item.armor?bonus(raw.bonusAc):undefined)??item.magicBonus??0
  item.effects={ac:item.armor?item.effects?.ac??0:bonus(raw.bonusAc)??item.effects?.ac??0,saves:bonus(raw.bonusSavingThrow)??item.effects?.saves??0}
+ // Keep the selected edition's grants with the inventory copy. Explicit edits,
+ // including an empty list, replace the imported spell bonuses.
+ const authored=[entry.benefits,object(entry.workshop).benefits,object(source).benefits].some(Array.isArray)
+ const benefits=entryBenefits(entry).filter(row=>benefitProblems([row]).length===0)
+ if(!authored)for(const [field,type] of [['bonusSpellAttack','spell-attack-bonus'],['bonusSpellSaveDc','spell-dc-bonus']] as const){
+  const value=bonus(raw[field]);if(value!==undefined&&value!==0)benefits.push({type,value,level:1})
+ }
+ if(authored||benefits.length)item.benefits=structuredClone(benefits)
  delete item._id;delete item.grantId;delete item.templateId;delete item.templateRevision
  return item
 }

@@ -4,6 +4,7 @@ import type { Character, EquipmentItem } from '../../shared/character'
 import { attunementError, itemKind } from '../../shared/item-rules'
 import { resolveEquipmentItem } from './equipment-references'
 import { armourCategories, itemRarities } from '../../shared/item-classification'
+import { benefitProblems } from '../../shared/rule-benefits'
 
 const weaponSchema=z.object({dice:z.string().max(30),damageType:z.string().max(60),range:z.string().max(100),finesse:z.boolean(),ranged:z.boolean(),category:z.string().max(40).optional(),noDamage:z.boolean().optional()}).superRefine((weapon,ctx)=>{
  if(weapon.noDamage)return // Special rules remain descriptive, without invented base damage.
@@ -22,6 +23,7 @@ export const itemSchema=z.preprocess(omitEmpty,z.object({
   equipped:z.boolean(),notes:z.string().max(20000).default(''),kind:z.enum(['weapon','armour','accessory','consumable','treasure','gear']),
   magical:z.boolean().default(false),requiresAttunement:z.boolean().default(false),attuned:z.boolean().default(false),
   effects:z.object({ac:bonus,saves:bonus}).optional(),magicBonus:bonus.optional(),
+  benefits:z.array(z.unknown()).max(200).superRefine((rows,ctx)=>{for(const message of benefitProblems(rows))ctx.addIssue({code:'custom',message})}).optional(),
   tags:z.array(z.string().trim().min(1).max(40)).max(20).optional(),rarity:z.enum(itemRarities).optional(),
   value:z.object({amount:z.number().finite().min(0).max(1000000000),currency:z.enum(['cp','sp','ep','gp','pp'])}).optional(),
   attunementRequirement:z.string().max(500).optional(),

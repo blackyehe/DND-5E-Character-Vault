@@ -7,7 +7,7 @@ import { sourceHash } from './orcbrew'
 import {optionHasId,optionLabelMatches} from '../../shared/option-reference'
 import {choiceDescription,type ChoiceGroup} from '../../shared/choice-groups'
 import {isFeatureOptionKind} from '../../shared/option-kinds'
-import { characterBenefits, characterBenefitRows, benefitSummary, benefitKey, benefitField } from '../../shared/rule-benefits'
+import { characterBenefits, characterBenefitRows, benefitSummary, benefitKey, benefitField, entryBenefits, benefitProblems } from '../../shared/rule-benefits'
 
 const record=(v:unknown):EntryData=>v&&typeof v==='object'&&!Array.isArray(v)?v as EntryData:{}
 const list=(v:unknown):EntryData[]=>Array.isArray(v)?v.map(record):[]
@@ -90,6 +90,9 @@ export function applyReviewedDefinitions(c:Character):Character{
         for(const key of ['name','weight','category','tags','rarity','value','attunementRequirement','description','armor','weapon','magicBonus','kind','magical','requiresAttunement','effects'] as const){
           if(!sameEntry(old[key],next[key])&&(sameEntry(item[key],old[key])||sameEntry(item[key],next[key])||item[key]===undefined))Object.assign(result,{[key]:next[key]})
         }
+        // Keep the inventory's visible snapshot in sync with the approved edition.
+        const benefits=entryBenefits(d.entry).filter(row=>benefitProblems([row]).length===0)
+        if(benefits.length||Array.isArray(d.entry.benefits)||item.benefits)result.benefits=cloneEntry(benefits)
         return result
       })
       continue

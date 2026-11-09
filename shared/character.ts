@@ -53,6 +53,7 @@ export interface EquipmentItem {
   requiresAttunement?: boolean
   attuned?: boolean
   effects?: { ac: number; saves: number }
+  benefits?: unknown[]
   templateId?: string
   templateRevision?: number
   grantId?: string

@@ -6,6 +6,26 @@ import {itemSchema} from '../server/lib/inventory'
 import {resolveEquipmentItem} from '../server/lib/equipment-references'
 
 describe('imported equipment delivery',()=>{
+ it('preserves authored spell benefits independently of the item description and source object',()=>{
+  const benefits=[{type:'spell-attack-bonus',value:3,level:1},{type:'spell-dc-bonus',value:3,level:1}]
+  const item=importedEquipment({index:'homebrew-focus',name:'Test focus',benefits,workshopItem:{name:'Test focus',qty:1,weight:1,equipped:false,notes:'',kind:'accessory',requiresAttunement:true}},'magic-items')
+  expect(item.benefits).toEqual(benefits)
+  expect(item.benefits).not.toBe(benefits)
+  expect(itemSchema.parse(item).benefits).toEqual(benefits)
+  expect(resolveEquipmentItem(item).benefits).toEqual(benefits)
+ })
+ it('converts fixed imported spell attack and save DC bonuses into inventory benefits',()=>{
+  const entry=inspectOrcbrew(writeEdn({':orcpub.dnd.e5/magic-items':{':focus':{':name':'Test focus',':codex/item':{item:{name:'Test focus',type:'RD',bonusSpellAttack:'+3',bonusSpellSaveDc:'+3',reqAttune:true},description:'Full focus rules.',mundane:false,hash:'test_focus',sourceName:'Trial pack',typeText:'rod'}}}})).entries['magic-items'][0]!
+  const item=importedEquipment(entry,'magic-items')
+  expect(item.benefits).toEqual([{type:'spell-attack-bonus',value:3,level:1},{type:'spell-dc-bonus',value:3,level:1}])
+  expect(itemSchema.safeParse(item).success).toBe(true)
+ })
+ it('honors explicit replacement and removal instead of restoring imported spell bonuses',()=>{
+  const entry={index:'homebrew-focus',name:'Test focus',details:{':codex/item':{item:{bonusSpellAttack:'+3',bonusSpellSaveDc:'+3'}}}}
+  expect(importedEquipment({...entry,benefits:[]},'magic-items').benefits).toEqual([])
+  expect(importedEquipment({...entry,benefits:[{type:'spell-attack-bonus',value:1,level:5}]},'magic-items').benefits).toEqual([{type:'spell-attack-bonus',value:1,level:5}])
+  expect(importedEquipment({...entry,details:{':codex/item':{item:{bonusSpellAttack:'PB',bonusSpellSaveDc:'+99'}}}},'magic-items').benefits).toBeUndefined()
+ })
  it('converts a real normalized imported weapon with its full rules and numeric bonus',()=>{
   const entry=inspectOrcbrew(writeEdn({':orcpub.dnd.e5/magic-items':{':blade':{':name':'Room Blade +2',':codex/item':{item:{name:'Room Blade +2',type:'M',weapon:true,dmg1:'1d8',dmgType:'S',weaponCategory:'martial',_baseName:'Longsword',bonusWeapon:'+2',weight:3,rarity:'rare',reqAttune:true},description:'Unabridged imported rules. Extra 2d6 fire damage on a command.',mundane:false,hash:'room_blade',sourceName:'Trial pack',typeText:'martial weapon'}}}})).entries['magic-items'][0]!
   const item=importedEquipment(entry,'magic-items')

@@ -7,6 +7,16 @@ import { sheetReferences } from './sheet-references'
 import type { WorkshopLibrary } from './workshop-library'
 const hero=():Character=>({...emptyCharacter(),_id:'a'.repeat(24),updatedAt:'2026-10-23T00:00:00Z'})
 describe('approved definitions',()=>{
+  it('refreshes and removes captured inventory benefits through explicit character review',()=>{
+    const c=hero(),benefits=[{type:'spell-attack-bonus',value:3},{type:'spell-dc-bonus',value:3}]
+    const item={name:'Test focus',templateId:'b'.repeat(24),qty:1,weight:1,equipped:true,attuned:true,notes:'Saved notes',benefits:[{type:'spell-attack-bonus',value:1}]}
+    c.equipment=[item];c.compendiumRules=[{kind:'magic-items',index:`workshop-item-${item.templateId}`,revision:1,before:{name:item.name,workshopItem:item},entry:{name:item.name,workshopItem:item,benefits}}]
+    const result=reviewedCharacter(c,[],{})
+    expect(result.equipment[0]).toEqual({...item,benefits})
+    result.compendiumRules![0]!.entry.benefits=[]
+    expect(reviewedCharacter(result,[],{}).equipment[0]).toEqual({...item,benefits:[]})
+    expect(c.equipment[0]!.benefits).toEqual([{type:'spell-attack-bonus',value:1}])
+  })
   it('reconciles class features, slots and trackers without resetting current HP or spent uses',()=>{
     const old=newWorkshopDraft();old.name='Test class';old.hitDie=8;old.features=[{...newWorkshopFeature(),name:'Test feature',description:'Old text'}];old.resources=[{...newWorkshopResource(),name:'Focus',base:3,multiplier:0}];old.magic.enabled=true
     const next=cloneEntry(old);next.features[0]!.description='New text';next.resources[0]!.base=5;next.hitDie=10

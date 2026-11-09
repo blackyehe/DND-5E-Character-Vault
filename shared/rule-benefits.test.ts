@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest'
 import {emptyCharacter,type Character} from './character'
-import {BENEFIT_TYPES,benefitProblems,characterBenefits,benefitDamage,entryBenefits,characterBenefitRows,benefitSpellDC} from './rule-benefits'
+import {BENEFIT_TYPES,benefitProblems,characterBenefits,benefitDamage,entryBenefits,characterBenefitRows,benefitSpellAttack,benefitSpellDC,benefitKnownSpellIds} from './rule-benefits'
 import {newWorkshopDraft} from './homebrew-workshop'
 import {sheetAC,sheetSkill,sheetSave,sheetInitiative,attackValues,sheetProficiencies} from '../src/lib/character-sheet'
 import {partyMemberSnapshot,partyHitPointUpdate} from './party-dashboard'
@@ -25,6 +25,29 @@ function grant(c:Character,kind:CompendiumKind='feats',benefits:unknown[]=[resis
  return c
 }
 describe('typed benefit mechanics',()=>{
+ it('applies captured item spell bonuses only while equipped, attuned, owned and unlocked',()=>{
+  const c=hero();c.meta.level=9;c.abilities.int=18
+  const item={name:'Test focus',kind:'accessory' as const,magicIndex:'focus',magical:true,qty:1,weight:1,notes:'',equipped:false,requiresAttunement:true,attuned:false,benefits:[{type:'spell-attack-bonus',value:3,level:9},{type:'spell-dc-bonus',value:3,level:9}]}
+  c.equipment=[item]
+  const check=(attack:number,dc:number)=>{expect(benefitSpellAttack(c)).toBe(attack);expect(benefitSpellDC(c)).toBe(dc)}
+  check(8,16);item.equipped=true;check(8,16);item.attuned=true;check(11,19)
+  expect(characterBenefitRows(c)).toMatchObject([{source:'Test focus',active:true},{source:'Test focus',active:true}])
+  c.meta.level=8;check(7,15);c.meta.level=9;item.qty=0;check(8,16);item.qty=10;check(11,19)
+  c.equipment.push({...item});check(11,19);item.attuned=false;c.equipment.pop();check(8,16)
+  item.attuned=true;item.equipped=false;check(8,16);c.equipment=[];check(8,16)
+ })
+ it('uses reviewed item benefits in place of captured grants, including removal and renamed sources',()=>{
+  const c=grant(hero(),'magic-items',[{type:'spell-attack-bonus',value:1}]);c.equipment[0]!.benefits=[{type:'spell-attack-bonus',value:3}]
+  expect(benefitSpellAttack(c)).toBe(3)
+  c.compendiumRules![0]!.entry={name:'Renamed focus',benefits:[]}
+  expect(benefitSpellAttack(c)).toBe(2)
+  expect(characterBenefitRows(c)).toEqual([])
+ })
+ it('keeps captured inventory spell grants available to the existing known-spell path',()=>{
+  const c=hero();c.equipment=[{name:'Test focus',qty:1,weight:0,notes:'',equipped:true,benefits:[{type:'spell',value:{key:'light',ability:'cha',level:0}}]}]
+  expect(benefitKnownSpellIds(c)).toContain('light');expect(innateRaceSpells(c)).toMatchObject([{index:'light'}])
+  c.equipment[0]!.equipped=false;expect(benefitKnownSpellIds(c)).not.toContain('light')
+ })
  for(const kind of ['classes','subclasses','races','subraces','backgrounds','feats','invocations','boons','selections','languages','other','equipment','magic-items','spells'] as CompendiumKind[])it(`applies the same reviewed resistance for ${kind}`,()=>{const c=grant(hero(),kind);expect(characterBenefits(c).resistances).toEqual(['necrotic']);expect(benefitDamage(9,'necrotic',characterBenefits(c))).toBe(4)})
  it('does not activate spell benefits just because a spell is known or prepared',()=>{const c=grant(hero(),'spells');c.spellcasting.activeEffects=[];expect(characterBenefits(c).resistances).toEqual([]);c.spellcasting.prepared=['example'];expect(characterBenefits(c).resistances).toEqual([])})
  it('deactivates an effect when the spell leaves the character',()=>{const c=grant(hero(),'spells');c.spellcasting.known=[];expect(characterBenefits(c).resistances).toEqual([])})

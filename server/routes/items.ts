@@ -7,6 +7,7 @@ import { isValidObjectId } from 'mongoose'
 import { savedCharacterOutput } from '../lib/character-output'
 import { applyItemTemplate,grantSchema,prepareItem } from '../lib/inventory'
 import type { EquipmentItem } from '../../shared/character'
+import {withItemBenefitEdition} from '../lib/item-benefits'
 
 const router=Router()
 router.use(requireAuth)
@@ -18,7 +19,12 @@ export async function rememberItem(userId:string|undefined,requestId:string,item
 }
 router.get('/',async(req,res)=>{
   const records=await CustomContent.find({userId:req.userId,type:'item'}).select('_id data __v').sort({'data.name':1}).lean()
-  res.json(records.map(r=>({id:String(r._id),revision:r.__v??0,item:{...prepareItem(r.data as EquipmentItem),templateId:String(r._id),templateRevision:r.__v??0}})))
+  const edits=records.length?await CustomContent.find({userId:req.userId,type:'compendium-edit','data.kind':{$in:['equipment','magic-items']},'data.index':{$in:records.map(r=>`workshop-item-${r._id}`)}}).select('data').lean():[]
+  res.json(records.map(r=>{
+    const item=prepareItem(r.data as EquipmentItem),kind=item.magical?'magic-items':'equipment'
+    const edit=edits.map(e=>e.data as {kind:string;index:string;changes:Record<string,unknown>}).find(e=>e.kind===kind&&e.index===`workshop-item-${r._id}`)
+    return {id:String(r._id),revision:r.__v??0,item:{...withItemBenefitEdition(item,edit?.changes),templateId:String(r._id),templateRevision:r.__v??0}}
+  }))
 })
 router.post('/',async(req,res)=>{
   const parsed=grantSchema.safeParse(req.body)
