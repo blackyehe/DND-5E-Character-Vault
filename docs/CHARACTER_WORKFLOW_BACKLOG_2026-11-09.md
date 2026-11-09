@@ -75,6 +75,25 @@ with the same audit file recording its validation and Owlbear-specific limits.
    Website implemented: six effective saves with proficiency, equipped/custom
    attacks and spell totals above Training. Owlbear summary placement remains
    pending in its separate frontend; the backend already projects these values.
+8. Improve individual spell presentation (item 6 in the remaining-work list).
+   Use the supplied [spell reference](references/character-ui-2026-11-09/spell-presentation.png)
+   for a compact, expandable spell row: name/source, casting ability, applicable
+   save DC/modifiers and an easily visible attack-roll expression where relevant.
+   Show each spell's casting time, range, duration and components with **bold
+   labels**, plus level/school and other relevant casting details. Keep the full
+   description and scaling text readable when expanded. Spell attack modifiers
+   must use the correct casting source and current active bonuses; save-only
+   spells should show their applicable save information.
+9. Re-imagine repeated character-sheet UI elements consistently across the website
+   and Owlbear. The supplied [sheet example](references/character-ui-2026-11-09/sheet-section-dividers.png)
+   shows too many red outlines and divider lines in skills, saving throws and the
+   combat summary. This is an example of a broader visual issue, not a request
+   limited to those three panels. Explore contrasting background surfaces, subtle
+   overlays, spacing and typography to distinguish sections with fewer borders.
+   Apply a coherent treatment across comparable panels, rows and statistics in
+   the different sheets, preserving readability across themes and screen sizes.
+   The final visual treatment is still to be designed; no UI change is requested
+   in this reminder-only update.
 
 A stage is complete only after its implementation and relevant checks. A release
 must preserve the current deployed baseline; the working checkout also contains
