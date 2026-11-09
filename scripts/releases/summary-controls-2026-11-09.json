@@ -1,0 +1,19 @@
+{
+  "evidence": ".local/summary-controls-20261109",
+  "checkpoint": "d2c63c5",
+  "runtime": [
+    "shared/character-rest.ts",
+    "src/components/sheet/CharacterSummary.vue",
+    "src/components/sheet/CombatTrackers.vue"
+  ],
+  "tests": [
+    "shared/character-rest.test.ts",
+    "src/components/sheet/CharacterSummary.test.ts"
+  ],
+  "testFiles": [
+    "shared/character-rest.test.ts",
+    "src/components/sheet/CharacterSummary.test.ts",
+    "src/components/sheet/CombatTrackers.test.ts",
+    "shared/rule-benefits.test.ts"
+  ]
+}

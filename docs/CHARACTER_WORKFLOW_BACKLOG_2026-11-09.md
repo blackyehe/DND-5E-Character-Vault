@@ -58,8 +58,15 @@ The two implemented sheet tasks below are live on the website in
 5. Add source-linked trackers to items, feats and other grants. Activation,
    removal/unequipping, recovery and preserved spent uses must follow the source.
 6. Add a clear long-rest action to website and Owlbear summary screens.
+   Website implemented: a top-of-summary action shares resource/slot recovery
+   with Combat. HP and hit dice remain manual, as before. Owlbear is still pending:
+   it has a separate frontend and scoped write grants/API, so it needs its own
+   rest action and permission tests rather than a website-only button change.
 7. Add saving throws to summaries below skills/proficiencies, plus readable attack
    dice/damage modifiers and spell attack/DC totals near the combat information.
+   Website implemented: six effective saves with proficiency, equipped/custom
+   attacks and spell totals above Training. Owlbear summary placement remains
+   pending in its separate frontend; the backend already projects these values.
 
 A stage is complete only after its implementation and relevant checks. A release
 must preserve the current deployed baseline; the working checkout also contains

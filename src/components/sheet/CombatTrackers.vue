@@ -8,6 +8,7 @@ import { vMotionCounter } from '../../directives/siteMotion'
 import { useSheetLibrary } from '../../composables/useSheetLibrary'
 import { featResourceKey } from '../../../shared/feat-resources'
 import type { CharacterResource } from '../../../shared/character'
+import {restUpdate} from '../../../shared/character-rest'
 defineProps<{ variant?:'rail' }>()
 
 const store = useCharactersStore(), c = computed(() => store.current!)
@@ -43,8 +44,7 @@ function resource(id: string, direction: number, single = false) {
   return save({ resources: records.value.map(r => r.id === id ? { ...r, used: direction<0?Math.max(0,r.used-amount):Math.min(r.max,r.used+amount) } : r) })
 }
 function rest(kind: 'short' | 'long') {
-  const restoredSlots = Object.fromEntries(Object.entries(effectiveSlots.value).map(([key,s]) => [key, { ...s, used: kind === 'long' || recovery(s.recovery) === 'short' ? 0 : s.used }]))
-  return save({ resources: records.value.map(r => ({ ...r, used: r.recovery === kind || kind === 'long' && r.recovery === 'short' ? 0 : r.used })), spellcasting: { ...c.value.spellcasting, slots: restoredSlots } })
+  return save(restUpdate(c.value,kind))
 }
 </script>
 
