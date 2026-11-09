@@ -37,6 +37,10 @@ do not change authoring, synchronization, or player write permissions.
 
 ## Remaining requested stages
 
+The two implemented sheet tasks below are live on the website in
+`dpl_3pKTvMLAEZ5Ps555nQmB8tx6QvJM`; validation and limits are recorded in
+`docs/audits/sheet-usability-2026-11-09.md`. Other stages remain pending.
+
 1. Uniform spell-slot/resource panels with aligned counts and controls. Give
    spell attack and spell save DC a prominent, readable position. Per-spell
    attack modifiers beside damaging spells are a later addition.
