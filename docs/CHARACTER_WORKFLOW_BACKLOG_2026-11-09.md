@@ -56,6 +56,11 @@ with the same audit file recording its validation and Owlbear-specific limits.
    as before; players can change quantities/equipment but cannot delete entries.
 3. Give item creation, giving and Workshop editing the full supported Benefits
    controls already available in Compendium editing.
+   Implemented: the same Benefits editor is now in normal/magic item creation,
+   Workshop editing and the create-and-give form. It validates grants before
+   saving and preserves explicit removal. Compendium keeps its separate Benefits
+   step, avoiding duplicate editors. Personal-edition reconciliation remains at
+   the deferred resume point; this control addition does not solve that layer.
 4. Add spell creation to the Homebrew Workshop, reusing the existing spell builder.
 5. Add source-linked trackers to items, feats and other grants. Activation,
    removal/unequipping, recovery and preserved spent uses must follow the source.

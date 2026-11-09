@@ -1,0 +1,11 @@
+{
+  "evidence": ".local/item-benefits-controls-20261109",
+  "checkpoint": "44a7ef9",
+  "runtime": ["src/components/items/ItemComposer.vue"],
+  "tests": ["src/components/items/ItemComposer.test.ts"],
+  "testFiles": [
+    "src/components/items/ItemComposer.test.ts",
+    "server/lib/inventory.test.ts",
+    "shared/rule-benefits.test.ts"
+  ]
+}
