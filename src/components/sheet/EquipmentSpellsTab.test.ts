@@ -18,7 +18,7 @@ beforeEach(()=>{
  current.abilities.dex=14;current.combat.acMode='equipment'
  current.equipment=[{name:'Leather',qty:1,weight:10,equipped:true,notes:'',armor:{base:11,dex:true,shield:false}},
   {name:'Rope',qty:1,weight:1,equipped:false,notes:''}]
- state.store=reactive({current,saving:false,canEditPermanent:false})
+ state.store=reactive({current,saving:false,canEditPermanent:false,update:vi.fn().mockResolvedValue(undefined)})
  vi.mocked(armourValues).mockClear()
 })
 function render(query:string,capture?:(bindings:any)=>void){
@@ -29,7 +29,7 @@ function render(query:string,capture?:(bindings:any)=>void){
   capture?.(bindings)
   return bindings
  }}
- return renderToString(createSSRApp(subject as Component))
+ return renderToString(createSSRApp(subject as Component)).then(html=>html.replace(/ data-v-[\w-]+(?:="[^"]*")?/g,''))
 }
 it('does no armour-preview work for filtered-out armour rows',async()=>{
  const html=await render('Rope')
@@ -49,4 +49,33 @@ it('renders current AC when armour becomes visible and after ability changes',as
  expect(row.armour.total).toBe(17)
  html=await render('Leather')
  expect(html).toContain('Worn gear AC</small><strong>17</strong>')
+})
+it('removes the original inventory row after filtering and sorting, with a character-version guard',async()=>{
+ state.store.canEditPermanent=true
+ state.store.current.equipment=[{_id:'first',name:'Z Rope',qty:1,weight:2,equipped:false,notes:''},{_id:'target',name:'A Rope',qty:3,weight:1,equipped:true,notes:''}]
+ let bindings:any;const html=await render('Rope',b=>{bindings=b})
+ expect(html).toContain('Remove A Rope from inventory');expect(bindings.groups.value[0].items[0].index).toBe(1)
+ bindings.requestRemoval(bindings.groups.value[0].items[0].index)
+ expect(bindings.pendingRemoval.value).toMatchObject({index:1,name:'A Rope',qty:3})
+ await bindings.removeItem()
+ expect(state.store.update).toHaveBeenCalledExactlyOnceWith('fixture',{equipment:[state.store.current.equipment[0]]},{expectedUpdatedAt:'2026-11-01'})
+ expect(bindings.itemNotice.value).toBe('A Rope removed from the inventory.');expect(bindings.pendingRemoval.value).toBeNull()
+})
+it.each(['version','position','character'])('refuses removal when the confirmed %s changes',async change=>{
+ state.store.canEditPermanent=true;let bindings:any;await render('',b=>bindings=b);bindings.requestRemoval(0)
+ if(change==='version')state.store.current.updatedAt='newer'
+ if(change==='position')state.store.current.equipment.reverse()
+ if(change==='character')state.store.current._id='another'
+ await bindings.removeItem();expect(state.store.update).not.toHaveBeenCalled();expect(bindings.itemNotice.value).toMatch(/inventory changed/)
+})
+it('keeps the saved inventory and confirmation on a failed save so it can be retried',async()=>{
+ state.store.canEditPermanent=true;let bindings:any;await render('',b=>bindings=b);bindings.requestRemoval(0)
+ state.store.update.mockRejectedValueOnce(new Error('Conflict'));const before=JSON.stringify(state.store.current.equipment)
+ await bindings.removeItem();expect(JSON.stringify(state.store.current.equipment)).toBe(before);expect(bindings.pendingRemoval.value?.name).toBe('Leather');expect(bindings.itemNotice.value).toBe('')
+ await bindings.removeItem();expect(state.store.update).toHaveBeenCalledTimes(2);expect(bindings.pendingRemoval.value).toBeNull()
+})
+it('hides removal for players and prevents handler calls while unauthorized or saving',async()=>{
+ let bindings:any;const html=await render('',b=>bindings=b);expect(html).not.toContain('Remove item');bindings.requestRemoval(0);expect(bindings.pendingRemoval.value).toBeNull()
+ state.store.canEditPermanent=true;bindings.requestRemoval(0);state.store.saving=true;await bindings.removeItem();expect(state.store.update).not.toHaveBeenCalled()
+ state.store.saving=false;state.store.canEditPermanent=false;await bindings.removeItem();expect(state.store.update).not.toHaveBeenCalled()
 })

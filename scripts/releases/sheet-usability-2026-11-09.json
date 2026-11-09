@@ -1,0 +1,18 @@
+{
+  "evidence": ".local/sheet-usability-20261109",
+  "checkpoint": "1a701fa",
+  "runtime": [
+    "src/components/sheet/CombatTrackers.vue",
+    "src/components/sheet/EquipmentSpellsTab.vue",
+    "src/components/sheet/sheet-density.css"
+  ],
+  "tests": [
+    "src/components/sheet/CombatTrackers.test.ts",
+    "src/components/sheet/EquipmentSpellsTab.test.ts"
+  ],
+  "testFiles": [
+    "src/components/sheet/CombatTrackers.test.ts",
+    "src/components/sheet/EquipmentSpellsTab.test.ts",
+    "shared/rule-benefits.test.ts"
+  ]
+}

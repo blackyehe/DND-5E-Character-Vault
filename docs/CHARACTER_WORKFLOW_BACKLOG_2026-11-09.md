@@ -20,6 +20,11 @@ edits across all authoring screens. That reconciliation, creator types beyond
 character options, and character-side pending-update indicators remain open.
 The existing explicit Compendium review remains available for those definitions.
 
+Resume point, explicitly deferred at the user's request: reconcile personal
+Compendium editions with native Workshop edits across all creator types, then
+add character-side pending-update indicators. The lighter sheet changes below
+do not change authoring, synchronization, or player write permissions.
+
 - Give Workshop and Compendium saves the same affected-character preview and
   explicit apply controls. Show actual spell attack/DC changes clearly.
 - Preserve HP, spent uses, inventory state, character choices and approved rules
@@ -35,8 +40,14 @@ The existing explicit Compendium review remains available for those definitions.
 1. Uniform spell-slot/resource panels with aligned counts and controls. Give
    spell attack and spell save DC a prominent, readable position. Per-spell
    attack modifiers beside damaging spells are a later addition.
+   Implemented: aligned cards/recovery labels and a separate spell-stat strip,
+   including the compact layout. Folio's narrow rail retains its list layout.
 2. Remove inventory items directly from the Equipment screen, with appropriate
    DM/player permissions and protection against removing the wrong filtered row.
+   Implemented for owners/DMs beside each item's controls. Inline confirmation
+   removes the whole stack; character version and exact saved row are checked.
+   Failed saves retain the item and confirmation. Player write permissions stay
+   as before; players can change quantities/equipment but cannot delete entries.
 3. Give item creation, giving and Workshop editing the full supported Benefits
    controls already available in Compendium editing.
 4. Add spell creation to the Homebrew Workshop, reusing the existing spell builder.

@@ -19,7 +19,7 @@ it('updates combat and rail indicators when equipping, attuning and unequipping 
  store.current=c;store.roomContext={roomId:'room',role:'player',preview:true}
  const check=async(attack:number,dc:number)=>{
   for(const variant of [undefined,'rail'] as const){
-   const html=await renderToString(createSSRApp(CombatTrackers,{variant}).use(pinia))
+   const html=(await renderToString(createSSRApp(CombatTrackers,{variant}).use(pinia))).replace(/ data-v-[\w-]+(?:="[^"]*")?/g,'')
    expect(html).toContain(`Spell attack</dt><dd>+${attack}</dd>`)
    expect(html).toContain(`Save DC</dt><dd>${dc}</dd>`)
   }

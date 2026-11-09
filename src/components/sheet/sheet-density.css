@@ -64,7 +64,7 @@
 .site-shell[data-sheet-density="compact"] .hero-sheet .sheet-spell-level h4 { margin-bottom:5px; }
 .site-shell[data-sheet-density="compact"] .hero-sheet .sheet-spellbook-hint { margin:6px 0 9px; }
 .site-shell[data-sheet-density="compact"] .hero-sheet .sheet-trackers-heading { margin-bottom:8px; gap:8px; }
-.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-grid { gap:7px; align-items:start; }
+.site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-grid { gap:7px; align-items:stretch; }
 .site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-card { padding:7px 8px; }
 .site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-card .sheet-track-pips { margin:5px 0; }
 .site-shell[data-sheet-density="compact"] .hero-sheet .sheet-tracker-total strong { font-size:19px; }
