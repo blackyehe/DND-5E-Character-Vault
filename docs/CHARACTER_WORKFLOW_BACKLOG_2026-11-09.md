@@ -61,6 +61,7 @@ with the same audit file recording its validation and Owlbear-specific limits.
    saving and preserves explicit removal. Compendium keeps its separate Benefits
    step, avoiding duplicate editors. Personal-edition reconciliation remains at
    the deferred resume point; this control addition does not solve that layer.
+   Released on the website as `dpl_GHue5E3BbMEiMr2Lwwh824ikXHGh`.
 4. Add spell creation to the Homebrew Workshop, reusing the existing spell builder.
 5. Add source-linked trackers to items, feats and other grants. Activation,
    removal/unequipping, recovery and preserved spent uses must follow the source.
