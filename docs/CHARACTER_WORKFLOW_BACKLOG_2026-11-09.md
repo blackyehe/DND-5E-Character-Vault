@@ -12,6 +12,8 @@ immediately and avoid a second library reload. Complete prepared option categori
 replace unrelated source reads when available; saving reads only the target pack.
 Conflicts keep the draft and require a fresh comparison. Tests cover all 30 offered
 Benefits, explicit native-feat refresh/removal and preserved play state.
+Released to the website as `dpl_CBitkm3auCwY8ZziXSoiYG2X65WF`; see
+`docs/audits/character-option-review-2026-11-09.md` for validation and limits.
 
 This does **not** yet unify personal Compendium editions with native Workshop pack
 edits across all authoring screens. That reconciliation, creator types beyond
