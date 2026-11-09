@@ -47,6 +47,35 @@ async function state(kind='feats'){const response=await request(`/${kind}/exampl
 async function save(kind='feats',description='Revised rule'){const current=await state(kind);return request(`/${kind}/example`,'PUT',{expectedRevision:current.revision,expectedSourceHash:current.sourceHash,entry:{...current.entry,description}})}
 function character(){const c={...emptyCharacter(),_id:'a'.repeat(24),userId:'owner',updatedAt:new Date('2026-10-23T00:00:00Z'),compendiumRules:undefined as unknown[]|undefined};c.meta.name='Test hero';c.features=[{name:'Example',description:'Original rule',origin:'feat',pinned:true}];c.combat.hpCurrent=4;c.combat.hpTemp=3;c.resources=[{id:'spent',name:'Uses',max:3,used:2,recovery:'long'}];return c}
 describe('personal Compendium editions',()=>{
+  it('reviews a changed native feat across fingerprints, previews total spell modifiers, and applies or removes it without resetting play state',async()=>{
+    const c=character(),oldIndex='homebrew-feats-old',nextIndex='homebrew-feats-next',optionId='f69246da-059c-4280-9cb4-cd931d38ca67'
+    c.meta.name='Volenta';c.meta.level=6;c.meta.klass='Wizard';c.abilities.int=20;c.spellcasting.ability='int';c.spellcasting.known=['light'];c.spellcasting.slots={l1:{max:4,used:2}}
+    c.features=[{name:'Zhaerin Contractor',origin:'feat',description:'Original rule',pinned:true,definition:{version:1,kind:'feats',index:oldIndex}}]
+    const before={name:'Zhaerin Contractor',index:oldIndex,optionId,benefits:[],description:'Original rule'}
+    c.compendiumRules=[{kind:'feats',index:oldIndex,revision:0,before,entry:before},{kind:'magic-items',index:'focus',revision:1,before:{name:'Focus',index:'focus'},entry:{name:'Focus',index:'focus',benefits:[{type:'spell-attack-bonus',value:3},{type:'spell-dc-bonus',value:3}]}}]
+    c.equipment=[{name:'Focus',magicIndex:'focus',qty:1,equipped:true,attuned:true,requiresAttunement:true,notes:'Keep',weight:1,benefits:[{type:'spell-attack-bonus',value:3},{type:'spell-dc-bonus',value:3}]}]
+    db.characters.push(c)
+    const benefits=[{type:'spell-attack-bonus',value:1},{type:'spell-dc-bonus',value:1}]
+    db.sources.set('feats:'+nextIndex,{...before,index:nextIndex,aliases:[oldIndex],benefits})
+    const play=JSON.stringify({combat:c.combat,resources:c.resources,spellcasting:c.spellcasting,equipment:c.equipment})
+    const preview=await(await request('/feats/'+nextIndex+'/review')).json(),row=preview.characters[0]
+    expect(row.name).toBe('Volenta');expect(row.statistics).toEqual([{label:'Spell attack',before:'+11',after:'+12'},{label:'Spell save DC',before:'19',after:'20'}]);expect((c.compendiumRules[0] as {entry:EntryData}).entry.benefits).toEqual([])
+    const payload={expectedRevision:preview.revision,expectedUpdatedAt:row.updatedAt,reviewHash:row.reviewHash,confirmedSource:true}
+    expect((await request(`/feats/${nextIndex}/review/${c._id}`,'POST',payload)).status).toBe(200)
+    expect(c.compendiumRules.filter(d=>(d as EntryData).kind==='feats')).toHaveLength(1);expect(c.features[0]!.definition?.index).toBe(nextIndex)
+    expect(JSON.stringify({combat:c.combat,resources:c.resources,spellcasting:c.spellcasting,equipment:c.equipment})).toBe(play)
+    const source=db.sources.get('feats:'+nextIndex)!;source.benefits=[]
+    const removal=await(await request('/feats/'+nextIndex+'/review')).json(),removeRow=removal.characters[0]
+    expect(removeRow.statistics).toEqual([{label:'Spell attack',before:'+12',after:'+11'},{label:'Spell save DC',before:'20',after:'19'}])
+    expect((await request(`/feats/${nextIndex}/review/${c._id}`,'POST',{...payload,expectedUpdatedAt:removeRow.updatedAt,reviewHash:removeRow.reviewHash})).status).toBe(200)
+    expect(JSON.stringify({combat:c.combat,resources:c.resources,spellcasting:c.spellcasting,equipment:c.equipment})).toBe(play)
+  })
+  it('rejects a native source changing after review even when its personal-edition revision stays zero',async()=>{
+    const c=character();db.characters.push(c);const preview=await(await request('/feats/example/review')).json(),row=preview.characters[0]
+    db.sources.get('feats:example')!.benefits=[{type:'spell-dc-bonus',value:1}]
+    const response=await request(`/feats/example/review/${c._id}`,'POST',{expectedRevision:0,expectedUpdatedAt:row.updatedAt,reviewHash:row.reviewHash,confirmedSource:true})
+    expect(response.status).toBe(409);expect(c.compendiumRules).toBeUndefined()
+  })
   it.each(EDITABLE_KINDS)('saves a prefilled %s builder twice and restores source without character writes',async kind=>{
     const source:EntryData={...builderExample(kind),index:'example'},entry=cloneEntry(source) as EntryData;db.sources.set(`${kind}:example`,source)
     const renamed='Updated example'

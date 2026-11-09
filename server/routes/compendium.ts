@@ -12,6 +12,7 @@ import type { Character as CharacterData } from '../../shared/character'
 import {characterRuleExtraKinds} from '../lib/workshop-rules'
 import { characterRuleLibrary } from '../lib/character-rule-library'
 import { characterUsesDefinition, reviewedCharacter, characterReviewChanges } from '../lib/compendium-character'
+import {characterReviewStatistics} from '../lib/character-review-statistics'
 import { savedCharacterOutput } from '../lib/character-output'
 import {sameOptionIdentity,optionHasId} from '../../shared/option-reference'
 import {subraceMatchesRace} from '../../shared/subrace-options'
@@ -129,7 +130,7 @@ async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|un
   const sourceConfirmation=true
   if(sourceConfirmation)warnings.push('Confirm this is the source intended for this character. Older saved features may only record a name; similarly named versions cannot always be distinguished.')
   const reviewHash=sourceHash(JSON.stringify({changes,homebrew:after.homebrew,definition,updatedAt:original.updatedAt}))
-  return {before,after,changes,warnings,blocked:selectionErrors.length>0,sourceConfirmation,reviewHash,alreadyReviewed:previous?.revision===state.revision&&sameEntry(previous.entry,state.entry)}
+  return {before,after,changes,statistics:characterReviewStatistics(before,after),warnings,blocked:selectionErrors.length>0,sourceConfirmation,reviewHash,alreadyReviewed:previous?.revision===state.revision&&sameEntry(previous.entry,state.entry)}
 }
 router.get('/:kind/:index/review',async(req,res)=>{
   const state=await compendiumEditState(req.userId,req.params.kind as CompendiumKind,String(req.params.index))
