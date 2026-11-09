@@ -42,3 +42,33 @@ Both independent Owlbear extension aliases remain on their previous deployment.
 Workspace hygiene reports zero scratch runs/cache. Rollback, while the website
 still points to this release:
 `node .local/sheet-usability-20261109/release.mjs rollback`.
+
+## Summary follow-up
+
+Live on both website aliases as `dpl_827hsYMEGD9Jx4HaS1BZsXaXZTiN`, immutable
+https://dndoldal-agvx68n7d-dndenjoyerstudio.vercel.app.
+Previous/rollback: `dpl_3pKTvMLAEZ5Ps555nQmB8tx6QvJM`.
+
+Checkpoint `be99e08` adds website Summary controls using existing calculations:
+six effective saving throws below skills, equipped/custom attacks and spell
+attack/DC above Training, and a top-of-summary Long rest action. The same pure
+`restUpdate` helper now powers Combat's rest controls and Summary. Short/long
+recovery respects tracker recovery modes; manual and unlimited trackers are
+preserved. HP and hit dice remain manual and the UI states this explicitly.
+
+Player updates use the existing play-state boundary; no permissions or permanent
+editing fields were added. Double submission is blocked and failed saves keep
+the saved state. Fifty focused checks, both type checks and the production build
+pass against the isolated exact production baseline. The candidate contains 522
+inputs, overlaying three runtime files onto the preceding 519-file deployment.
+
+Configuration: `scripts/releases/summary-controls-2026-11-09.json`. Concise
+manifests/receipts: `.local/summary-controls-20261109/`. No campaign data was edited
+while verifying. Owlbear's separate summary/frontend and scoped rest write action
+remain pending; the broader authoring reconciliation resume point is unchanged.
+
+All 522 hosted input hashes match the candidate; region and custom environment
+variable names match the preceding deployment. Public health is JSON 200;
+anonymous character/Workshop requests are JSON 401. Both Owlbear extension aliases
+retain their prior deployment. Application rollback, while this release is current:
+`node .local/summary-controls-20261109/release.mjs rollback`.

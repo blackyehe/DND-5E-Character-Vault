@@ -40,6 +40,8 @@ do not change authoring, synchronization, or player write permissions.
 The two implemented sheet tasks below are live on the website in
 `dpl_3pKTvMLAEZ5Ps555nQmB8tx6QvJM`; validation and limits are recorded in
 `docs/audits/sheet-usability-2026-11-09.md`. Other stages remain pending.
+The website Summary follow-up is live in `dpl_827hsYMEGD9Jx4HaS1BZsXaXZTiN`,
+with the same audit file recording its validation and Owlbear-specific limits.
 
 1. Uniform spell-slot/resource panels with aligned counts and controls. Give
    spell attack and spell save DC a prominent, readable position. Per-spell
