@@ -8,6 +8,8 @@ import {optionHasId,optionLabelMatches} from '../../shared/option-reference'
 import {choiceDescription,type ChoiceGroup} from '../../shared/choice-groups'
 import {isFeatureOptionKind} from '../../shared/option-kinds'
 import { characterBenefits, characterBenefitRows, benefitSummary, benefitKey, benefitField, entryBenefits, benefitProblems } from '../../shared/rule-benefits'
+import {ITEM_DEFINITION_FIELDS,itemDefinitionSnapshot} from '../../shared/item-definition'
+import {sameDefinition} from './definition-editions'
 
 const record=(v:unknown):EntryData=>v&&typeof v==='object'&&!Array.isArray(v)?v as EntryData:{}
 const list=(v:unknown):EntryData[]=>Array.isArray(v)?v.map(record):[]
@@ -15,16 +17,18 @@ const text=(v:unknown):string=>Array.isArray(v)?v.filter(x=>typeof x==='string')
 const name=(v:unknown)=>ruleName(String(v??''))
 const ids=(e:EntryData)=>[e.index,e.contentKey,...(Array.isArray(e.aliases)?e.aliases:[])].filter(v=>typeof v==='string') as string[]
 export function characterUsesDefinition(c:Character,d:CompendiumDefinition,includeReviewed=true):boolean {
-  if(includeReviewed&&c.compendiumRules?.some(r=>r.kind===d.kind&&r.index===d.index))return true
-  const refs=ids(d.before),named=(v:unknown)=>name(v)===name(d.before.name)
+  const approved=c.compendiumRules?.filter(r=>sameDefinition(r,d.kind,d.index,d.before))??[]
+  if(includeReviewed&&approved.length)return true
+  const refs=[...new Set([...ids(d.before),...approved.flatMap(r=>[r.index,...ids(r.entry),...ids(r.before)])])],names=[d.before.name,...approved.flatMap(r=>[r.entry.name,r.before.name])].map(name),named=(v:unknown)=>names.includes(name(v))
+  const option={...d.before,index:d.index,name:String(d.before.name),aliases:refs}
   if(d.kind==='spells')return [...c.spellcasting.known,...c.spellcasting.prepared].some(id=>refs.includes(id))
   if(d.kind==='equipment'||d.kind==='magic-items')return c.equipment.some(e=>refs.includes(e.index??'')||refs.includes(e.magicIndex??'')||d.index===`workshop-item-${e.templateId}`||!e.index&&!e.magicIndex&&named(e.name))
   if(d.kind==='classes')return c.meta.classLevels?.length?c.meta.classLevels.some(e=>e.index?refs.includes(e.index):named(e.name)):c.meta.classIndex?refs.includes(c.meta.classIndex):named(c.meta.klass)
   if(d.kind==='subclasses')return c.meta.classLevels?.length?c.meta.classLevels.some(e=>e.subclassIndex?refs.includes(e.subclassIndex):named(e.subclass)):c.meta.subclassIndex?refs.includes(c.meta.subclassIndex):named(c.meta.subclass)
   if(d.kind==='races')return c.meta.raceIndex?refs.includes(c.meta.raceIndex):named(c.meta.race)
   if(d.kind==='subraces')return c.meta.subraceIndex?refs.includes(c.meta.subraceIndex):named(c.meta.subrace)
-  if(d.kind==='backgrounds')return c.meta.backgroundIndex?refs.includes(c.meta.backgroundIndex):optionLabelMatches({...d.before,index:d.index,name:String(d.before.name)},c.meta.background)
-  if(isFeatureOptionKind(d.kind))return c.features.some(f=>f.definition?f.definition.kind===d.kind&&optionHasId({...d.before,index:d.index,name:String(d.before.name)},f.definition.index):optionLabelMatches({...d.before,index:d.index,name:String(d.before.name)},f.name)||d.kind==='feats'&&/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(named))
+  if(d.kind==='backgrounds')return c.meta.backgroundIndex?refs.includes(c.meta.backgroundIndex):optionLabelMatches(option,c.meta.background)||named(c.meta.background)
+  if(isFeatureOptionKind(d.kind))return c.features.some(f=>f.definition?f.definition.kind===d.kind&&optionHasId(option,f.definition.index):optionLabelMatches(option,f.name)||named(f.name)||d.kind==='feats'&&/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(named))
   if(d.kind==='languages')return c.proficiencies.languages.some(named)
   if(d.kind==='monsters')return false
   return c.features.some(f=>named(f.name)||/^feats?$/i.test(f.name.trim())&&f.description.split(/[,;\n]+/).some(named))
@@ -51,7 +55,15 @@ function draftFor(entry:EntryData,kind:WorkshopDraft['kind'],baseline?:WorkshopD
   return d
 }
 export function reviewedWorkshopRules(c:Character,rules:PublishedWorkshopRule[],initial:Record<string,WorkshopDraft>){
-  const next=[...rules],baselines={...initial}
+  const next=rules.map(rule=>{
+    const binding=c.homebrew?.bindings.find(b=>b.ruleId===rule.id)
+    if(!binding){
+      const indexes=[c.meta.classIndex,c.meta.subclassIndex,c.meta.raceIndex,...(c.meta.classLevels??[]).flatMap(row=>[row.index,row.subclassIndex])]
+      const baseline=initial[rule.id]
+      return baseline&&!indexes.includes(rule.index)?{...rule,revision:0,draft:baseline,index:rule.previousIndexes[0]??rule.index,previousIndexes:[rule.index,...rule.previousIndexes]}:rule
+    }
+    return {...rule,index:binding.index,revision:binding.revision,draft:binding.rule,previousIndexes:[...new Set([rule.index,...rule.previousIndexes])]}
+  }),baselines={...initial}
   for(const def of c.compendiumRules??[]){
     const kind=({classes:'class',subclasses:'subclass',races:'race'} as const)[def.kind as 'classes'|'subclasses'|'races']
     if(!kind)continue
@@ -87,12 +99,14 @@ export function applyReviewedDefinitions(c:Character):Character{
       c.equipment=c.equipment.map(item=>{
         if(!ids(d.before).includes(item.index??'')&&!ids(d.before).includes(item.magicIndex??'')&&d.index!==`workshop-item-${item.templateId}`&&!(name(item.name)===name(d.before.name)&&!item.index&&!item.magicIndex))return item
         const result={...item}
-        for(const key of ['name','weight','category','tags','rarity','value','attunementRequirement','description','armor','weapon','magicBonus','kind','magical','requiresAttunement','effects'] as const){
-          if(!sameEntry(old[key],next[key])&&(sameEntry(item[key],old[key])||sameEntry(item[key],next[key])||item[key]===undefined))Object.assign(result,{[key]:next[key]})
+        const baseline=item.templateBaseline??old
+        for(const key of ITEM_DEFINITION_FIELDS.filter(key=>key!=='benefits')){
+          if(!sameEntry(baseline[key],next[key])&&(sameEntry(item[key],baseline[key])||sameEntry(item[key],next[key])||item[key]===undefined))Object.assign(result,{[key]:next[key]})
         }
         // Keep the inventory's visible snapshot in sync with the approved edition.
         const benefits=entryBenefits(d.entry).filter(row=>benefitProblems([row]).length===0)
         if(benefits.length||Array.isArray(d.entry.benefits)||item.benefits)result.benefits=cloneEntry(benefits)
+        if(item.templateId){result.templateBaseline=itemDefinitionSnapshot({...next,...(result.benefits?{benefits:result.benefits}:{})});if(typeof next.templateRevision==='number')result.templateRevision=next.templateRevision}
         return result
       })
       continue

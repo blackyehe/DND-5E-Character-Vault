@@ -1,0 +1,137 @@
+import {afterAll,beforeAll,beforeEach,describe,expect,it,vi} from 'vitest'
+import mongoose from 'mongoose'
+import express,{type Request,type Response,type NextFunction} from 'express'
+import type {Server} from 'node:http'
+import {env} from '../env'
+import {CustomContent} from '../models/CustomContent'
+import {Character} from '../models/Character'
+import {Room} from '../models/Room'
+import {newOptionDraft} from '../../shared/option-workshop'
+import {newSpellDraft} from '../../shared/spell-workshop'
+import {newWorkshopDraft,newWorkshopResource} from '../../shared/homebrew-workshop'
+import {emptyCharacter,type EquipmentItem} from '../../shared/character'
+import {benefitSpellAttack,benefitSpellDC} from '../../shared/rule-benefits'
+import {definitionIdentity,editIdentity,saveNativeDefinition} from '../lib/definition-editions'
+import {workshopLibrary,resolveWorkshopCharacter} from '../lib/workshop-library'
+import {reviewedCharacter} from '../lib/compendium-character'
+import {captureSelectedDefinitions} from '../lib/selected-options'
+
+vi.mock('../middleware/auth',()=>({requireAuth:(req:Request,res:Response,next:NextFunction)=>{req.userId=req.get('x-user');return req.userId?next():res.sendStatus(401)}}))
+import compendium from './compendium'
+import workshop from './workshop'
+import items from './items'
+import rooms from './rooms'
+let server:Server,base:string,owner:string
+async function request(path:string,method='GET',body?:unknown,user=owner){const response=await fetch(base+path,{method,headers:{'content-type':'application/json','x-user':user,connection:'close'},body:body===undefined?undefined:JSON.stringify(body)});return {status:response.status,body:await response.json() as any}}
+async function saveEdition(kind:string,index:string,change:(entry:any)=>void){const response=await request(`/compendium/${kind}/${index}`);expect(response.status,JSON.stringify(response.body)).toBe(200);const state=response.body;const entry=structuredClone(state.entry);change(entry);return request(`/compendium/${kind}/${index}`,'PUT',{expectedRevision:state.revision,expectedSourceHash:state.sourceHash,entry})}
+async function publish(kind:'options'|'spells',draft:any){return request(`/workshop/${kind}/publish`,'POST',{draft,target:draft.published?{packId:draft.published.packId,expectedHash:draft.published.packHash}:{filename:`${draft.id}.orcbrew`},expectedRevision:draft.published?.revision??0})}
+async function apply(kind:string,index:string,id:string){const review=(await request(`/compendium/${kind}/${index}/review`)).body,row=review.characters.find((r:any)=>r.id===id);expect(row).toBeDefined();return request(`/compendium/${kind}/${index}/review/${id}`,'POST',{expectedRevision:review.revision,expectedUpdatedAt:row.updatedAt,reviewHash:row.reviewHash,confirmedSource:true})}
+const bonuses=(n:number)=>[{type:'spell-attack-bonus',value:n},{type:'spell-dc-bonus',value:n}]
+describe.skipIf(process.env.DEFINITION_CONSISTENCY_TESTS!=='1')('shared definition saves with real MongoDB transactions',()=>{
+ beforeAll(async()=>{
+  expect(env.MONGO_URI).toMatch(/^mongodb:\/\/127\.0\.0\.1:\d+\/definition_consistency_tests_[a-f0-9]+\?replicaSet=definitions$/);expect(Boolean(process.env.VERCEL)).toBe(false)
+  await mongoose.connect(env.MONGO_URI,{autoCreate:false,autoIndex:false})
+  await CustomContent.createCollection();await CustomContent.createIndexes();await Character.createCollection();await Character.createIndexes();await Room.createCollection();await Room.createIndexes()
+  const app=express();app.use(express.json({limit:'4mb'}));app.use('/compendium',compendium);app.use('/workshop',workshop);app.use('/items',items);app.use('/rooms',rooms);app.use((error:Error,_req:Request,res:Response,_next:NextFunction)=>res.status(500).json({error:error.message,stack:error.stack}))
+  server=await new Promise(resolve=>{const listening=app.listen(0,'127.0.0.1',()=>resolve(listening))});const address=server.address();if(!address||typeof address==='string')throw Error('No fixture address');base=`http://127.0.0.1:${address.port}`
+ })
+ beforeEach(()=>{owner=String(new mongoose.Types.ObjectId())})
+ afterAll(async()=>{try{if(server)await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));if(mongoose.connection.readyState===1&&mongoose.connection.host==='127.0.0.1'&&/^definition_consistency_tests_[a-f0-9]+$/.test(mongoose.connection.name))await mongoose.connection.dropDatabase()}finally{await mongoose.disconnect()}})
+ it.each(['options','spells'] as const)('opens Compendium edits in %s, rejects an old tab and keeps explicit removal through another fingerprint',async kind=>{
+  const draft=kind==='options'?newOptionDraft('feats'):newSpellDraft();draft.body.name='Shared definition'
+  const first=await publish(kind,draft);expect(first.status,JSON.stringify(first.body)).toBe(200);const saved=first.body.draft,index=saved.published.index,category=kind==='options'?'feats':'spells'
+  expect((await saveEdition(category,index,entry=>{entry.benefits=bonuses(1)})).status).toBe(200)
+  expect((await publish(kind,saved)).status).toBe(409)
+  const opened=(await request('/workshop/'+kind)).body[kind][0];expect(opened.benefits).toEqual(bonuses(1));expect(opened.published.definitionRevision).toBe(2)
+  opened.benefits=[];opened.body.name='Renamed shared definition'
+  const second=await publish(kind,opened);expect(second.status).toBe(200);expect(second.body.draft.published.index).not.toBe(index)
+  const state=(await request(`/compendium/${category}/${second.body.draft.published.index}`)).body;expect(state.entry.benefits).toEqual([]);expect(state.entry.name).toBe(opened.body.name);expect(state.revision).toBe(3)
+  expect(await CustomContent.countDocuments({userId:owner,type:'compendium-edit'})).toBe(1)
+  const other=await request('/workshop/'+kind,'GET',undefined,String(new mongoose.Types.ObjectId()));expect(other.body[kind]).toEqual([])
+ })
+ it('adopts a legacy personal edition across native aliases without creating a second edition',async()=>{
+  const draft=newOptionDraft('feats');draft.body.name='Legacy source';const first=(await publish('options',draft)).body.draft,index=first.published.index
+  await CustomContent.updateOne({userId:owner,type:'compendium-edit'},{$set:{sourceHash:editIdentity('feats',index),'data.changes':{benefits:bonuses(2)}}})
+  const opened=(await request('/workshop/options')).body.options[0];expect(opened.benefits).toEqual(bonuses(2));const saved=await publish('options',opened);expect(saved.status).toBe(200)
+  const state=(await request(`/compendium/feats/${saved.body.draft.published.index}`)).body,doc=await CustomContent.findOne({userId:owner,type:'compendium-edit'}).lean();expect(doc!.sourceHash).toBe(definitionIdentity('feats',state.index,state.source));expect(state.entry.benefits).toEqual(bonuses(2))
+ })
+ it('allows only one of two edits made from the same version to commit',async()=>{
+  const draft=newOptionDraft('feats');draft.body.name='Concurrent source';const first=(await publish('options',draft)).body.draft,index=first.published.index
+  const state=(await request(`/compendium/feats/${index}`)).body
+  const bodies=[1,2].map(n=>({expectedRevision:state.revision,expectedSourceHash:state.sourceHash,entry:{...state.entry,benefits:bonuses(n)}}))
+  const results=await Promise.all(bodies.map(body=>request(`/compendium/feats/${index}`,'PUT',body)));expect(results.map(r=>r.status).sort()).toEqual([200,409]);expect(await CustomContent.countDocuments({userId:owner,type:'compendium-edit'})).toBe(1)
+ })
+ it('rolls back the source write when the edition cannot be saved',async()=>{
+  const record=await CustomContent.create({userId:owner,type:'item',data:{name:'Original'}}),source={index:`workshop-item-${record._id}`,name:'Original'}
+  const write=vi.spyOn(CustomContent,'create').mockRejectedValueOnce(new Error('forced edition failure'))
+  try{await expect(saveNativeDefinition(owner,'equipment',source,{...source,name:'Lost'},0,{...source,name:'Lost'},async session=>CustomContent.findOneAndUpdate({_id:record._id},{$set:{'data.name':'Lost'}},{session,new:true}).lean())).rejects.toThrow('forced edition failure')}finally{write.mockRestore()}
+  expect((await CustomContent.findById(record._id).lean())!.data.name).toBe('Original')
+ })
+ it('rejects one of simultaneous Compendium and Workshop saves without losing either editor’s winning fields',async()=>{
+  const draft=newOptionDraft('feats');draft.body.name='Editor race';const saved=(await publish('options',draft)).body.draft,index=saved.published.index,state=(await request(`/compendium/feats/${index}`)).body
+  saved.benefits=bonuses(2)
+  const result=await Promise.all([publish('options',saved),request(`/compendium/feats/${index}`,'PUT',{expectedRevision:state.revision,expectedSourceHash:state.sourceHash,entry:{...state.entry,benefits:bonuses(1)}})])
+  expect(result.map(r=>r.status).sort()).toEqual([200,409]);const opened=(await request('/workshop/options')).body.options[0];expect(opened.benefits).toEqual(bonuses(result[0].status===200?2:1))
+ })
+ it('captures the current Compendium edition on acquisition and keeps it when an unrelated character field changes',async()=>{
+  const draft=newOptionDraft('feats');draft.body.name='Acquired source';const saved=(await publish('options',draft)).body.draft,index=saved.published.index
+  expect((await saveEdition('feats',index,entry=>entry.benefits=bonuses(2))).status).toBe(200)
+  const c={...emptyCharacter(),_id:String(new mongoose.Types.ObjectId()),updatedAt:new Date().toISOString()};c.features=[{name:draft.body.name,description:'',origin:'feat',definition:{version:1,kind:'feats',index}}]
+  const library=await workshopLibrary(owner),selected=await captureSelectedDefinitions(owner,c,library);expect(selected.compendiumRules![0]!.entry.benefits).toEqual(bonuses(2));const char=await Character.create({...selected,userId:owner})
+  expect((await request('/compendium/pending/'+char._id)).body).toEqual([])
+  expect((await saveEdition('feats',index,entry=>entry.benefits=bonuses(4))).status).toBe(200)
+  const unchanged=await captureSelectedDefinitions(owner,{...selected,personality:{...selected.personality,notes:'Changed notes'}},library,selected);expect(unchanged.compendiumRules![0]!.entry.benefits).toEqual(bonuses(2))
+  await CustomContent.deleteOne({_id:saved.published.packId,userId:owner});expect((await request('/compendium/pending/'+char._id)).body).toContainEqual({kind:'feats',index,name:draft.body.name,missing:true})
+ })
+ it('keeps Volenta-style feat bonuses pinned, previews +12/DC20 and removes them without resetting play state',async()=>{
+  const draft=newOptionDraft('feats');draft.body.name='Zhaerin Contractor';const first=(await publish('options',draft)).body.draft,index=first.published.index
+  const state=(await request(`/compendium/feats/${index}`)).body,c=emptyCharacter();c.meta.name='Volenta fixture';c.meta.level=6;c.meta.klass='Wizard';c.abilities.int=20;c.spellcasting.ability='int';c.spellcasting.slots={l1:{max:4,used:2}};c.combat.hpCurrent=4;c.combat.hpTemp=3;c.resources=[{id:'spent',name:'Uses',max:3,used:2,recovery:'long'}]
+  c.features=[{name:draft.body.name,description:'',origin:'feat',definition:{version:1,kind:'feats',index}}];c.compendiumRules=[{kind:'feats',index,revision:state.revision,before:state.source,entry:state.entry}]
+  c.equipment=[{name:'Prison fixture',kind:'accessory',qty:1,weight:1,equipped:true,attuned:false,notes:'Keep',benefits:bonuses(3)}]
+  const char=await Character.create({...c,userId:owner}),id=String(char._id),play=JSON.stringify({combat:char.combat,resources:char.resources,spellcasting:char.spellcasting,equipment:char.equipment})
+  first.benefits=bonuses(1);const second=await publish('options',first);expect(second.status).toBe(200);const next=second.body.draft.published.index
+  let current=await Character.findById(id).lean();expect(benefitSpellAttack(current as any)).toBe(11);expect(benefitSpellDC(current as any)).toBe(19)
+  const pending=await request('/compendium/pending/'+id);expect(pending.status).toBe(200);expect(pending.body).toContainEqual({kind:'feats',index:next,name:draft.body.name})
+  const preview=(await request(`/compendium/feats/${next}/review`)).body;expect(preview.characters[0].statistics).toEqual([{label:'Spell attack',before:'+11',after:'+12'},{label:'Spell save DC',before:'19',after:'20'}])
+  expect((await apply('feats',next,id)).status).toBe(200);current=await Character.findById(id).lean();expect(benefitSpellAttack(current as any)).toBe(12);expect(current!.compendiumRules).toHaveLength(1)
+  expect(JSON.stringify({combat:current!.combat,resources:current!.resources,spellcasting:current!.spellcasting,equipment:current!.equipment})).toBe(play)
+  expect((await request('/compendium/pending/'+id)).body).toEqual([])
+  expect((await saveEdition('feats',next,entry=>entry.benefits=[])).status).toBe(200);expect((await apply('feats',next,id)).status).toBe(200);current=await Character.findById(id).lean();expect(benefitSpellAttack(current as any)).toBe(11);expect(benefitSpellDC(current as any)).toBe(19)
+ })
+ it('shares item name, description and benefits, rejects stale saves and keeps character copies until review',async()=>{
+  const item:EquipmentItem={name:'Prison fixture',kind:'accessory',magical:true,qty:1,weight:1,equipped:false,attuned:false,notes:'',benefits:bonuses(3)}
+  const created=await request('/items','POST',{requestId:crypto.randomUUID(),item});expect(created.status).toBe(201);const id=created.body.id,index=`workshop-item-${id}`
+  const c=emptyCharacter();c.meta.name='Item holder';c.meta.level=6;c.abilities.int=20;c.spellcasting.ability='int';c.equipment=[{...item,templateId:id,qty:2,equipped:true,notes:'Personal note'}];const char=await Character.create({...c,userId:owner})
+  expect((await saveEdition('magic-items',index,entry=>{entry.workshopItem.description='Shared rules';entry.workshopItem.name='Shared prison';entry.benefits=bonuses(4)})).status).toBe(200)
+  const opened=(await request('/items')).body[0];expect(opened.item.name).toBe('Shared prison');expect(opened.item.description).toBe('Shared rules');expect(opened.item.benefits).toEqual(bonuses(4))
+  expect((await request('/items/'+id,'PUT',{item,requestId:crypto.randomUUID(),expectedRevision:0,expectedDefinitionRevision:0})).status).toBe(409)
+  const saved=await request('/items/'+id,'PUT',{item:{...opened.item,benefits:[]},requestId:crypto.randomUUID(),expectedRevision:opened.revision,expectedDefinitionRevision:opened.definitionRevision});expect(saved.status).toBe(200)
+  expect((await Character.findById(char._id).lean())!.equipment[0]!.benefits).toEqual(bonuses(3))
+  expect((await apply('magic-items',index,String(char._id))).status).toBe(200);const after=(await Character.findById(char._id).lean())!.equipment[0]!;expect(after.benefits).toEqual([]);expect(after.name).toBe('Shared prison');expect(after.description).toBe('Shared rules');expect(after.qty).toBe(2);expect(after.equipped).toBe(true);expect(after.notes).toBe('Personal note')
+ })
+ it('shares native class edits and keeps its saved resource binding on the approved revision',async()=>{
+  const draft=newWorkshopDraft('class');draft.name='Bound mage';draft.skillCount=0;draft.resources=[{...newWorkshopResource(),name:'Arcane uses',base:3,multiplier:0}]
+  const first=await request('/workshop/publish','POST',{draft,target:{filename:'class.orcbrew'},expectedRevision:0});expect(first.status,JSON.stringify(first.body)).toBe(200);const saved=first.body.draft,index=saved.published.index
+  const c=emptyCharacter();c.meta.name='Class holder';c.meta.klass=draft.name;c.meta.classIndex=index;c.meta.level=3
+  const lib=await workshopLibrary(owner),bound=reviewedCharacter({...c,_id:String(new mongoose.Types.ObjectId()),updatedAt:new Date().toISOString()},lib.rules,lib.initial);bound.resources![0]!.used=2;const char=await Character.create({...bound,userId:owner})
+  expect((await saveEdition('classes',index,entry=>{entry.workshop.description='Shared class rules';entry.workshop.resources[0].base=5})).status).toBe(200)
+  expect((await request('/workshop/publish','POST',{draft:saved,target:{packId:saved.published.packId,expectedHash:saved.published.packHash},expectedRevision:1})).status).toBe(409)
+  const startup=(await request('/workshop/initial')).body,entry=startup.classes[0];expect(entry.workshop.description).toBe('Shared class rules');expect(entry.workshop.resources[0].base).toBe(5)
+  const edited={...entry.workshop,definitionRevision:entry.definitionRevision,imported:{index:entry.index,contentKey:entry.contentKey,sources:entry.sourcePacks},published:{...saved.published,definitionRevision:entry.definitionRevision}}
+  const second=await request('/workshop/publish','POST',{draft:edited,target:{packId:saved.published.packId,expectedHash:saved.published.packHash},expectedRevision:1});expect(second.status).toBe(200)
+  const raw=await Character.findById(char._id).lean(),resolved=await resolveWorkshopCharacter(raw,owner);expect(resolved.resources![0]!.max).toBe(3);expect(resolved.resources![0]!.used).toBe(2)
+  expect((await apply('classes',second.body.draft.published.index,String(char._id))).status).toBe(200);const after=await Character.findById(char._id).lean();expect(after!.resources[0]!.max).toBe(5);expect(after!.resources[0]!.used).toBe(2)
+ })
+ it('exposes pending names only through current ownership or an active room assignment; players cannot apply editions',async()=>{
+  const draft=newOptionDraft('feats');draft.body.name='Assigned source';const saved=(await publish('options',draft)).body.draft,index=saved.published.index,state=(await request(`/compendium/feats/${index}`)).body
+  const c=emptyCharacter();c.meta.name='Assigned hero';c.features=[{name:draft.body.name,description:'',origin:'feat',definition:{version:1,kind:'feats',index}}];c.compendiumRules=[{kind:'feats',index,revision:state.revision,before:state.source,entry:state.entry}]
+  const char=await Character.create({...c,userId:owner}),player=String(new mongoose.Types.ObjectId()),outsider=String(new mongoose.Types.ObjectId()),room=await Room.create({ownerId:owner,name:'Fixture',members:[player,outsider],assignments:[{characterId:char._id,userId:player}],joinToken:crypto.randomUUID()})
+  expect((await saveEdition('feats',index,entry=>entry.benefits=bonuses(1))).status).toBe(200)
+  const path=`/rooms/${room._id}/characters/${char._id}/rule-updates`,before=JSON.stringify(await Character.findById(char._id).lean())
+  expect((await request(path,'GET',undefined,player)).body).toEqual([{kind:'feats',index,name:draft.body.name}]);expect((await request(path,'GET',undefined,outsider)).status).toBe(404)
+  expect((await request('/compendium/pending/'+char._id,'GET',undefined,player)).status).toBe(404)
+  expect((await request(`/compendium/feats/${index}/review/${char._id}`,'POST',{expectedRevision:2,expectedUpdatedAt:char.updatedAt.toISOString(),reviewHash:'a'.repeat(64),confirmedSource:true},player)).status).toBe(404)
+  expect(JSON.stringify(await Character.findById(char._id).lean())).toBe(before)
+  await Room.updateOne({_id:room._id},{$set:{assignments:[]}});expect((await request(path,'GET',undefined,player)).status).toBe(404)
+ })
+})

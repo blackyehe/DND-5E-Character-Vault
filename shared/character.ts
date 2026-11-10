@@ -30,6 +30,7 @@ export interface Attack {
 }
 
 export interface EquipmentItem {
+  templateBaseline?:Partial<Omit<EquipmentItem,'templateBaseline'>>
   _id?: string
   name: string
   qty: number

@@ -14,7 +14,8 @@ export const workshopDraftSchema=z.object({
   resources:z.array(z.object({id:z.string().uuid(),name:text.min(1),level:whole(1,20),basis:z.enum(['fixed','level','ability','proficiency']),ability,multiplier:whole(0,99),base:whole(0,999),minimum:whole(0,999),recovery:z.enum(['short','long','manual']),unlimitedAt:whole(1,20).nullable(),notes:z.string().max(10000)})).max(100),
   features:z.array(z.object({id:z.string().uuid(),name:text.min(1),level:whole(1,20),description:z.string().max(100000),choice:z.boolean(),choose:whole(1,99),options:z.array(text).max(500),originalIndex:whole(0,2000).optional(),originalSelection:whole(0,2000).optional()})).max(1000),
   imported:z.object({index:z.string().max(250),contentKey:z.string().max(200).regex(/^[a-zA-Z0-9_./-]+$/),sources:z.array(text).max(100)}).optional(),
-  published:z.object({revision:whole(1,1000000),index:z.string().max(250),packId:z.string().max(100),packHash:z.string().max(100)}).optional(),updatedAt:z.string().max(100),
+  definitionRevision:whole(0,1000000).optional(),
+  published:z.object({revision:whole(1,1000000),index:z.string().max(250),packId:z.string().max(100),packHash:z.string().max(100),definitionRevision:whole(0,1000000).optional()}).optional(),updatedAt:z.string().max(100),
 }).superRefine((d,ctx)=>{
   for(const message of workshopProblems(d as WorkshopDraft))ctx.addIssue({code:'custom',message})
   for(const array of [d.features,d.resources])if(new Set(array.map(v=>v.id)).size!==array.length)ctx.addIssue({code:'custom',message:'Feature and resource identifiers must be unique.'})

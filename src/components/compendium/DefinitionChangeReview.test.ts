@@ -9,11 +9,11 @@ vi.mock('../../lib/api',()=>({api:{get:mocks.get,post:mocks.post},ApiError:class
 vi.mock('../../stores/auth',async()=>{const {reactive}=await import('vue');const state=reactive({user:{id:'owner'}});return {useAuthStore:()=>state}})
 const renderer=createRenderer<object,object>({patchProp(){},insert(){},remove(){},createElement:()=>({}),createText:()=>({}),createComment:()=>({}),setText(){},setElementText(){},parentNode:()=>null,nextSibling:()=>null})
 let bindings:any,stop:(()=>void)|undefined
-const props=reactive({kind:'feats',index:'contractor',version:1,disabled:false}),events:unknown[][]=[]
+const props=reactive({characterId:undefined as string|undefined,kind:'feats',index:'contractor',version:1,disabled:false}),events:unknown[][]=[]
 const row:DefinitionReviewRow={id:'a'.repeat(24),name:'Volenta',updatedAt:'saved',reviewHash:'b'.repeat(64),sourceConfirmation:true,alreadyReviewed:false,warnings:[],changes:[],statistics:[{label:'Spell attack',before:'+11',after:'+12'},{label:'Spell save DC',before:'19',after:'20'}]}
 function deferred<T>(){let resolve!:(value:T)=>void;const promise=new Promise<T>(r=>resolve=r);return {promise,resolve}}
 function mount(){const original=DefinitionChangeReview as any;const app=renderer.createApp({...original,setup(_:unknown,context:any){bindings=original.setup(props,{...context,emit:(...e:unknown[])=>events.push(e)});return bindings},render:()=>null} as Component,props);app.provide(ssrContextKey,{modules:new Set()});app.mount({});stop=()=>app.unmount()}
-beforeEach(()=>{Object.assign(props,{kind:'feats',index:'contractor',version:1,disabled:false});(useAuthStore().user as any).id='owner';mocks.get.mockReset().mockResolvedValue({revision:3,characters:[row]});mocks.post.mockReset().mockResolvedValue({});events.length=0})
+beforeEach(()=>{Object.assign(props,{characterId:undefined,kind:'feats',index:'contractor',version:1,disabled:false});(useAuthStore().user as any).id='owner';mocks.get.mockReset().mockResolvedValue({revision:3,characters:[row]});mocks.post.mockReset().mockResolvedValue({});events.length=0})
 afterEach(()=>{stop?.();stop=undefined})
 it('requires source confirmation and applies exactly the revision and character that were reviewed',async()=>{
  mount();await bindings.load();await bindings.apply(row);expect(mocks.post).not.toHaveBeenCalled();bindings.confirmed.value[row.id]=true
@@ -37,3 +37,5 @@ it('aborts and discards a comparison when the saved definition, draft or account
 it('does not report a completed apply against a new definition or after unmount',async()=>{
  mount();await bindings.load();bindings.confirmed.value[row.id]=true;const pending=deferred<unknown>();mocks.post.mockReturnValueOnce(pending.promise);const saving=bindings.apply(row);props.index='other';stop!();stop=undefined;pending.resolve({});await saving;expect(bindings.applied.value).toEqual({});expect(events).not.toContainEqual(['applied','Volenta'])
 })
+
+it('limits a sheet review to its current character',async()=>{props.characterId=row.id;const other={...row,id:'other'};mocks.get.mockResolvedValue({revision:3,characters:[other,row]});mount();await bindings.load();expect(bindings.review.value.characters).toEqual([row]);bindings.confirmed.value.other=true;expect(bindings.canApply(other)).toBe(false);await bindings.apply(other);expect(mocks.post).not.toHaveBeenCalled()})

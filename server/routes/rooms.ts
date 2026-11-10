@@ -1,3 +1,4 @@
+import {characterDefinitionUpdates} from '../lib/character-definition-updates'
 import { Router } from 'express'
 import { randomBytes } from 'node:crypto'
 import { isValidObjectId } from 'mongoose'
@@ -128,6 +129,7 @@ router.get('/:roomId/characters/:characterId', async (req, res) => {
   const { raw, ownerId, dm } = res.locals.roomCharacter
   res.json(req.query.view==='quick'?{...quickSheetOutput(raw,!dm),libraryRevision:await workshopRevision(ownerId)}:await characterOutput(raw, ownerId, !dm))
 })
+router.get('/:roomId/characters/:characterId/rule-updates',async(_req,res)=>{const {raw,ownerId}=res.locals.roomCharacter;res.json(await characterDefinitionUpdates(raw,ownerId))})
 router.get('/:roomId/characters/:characterId/references',async(_req,res)=>{
   const {raw,ownerId,dm}=res.locals.roomCharacter
   const library=await characterRuleLibrary(ownerId,characterRuleExtraKinds(raw))

@@ -123,7 +123,7 @@ const equipmentSchema = new Schema(
     description: String,
     referenceDescription: String,
       kind:{type:String,enum:['weapon','armour','accessory','consumable','treasure','gear']},
-      magical:Boolean,requiresAttunement:Boolean,attuned:Boolean,templateId:String,templateRevision:Number,grantId:String,
+      magical:Boolean,requiresAttunement:Boolean,attuned:Boolean,templateId:String,templateRevision:Number,grantId:String,templateBaseline:Schema.Types.Mixed,
       effects:{type:new Schema({ac:{type:Number,default:0},saves:{type:Number,default:0}},{_id:false}),default:undefined},
       benefits:{type:[Schema.Types.Mixed],default:undefined,validate:{validator:(rows:unknown[])=>benefitProblems(rows).length===0,message:'Check the item benefits.'}},
     armor: { type: new Schema({ base: Number, dex: Boolean, cap: Number, shield: Boolean, category: String }, { _id: false }), default: undefined },

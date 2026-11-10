@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import {afterAll,beforeAll,beforeEach,expect,it,vi} from 'vitest'
 import express from 'express'
 import type {Server} from 'node:http'
@@ -8,13 +9,13 @@ import {placeOptionEntry} from '../lib/workshop-pack'
 const mocks=vi.hoisted(()=>({library:vi.fn(),read:vi.fn(),write:vi.fn(),create:vi.fn()}))
 vi.mock('../lib/option-authoring-library',()=>({optionAuthoringLibrary:mocks.library}))
 vi.mock('../lib/pack-source',()=>({readPackDocuments:mocks.read}))
-vi.mock('../models/CustomContent',()=>({CustomContent:{findOneAndUpdate:(...args:unknown[])=>({lean:()=>mocks.write(...args)}),create:mocks.create}}))
+vi.mock('../models/CustomContent',()=>({CustomContent:{findOneAndUpdate:(...args:unknown[])=>({lean:()=>mocks.write(...args)}),find:()=>({setOptions(){return this},lean:async()=>[]}),createIndexes:async()=>{},create:async(values:any)=>{const rows=Array.isArray(values)?values:[values];return rows[0].type==='compendium-edit'?rows:[await mocks.create(rows[0])]}}}))
 import router from './option-workshop'
 let server:Server,base:string
 const packId='a'.repeat(24),draft=newOptionDraft('feats');draft.body.name='Zhaerin Contractor'
 const source=placeOptionEntry(undefined,'feats',optionKey(draft.id),optionRecord(draft,1,[]),draft.id),pack={id:packId,filename:'Blacky.orcbrew',includeDisabled:false,parsed:inspectOrcbrew(source)},entry=pack.parsed.entries.feats[0]!,hash=sourceHash(source)
 const oldDraft={...nativeOption(entry)!,published:{revision:1,index:entry.index,packId,packHash:hash}},doc={_id:packId,userId:'owner',type:'orcbrew',updatedAt:new Date('2026-11-09'),data:{filename:pack.filename,source}}
-beforeAll(async()=>{const app=express();app.use(express.json());app.use((req,res,next)=>{if(req.get('x-user')!=='owner')return res.sendStatus(401);req.userId='owner';next()});app.use(router);server=await new Promise<Server>(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});const address=server.address();if(!address||typeof address==='string')throw Error('No address');base=`http://127.0.0.1:${address.port}`})
+beforeAll(async()=>{vi.spyOn(mongoose.connection,'transaction').mockImplementation(async(fn:any)=>fn({}));const app=express();app.use(express.json());app.use((req,res,next)=>{if(req.get('x-user')!=='owner')return res.sendStatus(401);req.userId='owner';next()});app.use(router);server=await new Promise<Server>(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});const address=server.address();if(!address||typeof address==='string')throw Error('No address');base=`http://127.0.0.1:${address.port}`})
 afterAll(()=>new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve())))
 beforeEach(()=>{vi.clearAllMocks();mocks.library.mockResolvedValue({lib:{packs:[pack],hashes:new Map([[packId,hash]]),warnings:[]},rows:[{pack,entry,draft:nativeOption(entry)}]});mocks.read.mockResolvedValue([doc]);mocks.write.mockResolvedValue({...doc,updatedAt:new Date()});mocks.create.mockResolvedValue({_id:packId})})
 async function request(body:unknown){return fetch(base+'/publish',{method:'POST',headers:{'Content-Type':'application/json','x-user':'owner',connection:'close'},body:JSON.stringify(body)})}

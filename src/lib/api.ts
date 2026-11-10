@@ -35,7 +35,7 @@ async function request<T>(path: string, options: RequestInit = {}, background=fa
     throw new ApiError(res.status, message)
   }
   const value=await res.json().catch(error=>{if(options.signal?.aborted)throw new Error('The connection is taking too long. Please try Refresh.');throw error}) as T
-  if(options.method&&options.method!=='GET'&&/^\/api\/(?:content|compendium[^/]*|workshop(?:-trash)?|monster-workshop)(?:\/|$)/.test(path)&&typeof window!=='undefined')window.dispatchEvent(new Event('codex:library-changed'))
+  if(options.method&&options.method!=='GET'&&/^\/api\/(?:content|items|compendium[^/]*|workshop(?:-trash)?|monster-workshop)(?:\/|$)/.test(path)&&typeof window!=='undefined')window.dispatchEvent(new Event('codex:library-changed'))
   return value
   } finally {finish()}
 }

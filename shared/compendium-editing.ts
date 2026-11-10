@@ -8,10 +8,11 @@ export interface CompendiumDefinition { kind: CompendiumKind; index: string; rev
 export interface CompendiumEditState {
   kind: CompendiumKind; index: string; revision: number; sourceHash: string; sourceChanged: boolean
   source: EntryData; entry: EntryData; edited: boolean
+  previousSource?:EntryData
 }
 export const cloneEntry = <T>(value:T):T => JSON.parse(JSON.stringify(value))
 export const sameEntry = (a:unknown,b:unknown):boolean => JSON.stringify(a)===JSON.stringify(b)
-const protectedRoot = new Set(['index','contentKey','legacyKey','disabled','aliases','source','sourcePack','sourcePacks','sources','url','displayName','homebrew','filterFacets','workshopRevision','itemDetailUrl','monsterDetailUrl','definitionAvailable','optionId','optionRevision','spellId','spellRevision','monsterEnrichment','itemReference','itemDamageTypes'])
+const protectedRoot = new Set(['definitionRevision','index','contentKey','legacyKey','disabled','aliases','source','sourcePack','sourcePacks','sources','url','displayName','homebrew','filterFacets','workshopRevision','itemDetailUrl','monsterDetailUrl','definitionAvailable','optionId','optionRevision','spellId','spellRevision','monsterEnrichment','itemReference','itemDamageTypes'])
 export function protectedEntryField(key:string,root=false):boolean {
   return ['__proto__','prototype','constructor','_id','id','localId','ruleId','featureId','index','url','key',':key','version','updatedAt','originalIndex','originalSelection',':edit-event',':option-pack',':codex/revision',':codex/previous-indexes',':codex/previous-names','published','imported','templateId','templateRevision','grantId'].includes(key) || root&&protectedRoot.has(key)
 }

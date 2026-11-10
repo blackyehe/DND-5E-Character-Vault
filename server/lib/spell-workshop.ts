@@ -3,7 +3,7 @@ import {normalizeBuilderEntry} from './entry-builder-schema'
 import {benefitProblems} from '../../shared/rule-benefits'
 import type {SpellDraft} from '../../shared/spell-workshop'
 import type {OrcbrewEntry} from './orcbrew'
-const published=z.object({revision:z.number().int().min(1),index:z.string().min(1).max(300),packId:z.string().regex(/^[a-f0-9]{24}$/i),packHash:z.string().length(64)}).strict()
+const published=z.object({revision:z.number().int().min(1),index:z.string().min(1).max(300),packId:z.string().regex(/^[a-f0-9]{24}$/i),packHash:z.string().length(64),definitionRevision:z.number().int().min(0).optional()}).strict()
 export const spellDraftSchema=z.object({version:z.literal(1),id:z.uuid(),kind:z.literal('spells'),source:z.string().trim().min(1).max(200),body:z.record(z.string(),z.unknown()),benefits:z.array(z.unknown()).max(200),updatedAt:z.string().max(60),published:published.optional()}).strict()
 export function validatedSpell(value:unknown):SpellDraft{
  const d=spellDraftSchema.parse(value),entry=normalizeBuilderEntry({name:d.body.name,spellBuilder:d.body,benefits:d.benefits},'spells'),issues=benefitProblems(d.benefits)

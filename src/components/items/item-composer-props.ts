@@ -6,4 +6,5 @@ export interface ItemComposerProps {
   characterName?: string
   initial?: EquipmentItem
   initialMagical?: boolean
+  definitionRevision?:number
 }

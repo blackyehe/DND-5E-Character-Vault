@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import express, { type Request, type Response, type NextFunction } from 'express'
 import type { Server } from 'node:http'
@@ -13,14 +14,16 @@ const db=vi.hoisted(()=>{
   let sequence=0
   const matches=(doc:Doc,filter:Doc)=>Object.entries(filter).every(([key,value])=>{
     const actual=key.split('.').reduce((o,k)=>o?.[k],doc)
+    if(value&&typeof value==='object'&&'$in' in value)return value.$in.includes(actual)
     return actual instanceof Date||value instanceof Date?String(actual)===String(value):actual===value
   })
-  const query=(load:()=>unknown)=>{const result={lean:async()=>load(),select:()=>result,sort:()=>result};return result}
+  const query=(load:()=>unknown)=>{const result={lean:async()=>load(),select:()=>result,sort:()=>result,setOptions:()=>result,session:()=>result};return result}
   const model=(docs:Doc[])=>({
     find:(filter:Doc)=>query(()=>docs.filter(d=>matches(d,filter))),
     findOne:(filter:Doc)=>query(()=>docs.find(d=>matches(d,filter))??null),
     createIndexes:async()=>{},
-    create:async(value:Doc)=>{
+    create:async(value:Doc):Promise<any>=>{
+      if(Array.isArray(value)){const result=[];for(const row of value)result.push(await model(docs).create(row));return result}
       if(docs.some(d=>d.userId===value.userId&&d.type===value.type&&d.sourceHash===value.sourceHash))throw Object.assign(new Error('Duplicate'),{code:11000})
       const doc={...value,_id:(++sequence).toString(16).padStart(24,'0'),updatedAt:new Date()};docs.push(doc);return doc
     },
@@ -31,6 +34,7 @@ const db=vi.hoisted(()=>{
   })
   return {content,characters,sources,contentModel:model(content),characterModel:model(characters)}
 })
+vi.mock('../lib/definition-editions',async original=>({...await original<typeof import('../lib/definition-editions')>(),withCurrentDefinition:async(_owner:unknown,_kind:unknown,_index:unknown,_source:unknown,_revision:unknown,write:(session:unknown)=>unknown)=>write({})}))
 vi.mock('../models/CustomContent',()=>({CustomContent:db.contentModel}))
 vi.mock('../models/Character',()=>({Character:db.characterModel}))
 vi.mock('../lib/compendium-source',()=>({compendiumSource:async(user:string,kind:string,index:string)=>user==='owner'?db.sources.get(`${kind}:${index}`)??null:null}))
@@ -39,7 +43,7 @@ vi.mock('../lib/character-output',()=>({savedCharacterOutput:(value:unknown)=>va
 vi.mock('../middleware/auth',()=>({requireAuth:(req:Request,res:Response,next:NextFunction)=>{const user=req.get('x-user');if(!user)return res.status(401).json({error:'Unauthorized'});req.userId=user;next()}}))
 import router from './compendium'
 let server:Server,base:string
-beforeAll(async()=>{const app=express();app.use(express.json({limit:'4mb'}));app.use(router);server=await new Promise<Server>(resolve=>{const listener=app.listen(0,'127.0.0.1',()=>resolve(listener))});const address=server.address();if(!address||typeof address==='string')throw Error('No address');base=`http://127.0.0.1:${address.port}`})
+beforeAll(async()=>{vi.spyOn(mongoose.connection,'transaction').mockImplementation(async(fn:any)=>fn({}));const app=express();app.use(express.json({limit:'4mb'}));app.use(router);server=await new Promise<Server>(resolve=>{const listener=app.listen(0,'127.0.0.1',()=>resolve(listener))});const address=server.address();if(!address||typeof address==='string')throw Error('No address');base=`http://127.0.0.1:${address.port}`})
 afterAll(()=>new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve())))
 beforeEach(()=>{db.content.length=0;db.characters.length=0;db.sources.clear();for(const kind of EDITABLE_KINDS)db.sources.set(`${kind}:example`,{index:'example',name:'Example',url:'',description:'Original rule',details:{':unknown':{nested:[0,false,'preserve me']}},aliases:['old-example']})})
 async function request(path:string,method='GET',body?:unknown,user='owner'){return fetch(base+path,{method,headers:{'Content-Type':'application/json',connection:'close',...(user?{'x-user':user}:{})},body:body===undefined?undefined:JSON.stringify(body)}) as Promise<Omit<Awaited<ReturnType<typeof fetch>>,'json'>&{json:()=>Promise<any>}>}

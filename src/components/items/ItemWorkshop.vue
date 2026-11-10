@@ -3,13 +3,15 @@ import { computed,onMounted,onUnmounted,ref } from 'vue'
 import { api } from '../../lib/api'
 import type { EquipmentItem,CharacterSummary } from '../../../shared/character'
 import ItemComposer from './ItemComposer.vue'
+import DefinitionChangeReview from '../compendium/DefinitionChangeReview.vue'
 import WorkshopLibraryTools from '../workshop/WorkshopLibraryTools.vue'
 import DeleteCreationButton from '../workshop/DeleteCreationButton.vue'
 import ItemFilters from './ItemFilters.vue'
 import { emptyItemFilters,itemSearchText,matchesEquipmentItem } from '../../lib/magic-item-filters'
 import { equipmentTags,itemClassificationLabel } from '../../../shared/item-classification'
-const items=ref<{id:string;item:EquipmentItem}[]>([]),characters=ref<CharacterSummary[]>([]),target=ref(''),query=ref(''),filter=ref('all')
+const items=ref<{id:string;item:EquipmentItem;definitionRevision?:number}[]>([]),characters=ref<CharacterSummary[]>([]),target=ref(''),query=ref(''),filter=ref('all')
 const open=ref(false),mode=ref<'library'|'give'>('library'),initial=ref<EquipmentItem>(),magical=ref(false),message=ref(''),error=ref(''),loading=ref(false)
+const definitionRevision=ref(0),reviewItem=ref<EquipmentItem>()
 const filters=ref(emptyItemFilters())
 const matches=computed(()=>items.value.filter(e=>(filter.value==='all'||!!e.item.magical===(filter.value==='magic'))&&itemSearchText(e.item).includes(query.value.toLowerCase())&&matchesEquipmentItem(e.item,filters.value)))
 let loadRun=0,disposed=false,loadAbort:AbortController|undefined
@@ -19,7 +21,7 @@ async function load(){
   loading.value=true;error.value=''
   try{
     const [nextItems,nextCharacters]=await Promise.all([
-      api.get<{id:string;item:EquipmentItem}[]>('/api/items',{signal:controller.signal}),
+      api.get<{id:string;item:EquipmentItem;definitionRevision?:number}[]>('/api/items',{signal:controller.signal}),
       api.get<CharacterSummary[]>('/api/characters',{signal:controller.signal}),
     ])
     if(disposed||run!==loadRun)return
@@ -28,9 +30,9 @@ async function load(){
   finally{if(run===loadRun)loading.value=false}
 }
 function create(value:boolean){mode.value='library';initial.value=undefined;magical.value=value;open.value=true}
-function edit(item:EquipmentItem){mode.value='library';initial.value=item;open.value=true}
+function edit(item:EquipmentItem){mode.value='library';initial.value=item;definitionRevision.value=items.value.find(e=>e.id===item.templateId)?.definitionRevision??0;open.value=true}
 function give(item:EquipmentItem){mode.value='give';initial.value=item;open.value=true}
-async function saved(text:string){message.value=text;await load()}
+async function saved(text:string){const id=initial.value?.templateId;message.value=text;await load();if(mode.value==='library'&&id)reviewItem.value=items.value.find(e=>e.id===id)?.item}
 async function removed(text:string){open.value=false;message.value=text;await load()}
 onMounted(load)
 onUnmounted(()=>{disposed=true;loadRun++;loadAbort?.abort()})
@@ -49,6 +51,7 @@ onUnmounted(()=>{disposed=true;loadRun++;loadAbort?.abort()})
       <p v-if="loading" class="hw-hint" role="status">Loading your items…</p><p v-else-if="!matches.length" class="hw-empty-inline">{{items.length?'No items match. Clear your filters or try another search.':'Create your first item above. You can also choose an SRD item in the creator and save it to your library.'}}</p>
       <div class="hw-library-grid"><article v-for="entry in matches" :key="entry.id" class="hw-creation-card"><button type="button" class="hw-content-card" @click="edit(entry.item)"><span class="hw-card-kind">{{entry.item.magical?'Magic':'Normal'}} · {{entry.item.kind??'Gear'}}</span><strong>{{entry.item.name}}</strong><small v-if="itemClassificationLabel(entry.item)">{{itemClassificationLabel(entry.item)}}</small><span class="hw-card-description">{{entry.item.description?.slice(0,160)||'No additional description.'}}</span><span class="hw-content-footer">Account library <b>Edit item</b></span></button><div class="hw-card-actions"><button type="button" class="hw-text-button" :disabled="!target" @click="give(entry.item)">Give item</button><DeleteCreationButton :target="{scope:'record',id:entry.id,kind:'item',revision:entry.item.templateRevision??0,name:entry.item.name}" @deleted="removed"/></div></article></div>
     </section>
-    <ItemComposer v-if="open" :mode="mode" :initial="initial" :initial-magical="magical" :character-id="target" :character-name="characters.find(c=>c._id===target)?.meta.name" @close="open=false" @saved="saved" />
+    <DefinitionChangeReview v-if="reviewItem?.templateId&&!open" :kind="reviewItem.magical?'magic-items':'equipment'" :index="`workshop-item-${reviewItem.templateId}`" :version="items.find(e=>e.id===reviewItem!.templateId)?.definitionRevision" />
+    <ItemComposer v-if="open" :mode="mode" :initial="initial" :definition-revision="definitionRevision" :initial-magical="magical" :character-id="target" :character-name="characters.find(c=>c._id===target)?.meta.name" @close="open=false" @saved="saved" />
   </section>
 </template>

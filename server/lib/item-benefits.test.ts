@@ -7,11 +7,11 @@ import {benefitSpellAttack,benefitSpellDC} from '../../shared/rule-benefits'
 import {savedCharacterOutput} from './character-output'
 import {applyPlayUpdate,playUpdateSchema} from './play-update'
 
-const mocks=vi.hoisted(()=>({findOne:vi.fn()}))
-vi.mock('../models/CustomContent',()=>({CustomContent:{findOne:mocks.findOne}}))
+const mocks=vi.hoisted(()=>({find:vi.fn()}))
+vi.mock('../models/CustomContent',()=>({CustomContent:{find:mocks.find}}))
 const benefits=[{type:'spell-attack-bonus',value:3,level:1},{type:'spell-dc-bonus',value:3,level:1}]
 const focus=():EquipmentItem=>({name:'Test focus',kind:'accessory',magical:true,qty:1,weight:1,notes:'',equipped:false,requiresAttunement:true,attuned:false})
-beforeEach(()=>{mocks.findOne.mockReset()})
+beforeEach(()=>{mocks.find.mockReset()})
 
 it('captures configured template benefits, supports explicit removal, and leaves the template untouched',()=>{
  const item={...focus(),benefits},copy=withItemBenefitEdition(item,{benefits:[]})
@@ -21,9 +21,9 @@ it('captures configured template benefits, supports explicit removal, and leaves
 })
 
 it('reads only the selected owner, item and category when granting a template',async()=>{
- mocks.findOne.mockReturnValue({select:()=>({lean:async()=>({data:{changes:{benefits}}})})})
+ mocks.find.mockReturnValue({setOptions(){return this},lean:async()=>[{data:{changes:{benefits}}}]})
  expect((await templateBenefitEdition('owner','a'.repeat(24),focus())).benefits).toEqual(benefits)
- expect(mocks.findOne).toHaveBeenCalledWith({userId:'owner',type:'compendium-edit','data.kind':'magic-items','data.index':`workshop-item-${'a'.repeat(24)}`})
+ expect(mocks.find).toHaveBeenCalledWith({userId:'owner',type:'compendium-edit',sourceHash:{$in:expect.any(Array)}})
 })
 
 it('retains spell bonuses through grant validation, database serialization, reload and player equip actions',async()=>{

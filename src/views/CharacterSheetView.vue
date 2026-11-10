@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, computed, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import WorkshopRuleReview from '../components/workshop/WorkshopRuleReview.vue'
+import DefinitionUpdates from '../components/sheet/DefinitionUpdates.vue'
 import { useRoute, RouterLink, onBeforeRouteLeave } from 'vue-router'
 import { useCharactersStore, type Character } from '../stores/characters'
 import { provideSheetLibrary } from '../composables/useSheetLibrary'
@@ -83,6 +84,7 @@ defineExpose({ editDirty,retryOpen:openCharacter,discardEdits,reviewRules,openSe
         <template #status>
         <section v-if="pendingTab" class="sheet-panel" role="alertdialog" aria-label="Unsaved character edits" style="margin-bottom:20px"><h3>Keep your edits?</h3><p class="sheet-small">Your character has unsaved changes. Complete the draft, or discard it to change tabs.</p><div class="sheet-filter-buttons" style="margin-top:14px"><button class="sheet-button" @click="pendingTab=''">Keep editing</button><button class="sheet-button" @click="discardAndSwitch">Discard draft & change tab</button></div></section>
         <p v-if="advancementMessage" class="sheet-notice" role="status">{{advancementMessage}}</p>
+        <DefinitionUpdates v-if="!playerPreview&&!championFor" :character-id="id" :room-id="roomId" :can-apply="store.canEditPermanent" :disabled="store.saving||editDirty||active==='level-up'" @applied="refreshRules()" />
         <p v-if="store.saveError&&active!=='level-up'" class="sheet-alert" role="alert">{{ store.saveError }} Your last saved values are still shown.</p>
         <p v-if="pendingRules" class="sheet-notice">Saved class rules changed while you were editing. Your draft is kept; saving it will apply the latest rules and flag conflicts.</p><WorkshopRuleReview v-if="active!=='level-up'&&store.canEditPermanent&&!(roomId&&role==='dm')" @edit="reviewRules" />
         <p v-if="library.warning.value" class="sheet-notice">{{ library.warning.value }}</p>

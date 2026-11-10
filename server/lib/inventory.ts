@@ -5,6 +5,7 @@ import { attunementError, itemKind } from '../../shared/item-rules'
 import { resolveEquipmentItem } from './equipment-references'
 import { armourCategories, itemRarities } from '../../shared/item-classification'
 import { benefitProblems } from '../../shared/rule-benefits'
+import {itemDefinitionSnapshot} from '../../shared/item-definition'
 
 const weaponSchema=z.object({dice:z.string().max(30),damageType:z.string().max(60),range:z.string().max(100),finesse:z.boolean(),ranged:z.boolean(),category:z.string().max(40).optional(),noDamage:z.boolean().optional()}).superRefine((weapon,ctx)=>{
  if(weapon.noDamage)return // Special rules remain descriptive, without invented base damage.
@@ -48,7 +49,7 @@ export function inventoryAfterGrant(before:Character,item:EquipmentItem,requestI
   const previous=before.equipment.find(i=>i.grantId===requestId)
   if(previous)return {equipment:before.equipment,duplicate:true}
   if(before.equipment.length>=1000)throw new Error('This inventory already has 1000 entries.')
-  const added={...prepareItem(item),grantId:requestId}
+  const added={...prepareItem(item),...(item.templateId&&!item.templateBaseline?{templateBaseline:itemDefinitionSnapshot(item)}:{}),grantId:requestId}
   const equipment=[...before.equipment.map(i=>added.equipped&&added.armor&&i.armor&&i.armor.shield===added.armor.shield?{...i,equipped:false}:i),added]
   if(added.attuned){const error=attunementError(equipment);if(error)throw new Error(error)}
   return {equipment,duplicate:false}

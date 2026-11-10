@@ -1,3 +1,4 @@
+vi.mock('./definition-editions',()=>({effectiveDefinitions:async(_owner:unknown,rows:{source:unknown}[])=>rows.map(row=>({entry:row.source,revision:0}))}))
 import {beforeEach,expect,it,vi} from 'vitest'
 import {inspectOrcbrew,buildOrcbrewCatalog,sourceHash} from './orcbrew'
 import {characterRules} from './workshop-rules'
@@ -15,7 +16,7 @@ let revision=0
 beforeEach(()=>{vi.clearAllMocks();for(const row of metadata)row.updatedAt=new Date(Date.parse('2026-10-01')+(++revision));mocks.enabled.mockReturnValue(true);mocks.metadata.mockResolvedValue(metadata);mocks.read.mockResolvedValue(packs);mocks.legacy.mockResolvedValue(legacy)})
 it('returns the same complete authoring data and pack identities using only four prepared categories',async()=>{
  const value=await workshopStartup('owner')
- expect(value.classes).toEqual(activeWorkshopEntries(catalog.classes,'classes'));expect(value.races).toEqual(activeWorkshopEntries(catalog.races,'races'));expect(value.spells).toEqual(catalog.spells)
+ expect(value.classes).toEqual(activeWorkshopEntries(catalog.classes,'classes').map(e=>({...e,definitionRevision:0})));expect(value.races).toEqual(activeWorkshopEntries(catalog.races,'races').map(e=>({...e,definitionRevision:0})));expect(value.spells).toEqual(catalog.spells)
  expect(value.library.packs).toEqual(packs.map(p=>({id:p.id,filename:p.filename,hash:metadata.find(m=>m._id===p.id)!.sourceHash,entries:[...p.parsed.entries.classes,...p.parsed.entries.subclasses,...p.parsed.entries.races].map(e=>e.index)})))
  expect(value.library.packs[1]!.entries).toHaveLength(1);expect(value.subclasses).toHaveLength(0)
  expect(mocks.read).toHaveBeenCalledWith('owner',['classes','subclasses','races','spells'],metadata,false,expect.any(Number))
@@ -27,7 +28,7 @@ it.each(['off','missing','error','changed'])('falls back without a partial resul
  if(condition==='error')mocks.read.mockRejectedValue(new Error('temporary storage failure'))
  if(condition==='changed')mocks.metadata.mockResolvedValueOnce(metadata).mockResolvedValueOnce([{...metadata[0],sourceHash:'different'}])
  const fallback=await workshopStartup('owner')
- expect(fallback.classes).toEqual(activeWorkshopEntries(catalog.classes,'classes'));expect(mocks.legacy).toHaveBeenCalledWith('owner')
+ expect(fallback.classes).toEqual(activeWorkshopEntries(catalog.classes,'classes').map(e=>({...e,definitionRevision:0})));expect(mocks.legacy).toHaveBeenCalledWith('owner')
 })
 it('coalesces concurrent startup requests per owner and clears failed in-flight work',async()=>{
  let release!:(value:typeof packs)=>void;mocks.read.mockReturnValueOnce(new Promise(resolve=>{release=resolve}))
@@ -35,7 +36,7 @@ it('coalesces concurrent startup requests per owner and clears failed in-flight 
  for(let n=0;n<8;n++)await Promise.resolve()
  release(packs);expect(await second).toEqual(await first);expect(mocks.read).toHaveBeenCalledOnce()
  mocks.enabled.mockReturnValue(false);mocks.legacy.mockRejectedValueOnce(new Error('network'))
- await expect(workshopStartup('owner')).rejects.toThrow('network');expect((await workshopStartup('owner')).classes).toEqual(activeWorkshopEntries(catalog.classes,'classes'))
+ await expect(workshopStartup('owner')).rejects.toThrow('network');expect((await workshopStartup('owner')).classes).toEqual(activeWorkshopEntries(catalog.classes,'classes').map(e=>({...e,definitionRevision:0})))
 })
 it('reuses a warm response only after current small owner metadata matches',async()=>{
  const reader=vi.fn(),first=await workshopStartup('owner',reader),count=mocks.metadata.mock.calls.length

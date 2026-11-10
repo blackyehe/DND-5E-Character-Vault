@@ -1,13 +1,16 @@
+import {effectiveDefinition,saveNativeDefinition} from '../lib/definition-editions'
+import {nativeDesired,savedPackEntry} from '../lib/native-definition-editing'
+import {changedEntryFields} from '../../shared/compendium-editing'
 import spellRoutes from './spell-workshop'
 import { env } from '../env'
 import { Router } from 'express'
 import { storedPackData,MAX_PACK_BYTES } from '../lib/pack-storage'
-import { isValidObjectId } from 'mongoose'
+import { isValidObjectId,Types } from 'mongoose'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth'
 import { CustomContent } from '../models/CustomContent'
 import { workshopDraftSchema, validatedDraft } from '../lib/workshop-schema'
-import { workshopLibrary, synchronizeWorkshopCharacters } from '../lib/workshop-library'
+import { workshopLibrary } from '../lib/workshop-library'
 import { compactDraft, compileWorkshopEntry, placeWorkshopEntry, workshopKey } from '../lib/workshop-pack'
 import { inspectOrcbrew, sourceHash } from '../lib/orcbrew'
 import { workshopFromEntry, workshopSection, type WorkshopDraft } from '../../shared/homebrew-workshop'
@@ -33,7 +36,7 @@ router.get('/backup',async(req,res)=>{
 async function prepare(draft:WorkshopDraft,userId:string|undefined){
   const lib=await workshopLibrary(userId),kind=workshopSection(draft.kind)
   const latest=lib.rules.find(r=>r.id===draft.id)
-  const origin=lib.catalog[kind].find(e=>e.index===draft.imported?.index)
+  const origin=lib.catalog[kind].find(e=>e.index===(latest?.index??draft.imported?.index))
   if(draft.imported&&!origin)throw Object.assign(new Error('The source definition has changed or was removed. Reopen its latest version from the library.'),{status:409})
   const originPack=origin?lib.packs.find(p=>p.parsed.entries[kind].some(e=>e.index===origin.index)):undefined
   const source=originPack?String((lib.docs.find(d=>String(d._id)===originPack.id)!.data as {source:string}).source):undefined
@@ -77,6 +80,8 @@ router.post('/publish',async(req,res)=>{
   return locked(String(req.userId),async()=>{
     try{const draft=parsed.data.draft as WorkshopDraft,{target,expectedRevision}=parsed.data,p=await prepare(draft,req.userId)
       if((p.latest?.revision??0)!==expectedRevision)return res.status(409).json({error:'This class has a newer saved revision. Reopen it before saving your changes.'})
+      const effective=p.origin?await effectiveDefinition(req.userId,workshopSection(draft.kind),p.origin):undefined
+      if((effective?.revision??0)!==(draft.definitionRevision??draft.published?.definitionRevision??0))return res.status(409).json({error:'This definition changed in another editor. Reopen the saved version; your draft is kept.'})
       const targetDoc=target.packId?p.lib.docs.find(d=>String(d._id)===target.packId):undefined
       if(target.packId&&(!isValidObjectId(target.packId)||!targetDoc))return res.status(404).json({error:'Target pack not found'})
       if(!targetDoc&&!target.filename)return res.status(400).json({error:'Name the new Orcbrew pack.'})
@@ -92,11 +97,13 @@ router.post('/publish',async(req,res)=>{
       if(entry.disabled&&!data.includeDisabled)return res.status(400).json({error:'This pack is disabled. Enable its disabled content in the Compendium or choose another pack.'})
       const duplicate=await CustomContent.findOne({userId:req.userId,type:'orcbrew',sourceHash:hash,...(targetDoc?{_id:{$ne:targetDoc._id}}:{})}).lean()
       if(duplicate)return res.status(409).json({error:'An identical pack is already in your library.'})
-      const doc=targetDoc?await CustomContent.findOneAndUpdate({_id:targetDoc._id,userId:req.userId,updatedAt:targetDoc.updatedAt},{$set:{data,sourceHash:hash}},{new:true}).lean():await CustomContent.create({userId:req.userId,type:'orcbrew',data,sourceHash:hash})
-      if(!doc)return res.status(409).json({error:'The pack changed during saving. Reload and try again.'})
-      const library=await workshopLibrary(req.userId)
-      let updates:{updated:number;review:number;deferred:number};try{updates=await synchronizeWorkshopCharacters(req.userId,library)}catch{updates={updated:0,review:0,deferred:1}}
-      res.json({draft:{...((entry.details as Record<string,unknown>)[':codex/workshop'] as WorkshopDraft),imported:{index:entry.index,contentKey:entry.contentKey,sources:[data.filename],raw:entry.details},published:{revision:(p.latest?.revision??0)+1,index:entry.index,packId:String(doc._id),packHash:hash}},updates})
+      const id=String(targetDoc?._id??new Types.ObjectId()),kind=workshopSection(draft.kind),after=savedPackEntry(kind,inspected,{id,filename:String(data.filename),includeDisabled:!!data.includeDisabled},entry.index)
+      const desired=nativeDesired(kind,after,p.origin&&effective?changedEntryFields(p.origin,effective.entry):undefined,undefined,p.origin)
+      const result=await saveNativeDefinition(req.userId,kind,p.origin,after,draft.definitionRevision??draft.published?.definitionRevision??0,desired,async session=>targetDoc?await CustomContent.findOneAndUpdate({_id:targetDoc._id,userId:req.userId,updatedAt:targetDoc.updatedAt,...(targetDoc.sourceHash?{sourceHash:targetDoc.sourceHash}:{})},{$set:{data,sourceHash:hash}},{new:true,session}).lean():(await CustomContent.create([{_id:id,userId:req.userId,type:'orcbrew',data,sourceHash:hash}],{session}))[0])
+      const doc=result.saved
+      const updates={updated:0,review:0,deferred:0}
+
+      res.json({draft:{definitionRevision:result.revision,...((entry.details as Record<string,unknown>)[':codex/workshop'] as WorkshopDraft),imported:{index:entry.index,contentKey:entry.contentKey,sources:[data.filename],raw:entry.details},published:{revision:(p.latest?.revision??0)+1,index:entry.index,packId:String(doc._id),packHash:hash,definitionRevision:result.revision}},updates})
     }catch(error){return res.status((error as {status?:number}).status??400).json({error:(error as Error).message})}
   })
 })

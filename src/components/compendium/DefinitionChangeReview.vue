@@ -7,7 +7,7 @@ import type {DefinitionReview,DefinitionReviewRow} from '../../../shared/definit
 import ReferenceValue from './ReferenceValue.vue'
 import './entry-editor.css'
 
-const props=defineProps<{kind:CompendiumKind;index:string;version?:string|number;disabled?:boolean}>()
+const props=defineProps<{kind:CompendiumKind;index:string;version?:string|number;disabled?:boolean;characterId?:string}>()
 const emit=defineEmits<{busy:[boolean];applied:[string]}>()
 const auth=useAuthStore(),review=ref<DefinitionReview|null>(null),busy=ref(false),error=ref(''),notice=ref(''),stale=ref(false)
 const confirmed=ref<Record<string,boolean>>({}),applied=ref<Record<string,boolean>>({})
@@ -15,11 +15,11 @@ const path=computed(()=>`/api/compendium/${props.kind}/${encodeURIComponent(prop
 let generation=0,controller:AbortController|undefined
 function reset(){++generation;controller?.abort();review.value=null;error.value='';notice.value='';stale.value=false;confirmed.value={};applied.value={}}
 function displayValue(value:unknown):unknown{return Array.isArray(value)?value.map(displayValue):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([key])=>!['index','url'].includes(key)).map(([key,child])=>[key,displayValue(child)])):value}
-function canApply(row:DefinitionReviewRow){return !props.disabled&&!busy.value&&!stale.value&&!applied.value[row.id]&&!row.alreadyReviewed&&!row.blocked&&(!row.sourceConfirmation||!!confirmed.value[row.id])}
+function canApply(row:DefinitionReviewRow){return (!props.characterId||row.id===props.characterId)&&!props.disabled&&!busy.value&&!stale.value&&!applied.value[row.id]&&!row.alreadyReviewed&&!row.blocked&&(!row.sourceConfirmation||!!confirmed.value[row.id])}
 async function load(){
  if(props.disabled||busy.value)return
  const run=++generation;controller?.abort();controller=new AbortController();busy.value=true;emit('busy',true);error.value='';notice.value=''
- try{const value=await api.get<DefinitionReview>(path.value+'/review',{timeoutMs:60000,signal:controller.signal});if(run!==generation)return;review.value=value;confirmed.value={};applied.value={};stale.value=false}
+ try{const value=await api.get<DefinitionReview>(path.value+'/review',{timeoutMs:60000,signal:controller.signal});if(run!==generation)return;review.value=props.characterId?{...value,characters:value.characters.filter(row=>row.id===props.characterId)}:value;confirmed.value={};applied.value={};stale.value=false}
  catch(e){if(run===generation)error.value=(e as Error).message}
  finally{busy.value=false;emit('busy',false)}
 }
@@ -30,7 +30,7 @@ async function apply(row:DefinitionReviewRow){
  catch(e){if(run===generation){error.value=(e as Error).message;stale.value=e instanceof ApiError&&e.status===409}}
  finally{busy.value=false;emit('busy',false)}
 }
-watch(()=>[props.kind,props.index,props.version,auth.user?.id],reset,{flush:'sync'})
+watch(()=>[props.kind,props.index,props.version,props.characterId,auth.user?.id],reset,{flush:'sync'})
 // An unsaved edit invalidates the comparison even if the user later undoes it.
 watch(()=>props.disabled,value=>{if(value)reset()},{flush:'sync'})
 onBeforeUnmount(reset)

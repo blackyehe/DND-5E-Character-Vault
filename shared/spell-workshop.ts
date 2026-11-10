@@ -1,6 +1,6 @@
 import {entrySpellDraft,type SpellBuilder} from './spell-builder'
 import type {EntryData} from './compendium-editing'
-export interface SpellDraft {version:1;id:string;kind:'spells';source:string;body:SpellBuilder;benefits:unknown[];updatedAt:string;published?:{revision:number;index:string;packId:string;packHash:string}}
+export interface SpellDraft {version:1;id:string;kind:'spells';source:string;body:SpellBuilder;benefits:unknown[];updatedAt:string;published?:{revision:number;index:string;packId:string;packHash:string;definitionRevision?:number}}
 export const spellDraftStorageKey=(owner:string)=>`codex:spell-workshop:v1:${owner}`
 export function newSpellDraft():SpellDraft{return {version:1,id:crypto.randomUUID(),kind:'spells',source:'My Homebrew',body:entrySpellDraft({name:'',casting_time:'1 action',range:'Self',duration:'Instantaneous'}),benefits:[],updatedAt:new Date().toISOString()}}
 export function spellDraftEntry(draft:SpellDraft):EntryData{return {name:draft.body.name,index:`spell-${draft.id}`,...(draft.body.level===0?{damage:{damage_at_character_level:{}}}:{}),spellBuilder:draft.body,benefits:draft.benefits}}

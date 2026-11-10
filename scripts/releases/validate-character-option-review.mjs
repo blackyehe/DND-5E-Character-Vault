@@ -21,21 +21,24 @@ await withTemporaryWorkspace('character-option-review-production',async director
  for(const file of prior){
   const target=path.join(source,file.path)
   if(fs.existsSync(target)&&hash(fs.readFileSync(target))===file.uid)continue
-  const retained=path.join(root,'.local/reader-spell-levels-20261104/source',file.path)
+  const selected=config.baselineFiles?path.join(root,config.baselineFiles,file.path):undefined
+  const retained=selected&&fs.existsSync(selected)?selected:path.join(root,'.local/reader-spell-levels-20261104/source',file.path)
   let bytes=fs.existsSync(retained)?fs.readFileSync(retained):null
   const current=path.join(root,file.path);if((!bytes||hash(bytes)!==file.uid)&&fs.existsSync(current)){const candidate=fs.readFileSync(current);if(hash(candidate)===file.uid)bytes=candidate}
   if(!bytes||hash(bytes)!==file.uid){const git=spawnSync('git',['show',(config.checkpoint??'343f786')+':'+file.path],{cwd:root,maxBuffer:64*1024*1024});assert.equal(git.status,0,'Missing baseline: '+file.path);bytes=git.stdout;if(hash(bytes)!==file.uid)bytes=Buffer.from(bytes.toString('utf8').replace(/\r?\n/g,'\r\n'))}
   assert.equal(hash(bytes),file.uid,'Baseline mismatch: '+file.path);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,bytes)
  }
  for(const file of [...runtime,...tests]){const target=path.join(source,file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(root,file),target)}
+ for(const file of [...(config.integrationRunner?[config.integrationRunner]:[]),...(config.validationSupport??[])]){const target=path.join(source,file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(root,file),target)}
  const files=[...new Set([...prior.map(f=>f.path),...runtime,...tests])].map(file=>{const bytes=fs.readFileSync(path.join(source,file));return {path:file,uid:hash(bytes),size:bytes.length}})
  for(const manifest of ['package.json','server/package.json']){const a=JSON.parse(fs.readFileSync(path.join(source,manifest))),b=JSON.parse(fs.readFileSync(path.join(root,manifest)));assert.deepEqual(a.dependencies,b.dependencies);assert.deepEqual(a.devDependencies,b.devDependencies)}
  const links=[['node_modules','node_modules'],['server/node_modules','server/node_modules']];const created=[]
  const logs=[]
- async function run(name,cwd,args){const log=path.join(directory,name+'.log'),fd=fs.openSync(log,'w');try{const code=await new Promise((resolve,reject)=>{const child=spawn(process.execPath,args,{cwd,windowsHide:true,stdio:['ignore',fd,fd]});child.once('error',reject);child.once('exit',resolve)});const output=fs.readFileSync(log,'utf8');logs.push({name,code,tail:output.slice(-1800)});assert.equal(code,0,name+' failed: '+output.slice(-1800));console.log(name+' passed')}finally{fs.closeSync(fd)}}
+ async function run(name,cwd,args){const log=path.join(directory,name+'.log'),fd=fs.openSync(log,'w');try{const code=await new Promise((resolve,reject)=>{const child=spawn(process.execPath,args,{cwd,windowsHide:true,stdio:['ignore',fd,fd],env:{...process.env,DND_WORKSPACE_ROOT:root}});child.once('error',reject);child.once('exit',resolve)});const output=fs.readFileSync(log,'utf8');logs.push({name,code,tail:output.slice(-1800)});assert.equal(code,0,name+' failed: '+output.slice(-1800));console.log(name+' passed')}finally{fs.closeSync(fd)}}
  try{
   for(const [from,to] of links){const target=path.join(source,to);fs.symlinkSync(path.join(root,from),target,'junction');created.push(target)}
   await run('tests',source,['node_modules/vitest/vitest.mjs','run','--maxWorkers=2','--no-fsModuleCache',...(config.testFiles??[])])
+  if(config.integrationRunner)await run('database-integration',source,[config.integrationRunner])
   const types=await Promise.allSettled([run('frontend-types',source,['node_modules/vue-tsc/bin/vue-tsc.js','-b']),run('server-types',path.join(source,'server'),['node_modules/typescript/bin/tsc','--noEmit'])]);for(const result of types)if(result.status==='rejected')throw result.reason
   await run('production-build',source,['node_modules/vite/bin/vite.js','build'])
   for(const file of files)assert.equal(hash(fs.readFileSync(path.join(source,file.path))),file.uid,'Source changed: '+file.path)

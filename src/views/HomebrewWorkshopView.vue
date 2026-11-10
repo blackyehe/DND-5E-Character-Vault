@@ -14,6 +14,7 @@ import '../components/workshop/workshop.css'
 import { api } from '../lib/api'
 import WorkshopPublish, {type WorkshopLibraryInfo} from '../components/workshop/WorkshopPublish.vue'
 import ItemWorkshop from '../components/items/ItemWorkshop.vue'
+import DefinitionChangeReview from '../components/compendium/DefinitionChangeReview.vue'
 import DeleteCreationButton from '../components/workshop/DeleteCreationButton.vue'
 import WorkshopTrash from '../components/workshop/WorkshopTrash.vue'
 import WorkshopLibraryTools from '../components/workshop/WorkshopLibraryTools.vue'
@@ -39,6 +40,8 @@ const classes=ref<SrdRef[]>([]),spells=ref<(SrdRef & {level?:number})[]>([])
 const loading=ref(true),loadError=ref(''),storageError=ref(''),saveStatus=ref('')
 const libraryInfo=ref<WorkshopLibraryInfo>({packs:[],rules:[],warnings:[]})
 const publishOpen=ref(false),exportBusy=ref(false),exportError=ref(''),exportNote=ref('')
+const reviewedDraft=ref('')
+const savedForReview=computed(()=>!!draft.value?.published&&reviewedDraft.value===JSON.stringify(draft.value))
 const level=ref(6)
 const scores=ref<Record<AbilityKey,number>>({str:16,dex:16,con:18,int:16,wis:16,cha:16})
 const matches=computed(()=>entries.value.filter(e=>e.kind===kind.value&&`${e.name} ${e.sourcePack??''}`.toLowerCase().includes(query.value.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name)))
@@ -51,15 +54,15 @@ function persist(showStatus=false) {
   try {localStorage.setItem(storageKey,JSON.stringify(next));drafts.value=next;storageError.value='';if(showStatus)saveStatus.value='Draft saved on this device.';return true}
   catch {storageError.value='This browser could not save the draft. Keep this page open and free some browser storage before trying again.';return false}
 }
-function open(value:WorkshopDraft){draft.value=restoreWorkshopDraft(value);step.value='identity';saveStatus.value='';void nextTick(()=>revealNavigationTarget(document.querySelector('.hw-workspace')))}
+function open(value:WorkshopDraft,saved=false){draft.value=restoreWorkshopDraft(value);reviewedDraft.value=saved?JSON.stringify(draft.value):'';step.value='identity';saveStatus.value='';void nextTick(()=>revealNavigationTarget(document.querySelector('.hw-workspace')))}
 function openImported(entry:SrdRef & {kind:WorkshopDraft['kind']}) {
-  const existing=drafts.value.find(d=>d.imported?.index===entry.index&&d.kind===entry.kind)
-  const value=existing??workshopFromEntry(entry as unknown as Record<string,unknown>,entry.kind)
-  if(!existing&&drafts.value.some(d=>d.id===value.id&&d.imported?.index!==entry.index))value.localId=crypto.randomUUID()
-  if(!existing){
+  // A library card opens the saved definition; private drafts remain in the draft list.
+  const value=workshopFromEntry(entry as unknown as Record<string,unknown>,entry.kind)
+  if(drafts.value.some(d=>d.id===value.id))value.localId=crypto.randomUUID()
+  {
     if(value.race)for(const spell of value.race.spells){const candidates=spells.value.filter(s=>s.index===spell.index||s.contentKey===spell.index||s.aliases?.includes(spell.index));if(candidates.length===1){spell.index=candidates[0]!.index;spell.name=candidates[0]!.name}}
     const savedRule=libraryInfo.value.rules.find(r=>r.id===value.id&&r.index===entry.index),pack=libraryInfo.value.packs.find(p=>p.entries.includes(entry.index))
-    if(savedRule&&savedRule.revision>0&&pack)value.published={revision:savedRule.revision,index:entry.index,packId:pack.id,packHash:pack.hash}
+    if(savedRule&&savedRule.revision>0&&pack)value.published={revision:savedRule.revision,index:entry.index,packId:pack.id,packHash:pack.hash,definitionRevision:savedRule.definitionRevision??0}
     value.magic.spellList=value.magic.spellList.map(key=>{
       const candidates=spells.value.filter(s=>s.index===key||s.contentKey===key||s.aliases?.includes(key))
       const sameSource=candidates.filter(s=>s.sourcePack===value.source)
@@ -69,7 +72,7 @@ function openImported(entry:SrdRef & {kind:WorkshopDraft['kind']}) {
     if(parents.length===1)value.parentClass=parents[0]!.index
   }
   const parentRule=libraryInfo.value.rules.find(r=>r.index===value.parentClass||r.previousIndexes?.includes(value.parentClass));if(parentRule)value.parentClass=parentRule.index
-  open(value)
+  open(value,true)
 }
 function back(){if(persist()){draft.value=null;saveStatus.value=''}}
 async function removed(message:string){drafts.value=JSON.parse(localStorage.getItem(storageKey)??'[]');await loadLibrary();saveStatus.value=message}
@@ -99,7 +102,7 @@ async function loadLibrary(){
   if(results.some(r=>r.status==='rejected'))loadError.value='Part of the content library could not be loaded. Drafts remain available. Reload the library to retry.'
   loading.value=false
 }
-async function published(value:WorkshopDraft,message:string){value.localId=draft.value?.localId??draft.value?.id;draft.value=value;publishOpen.value=false;persist();await loadLibrary();await nextTick();saveStatus.value=message}
+async function published(value:WorkshopDraft,message:string){value.localId=draft.value?.localId??draft.value?.id;draft.value=value;publishOpen.value=false;persist();await loadLibrary();await nextTick();reviewedDraft.value=JSON.stringify(draft.value);saveStatus.value=message}
 function download(filename:string,text:string,type:string){const url=URL.createObjectURL(new Blob([text],{type})),link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function exportDraft(){if(!draft.value||exportBusy.value)return;exportBusy.value=true;exportError.value='';try{const result=await api.post<{filename:string;source:string;warnings:string[]}>('/api/workshop/export',{draft:draft.value});download(result.filename,result.source,'application/octet-stream');exportNote.value=result.warnings.join(' ')}catch(e){exportError.value=(e as Error).message}finally{exportBusy.value=false}}
 async function backup(){if(exportBusy.value||workshopArea.value==='spells'&&!spellWorkshop.value?.persist()||workshopArea.value==='options'&&!optionWorkshop.value?.persist()||workshopArea.value==='monsters'&&!monsterWorkshop.value?.persist())return;if(!persist())return;exportBusy.value=true;exportError.value='';try{const device=captureBackupDevice(auth.user?.id??'local'),data=await api.get<Record<string,unknown>>('/api/workshop/backup',{timeoutMs:120000});data.device=device;backupDownloadSize(data);download('codex-of-heroes-backup.json',JSON.stringify(data),'application/json');exportNote.value='Backup downloaded: characters, libraries, folders, owned campaigns, Notebook history, Maps, city libraries and device drafts. Restored rooms require fresh player invitations.'}catch(e){exportError.value=(e as Error).message}finally{exportBusy.value=false}}
@@ -109,7 +112,7 @@ async function backup(){if(exportBusy.value||workshopArea.value==='spells'&&!spe
   <header class="hw-page-header"><div><p class="hw-eyebrow">YOUR RULES. YOUR WORLD.</p><h1>Homebrew Workshop <span class="hw-pill">Rules, spells, character options, items & monsters</span></h1><p class="hw-hint">Create rules and items, with their effects visible as you work.</p></div><button type="button" class="hw-button" :disabled="exportBusy" @click="backup">Download site backup</button></header>
   <nav class="hw-category-nav" aria-label="Workshop content sections"><button class="hw-button" :class="{'hw-button-primary':workshopArea==='rules'}" :aria-pressed="workshopArea==='rules'" @click="chooseArea('rules')">Classes, subclasses &amp; races</button><button class="hw-button" :class="{'hw-button-primary':workshopArea==='options'}" :aria-pressed="workshopArea==='options'" @click="chooseArea('options')">Character options</button><button class="hw-button" :class="{'hw-button-primary':workshopArea==='spells'}" :aria-pressed="workshopArea==='spells'" @click="chooseArea('spells')">Spells</button><button class="hw-button" :class="{'hw-button-primary':workshopArea==='items'}" :aria-pressed="workshopArea==='items'" @click="chooseArea('items')">Normal &amp; magic items</button><button class="hw-button" :class="{'hw-button-primary':workshopArea==='monsters'}" :aria-pressed="workshopArea==='monsters'" @click="chooseArea('monsters')">Monsters &amp; actions</button><button class="hw-button" :class="{'hw-button-primary':workshopArea==='compendium'}" :aria-pressed="workshopArea==='compendium'" @click="chooseArea('compendium')">All Compendium entries</button><button class="hw-button" :class="{'hw-button-primary':workshopArea==='trash'}" :aria-pressed="workshopArea==='trash'" @click="chooseArea('trash')">Recently deleted</button></nav><p v-if="exportError" class="hw-alert" role="alert">{{exportError}}</p><p v-if="exportNote" class="hw-callout" role="status">{{exportNote}}</p><div v-motion-panel="workshopArea" class="hw-area-content"><CompendiumEntries v-if="workshopArea==='compendium'" embedded /><OptionWorkshop v-else-if="workshopArea==='options'" ref="optionWorkshop"/><SpellWorkshop v-else-if="workshopArea==='spells'" ref="spellWorkshop"/><WorkshopTrash v-else-if="workshopArea==='trash'" @changed="removed('Creation restored.')"/><ItemWorkshop v-else-if="workshopArea==='items'" /><MonsterWorkshop v-else-if="workshopArea==='monsters'" ref="monsterWorkshop"/><template v-else><p v-if="storageError" class="hw-alert" role="alert">{{storageError}}</p><p v-if="saveStatus" class="hw-save-status" role="status">{{saveStatus}}</p><p v-if="loadError" class="hw-alert" role="status">{{loadError}}</p>
   <div v-if="draft" class="hw-draft-toolbar"><button type="button" class="hw-button" @click="back">Back to library</button><div class="hw-actions" aria-label="Save current creation"><button type="button" class="hw-button" @click="persist(true)">Save draft</button><button type="button" class="hw-button hw-button-primary" @click="step='review';publishOpen=true">Save to pack…</button></div><p class="hw-hint">Save draft keeps this work on this device. Save to pack makes the rules available to your characters.</p></div>
-  <div v-if="draft" class="hw-export-actions"><button class="hw-text-button" :disabled="exportBusy" @click="exportDraft">{{exportBusy?'Preparing download…':'Export this definition as Orcbrew ↓'}}</button><span v-if="draft.published" class="hw-pill">Saved revision {{draft.published.revision}}</span></div>
+  <DefinitionChangeReview v-if="draft?.published" :kind="draft.kind==='class'?'classes':draft.kind==='subclass'?'subclasses':'races'" :index="draft.published.index" :version="draft.published.definitionRevision" :disabled="!savedForReview||publishOpen||exportBusy" /><div v-if="draft" class="hw-export-actions"><button class="hw-text-button" :disabled="exportBusy" @click="exportDraft">{{exportBusy?'Preparing download…':'Export this definition as Orcbrew ↓'}}</button><span v-if="draft.published" class="hw-pill">Saved revision {{draft.published.revision}}</span></div>
   <div v-if="draft" class="hw-workspace"><nav class="hw-step-nav" aria-label="Workshop sections"><div class="hw-draft-title"><span class="hw-eyebrow">{{draft.kind}} DRAFT</span><strong>{{draft.name||'Untitled creation'}}</strong></div><button v-for="(section,index) in WORKSHOP_STEPS" :key="section.key" type="button" :class="{active:step===section.key}" :aria-current="step===section.key?'step':undefined" @click="step=section.key"><span class="hw-step-number">{{index+1}}</span><span><strong>{{draft.kind==='race'?({foundation:'Body & training',progression:'Trait progression',magic:'Innate spells',features:'Traits & choices'} as Record<string,string>)[section.key]??section.name:section.name}}</strong><small>{{draft.kind==='race'?(section.key==='foundation'?'Speed, size, bonuses & training':section.key==='magic'?'Racial spell grants & casting rules':section.key==='identity'?'Name, source & lore':'Rules by character level'):section.hint}}</small></span></button><p class="hw-nav-note">Drafts save on this device when you leave the editor. Save to a pack when you’re ready to apply these rules.</p></nav><WorkshopEditor :draft="draft" :step="step" :classes="classes" :spells="spells" @step="step=$event" @save="persist(true)" @publish="publishOpen=true"/><WorkshopPreview :draft="draft" :step="step" :level="level" :scores="scores" @level="level=$event" @score="(key,value)=>scores[key]=value"/></div>
   <div v-else v-motion-panel="kind" class="hw-library"><WorkshopLibraryTools title="Classes, subclasses & races" description="Build rules, preview their progression, then save them to a pack for your characters.">
     <template #search><label>Find content<input v-model="query" type="search" placeholder="Search by name or source…"/></label></template>

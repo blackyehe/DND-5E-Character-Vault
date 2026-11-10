@@ -4,7 +4,7 @@ import {benefitProblems} from '../../shared/rule-benefits'
 import type {OptionDraft} from '../../shared/option-workshop'
 import type {OrcbrewEntry} from './orcbrew'
 import {OPTION_KINDS} from '../../shared/option-kinds'
-const published=z.object({revision:z.number().int().min(1),index:z.string().min(1).max(300),packId:z.string().regex(/^[a-f0-9]{24}$/i),packHash:z.string().length(64)}).strict()
+const published=z.object({revision:z.number().int().min(1),index:z.string().min(1).max(300),packId:z.string().regex(/^[a-f0-9]{24}$/i),packHash:z.string().length(64),definitionRevision:z.number().int().min(0).optional()}).strict()
 export const optionDraftSchema=z.object({version:z.literal(1),id:z.uuid(),kind:z.enum(OPTION_KINDS),source:z.string().trim().min(1).max(200),body:z.record(z.string(),z.unknown()),benefits:z.array(z.unknown()).max(200),updatedAt:z.string().max(60),published:published.optional()}).strict()
 export function validatedOption(value:unknown):OptionDraft{
  const parsed=optionDraftSchema.parse(value),entry=normalizeBuilderEntry({name:parsed.body.name,optionBuilder:parsed.body,benefits:parsed.benefits},parsed.kind)

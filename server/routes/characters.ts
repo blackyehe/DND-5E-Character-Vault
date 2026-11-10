@@ -14,7 +14,7 @@ import { rememberItem } from './items'
 import { attunementError } from '../../shared/item-rules'
 import { resolveEquipmentItem } from '../lib/equipment-references'
 import { CustomContent } from '../models/CustomContent'
-import {pinSelectedOptions} from '../lib/selected-options'
+import {captureSelectedDefinitions} from '../lib/selected-options'
 import {templateBenefitEdition} from '../lib/item-benefits'
 import type {Character as CharacterData} from '../../shared/character'
 
@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
   const candidate=new Character({...normalizeImportedCharacter(data),userId:req.userId})
   const library=await characterRuleLibrary(req.userId,characterRuleExtraKinds(candidate.toObject()))
   let selected
-  try{selected=pinSelectedOptions(candidate.toObject() as unknown as CharacterData,library)}catch(e){return res.status(400).json({error:(e as Error).message})}
+  try{selected=await captureSelectedDefinitions(req.userId,candidate.toObject() as unknown as CharacterData,library)}catch(e){return res.status(400).json({error:(e as Error).message})}
   const resolved=await resolveWorkshopCharacter(selected,req.userId,library)
   const char = await Character.create({ ...resolved, userId: req.userId })
   res.status(201).json(await output(char.toObject(),req.userId))
@@ -118,7 +118,7 @@ router.patch('/:id', async (req, res) => {
     if(patch.equipment){patch.equipment=(patch.equipment as typeof previous.equipment).map(resolveEquipmentItem);const equipment=patch.equipment as typeof previous.equipment;if(equipment.some(i=>i.attuned&&!previous.equipment.some(old=>String(old._id)===String(i._id)&&old.attuned))){const issue=attunementError(equipment);if(issue)return res.status(400).json({error:issue})}}
     const combatPatch=patch.combat as Partial<typeof previous.combat>|undefined
     let selected
-    try{selected=pinSelectedOptions({...before,...patch,combat:{...before.combat,...combatPatch,itemAcBaseline:combatPatch?.itemAcBaseline??previous.combat.itemAcBaseline}} as unknown as CharacterData,library,before as unknown as CharacterData)}catch(e){return res.status(400).json({error:(e as Error).message})}
+    try{selected=await captureSelectedDefinitions(req.userId,{...before,...patch,combat:{...before.combat,...combatPatch,itemAcBaseline:combatPatch?.itemAcBaseline??previous.combat.itemAcBaseline}} as unknown as CharacterData,library,before as unknown as CharacterData)}catch(e){return res.status(400).json({error:(e as Error).message})}
     const resolved=await resolveWorkshopCharacter(selected,req.userId,library)
     const {meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules}=resolved
     const char=await Character.findOneAndUpdate({_id:before._id,userId:req.userId,updatedAt:before.updatedAt},{$set:{...patch,meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules,...(patch.combat?{combat:resolved.combat}:{'combat.hpMax':resolved.combat.hpMax,'combat.speed':resolved.combat.speed,'combat.itemAcBaseline':resolved.combat.itemAcBaseline})}},{new:true,runValidators:true}).lean()

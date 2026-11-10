@@ -10,8 +10,9 @@ const customContentSchema = new Schema(
     deletedContent: { type: Schema.Types.Mixed },
     workshopTrash: { type: [Schema.Types.Mixed], default: undefined },
     sourceHash: { type: String },
+    definitionVersion: {type:Number,default:0},
   },
-  { timestamps: true },
+  { timestamps: true, minimize:false },
 )
 
 customContentSchema.index({ userId: 1, type: 1 })

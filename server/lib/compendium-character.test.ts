@@ -7,14 +7,26 @@ import { sheetReferences } from './sheet-references'
 import type { WorkshopLibrary } from './workshop-library'
 const hero=():Character=>({...emptyCharacter(),_id:'a'.repeat(24),updatedAt:'2026-10-23T00:00:00Z'})
 describe('approved definitions',()=>{
+  it('finds an active native grant by its stable ID after old fingerprint aliases have expired',()=>{
+    const c=hero(),before={index:'homebrew-feats-old',name:'Old feat',optionId:'stable-id'},entry={index:'homebrew-feats-new',name:'New feat',optionId:'stable-id',aliases:[]}
+    c.features=[{name:'Old feat',description:'',definition:{version:1,kind:'feats',index:before.index}}];c.compendiumRules=[{kind:'feats',index:before.index,revision:1,before,entry:before}]
+    const definition:CompendiumDefinition={kind:'feats',index:entry.index,revision:2,before:entry,entry};expect(characterUsesDefinition(c,definition)).toBe(true);expect(characterUsesDefinition(c,definition,false)).toBe(true);c.features=[];expect(characterUsesDefinition(c,definition,false)).toBe(false)
+  })
+  it('uses each copy’s captured source when reviewing a later item revision and preserves custom values',()=>{
+    const c=hero(),templateId='c'.repeat(24),baseline={name:'Focus',weight:2,description:'Second rules'}
+    c.equipment=[{...baseline,templateId,templateBaseline:baseline,qty:2,equipped:true,notes:'Personal'}, {...baseline,templateId,templateBaseline:baseline,weight:9,qty:1,equipped:false,notes:'Custom weight'}]
+    c.compendiumRules=[{kind:'magic-items',index:`workshop-item-${templateId}`,revision:3,before:{name:'Focus',workshopItem:{name:'Focus',weight:1,description:'First rules'}},entry:{name:'Focus',workshopItem:{name:'Focus',weight:3,description:'Third rules',benefits:[]}}}]
+    const result=reviewedCharacter(c,[],{});expect(result.equipment.map(i=>i.weight)).toEqual([3,9]);expect(result.equipment.map(i=>i.description)).toEqual(['Third rules','Third rules']);expect(result.equipment.map(i=>i.notes)).toEqual(['Personal','Custom weight']);expect(result.equipment[0]!.qty).toBe(2);expect(result.equipment[0]!.equipped).toBe(true)
+    expect(result.equipment[1]!.templateBaseline?.weight).toBe(3)
+  })
   it('refreshes and removes captured inventory benefits through explicit character review',()=>{
     const c=hero(),benefits=[{type:'spell-attack-bonus',value:3},{type:'spell-dc-bonus',value:3}]
     const item={name:'Test focus',templateId:'b'.repeat(24),qty:1,weight:1,equipped:true,attuned:true,notes:'Saved notes',benefits:[{type:'spell-attack-bonus',value:1}]}
     c.equipment=[item];c.compendiumRules=[{kind:'magic-items',index:`workshop-item-${item.templateId}`,revision:1,before:{name:item.name,workshopItem:item},entry:{name:item.name,workshopItem:item,benefits}}]
     const result=reviewedCharacter(c,[],{})
-    expect(result.equipment[0]).toEqual({...item,benefits})
+    expect(result.equipment[0]).toMatchObject({...item,benefits});expect(result.equipment[0]!.templateBaseline?.benefits).toEqual(benefits)
     result.compendiumRules![0]!.entry.benefits=[]
-    expect(reviewedCharacter(result,[],{}).equipment[0]).toEqual({...item,benefits:[]})
+    expect(reviewedCharacter(result,[],{}).equipment[0]).toMatchObject({...item,benefits:[]})
     expect(c.equipment[0]!.benefits).toEqual([{type:'spell-attack-bonus',value:1}])
   })
   it('reconciles class features, slots and trackers without resetting current HP or spent uses',()=>{

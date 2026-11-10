@@ -15,15 +15,23 @@ Benefits, explicit native-feat refresh/removal and preserved play state.
 Released to the website as `dpl_CBitkm3auCwY8ZziXSoiYG2X65WF`; see
 `docs/audits/character-option-review-2026-11-09.md` for validation and limits.
 
-This does **not** yet unify personal Compendium editions with native Workshop pack
-edits across all authoring screens. That reconciliation, creator types beyond
-character options, and character-side pending-update indicators remain open.
-The existing explicit Compendium review remains available for those definitions.
+10 November: the website synchronization foundation reconciles personal
+Compendium editions with native Workshop items, character options, spells,
+classes, subclasses and races. Both editors use stable identities and shared
+edition revisions. Source/edition saves are transactional; stale drafts and
+reviews require reopening. Existing characters retain approved rules until
+explicit review/apply. Item copies capture source values so later reviews can
+preserve custom values, quantities, equipment state and personal notes. New
+acquisitions capture current editions. Character-side pending notices show
+changed or unavailable approved definitions. Assigned players can read notices;
+owners/DMs apply reviews. The existing review UI is reused.
 
-Resume point, explicitly deferred at the user's request: reconcile personal
-Compendium editions with native Workshop edits across all creator types, then
-add character-side pending-update indicators. The lighter sheet changes below
-do not change authoring, synchronization, or player write permissions.
+See the [synchronization audit](audits/definition-consistency-2026-11-10.md) for
+release evidence and boundaries. The Volenta/+1 regression is verified with an
+isolated fixture; the final live record comparison/application remains an owner
+review through the new controls. Deployment does not rewrite campaign records.
+Next stage: source-linked trackers (item 5 below), using this shared identity and
+review behaviour. Owlbear UI and broader pack-saving performance remain separate.
 
 - Give Workshop and Compendium saves the same affected-character preview and
   explicit apply controls. Show actual spell attack/DC changes clearly.

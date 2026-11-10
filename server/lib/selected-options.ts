@@ -6,6 +6,13 @@ import {isOptionKind,isFeatureOptionKind,isManualOptionKind,optionTitle} from '.
 import {subraceMatchesRace} from '../../shared/subrace-options'
 import {choiceSelectionProblem,type ChoiceGroup} from '../../shared/choice-groups'
 import {manualOptionProblem} from '../../shared/manual-options'
+import {effectiveDefinitions,sameDefinition} from './definition-editions'
+import {activeWorkshopEntries} from './workshop-schema'
+import {characterUsesDefinition} from './compendium-character'
+import {sourceHash} from './orcbrew'
+import type {CompendiumKind} from '../../shared/compendium-editing'
+import {CustomContent} from '../models/CustomContent'
+import {compendiumSource} from './compendium-source'
 /** Capture authored grants once on selection. Later pack edits require review. */
 export function pinSelectedOptions(character:Character,library:CharacterRuleLibrary,before?:Character):Character{
  for(const feature of character.features)if(isManualOptionKind(feature.definition?.kind)){const issue=manualOptionProblem(feature);if(issue)throw new Error(issue)}
@@ -52,4 +59,29 @@ export function pinSelectedOptions(character:Character,library:CharacterRuleLibr
   else if(def.choiceIds?.length)throw new Error('This source has no structured choices. Restore the saved group or remove the selection.')
  }
  return {...character,...(retained.length||character.compendiumRules?{compendiumRules:retained}:{})}
+}
+
+/** New acquisitions receive the current edition. Already approved grants remain
+ * pinned even when a different part of the character is saved. */
+export async function captureSelectedDefinitions(owner:string|undefined,character:Character,library:CharacterRuleLibrary,before?:Character){
+ const selected=pinSelectedOptions(character,library,before)
+ const sources=Object.entries(library.catalog).flatMap(([category,entries])=>{const kind=category as CompendiumKind;return (['classes','subclasses','races'].includes(kind)?activeWorkshopEntries(entries,kind as 'classes'|'subclasses'|'races'):entries).map(source=>({kind,source:source as Record<string,unknown>}))})
+ const edits=await CustomContent.find({userId:owner,type:'compendium-edit'}).select('data.kind data.index data.changes.name').lean()
+ for(const doc of edits){const {kind,index,changes}=doc.data as {kind:CompendiumKind;index:string;changes?:{name?:string}};if(index.startsWith('homebrew-')||index.startsWith('workshop-item-'))continue
+  const candidate={kind,index,revision:0,before:{index,name:changes?.name??index.replace(/-/g,' ')},entry:{}}
+  if(!characterUsesDefinition(selected,candidate,false)||before&&characterUsesDefinition(before,candidate,false))continue
+  const source=await compendiumSource(owner,kind,index);if(source)sources.push({kind,source})
+ }
+ const applicable=sources.filter(({kind,source})=>{const definition={kind,index:String(source.index),revision:0,before:source,entry:source};return characterUsesDefinition(selected,definition,false)&&(!before||!characterUsesDefinition(before,definition,false))&&!before?.compendiumRules?.some(d=>sameDefinition(d,kind,String(source.index),source))}),editions=await effectiveDefinitions(owner,applicable)
+ for(const [position,{kind,source}]of applicable.entries()){
+   const index=String(source.index)
+   const definition={kind,index,revision:0,before:source,entry:source}
+   if(!characterUsesDefinition(selected,definition,false))continue
+   if(before&&characterUsesDefinition(before,definition,false))continue
+   if(before?.compendiumRules?.some(d=>sameDefinition(d,kind,index,source)))continue
+   const effective=editions[position]!
+   const {details:_,...entry}=effective.entry,{details:__,...base}=source
+   selected.compendiumRules=[...(selected.compendiumRules??[]).filter(d=>!sameDefinition(d,kind,index,source)),{kind,index,revision:effective.revision,sourceHash:sourceHash(JSON.stringify(source)),before:cloneEntry(base),entry:cloneEntry(entry)}]
+ }
+ return selected
 }

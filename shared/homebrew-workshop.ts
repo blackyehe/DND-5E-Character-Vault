@@ -40,7 +40,8 @@ export interface WorkshopDraft {
   resources:WorkshopResource[]; features:WorkshopFeature[];
   imported?:{index:string; contentKey:string; sources:string[]; raw:Record<string,unknown>};
   updatedAt:string
-  published?:{revision:number;index:string;packId:string;packHash:string}
+  definitionRevision?:number
+  published?:{revision:number;index:string;packId:string;packHash:string;definitionRevision?:number}
 }
 export interface PublishedWorkshopRule { id:string; revision:number; index:string; previousIndexes:string[]; previousNames:string[]; parentClassName?:string; draft:WorkshopDraft }
 export const plainObject = (value:unknown):Record<string,unknown> => value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{}
@@ -78,9 +79,10 @@ function importedSchedule(value:unknown):WorkshopSchedule[] {
   return Object.entries(plainObject(value)).filter(([level,n])=>/^\d+$/.test(level)&&typeof n==='number').sort((a,b)=>Number(a[0])-Number(b[0])).map(([level,n])=>({level:Number(level),total:total+=Number(n)}))
 }
 export function workshopFromEntry(entry:Record<string,unknown>,kind:WorkshopDraft['kind']):WorkshopDraft {
-  const native=plainObject(plainObject(entry.details)[':codex/workshop'])
-  if(native.version===1&&native.id&&native.magic&&Array.isArray(native.features))return JSON.parse(JSON.stringify({...native,imported:{index:entry.index,contentKey:entry.contentKey,sources:entry.sourcePacks??[],raw:entry.details}})) as WorkshopDraft
+  const native=plainObject(entry.workshop??plainObject(entry.details)[':codex/workshop'])
+  if(native.version===1&&native.id&&native.magic&&Array.isArray(native.features))return JSON.parse(JSON.stringify({...native,definitionRevision:Number(entry.definitionRevision??0),imported:{index:entry.index,contentKey:entry.contentKey,sources:entry.sourcePacks??[],raw:entry.details}})) as WorkshopDraft
   const draft=newWorkshopDraft(kind),raw=plainObject(entry.details),profs=plainObject(raw[':profs']),casting=plainObject(raw[':spellcasting'])
+  draft.definitionRevision=Number(entry.definitionRevision??0)
   draft.name=String(entry.name??'');draft.source=String(entry.sourcePack??entry.source??'My Homebrew');draft.description=String(raw[':help']??raw[':description']??'')
   draft.parentClass=local(raw[':class']??entry.class);draft.hitDie=Number(entry.hit_die??8)
   draft.savingThrows=enabled(profs[':save']).filter((key):key is AbilityKey=>ABILITY_KEYS.includes(key as AbilityKey))

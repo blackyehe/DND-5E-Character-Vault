@@ -4,7 +4,7 @@ import {entryOptionDraft,type OptionBuilder} from './entry-builders'
 import type {EntryData} from './compendium-editing'
 import {OPTION_KINDS,type OptionKind} from './option-kinds'
 export {OPTION_KINDS,optionTitle,type OptionKind} from './option-kinds'
-export interface OptionDraft {version:1;id:string;kind:OptionKind;source:string;body:OptionBuilder;benefits:unknown[];updatedAt:string;published?:{revision:number;index:string;packId:string;packHash:string}}
+export interface OptionDraft {version:1;id:string;kind:OptionKind;source:string;body:OptionBuilder;benefits:unknown[];updatedAt:string;published?:{revision:number;index:string;packId:string;packHash:string;definitionRevision?:number}}
 export const optionDraftStorageKey=(owner:string)=>`codex:option-workshop:v1:${owner}`
 export function newOptionDraft(kind:OptionKind):OptionDraft{return {version:1,id:crypto.randomUUID(),kind,source:'My Homebrew',body:{...entryOptionDraft({name:''}),...(kind==='subraces'?{subrace:{parentIndex:'',parentName:'',bonuses:{str:0,dex:0,con:0,int:0,wis:0,cha:0},speed:null}}:{}),...(kind==='selections'?{choiceGroup:{version:1 as const,choose:1,options:[]}}:{})},benefits:[],updatedAt:new Date().toISOString()}}
 export function optionDraftEntry(draft:OptionDraft):EntryData{return {name:draft.body.name,index:`option-${draft.id}`,optionBuilder:draft.body,benefits:draft.benefits}}

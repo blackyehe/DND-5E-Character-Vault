@@ -1,3 +1,4 @@
+import {characterDefinitionUpdates} from '../lib/character-definition-updates'
 import { Router } from 'express'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth'
@@ -5,7 +6,6 @@ import { CustomContent } from '../models/CustomContent'
 import { sourceHash, normalizeEditedOrcbrewEntry } from '../lib/orcbrew'
 import { compendiumSource } from '../lib/compendium-source'
 import { EDITABLE_KINDS, applyEntryChanges, changedEntryFields, cloneEntry, entryProblems, sameEntry, type CompendiumEditState, type CompendiumKind, type EntryData } from '../../shared/compendium-editing'
-import { ensureContentIndexes } from '../lib/content-indexes'
 import { Character } from '../models/Character'
 import { isValidObjectId } from 'mongoose'
 import type { Character as CharacterData } from '../../shared/character'
@@ -14,32 +14,34 @@ import { characterRuleLibrary } from '../lib/character-rule-library'
 import { characterUsesDefinition, reviewedCharacter, characterReviewChanges } from '../lib/compendium-character'
 import {characterReviewStatistics} from '../lib/character-review-statistics'
 import { savedCharacterOutput } from '../lib/character-output'
-import {sameOptionIdentity,optionHasId} from '../../shared/option-reference'
+import {optionHasId} from '../../shared/option-reference'
 import {subraceMatchesRace} from '../../shared/subrace-options'
 import {selectedOption} from '../../shared/option-reference'
 import {choiceSelectionProblem,type ChoiceGroup} from '../../shared/choice-groups'
-import {isOptionKind,isFeatureOptionKind} from '../../shared/option-kinds'
+import {isFeatureOptionKind} from '../../shared/option-kinds'
 import { workshopProblems } from '../../shared/homebrew-workshop'
 import { normalizeBuilderEntry } from '../lib/entry-builder-schema'
 import { validatedDraft } from '../lib/workshop-schema'
 import { itemSchema, prepareItem } from '../lib/inventory'
 import type { EquipmentItem } from '../../shared/character'
+import {definitionEdition,savePersonalDefinition,DefinitionConflict,sameDefinition,withCurrentDefinition} from '../lib/definition-editions'
+export {editIdentity} from '../lib/definition-editions'
 
 const router=Router()
 router.use(requireAuth)
 const bodySchema=z.object({expectedRevision:z.number().int().min(0),expectedSourceHash:z.string().length(64),entry:z.record(z.string(),z.unknown()).optional(),restore:z.boolean().optional()}).strict()
-export const editIdentity=(kind:string,index:string)=>sourceHash(`${kind}:${index}`)
 export async function compendiumEditState(userId:string|undefined,kind:CompendiumKind,index:string):Promise<CompendiumEditState|null>{
   const source=await compendiumSource(userId,kind,index)
   if(!source)return null
-  const doc=await CustomContent.findOne({userId,type:'compendium-edit',sourceHash:editIdentity(kind,index)}).lean()
-  const data=doc?.data as {revision:number;changes:EntryData;sourceHash:string}|undefined
-  return {kind,index,revision:data?.revision??0,sourceHash:sourceHash(JSON.stringify(source)),sourceChanged:!!data&&Object.keys(data.changes).length>0&&data.sourceHash!==sourceHash(JSON.stringify(source)),source,entry:applyEntryChanges(source,data?.changes??{}),edited:!!data&&Object.keys(data.changes).length>0}
+  const doc=await definitionEdition(userId,kind,index,source)
+  const data=doc?.data as {revision:number;changes:EntryData;sourceHash:string;before?:EntryData}|undefined
+  return {kind,index,previousSource:data?.before??source,revision:data?.revision??0,sourceHash:sourceHash(JSON.stringify(source)),sourceChanged:!!data&&Object.keys(data.changes??{}).length>0&&data.sourceHash!==sourceHash(JSON.stringify(source)),source,entry:applyEntryChanges(source,data?.changes??{}),edited:!!data&&Object.keys(data.changes??{}).length>0}
 }
+router.get('/pending/:characterId',async(req,res)=>{if(!isValidObjectId(req.params.characterId))return res.status(404).json({error:'Character not found.'});const raw=await Character.findOne({_id:req.params.characterId,userId:req.userId}).lean();if(!raw)return res.status(404).json({error:'Character not found.'});res.json(await characterDefinitionUpdates(raw as unknown as CharacterData,req.userId))})
 router.param('kind',(_req,res,next,value)=>EDITABLE_KINDS.includes(value as CompendiumKind)?next():res.status(404).json({error:'Unknown Compendium category.'}))
 router.get('/:kind',async(req,res)=>{
   const docs=await CustomContent.find({userId:req.userId,type:'compendium-edit','data.kind':req.params.kind}).lean()
-  res.json(docs.map(doc=>doc.data).filter(data=>Object.keys((data as {changes:EntryData}).changes).length>0))
+  res.json(docs.map(doc=>doc.data).filter(data=>Object.keys((data as {changes?:EntryData}).changes??{}).length>0))
 })
 router.get('/:kind/:index',async(req,res)=>{
   const state=await compendiumEditState(req.userId,req.params.kind as CompendiumKind,String(req.params.index))
@@ -88,20 +90,19 @@ router.put('/:kind/:index',async(req,res)=>{
   }
   if(typeof entry.name!=='string'||!entry.name.trim()||entry.name.length>200)return res.status(400).json({error:'Give the entry a name of up to 200 characters.'})
   if(Buffer.byteLength(JSON.stringify(entry))>2*1024*1024)return res.status(400).json({error:'Keep this entry below 2 MB.'})
-  const changes=changedEntryFields(state.source,entry),data={kind,index,revision:state.revision+1,sourceHash:state.sourceHash,changes}
-  const filter={userId:req.userId,type:'compendium-edit' as const,sourceHash:editIdentity(kind,index)}
+  const changes=changedEntryFields(state.source,entry)
+  let data:{revision:number}
   try{
-    if(state.revision===0){await ensureContentIndexes();await CustomContent.create({...filter,data})}
-    else if(!await CustomContent.findOneAndUpdate({...filter,'data.revision':state.revision},{$set:{data}},{new:true}).lean())return res.status(409).json({error:'Another save won the race. Your draft is kept; reload the saved version.'})
-  }catch(error){if((error as {code?:number}).code===11000)return res.status(409).json({error:'Another save won the race. Your draft is kept; reload the saved version.'});throw error}
+    data=await savePersonalDefinition(req.userId,kind,index,state.source,state.revision,entry)
+  }catch(error){if(error instanceof DefinitionConflict||(error as {code?:number}).code===11000)return res.status(409).json({error:'Another save changed this definition. Your draft is kept; reopen the saved version.'});throw error}
   res.json({...state,revision:data.revision,sourceChanged:false,edited:Object.keys(changes).length>0,entry:applyEntryChanges(state.source,changes)})
 })
 async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|undefined){
   const library=await characterRuleLibrary(userId,characterRuleExtraKinds(raw,[state.kind])),original=raw as CharacterData
   const before=reviewedCharacter(original,library.rules,library.initial)
-  const matches=(d:NonNullable<CharacterData['compendiumRules']>[number])=>d.kind===state.kind&&(d.index===state.index||isOptionKind(state.kind)&&sameOptionIdentity({...d.entry,index:d.index,name:String(d.entry.name)},{...state.source,index:state.index,name:String(state.source.name)})||state.kind==='spells'&&typeof state.source.spellId==='string'&&d.entry.spellId===state.source.spellId)
+  const matches=(d:NonNullable<CharacterData['compendiumRules']>[number])=>sameDefinition(d,state.kind,state.index,state.source)
   const previous=before.compendiumRules?.find(matches)
-  const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.source,entry:state.entry}
+  const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.previousSource??state.source,entry:state.entry}
   const candidate={...before,compendiumRules:[...(before.compendiumRules??[]).filter(d=>!matches(d)),definition]}
   if(state.kind==='spells'&&typeof state.source.spellId==='string'){
     const aliases=new Set([state.index,previous?.index,...(Array.isArray(state.source.aliases)?state.source.aliases:[])])
@@ -110,7 +111,7 @@ async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|un
   }
   candidate.meta=JSON.parse(JSON.stringify(candidate.meta)) as CharacterData['meta']
   if(state.kind==='backgrounds')candidate.meta.backgroundIndex=state.index
-  if(isFeatureOptionKind(state.kind))candidate.features=candidate.features.map(f=>f.definition?.kind===state.kind&&optionHasId({...state.source,index:state.index,name:String(state.source.name)},f.definition.index)?{...f,definition:{...f.definition,index:state.index}}:f)
+  if(isFeatureOptionKind(state.kind))candidate.features=candidate.features.map(f=>f.definition?.kind===state.kind&&(optionHasId({...state.source,index:state.index,name:String(state.source.name)},f.definition.index)||!!previous&&optionHasId({...previous.entry,index:previous.index,name:String(previous.entry.name)},f.definition.index))?{...f,definition:{...f.definition,index:state.index}}:f)
   if(state.kind==='subraces')candidate.meta.subraceIndex=state.index
   if(state.kind==='races')candidate.meta.raceIndex=state.index
   if(state.kind==='classes'){
@@ -162,7 +163,9 @@ router.post('/:kind/:index/review/:characterId',async(req,res)=>{
   if(plan.reviewHash!==parsed.data.reviewHash)return res.status(409).json({error:'The proposed changes changed. Refresh the review before applying them.'})
   if(plan.sourceConfirmation&&!parsed.data.confirmedSource)return res.status(400).json({error:'Confirm this is the intended source for the character.'})
   const {meta,features,equipment,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}=plan.after
-  const saved=await Character.findOneAndUpdate({_id:raw._id,userId:req.userId,updatedAt:raw.updatedAt},{$set:{meta,features,equipment,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}},{new:true,runValidators:true}).lean()
+  let saved
+  try{saved=await withCurrentDefinition(req.userId,state.kind,state.index,state.source,state.revision,async session=>Character.findOneAndUpdate({_id:raw._id,userId:req.userId,updatedAt:raw.updatedAt},{$set:{meta,features,equipment,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}},{new:true,runValidators:true,session}).lean())}
+  catch(error){if(error instanceof DefinitionConflict)return res.status(409).json({error:error.message});throw error}
   if(!saved)return res.status(409).json({error:'The character changed while applying. Refresh the review; no changes were applied.'})
   res.json({character:savedCharacterOutput(saved),message:'Reviewed changes applied to this character.'})
 })

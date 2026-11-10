@@ -42,7 +42,7 @@ function applyMap(source:string,value:unknown,update:Patch,spans:WeakMap<object,
   return result
 }
 export function compactDraft(draft:WorkshopDraft):WorkshopDraft {
-  const {imported:_,published:__,localId:___,...clean}=draft
+  const {imported:_,published:__,localId:___,definitionRevision:____,...clean}=draft
   return clean
 }
 function indexedDraft(draft:WorkshopDraft):WorkshopDraft {

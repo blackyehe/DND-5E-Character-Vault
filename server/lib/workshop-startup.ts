@@ -1,3 +1,4 @@
+import {effectiveDefinitions} from './definition-editions'
 import {buildOrcbrewCatalog} from './orcbrew'
 import {workshopLibrary} from './workshop-library'
 import {characterRules} from './workshop-rules'
@@ -46,5 +47,11 @@ async function opening(userId:string){
 /** One HTTP request replaces five simultaneous full-library reconstructions. */
 export async function workshopStartup(userId:string,onReader?:(reader:'prepared'|'resident'|'legacy')=>void){
  const previous=pending.get(userId),task=previous??opening(userId);if(!previous)pending.set(userId,task)
- try{const result=await task;onReader?.(result.reader);return result.value}finally{if(pending.get(userId)===task)pending.delete(userId)}
+ try{const result=await task;onReader?.(result.reader)
+  const value=structuredClone(result.value),revisions=new Map<string,number>()
+  const rows=(['classes','subclasses','races'] as const).flatMap(kind=>value[kind].map(source=>({kind,source}))),editions=await effectiveDefinitions(userId,rows)
+  for(const kind of ['classes','subclasses','races'] as const)value[kind]=rows.flatMap((row,position)=>{if(row.kind!==kind)return [];const effective=editions[position]!;revisions.set(row.source.index,effective.revision);return [{...effective.entry,definitionRevision:effective.revision} as unknown as typeof row.source]})
+  value.library.rules=value.library.rules.map(rule=>({...rule,definitionRevision:revisions.get(rule.index)??0}))
+  return value
+ }finally{if(pending.get(userId)===task)pending.delete(userId)}
 }
