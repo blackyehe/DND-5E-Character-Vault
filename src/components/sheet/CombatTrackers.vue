@@ -30,6 +30,10 @@ const slots = computed(() => Object.entries(effectiveSlots.value).filter(([,s]) 
 const spellAttack = computed(() => benefitSpellAttack(c.value))
 const hasMagic = computed(() => slots.value.length || c.value.spellcasting.known.length || c.value.spellcasting.prepared.length)
 const recovery = (value?: string) => value ?? (c.value.meta.klass.toLowerCase() === 'warlock' ? 'short' : 'long')
+const sharedSlotRecovery = computed(() => {
+  const kinds = new Set(slots.value.map(([,s]) => recovery(s.recovery)))
+  return kinds.size === 1 ? [...kinds][0] : undefined
+})
 async function save(patch: Partial<Character>) {
   if (store.saving) return
   try { await store.update(c.value._id, patch) } catch { /* The sheet retains the saved values and displays the error. */ }
@@ -51,15 +55,24 @@ function rest(kind: 'short' | 'long') {
 <template>
   <section class="sheet-panel sheet-trackers" :class="{'sheet-trackers-rail':variant==='rail'}">
     <header class="sheet-trackers-heading"><h3>Spell slots & resources</h3></header>
-    <dl v-if="hasMagic" class="sheet-casting-stats sheet-casting-highlight" aria-label="Spellcasting statistics"><div><dt>Spell attack</dt><dd>{{ signed(spellAttack) }}</dd></div><div><dt>Save DC</dt><dd>{{ benefitSpellDC(c) }}</dd></div><div><dt>Casting</dt><dd>{{ c.spellcasting.ability.toUpperCase() }}</dd></div></dl>
+    <p v-if="hasMagic&&variant==='rail'" class="sheet-small sheet-rail-casting">Casting ability <strong>{{ c.spellcasting.ability.toUpperCase() }}</strong></p>
+    <dl v-if="hasMagic" class="sheet-casting-stats sheet-casting-highlight" aria-label="Spellcasting statistics"><div><dt>Spell attack</dt><dd>{{ signed(spellAttack) }}</dd></div><div><dt>Save DC</dt><dd>{{ benefitSpellDC(c) }}</dd></div><div v-if="variant!=='rail'"><dt>Casting</dt><dd>{{ c.spellcasting.ability.toUpperCase() }}</dd></div></dl>
     <fieldset :disabled="store.saving"><div class="sheet-tracker-grid">
-      <article v-for="[key,s] in slots" :key="key" class="sheet-tracker-card">
+      <article v-if="variant==='rail'&&slots.length" class="sheet-tracker-card sheet-slot-group">
+        <h4>Spell slots</h4>
+        <div class="sheet-slot-rows"><div v-for="[key,s] in slots" :key="key" class="sheet-slot-row">
+          <div class="sheet-slot-label"><strong>Level {{ key.slice(1) }}</strong><span><span v-motion-counter="s.max-s.used">{{ Math.max(0,s.max-s.used) }}</span> / {{ s.max }} available</span><small v-if="!sharedSlotRecovery">{{ recovery(s.recovery)==='short'?'Short':'Long' }} rest</small></div>
+          <div class="sheet-tracker-actions"><button class="sheet-button sheet-small-button" :aria-label="`Use level ${key.slice(1)} slot`" :disabled="s.used>=s.max" @click="slot(key,1)">Use</button><button class="sheet-button sheet-small-button" :aria-label="`Restore level ${key.slice(1)} slot`" :disabled="s.used<=0" @click="slot(key,-1)">Restore</button></div>
+        </div></div>
+        <small v-if="sharedSlotRecovery" class="sheet-tracker-recovery">All slots recover on a {{ sharedSlotRecovery }} rest.</small>
+      </article>
+      <template v-else><article v-for="[key,s] in slots" :key="key" class="sheet-tracker-card">
         <header><h4>Level {{ key.slice(1) }} slots</h4><span class="sheet-tracker-total"><strong v-motion-counter="s.max-s.used">{{ Math.max(0, s.max-s.used) }}</strong> / {{ s.max }}</span></header>
         <div v-if="s.max<=12" class="sheet-track-pips"><button v-for="i in s.max" :key="i" :class="{spent:i>s.max-s.used}" :aria-label="`Level ${key.slice(1)} slot ${i}: ${i>s.max-s.used?'spent':'available'}`" :aria-pressed="i<=s.max-s.used" @click="slot(key,i>s.max-s.used?-1:1)" /></div><div v-else class="sheet-tracker-count">{{ s.max-s.used }} available</div>
         <div class="sheet-tracker-actions"><button class="sheet-button sheet-small-button" :aria-label="`Use level ${key.slice(1)} slot`" :disabled="s.used>=s.max" @click="slot(key,1)">Use</button><button class="sheet-button sheet-small-button" :aria-label="`Restore level ${key.slice(1)} slot`" :disabled="s.used<=0" @click="slot(key,-1)">Restore</button></div>
         <p class="sheet-small sheet-tracker-notes"></p>
         <small class="sheet-tracker-recovery">{{ recovery(s.recovery)==='short'?'Short rest':'Long rest' }}</small>
-      </article>
+      </article></template>
       <article v-for="r in resources" :key="r.id" class="sheet-tracker-card sheet-tracker-points">
         <header><h4><RuleReference :name="r.name" :text="resourceRules(r)" /></h4><span class="sheet-tracker-total"><strong v-motion-counter="r.unlimited?'?':r.max-r.used">{{ r.unlimited?'?':Math.max(0,r.max-r.used) }}</strong><template v-if="!r.unlimited"> / {{ r.max }}</template></span></header>
         <div v-if="!r.unlimited&&r.max<=12" class="sheet-track-pips"><button v-for="i in r.max" :key="i" :class="{spent:i>r.max-r.used}" :aria-label="`${r.name} ${i}: ${i>r.max-r.used?'spent':'available'}`" :aria-pressed="i<=r.max-r.used" @click="resource(r.id,i>r.max-r.used?-1:1,true)" /></div><div v-else class="sheet-tracker-count">{{ r.unlimited?'Unlimited':`${r.max-r.used} available` }}</div>

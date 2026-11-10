@@ -30,3 +30,17 @@ it('keeps prepare/search filters and save guards without spending slots or mutat
  await b.prepare('flame');expect(state.store.update).toHaveBeenCalledExactlyOnceWith('hero',{spellcasting:{...state.store.current.spellcasting,prepared:[]}});expect(JSON.stringify(state.store.current)).toBe(before)
  state.store.saving=true;await b.prepare('flame');expect(state.store.update).toHaveBeenCalledTimes(1)
 })
+
+it('shows newly learned level-four spells by default without preparing or saving them',async()=>{
+ const c=state.store.current;c.meta.level=7;c.spellcasting.known.push('wall-of-fire','elemental-bane')
+ state.spells.value['wall-of-fire']=spell('wall-of-fire','Wall of Fire',{level:4})
+ state.spells.value['elemental-bane']=spell('elemental-bane','Elemental Bane',{level:4})
+ const before=JSON.stringify(c)
+ let b:any;const html=await render(v=>b=v)
+ expect(html).toContain('Wall of Fire');expect(html).toContain('Elemental Bane');expect(html).toContain('Level 4')
+ const newSpells=()=>b.groups.value.flatMap((g:any)=>g.spells).filter((s:any)=>s.level===4)
+ expect(newSpells()).toHaveLength(2);expect(newSpells().every((s:any)=>!s.ready)).toBe(true)
+ expect(state.store.update).not.toHaveBeenCalled();expect(JSON.stringify(c)).toBe(before)
+ b.showAll.value=false;expect(newSpells()).toHaveLength(0)
+ b.showAll.value=true;expect(newSpells()).toHaveLength(2)
+})

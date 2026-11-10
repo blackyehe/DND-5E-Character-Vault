@@ -1,0 +1,25 @@
+{
+  "evidence": ".local/resource-rail-20261111",
+  "checkpoint": "fee691b",
+  "runtime": [
+    "src/components/sheet/CombatTrackers.vue",
+    "src/components/sheet/sheet-folio.css",
+    "src/components/sheet/SpellbookPanel.vue"
+  ],
+  "tests": [
+    "src/components/sheet/CombatTrackers.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts"
+  ],
+  "testFiles": [
+    "src/components/sheet/CombatTrackers.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts",
+    "shared/character-rest.test.ts",
+    "shared/level-up.test.ts"
+  ],
+  "validationSupport": [
+    "workspace-artifacts.mjs",
+    "shared/level-up.test.ts"
+  ],
+  "postBuildRunner": "scripts/check-resource-rail.mjs",
+  "baselineFiles": ".local/resource-rail-20261111/baseline-files"
+}
