@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type { Character } from '../../shared/character'
 import { attunementError } from '../../shared/item-rules'
 import { availableBenefitSpells } from '../../shared/rule-benefits'
+import {isLinkedResource,itemTrackerResources,reconcileItemTrackers,trackerActive} from '../../shared/linked-trackers'
 
 const count = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
 export const playUpdateSchema = z.object({
@@ -36,14 +37,19 @@ export function applyPlayUpdate(before: Character, update: z.infer<typeof playUp
     slot.used = bound(item.used, slot.max, slot.used)
   }
   if (update.slots?.length) set['spellcasting.slots'] = slots
-  const resources = structuredClone(before.resources ?? [])
+  const resources = structuredClone(before.resources ?? []),equipment=structuredClone(before.equipment)
+  let linkedChanged=false
   for (const item of update.resources ?? []) {
-    const resource = resources.find(r => r.id === item.id)
+    const resource = resources.find(r => r.id === item.id)??itemTrackerResources(before,true).find(r=>r.id===item.id)
     if (!resource || resource.unlimited) throw new Error('That resource cannot be spent.')
-    resource.used = bound(item.used, resource.max, resource.used)
+    const used=bound(item.used, resource.max, resource.used)
+    if(resource.source?.kind==='item'){
+      const source=equipment.find(e=>String(e._id??e.grantId)===resource.source!.itemId),tracker=source?.trackers?.find(t=>t.id===resource.source!.trackerId)
+      if(!source||!tracker||!trackerActive(source,tracker)&&used>resource.used)throw new Error('That item tracker is not currently available.')
+      source.trackerUses={...source.trackerUses,[tracker.id]:used};linkedChanged=true
+    }else resource.used=used
   }
-  if (update.resources?.length) set.resources = resources
-  const equipment = structuredClone(before.equipment)
+  if (update.resources?.length) set.resources = resources.filter(r=>!isLinkedResource(r))
   for (const item of update.equipment ?? []) {
     const saved = equipment.find(e => String(e._id) === item.id)
     if (!saved) throw new Error('Equipment item not found. Refresh the sheet.')
@@ -51,9 +57,9 @@ export function applyPlayUpdate(before: Character, update: z.infer<typeof playUp
     saved.equipped = item.qty > 0 && item.equipped
     if(item.attuned!==undefined)saved.attuned=!!saved.requiresAttunement&&item.attuned
   }
-  if (update.equipment?.length) {
+  if (update.equipment?.length||linkedChanged) {
     if(equipment.some(i=>i.attuned&&i.qty>0&&!before.equipment.some(old=>String(old._id)===String(i._id)&&old.attuned&&old.qty>0))){const error=attunementError(equipment);if(error)throw new Error(error)}
-    set.equipment = equipment;set['combat.itemAcBaseline']=before.combat.itemAcBaseline??0
+    set.equipment = reconcileItemTrackers({...before,equipment,resources:resources.filter(r=>!isLinkedResource(r))}).equipment;set['combat.itemAcBaseline']=before.combat.itemAcBaseline??0
   }
   if (update.prepared) {
     const available = new Set([...before.spellcasting.known, ...before.spellcasting.prepared])

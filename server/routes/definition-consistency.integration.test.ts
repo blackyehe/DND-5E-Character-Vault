@@ -15,12 +15,17 @@ import {definitionIdentity,editIdentity,saveNativeDefinition} from '../lib/defin
 import {workshopLibrary,resolveWorkshopCharacter} from '../lib/workshop-library'
 import {reviewedCharacter} from '../lib/compendium-character'
 import {captureSelectedDefinitions} from '../lib/selected-options'
+import {newLinkedTracker} from '../../shared/linked-trackers'
+import {resourcesFor} from '../../shared/character-resources'
+import {restUpdate} from '../../shared/character-rest'
+import {playUpdate} from '../../shared/rooms'
 
 vi.mock('../middleware/auth',()=>({requireAuth:(req:Request,res:Response,next:NextFunction)=>{req.userId=req.get('x-user');return req.userId?next():res.sendStatus(401)}}))
 import compendium from './compendium'
 import workshop from './workshop'
 import items from './items'
 import rooms from './rooms'
+import characters from './characters'
 let server:Server,base:string,owner:string
 async function request(path:string,method='GET',body?:unknown,user=owner){const response=await fetch(base+path,{method,headers:{'content-type':'application/json','x-user':user,connection:'close'},body:body===undefined?undefined:JSON.stringify(body)});return {status:response.status,body:await response.json() as any}}
 async function saveEdition(kind:string,index:string,change:(entry:any)=>void){const response=await request(`/compendium/${kind}/${index}`);expect(response.status,JSON.stringify(response.body)).toBe(200);const state=response.body;const entry=structuredClone(state.entry);change(entry);return request(`/compendium/${kind}/${index}`,'PUT',{expectedRevision:state.revision,expectedSourceHash:state.sourceHash,entry})}
@@ -32,7 +37,7 @@ describe.skipIf(process.env.DEFINITION_CONSISTENCY_TESTS!=='1')('shared definiti
   expect(env.MONGO_URI).toMatch(/^mongodb:\/\/127\.0\.0\.1:\d+\/definition_consistency_tests_[a-f0-9]+\?replicaSet=definitions$/);expect(Boolean(process.env.VERCEL)).toBe(false)
   await mongoose.connect(env.MONGO_URI,{autoCreate:false,autoIndex:false})
   await CustomContent.createCollection();await CustomContent.createIndexes();await Character.createCollection();await Character.createIndexes();await Room.createCollection();await Room.createIndexes()
-  const app=express();app.use(express.json({limit:'4mb'}));app.use('/compendium',compendium);app.use('/workshop',workshop);app.use('/items',items);app.use('/rooms',rooms);app.use((error:Error,_req:Request,res:Response,_next:NextFunction)=>res.status(500).json({error:error.message,stack:error.stack}))
+  const app=express();app.use(express.json({limit:'4mb'}));app.use('/compendium',compendium);app.use('/workshop',workshop);app.use('/items',items);app.use('/rooms',rooms);app.use('/characters',characters);app.use((error:Error,_req:Request,res:Response,_next:NextFunction)=>res.status(500).json({error:error.message,stack:error.stack}))
   server=await new Promise(resolve=>{const listening=app.listen(0,'127.0.0.1',()=>resolve(listening))});const address=server.address();if(!address||typeof address==='string')throw Error('No fixture address');base=`http://127.0.0.1:${address.port}`
  })
  beforeEach(()=>{owner=String(new mongoose.Types.ObjectId())})
@@ -133,5 +138,43 @@ describe.skipIf(process.env.DEFINITION_CONSISTENCY_TESTS!=='1')('shared definiti
   expect((await request(`/compendium/feats/${index}/review/${char._id}`,'POST',{expectedRevision:2,expectedUpdatedAt:char.updatedAt.toISOString(),reviewHash:'a'.repeat(64),confirmedSource:true},player)).status).toBe(404)
   expect(JSON.stringify(await Character.findById(char._id).lean())).toBe(before)
   await Room.updateOne({_id:room._id},{$set:{assignments:[]}});expect((await request(path,'GET',undefined,player)).status).toBe(404)
+ })
+ it('delivers item trackers immediately, persists owner/player spending and follows reviewed renames, additions and removals',async()=>{
+  const charge={...newLinkedTracker(),name:'Charges',max:4},item:EquipmentItem={name:'Linked wand',qty:1,weight:1,notes:'',equipped:false,kind:'accessory',magical:true,trackers:[charge]}
+  const template=await request('/items','POST',{requestId:crypto.randomUUID(),item});expect(template.status).toBe(201);const templateId=template.body.id,index=`workshop-item-${templateId}`
+  const c=emptyCharacter();c.meta.name='Tracker holder';const char=await Character.create({...c,userId:owner}),id=String(char._id)
+  const delivered=await request(`/characters/${id}/items`,'POST',{requestId:crypto.randomUUID(),item:{...item,templateId}});expect(delivered.status,JSON.stringify(delivered.body)).toBe(201)
+  let sheet=delivered.body.character,resource=sheet.resources.find((r:any)=>r.source);expect(resource).toMatchObject({name:'Linked wand · Charges',max:4,used:0})
+  const spent=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:sheet.resources.map((r:any)=>r.id===resource.id?{...r,used:2}:r)});expect(spent.status,JSON.stringify(spent.body)).toBe(200);sheet=spent.body;expect(sheet.resources.find((r:any)=>r.id===resource.id).used).toBe(2)
+  let raw=await Character.findById(id).lean();expect(raw!.equipment[0]!.trackerUses?.[charge.id]).toBe(2);expect(raw!.resources?.some(r=>r.id===resource.id)).toBe(false)
+  const player=String(new mongoose.Types.ObjectId()),room=await Room.create({ownerId:owner,name:'Tracker room',joinToken:crypto.randomUUID(),members:[player],assignments:[{userId:player,characterId:id}]})
+  const playerSpent=await request(`/rooms/${room._id}/characters/${id}/play`,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:[{id:resource.id,used:3}]},player);expect(playerSpent.status,JSON.stringify(playerSpent.body)).toBe(200);sheet=playerSpent.body
+  expect((await request(`/rooms/${room._id}/characters/${id}/play`,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:[{id:resource.id,used:3,max:999}]},player)).status).toBe(400)
+  expect((await apply('magic-items',index,id)).status).toBe(200)
+  const opened=(await request('/items')).body[0],second={...newLinkedTracker(),name:'Daily spell'};opened.item.name='Renamed wand';opened.item.trackers=[{...charge,name:'Arcane charges',max:2},second]
+  const saved=await request('/items/'+templateId,'PUT',{requestId:crypto.randomUUID(),item:opened.item,expectedRevision:opened.revision,expectedDefinitionRevision:opened.definitionRevision});expect(saved.status).toBe(200)
+  expect((await request('/characters/'+id)).body.resources.find((r:any)=>r.id===resource.id).name).toBe('Linked wand · Charges')
+  const fresh=await request(`/characters/${id}/items`,'POST',{requestId:crypto.randomUUID(),item:{...item,templateId}});expect(fresh.status).toBe(201)
+  const freshItem=fresh.body.character.equipment[1],freshTrackers=fresh.body.character.resources.filter((r:any)=>r.source?.itemId===freshItem._id)
+  expect(freshTrackers).toMatchObject([{name:'Renamed wand · Arcane charges',used:0},{name:'Renamed wand · Daily spell',used:0}]);expect(fresh.body.character.resources.find((r:any)=>r.id===resource.id).name).toBe('Linked wand · Charges')
+  expect((await request('/characters/'+id,'PATCH',{expectedUpdatedAt:fresh.body.character.updatedAt,equipment:fresh.body.character.equipment.slice(0,1)})).status).toBe(200)
+  const preview=(await request(`/compendium/magic-items/${index}/review`)).body;expect(preview.characters[0].changes.some((change:any)=>change.field==='resources')).toBe(true)
+  const beforeRace=(await request('/characters/'+id)).body,spentDuringReview=await request(`/rooms/${room._id}/characters/${id}/play`,'PATCH',{expectedUpdatedAt:beforeRace.updatedAt,resources:[{id:resource.id,used:4}]},player);expect(spentDuringReview.status).toBe(200)
+  const staleRow=preview.characters[0];expect((await request(`/compendium/magic-items/${index}/review/${id}`,'POST',{expectedRevision:preview.revision,expectedUpdatedAt:staleRow.updatedAt,reviewHash:staleRow.reviewHash,confirmedSource:true})).status).toBe(409)
+  expect((await apply('magic-items',index,id)).status).toBe(200);sheet=(await request('/characters/'+id)).body;const linked=sheet.resources.filter((r:any)=>r.source);expect(linked).toMatchObject([{id:resource.id,name:'Renamed wand · Arcane charges',max:2,used:4},{name:'Renamed wand · Daily spell',used:0}])
+  expect((await saveEdition('magic-items',index,entry=>{entry.workshopItem.trackers=[second]})).status).toBe(200);expect((await apply('magic-items',index,id)).status).toBe(200);raw=await Character.findById(id).lean();expect(raw!.equipment[0]!.trackerUses).not.toHaveProperty(charge.id);sheet=(await request('/characters/'+id)).body;expect(sheet.resources.filter((r:any)=>r.source)).toHaveLength(1)
+  const removed=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,equipment:[]});expect(removed.status).toBe(200);expect(removed.body.resources.filter((r:any)=>r.source)).toEqual([]);raw=await Character.findById(id).lean();expect(raw!.resources?.some(r=>r.id.startsWith('linked:'))).toBe(false)
+ })
+ it('retains uses through equipment toggles, rests while hidden and new inventory copies',async()=>{
+  const charge={...newLinkedTracker(),max:3,activation:'equipped' as const},item:EquipmentItem={name:'Resting focus',kind:'accessory',qty:1,weight:1,notes:'',equipped:true,trackers:[charge]}
+  const c=emptyCharacter();c.meta.name='Rest holder';const char=await Character.create({...c,userId:owner}),id=String(char._id),delivered=await request(`/characters/${id}/items`,'POST',{requestId:crypto.randomUUID(),item});expect(delivered.status).toBe(201)
+  let sheet=delivered.body.character,r=sheet.resources.find((r:any)=>r.source);sheet=(await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:sheet.resources.map((row:any)=>row.id===r.id?{...row,used:2}:row)})).body
+  sheet=(await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,equipment:sheet.equipment.map((i:any)=>({...i,equipped:false}))})).body;expect(sheet.resources.filter((r:any)=>r.source)).toEqual([]);expect(sheet.equipment[0].trackerUses[charge.id]).toBe(2)
+  sheet=(await request('/characters/'+id,'PATCH',{...restUpdate(sheet,'long'),expectedUpdatedAt:sheet.updatedAt})).body;expect(sheet.equipment[0].trackerUses[charge.id]).toBe(0)
+  sheet=(await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,equipment:sheet.equipment.map((i:any)=>({...i,equipped:true}))})).body;expect(resourcesFor(sheet).find(row=>row.source)?.used).toBe(0)
+  const second=await request(`/characters/${id}/items`,'POST',{requestId:crypto.randomUUID(),item});expect(second.status).toBe(201);const copies=second.body.character.resources.filter((r:any)=>r.source);expect(copies).toHaveLength(2);expect(new Set(copies.map((r:any)=>r.id)).size).toBe(2)
+  const player=String(new mongoose.Types.ObjectId()),room=await Room.create({ownerId:owner,name:'Rest player',joinToken:crypto.randomUUID(),members:[player],assignments:[{userId:player,characterId:id}]})
+  sheet=second.body.character;sheet=(await request(`/rooms/${room._id}/characters/${id}/play`,'PATCH',playUpdate(sheet,{equipment:sheet.equipment.map((i:any)=>({...i,equipped:false}))}),player)).body
+  const rested=await request(`/rooms/${room._id}/characters/${id}/play`,'PATCH',playUpdate(sheet,restUpdate(sheet,'long')),player);expect(rested.status,JSON.stringify(rested.body)).toBe(200)
  })
 })

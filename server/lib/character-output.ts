@@ -8,6 +8,7 @@ import { coreSpell } from './srd-snapshot'
 import { legacySrdSpellKey } from '../../src/lib/spell-reference'
 import { innateRaceSpells } from '../../shared/workshop-race'
 import { withItemBaseline } from '../../shared/item-rules'
+import {reconcileItemTrackers} from '../../shared/linked-trackers'
 
 export async function characterOutput(character: unknown, ownerId: string | undefined, player = false): Promise<Character> {
   return savedCharacterOutput(await resolveWorkshopCharacter(character,ownerId),player)
@@ -16,7 +17,7 @@ export async function characterOutput(character: unknown, ownerId: string | unde
 /** The authenticated opening path does not wait for pack reads or rule rebuilds.
  * The reference response supplies the latest resolved sheet in the background. */
 export function savedCharacterOutput(character:unknown,player=false):Character {
-  const resolved = resolveCharacterProgression(character as Character)
+  const resolved = resolveCharacterProgression(reconcileItemTrackers(character as Character))
   const data = normalizeImportedCharacter({ ...resolved, resources: resourcesFor(resolved) }) as Character & Record<string, unknown>
   data.equipment=data.equipment.map(item=>{
     const resolved=resolveEquipmentItem(item)

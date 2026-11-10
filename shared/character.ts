@@ -30,6 +30,8 @@ export interface Attack {
 }
 
 export interface EquipmentItem {
+  trackers?:import('./linked-trackers').LinkedTracker[]
+  trackerUses?:Record<string,number>
   templateBaseline?:Partial<Omit<EquipmentItem,'templateBaseline'>>
   _id?: string
   name: string
@@ -57,6 +59,7 @@ export interface EquipmentItem {
   benefits?: unknown[]
   templateId?: string
   templateRevision?: number
+  templateDefinitionRevision?:number
   grantId?: string
 }
 
@@ -76,6 +79,7 @@ export interface CharacterFeature {
   order?: number
 }
 export interface CharacterResource {
+  source?:{kind:'item';itemId:string;trackerId:string}
   ruleId?:string
   id: string
   name: string

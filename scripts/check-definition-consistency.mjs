@@ -7,7 +7,7 @@ import {randomBytes} from 'node:crypto'
 import mongoose from '../server/node_modules/mongoose/index.js'
 import {withTemporaryWorkspace} from '../workspace-artifacts.mjs'
 
-const evidence='.local/definition-consistency-20261110'
+const evidence=process.env.DND_EVIDENCE_DIR??process.argv[2]??'.local/definition-consistency-20261110'
 fs.mkdirSync(evidence,{recursive:true})
 const port=await new Promise((resolve,reject)=>{const s=net.createServer();s.once('error',reject);s.listen(0,'127.0.0.1',()=>{const address=s.address();s.close(()=>resolve(address.port))})})
 await withTemporaryWorkspace('def-db',async directory=>{

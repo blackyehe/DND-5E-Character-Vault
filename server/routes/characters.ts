@@ -17,6 +17,7 @@ import { CustomContent } from '../models/CustomContent'
 import {captureSelectedDefinitions} from '../lib/selected-options'
 import {templateBenefitEdition} from '../lib/item-benefits'
 import type {Character as CharacterData} from '../../shared/character'
+import {LINKED_RESOURCE_PREFIX} from '../../shared/linked-trackers'
 
 const router = Router()
 router.use(requireAuth)
@@ -109,6 +110,7 @@ router.patch('/:id', async (req, res) => {
   // Read selections after loading the stored character below.
   const fields=['companionKind','meta','combat','abilities','saves','skills','attacks','equipment','spellcasting','personality','features','resources','proficiencies','homebrew']
   const patch=Object.fromEntries(fields.filter(key=>Object.hasOwn(req.body,key)).map(key=>[key,req.body[key]]))
+  if(Array.isArray(patch.resources)&&patch.resources.some(r=>r&&typeof r.id==='string'&&r.id.startsWith(LINKED_RESOURCE_PREFIX)&&(!Number.isInteger(r.used)||r.used<0||r.used>999)))return res.status(400).json({error:'Item tracker uses must be a whole number from 0 to 999.'})
   for(let attempt=0;attempt<3;attempt++){
     const before=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
     if(!before)return res.status(404).json({error:'Character not found'})
@@ -120,8 +122,8 @@ router.patch('/:id', async (req, res) => {
     let selected
     try{selected=await captureSelectedDefinitions(req.userId,{...before,...patch,combat:{...before.combat,...combatPatch,itemAcBaseline:combatPatch?.itemAcBaseline??previous.combat.itemAcBaseline}} as unknown as CharacterData,library,before as unknown as CharacterData)}catch(e){return res.status(400).json({error:(e as Error).message})}
     const resolved=await resolveWorkshopCharacter(selected,req.userId,library)
-    const {meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules}=resolved
-    const char=await Character.findOneAndUpdate({_id:before._id,userId:req.userId,updatedAt:before.updatedAt},{$set:{...patch,meta,features,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules,...(patch.combat?{combat:resolved.combat}:{'combat.hpMax':resolved.combat.hpMax,'combat.speed':resolved.combat.speed,'combat.itemAcBaseline':resolved.combat.itemAcBaseline})}},{new:true,runValidators:true}).lean()
+    const {meta,features,equipment,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules}=resolved
+    const char=await Character.findOneAndUpdate({_id:before._id,userId:req.userId,updatedAt:before.updatedAt},{$set:{...patch,meta,features,equipment,resources,spellcasting,proficiencies,saves,skills,homebrew,compendiumRules,...(patch.combat?{combat:resolved.combat}:{'combat.hpMax':resolved.combat.hpMax,'combat.speed':resolved.combat.speed,'combat.itemAcBaseline':resolved.combat.itemAcBaseline})}},{new:true,runValidators:true}).lean()
     if(char)return res.json(await output(char,req.userId))
   }
   res.status(409).json({error:'This character changed while saving. Your edits have been kept; refresh the character before trying again.'})

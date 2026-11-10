@@ -1,0 +1,34 @@
+{
+  "evidence": ".local/item-trackers-20261110",
+  "checkpoint": "36967f9",
+  "runtime": [
+    "server/lib/character-output.ts",
+    "server/lib/compendium-character.ts",
+    "server/lib/inventory.ts",
+    "server/lib/item-benefits.ts",
+    "server/lib/play-update.ts",
+    "server/models/Character.ts",
+    "server/routes/characters.ts",
+    "server/routes/items.ts",
+    "shared/character-resources.ts",
+    "shared/character-rest.ts",
+    "shared/character.ts",
+    "shared/item-definition.ts",
+    "src/components/items/ItemComposer.vue",
+    "src/components/sheet/ItemRules.vue",
+    "src/components/sheet/ResourceEditor.vue",
+    "shared/linked-trackers.ts",
+    "src/components/items/LinkedTrackersEditor.vue"
+  ],
+  "tests": [
+    "server/lib/inventory.test.ts",
+    "server/routes/definition-consistency.integration.test.ts",
+    "src/components/items/ItemComposer.test.ts",
+    "shared/linked-trackers.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "baselineFiles": ".local/item-trackers-20261110/baseline-files"
+}

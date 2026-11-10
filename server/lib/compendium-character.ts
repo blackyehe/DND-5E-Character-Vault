@@ -10,6 +10,8 @@ import {isFeatureOptionKind} from '../../shared/option-kinds'
 import { characterBenefits, characterBenefitRows, benefitSummary, benefitKey, benefitField, entryBenefits, benefitProblems } from '../../shared/rule-benefits'
 import {ITEM_DEFINITION_FIELDS,itemDefinitionSnapshot} from '../../shared/item-definition'
 import {sameDefinition} from './definition-editions'
+import {reconcileItemTrackers} from '../../shared/linked-trackers'
+import {resourcesFor} from '../../shared/character-resources'
 
 const record=(v:unknown):EntryData=>v&&typeof v==='object'&&!Array.isArray(v)?v as EntryData:{}
 const list=(v:unknown):EntryData[]=>Array.isArray(v)?v.map(record):[]
@@ -98,15 +100,19 @@ export function applyReviewedDefinitions(c:Character):Character{
       const old=itemFrom(d.before,d.kind),next=itemFrom(d.entry,d.kind)
       c.equipment=c.equipment.map(item=>{
         if(!ids(d.before).includes(item.index??'')&&!ids(d.before).includes(item.magicIndex??'')&&d.index!==`workshop-item-${item.templateId}`&&!(name(item.name)===name(d.before.name)&&!item.index&&!item.magicIndex))return item
+        // A newly acquired copy can already use a newer edition than the
+        // character's previously approved copies. Never downgrade that copy.
+        if(item.templateDefinitionRevision!==undefined&&item.templateDefinitionRevision>d.revision)return item
         const result={...item}
         const baseline=item.templateBaseline??old
-        for(const key of ITEM_DEFINITION_FIELDS.filter(key=>key!=='benefits')){
+        for(const key of ITEM_DEFINITION_FIELDS.filter(key=>key!=='benefits'&&key!=='trackers')){
           if(!sameEntry(baseline[key],next[key])&&(sameEntry(item[key],baseline[key])||sameEntry(item[key],next[key])||item[key]===undefined))Object.assign(result,{[key]:next[key]})
         }
         // Keep the inventory's visible snapshot in sync with the approved edition.
         const benefits=entryBenefits(d.entry).filter(row=>benefitProblems([row]).length===0)
         if(benefits.length||Array.isArray(d.entry.benefits)||item.benefits)result.benefits=cloneEntry(benefits)
-        if(item.templateId){result.templateBaseline=itemDefinitionSnapshot({...next,...(result.benefits?{benefits:result.benefits}:{})});if(typeof next.templateRevision==='number')result.templateRevision=next.templateRevision}
+        if(Array.isArray(next.trackers)||Array.isArray(old.trackers)||item.trackers)result.trackers=cloneEntry(next.trackers??[])
+        if(item.templateId){result.templateDefinitionRevision=d.revision;result.templateBaseline=itemDefinitionSnapshot({...next,...(result.benefits?{benefits:result.benefits}:{})});if(typeof next.templateRevision==='number')result.templateRevision=next.templateRevision}
         return result
       })
       continue
@@ -128,13 +134,14 @@ export function applyReviewedDefinitions(c:Character):Character{
   return c
 }
 export function reviewedCharacter(c:Character,rules:PublishedWorkshopRule[],initial:Record<string,WorkshopDraft>){
+  c=reconcileItemTrackers(c)
   const reviewed=reviewedWorkshopRules(c,rules,initial)
-  return applyReviewedDefinitions(applyWorkshopRules(c,reviewed.rules,reviewed.initial))
+  return reconcileItemTrackers(applyReviewedDefinitions(applyWorkshopRules(c,reviewed.rules,reviewed.initial)))
 }
 export function characterReviewChanges(before:Character,after:Character){
   const benefits=(c:Character)=>({effective:characterBenefits(c),sources:characterBenefitRows(c).map(r=>({source:r.source,benefit:benefitSummary(r.row),active:r.active,level:r.level}))});const a=benefits(before),b=benefits(after)
   return [...(sameEntry(a,b)?[]:[{field:'benefits and defenses',before:a,after:b}]),...['meta','features','equipment','combat','abilities','saves','skills','resources','spellcasting','proficiencies'].flatMap(field=>{
-    const a=before[field as keyof Character],b=after[field as keyof Character]
+    const a=field==='resources'?resourcesFor(before):before[field as keyof Character],b=field==='resources'?resourcesFor(after):after[field as keyof Character]
     return sameEntry(a,b)?[]:[{field,before:a,after:b}]
   })]
 }

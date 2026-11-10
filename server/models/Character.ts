@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import { benefitProblems } from '../../shared/rule-benefits'
+import {trackerProblems} from '../../shared/linked-trackers'
 
 const { Schema } = mongoose
 
@@ -123,9 +124,11 @@ const equipmentSchema = new Schema(
     description: String,
     referenceDescription: String,
       kind:{type:String,enum:['weapon','armour','accessory','consumable','treasure','gear']},
-      magical:Boolean,requiresAttunement:Boolean,attuned:Boolean,templateId:String,templateRevision:Number,grantId:String,templateBaseline:Schema.Types.Mixed,
+      magical:Boolean,requiresAttunement:Boolean,attuned:Boolean,templateId:String,templateRevision:Number,templateDefinitionRevision:Number,grantId:String,templateBaseline:Schema.Types.Mixed,
       effects:{type:new Schema({ac:{type:Number,default:0},saves:{type:Number,default:0}},{_id:false}),default:undefined},
       benefits:{type:[Schema.Types.Mixed],default:undefined,validate:{validator:(rows:unknown[])=>benefitProblems(rows).length===0,message:'Check the item benefits.'}},
+      trackers:{type:[Schema.Types.Mixed],default:undefined,validate:{validator:(rows:unknown[])=>trackerProblems(rows).length===0,message:'Check the item trackers.'}},
+      trackerUses:{type:Schema.Types.Mixed,default:undefined,validate:{validator:(v:unknown)=>!!v&&typeof v==='object'&&!Array.isArray(v)&&Object.entries(v).every(([key,n])=>/^[a-f0-9-]{36}$/i.test(key)&&Number.isInteger(n)&&n>=0&&n<=999),message:'Check the item tracker uses.'}},
     armor: { type: new Schema({ base: Number, dex: Boolean, cap: Number, shield: Boolean, category: String }, { _id: false }), default: undefined },
     weapon: { type: new Schema({ dice: String, damageType: String, range: String, finesse: Boolean, ranged: Boolean, category: String, noDamage: Boolean }, { _id: false }), default: undefined },
     magicBonus: Number,

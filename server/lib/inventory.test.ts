@@ -8,11 +8,21 @@ import { playUpdateSchema,applyPlayUpdate } from './play-update'
 import { resolveEquipmentItem } from './equipment-references'
 import equipment from '../data/srd-2014-equipment.json'
 import magic from '../data/srd-2014-magic-items.json'
+import {newLinkedTracker} from '../../shared/linked-trackers'
 
 const character=():Character=>({...emptyCharacter(),_id:'a'.repeat(24),updatedAt:'2026-10-19T00:00:00.000Z'})
 const ring=()=>magicEquipmentFrom(magic.find(i=>i.index==='ring-of-protection') as MagicItemDefinition)
 const delivery='f3c23168-460b-45bc-85f4-d71bc729d4bf'
 describe('item creation, delivery and play',()=>{
+  it('validates linked definitions, strips client counters and gives each delivery a fresh counter',()=>{
+    const tracker={...newLinkedTracker(),max:3},item={...ring(),kind:'accessory',trackers:[tracker],trackerUses:{[tracker.id]:2}}
+    const parsed=grantSchema.parse({requestId:delivery,item});expect(parsed.item.trackers).toEqual([tracker]);expect('trackerUses' in parsed.item).toBe(false)
+    const given=inventoryAfterGrant(character(),item as EquipmentItem,delivery);expect(given.equipment[0]!.trackerUses).toEqual({});expect(given.equipment[0]!.trackers).toEqual([tracker])
+    expect(grantSchema.safeParse({requestId:delivery,item:{...item,trackers:[tracker,tracker]}}).success).toBe(false)
+    expect(grantSchema.safeParse({requestId:delivery,item:{...item,trackers:[{...tracker,id:'not-an-id'}]}}).success).toBe(false)
+    expect(grantSchema.safeParse({requestId:delivery,item:{...item,trackers:[{...tracker,max:1000}]}}).success).toBe(false)
+    expect(grantSchema.safeParse({requestId:delivery,item:{...item,requiresAttunement:false,trackers:[{...tracker,activation:'attuned'}]}}).success).toBe(false)
+  })
   it('builds a normal weapon with its statistics and a magic ring with its actual rules',()=>{
     const sword=equipmentFrom(equipment.find(i=>i.index==='longsword') as EquipmentDefinition)
     expect(sword.weapon?.dice).toBe('1d8')

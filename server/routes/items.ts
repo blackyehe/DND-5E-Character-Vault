@@ -14,7 +14,7 @@ const router=Router()
 router.use(requireAuth)
 export async function rememberItem(userId:string|undefined,requestId:string,item:EquipmentItem) {
   const id=createHash('sha256').update(`${userId}:item:${requestId}`).digest('hex').slice(0,24)
-  const data=JSON.parse(JSON.stringify({...item,qty:1,equipped:false,attuned:false,grantId:undefined,templateBaseline:undefined,templateId:id,templateRevision:0}))
+  const data=JSON.parse(JSON.stringify({...item,qty:1,equipped:false,attuned:false,grantId:undefined,trackerUses:undefined,templateBaseline:undefined,templateDefinitionRevision:undefined,templateId:id,templateRevision:0}))
   await CustomContent.updateOne({_id:id,userId,type:'item'},{$setOnInsert:{userId,type:'item',data}},{upsert:true,runValidators:true})
   return id
 }
@@ -24,7 +24,7 @@ router.get('/',async(req,res)=>{
   const items=records.map((r,position)=>{
     const item=prepareItem(r.data as EquipmentItem),effective=editions[position]!
     const definition=withItemBenefitEdition(item,effective.entry)
-    return {id:String(r._id),revision:r.__v??0,definitionRevision:effective.revision,item:{...definition,templateBaseline:itemDefinitionSnapshot(definition),templateId:String(r._id),templateRevision:r.__v??0}}
+    return {id:String(r._id),revision:r.__v??0,definitionRevision:effective.revision,item:{...definition,templateDefinitionRevision:effective.revision,templateBaseline:itemDefinitionSnapshot(definition),templateId:String(r._id),templateRevision:r.__v??0}}
   })
   res.json(items)
 })

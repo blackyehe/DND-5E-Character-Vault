@@ -14,5 +14,5 @@ export async function templateBenefitEdition<T extends EquipmentItem>(owner:stri
  const kind=item.magical?'magic-items':'equipment'
  const effective=await effectiveDefinition(owner,kind,{index:`workshop-item-${id}`,name:item.name,workshopItem:item})
  const definition=withItemBenefitEdition(item,effective.entry)
- return {...definition,templateBaseline:itemDefinitionSnapshot(definition)}
+ return {...definition,templateDefinitionRevision:effective.revision,templateBaseline:itemDefinitionSnapshot(definition)}
 }

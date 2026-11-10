@@ -14,6 +14,8 @@ import { useCharactersStore } from '../../stores/characters'
 import ItemRules from '../sheet/ItemRules.vue'
 import ItemFilters from './ItemFilters.vue'
 import RuleBenefitsEditor from '../compendium/RuleBenefitsEditor.vue'
+import LinkedTrackersEditor from './LinkedTrackersEditor.vue'
+import {itemTrackerProblems,type LinkedTracker} from '../../../shared/linked-trackers'
 import {benefitProblems} from '../../../shared/rule-benefits'
 import '../compendium/entry-editor.css'
 const ImportedItemPicker=defineAsyncComponent(()=>import('./ImportedItemPicker.vue'))
@@ -35,6 +37,8 @@ const clone=<T,>(value:T):T=>JSON.parse(JSON.stringify(value))
 const item=reactive<EquipmentItem>({...makeEmpty(),...clone(props.initial??{})})
 const itemBenefits=computed({get:()=>item.benefits??[],set:(rows:unknown[])=>{item.benefits=rows}})
 const benefitIssue=computed(()=>benefitProblems(itemBenefits.value)[0]??'')
+const itemTrackers=computed({get:()=>item.trackers??[],set:(rows:LinkedTracker[])=>{item.trackers=rows}})
+const trackerIssue=computed(()=>itemTrackerProblems(item)[0]??'')
 const labels:Record<string,string>={weapon:'Weapon',armour:'Armour or shield',accessory:'Ring, wondrous item or accessory',consumable:'Potion, scroll or consumable',treasure:'Treasure or currency',gear:'Adventuring gear'}
 const matches=computed(()=>entries.value.filter(e=>{const definition=e.item??(e.source==='equipment'?normalEquipmentSearch[e.index]:undefined);return (source.value==='all'||source.value===e.source)&&(definition?itemSearchText(definition):e.name.toLowerCase()).includes(query.value.toLowerCase())&&
   (definition?matchesEquipmentItem(definition,filters.value):e.source==='magic'?matchesMagicItem(e.index,filters.value):!Object.values(filters.value).some(Boolean))}))
@@ -42,7 +46,7 @@ const customArmourBases=computed(()=>magicArmourTypes.filter(form=>!item.armor?.
 const customTags=computed({get:()=>equipmentTags(item).filter(tag=>!(itemFormTags as readonly string[]).includes(tag)).join(', '),set:(value:string)=>{item.tags=[...equipmentTags(item).filter(tag=>(itemFormTags as readonly string[]).includes(tag)),...value.split(',').map(tag=>tag.trim().toLowerCase()).filter(Boolean)].filter((tag,index,all)=>all.indexOf(tag)===index)}})
 const baseOptions=computed(()=>magicDetail.value?magicItemBases(magicDetail.value.index):[])
 const heading=computed(()=>props.mode==='library'?'Item Workshop':props.mode==='give'?`Give an item to ${props.characterName??'this character'}`:'Add or create an item')
-const canSubmit=computed(()=>item.name.trim()&&Number.isSafeInteger(item.qty)&&item.qty>=1&&Number.isFinite(item.weight)&&item.weight>=0&&(!baseOptions.value.length||base.value)&&!benefitIssue.value&&!busy.value&&(page.value==='create'||chosen.value))
+const canSubmit=computed(()=>item.name.trim()&&Number.isSafeInteger(item.qty)&&item.qty>=1&&Number.isFinite(item.weight)&&item.weight>=0&&(!baseOptions.value.length||base.value)&&!benefitIssue.value&&!trackerIssue.value&&!busy.value&&(page.value==='create'||chosen.value))
 const action=computed(()=>props.mode==='draft'?'Add to character draft':props.mode==='give'?'Give item now':templateId.value?'Save item & review changes':'Save to my item library')
 function assign(value:EquipmentItem){
   for(const key of Object.keys(item))delete (item as unknown as Record<string,unknown>)[key]
@@ -116,7 +120,7 @@ async function submit(){
   if(!canSubmit.value)return
   busy.value=true;error.value=''
   const definition=JSON.parse(JSON.stringify(item)) as EquipmentItem
-  delete definition._id;delete definition.grantId
+  delete definition._id;delete definition.grantId;delete definition.trackerUses
   if(definition.kind!=='weapon')delete definition.weapon
   if(definition.kind!=='armour')delete definition.armor
   if(!definition.requiresAttunement)definition.attuned=false
@@ -157,6 +161,7 @@ onMounted(async()=>{await nextTick();if(props.mode!=='entry')dialog.value?.showM
   <div v-if="item.kind==='armour'&&item.armor" class="sheet-form-grid"><label>Base AC / shield bonus<input v-model.number="item.armor.base" type="number" min="0" max="40" required /></label><label class="sheet-checkbox"><input v-model="item.armor.dex" type="checkbox" /> Add Dexterity</label><label>Maximum Dexterity bonus<input v-model.number="item.armor.cap" type="number" min="0" max="20" placeholder="Blank = no cap" @change="item.armor.cap=($event.target as HTMLInputElement).value===''?undefined:item.armor.cap" /></label></div>
   <details v-if="customBase&&item.referenceDescription" class="sheet-details"><summary>Base item properties & rules</summary><ItemRules :item="{referenceDescription:item.referenceDescription}" /></details>
   <details class="sheet-details" :open="!!(item.effects?.ac||item.effects?.saves||item.magicBonus)"><summary>Automatic bonuses</summary><p class="sheet-small">These numeric bonuses apply while equipped, and attuned if required. Bonuses here add to Benefits below; enter each bonus once. Record conditional effects in the description.</p><div class="sheet-form-grid"><label v-if="item.kind==='weapon'||item.kind==='armour'">{{item.kind==='weapon'?'Attack & damage enchantment':'Armour enchantment'}}<input v-model.number="item.magicBonus" type="number" min="-20" max="20" /></label><label v-if="item.effects">Extra AC bonus<input v-model.number="item.effects.ac" type="number" min="-20" max="20" /></label><label v-if="item.effects">All saving throws bonus<input v-model.number="item.effects.saves" type="number" min="-20" max="20" /></label></div></details>
+  <LinkedTrackersEditor v-model="itemTrackers" :requires-attunement="item.requiresAttunement" />
   <RuleBenefitsEditor v-if="mode!=='entry'" v-model="itemBenefits" :kind="item.magical?'magic-items':'equipment'" label="Benefits" />
   <p v-if="benefitIssue&&mode!=='entry'" class="sheet-alert" role="alert">{{benefitIssue}}</p>
   <label class="sheet-checkbox"><input v-model="item.requiresAttunement" type="checkbox" /> Requires attunement</label><label v-if="item.requiresAttunement">Attunement requirements · optional<input v-model="item.attunementRequirement" maxlength="500" placeholder="For example: by a spellcaster, or by a cleric of a specific deity" /><small class="sheet-small">Record eligibility here for the DM to check.</small></label><label v-if="mode!=='library'&&mode!=='entry'" class="sheet-checkbox"><input v-model="remember" type="checkbox" /> Save a reusable copy in my Workshop item library</label></template>

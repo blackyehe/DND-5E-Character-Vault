@@ -6,6 +6,7 @@ import { resolveEquipmentItem } from './equipment-references'
 import { armourCategories, itemRarities } from '../../shared/item-classification'
 import { benefitProblems } from '../../shared/rule-benefits'
 import {itemDefinitionSnapshot} from '../../shared/item-definition'
+import {trackerProblems,itemTrackerProblems} from '../../shared/linked-trackers'
 
 const weaponSchema=z.object({dice:z.string().max(30),damageType:z.string().max(60),range:z.string().max(100),finesse:z.boolean(),ranged:z.boolean(),category:z.string().max(40).optional(),noDamage:z.boolean().optional()}).superRefine((weapon,ctx)=>{
  if(weapon.noDamage)return // Special rules remain descriptive, without invented base damage.
@@ -25,6 +26,7 @@ export const itemSchema=z.preprocess(omitEmpty,z.object({
   magical:z.boolean().default(false),requiresAttunement:z.boolean().default(false),attuned:z.boolean().default(false),
   effects:z.object({ac:bonus,saves:bonus}).optional(),magicBonus:bonus.optional(),
   benefits:z.array(z.unknown()).max(200).superRefine((rows,ctx)=>{for(const message of benefitProblems(rows))ctx.addIssue({code:'custom',message})}).optional(),
+  trackers:z.array(z.object({id:z.uuid(),name:z.string().trim().min(1).max(200),max:z.number().int().min(1).max(999),recovery:z.enum(['short','long','manual']),activation:z.enum(['carried','equipped','attuned']),notes:z.string().max(10000)}).strict()).max(20).superRefine((rows,ctx)=>{for(const message of trackerProblems(rows))ctx.addIssue({code:'custom',message})}).optional(),
   tags:z.array(z.string().trim().min(1).max(40)).max(20).optional(),rarity:z.enum(itemRarities).optional(),
   value:z.object({amount:z.number().finite().min(0).max(1000000000),currency:z.enum(['cp','sp','ep','gp','pp'])}).optional(),
   attunementRequirement:z.string().max(500).optional(),
@@ -33,6 +35,7 @@ export const itemSchema=z.preprocess(omitEmpty,z.object({
   armor:z.object({base:z.number().int().min(0).max(40),dex:z.boolean(),cap:z.number().int().min(0).max(20).optional(),shield:z.boolean(),category:z.enum(armourCategories).optional()}).optional(),
   weapon:weaponSchema.optional(),
 }).superRefine((item,ctx)=>{
+  for(const message of itemTrackerProblems(item))ctx.addIssue({code:'custom',message})
   if(item.kind==='weapon'&&!item.weapon)ctx.addIssue({code:'custom',message:'A weapon needs ordinary or special damage rules.'})
   if(item.kind==='armour'&&!item.armor)ctx.addIssue({code:'custom',message:'Armour needs its base AC or shield bonus.'})
   if(item.kind!=='treasure'&&item.qty>9999)ctx.addIssue({code:'custom',message:'Item quantity must be no greater than 9999.'})
@@ -49,7 +52,7 @@ export function inventoryAfterGrant(before:Character,item:EquipmentItem,requestI
   const previous=before.equipment.find(i=>i.grantId===requestId)
   if(previous)return {equipment:before.equipment,duplicate:true}
   if(before.equipment.length>=1000)throw new Error('This inventory already has 1000 entries.')
-  const added={...prepareItem(item),...(item.templateId&&!item.templateBaseline?{templateBaseline:itemDefinitionSnapshot(item)}:{}),grantId:requestId}
+  const added={...prepareItem(item),...(item.trackers?.length?{trackerUses:{}}:{}),...(item.templateId&&!item.templateBaseline?{templateBaseline:itemDefinitionSnapshot(item)}:{}),grantId:requestId}
   const equipment=[...before.equipment.map(i=>added.equipped&&added.armor&&i.armor&&i.armor.shield===added.armor.shield?{...i,equipped:false}:i),added]
   if(added.attuned){const error=attunementError(equipment);if(error)throw new Error(error)}
   return {equipment,duplicate:false}

@@ -4,6 +4,7 @@ import {renderToString} from 'vue/server-renderer'
 import type {EquipmentItem} from '../../../shared/character'
 import ItemComposer from './ItemComposer.vue'
 import type {ItemComposerProps} from './item-composer-props'
+import {newLinkedTracker} from '../../../shared/linked-trackers'
 const mocks=vi.hoisted(()=>({post:vi.fn(),put:vi.fn(),giveItem:vi.fn()}))
 vi.mock('../../lib/api',()=>({api:{post:mocks.post,put:mocks.put,get:vi.fn()}}))
 vi.mock('../../stores/characters',()=>({useCharactersStore:()=>({giveItem:mocks.giveItem})}))
@@ -25,3 +26,8 @@ it('explains invalid Benefits and blocks submission until they are fixed',async(
  let b:any;await render('library',v=>b=v);b.itemBenefits.value=[{type:'spell-dc-bonus',value:100}];expect(b.benefitIssue.value).toMatch(/Benefit 1/);expect(b.canSubmit.value).toBe(false);await b.submit();expect(mocks.post).not.toHaveBeenCalled();b.itemBenefits.value=benefits;expect(b.canSubmit.value).toBeTruthy()
 })
 it('keeps Compendium entry mode on its own Benefits step',async()=>{const {html}=await render('entry',()=>{});expect(html).not.toContain('aria-label="Rule benefits"')})
+it('offers the same linked tracker controls in library and Compendium item editing and preserves IDs when saving',async()=>{
+ const tracker={...newLinkedTracker(),name:'Spell charges'},initial={...item,templateId:'saved',trackers:[tracker]};let b:any
+ const {html}=await render('library',value=>b=value,initial);expect(html).toContain('Linked trackers');b.itemTrackers.value=[{...tracker,name:'Renamed charges'}];await b.submit();expect(mocks.put.mock.calls[0]![1].item.trackers).toEqual([{...tracker,name:'Renamed charges'}]);expect((await render('entry',()=>{},initial)).html).toContain('Linked trackers')
+})
+it('blocks invalid tracker definitions without discarding the draft',async()=>{let b:any;await render('library',v=>b=v);b.itemTrackers.value=[{...newLinkedTracker(),max:0}];expect(b.canSubmit.value).toBe(false);expect(b.trackerIssue.value).toContain('1');await b.submit();expect(mocks.post).not.toHaveBeenCalled();expect(b.itemTrackers.value[0].max).toBe(0)})

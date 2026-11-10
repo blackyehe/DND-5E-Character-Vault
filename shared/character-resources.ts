@@ -3,6 +3,7 @@ import { abilityMod } from './calc'
 import { scaledResource } from './character-progression'
 import { isRevenantShadow } from './class-rules'
 import { featResources, matchesFeatResource } from './feat-resources'
+import {isLinkedResource,itemTrackerResources} from './linked-trackers'
 
 export function classes(c: Pick<Character, 'meta'>) {
   if (c.meta.classLevels?.length) return c.meta.classLevels
@@ -45,12 +46,12 @@ export function automaticResources(c: Pick<Character, 'meta' | 'abilities'> & Pa
   }
   return [...result, ...featResources(c)]
 }
-export function resourcesFor(c: Pick<Character, 'meta' | 'abilities' | 'resources'> & Partial<Pick<Character,'homebrew'|'features'>>): CharacterResource[] {
-  const saved = c.resources ?? []
+export function resourcesFor(c: Pick<Character, 'meta' | 'abilities' | 'resources'> & Partial<Pick<Character,'homebrew'|'features'|'equipment'>>): CharacterResource[] {
+  const saved = (c.resources ?? []).filter(r=>!isLinkedResource(r))
   const defaults=automaticResources(c).filter(r=>!c.homebrew?.bindings.some(b=>b.rule.resources.some(resource=>resource.name.toLowerCase()===r.name.toLowerCase()||/^rift points/i.test(resource.name)&&/^rift points/i.test(r.name)||/^riftborne bonus slot/i.test(resource.name)&&/^riftborne bonus slot/i.test(r.name))))
   return [...defaults.filter(a => !saved.some(r => r.id === a.id || r.name.toLowerCase() === a.name.toLowerCase() || !r.automatic && matchesFeatResource(r,a,defaults))), ...saved.flatMap(r=>{
     if(!r.automatic)return [scaledResource(c,r)]
     const current=defaults.find(d=>d.id===r.id)
     return current?[{...current,used:Math.min(current.max,r.used)}]:[]
-  })].filter(r=>r.max>0 || !r.automatic)
+  })].filter(r=>r.max>0 || !r.automatic).concat(itemTrackerResources(c))
 }

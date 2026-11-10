@@ -82,6 +82,19 @@ with the same audit file recording its validation and Owlbear-specific limits.
    [spell-creator audit](audits/spell-creator-2026-11-10.md).
 5. Add source-linked trackers to items, feats and other grants. Activation,
    removal/unequipping, recovery and preserved spent uses must follow the source.
+   Item stage implemented: normal/magic item creation and Compendium item editing
+   offer linked trackers with stable IDs, fixed maxima, rest/manual recovery and
+   carried/equipped/attuned availability. Acquisition creates each inventory
+   entry's pools immediately. Removal hides the pools; actual item/definition
+   deletion removes their counters. Temporary deactivation retains spent uses.
+   Reviewed item/tracker renames, additions and removals update existing copies
+   without resetting uses. Newly given copies retain their current source edition
+   when older copies on the character are still waiting for review.
+   Next extension: add the same tracker definition controls to character options
+   and derive their pools from active approved grants, preserving IDs and counters
+   through renames/level eligibility. Built-in/manual trackers are not converted by
+   name. Other imported-item formats and independent Owlbear rollout remain later
+   work; item quantities currently share one pool per inventory entry.
 6. Add a clear long-rest action to website and Owlbear summary screens.
    Website implemented: a top-of-summary action shares resource/slot recovery
    with Combat. HP and hit dice remain manual, as before. Owlbear is still pending:
