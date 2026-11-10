@@ -43,6 +43,24 @@ describe.skipIf(process.env.DEFINITION_CONSISTENCY_TESTS!=='1')('shared definiti
  })
  beforeEach(()=>{owner=String(new mongoose.Types.ObjectId())})
  afterAll(async()=>{try{if(server)await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));if(mongoose.connection.readyState===1&&mongoose.connection.host==='127.0.0.1'&&/^definition_consistency_tests_[a-f0-9]+$/.test(mongoose.connection.name))await mongoose.connection.dropDatabase()}finally{await mongoose.disconnect()}})
+ it('persists inferred tracker overrides and removal without losing the feat or recreating its pool',async()=>{
+  const c=emptyCharacter();c.meta.name='Tracker override fixture';c.meta.klass='Wizard';c.meta.level=7
+  c.features=[{name:'Zhaerin Contractor',origin:'feat',level:6,description:'Once per long rest when your hp is reduced to 0, regain 1 hp.'}]
+  c.resources=[{id:'unrelated',name:'Unrelated pool',max:3,used:2,recovery:'manual'}]
+  const char=await Character.create({...c,userId:owner}),id=String(char._id)
+  let sheet=(await request('/characters/'+id)).body,rows=resourcesFor(sheet),inferred=rows.find(r=>r.id.startsWith('auto:feat:'))!
+  const edited=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:rows.map(r=>r.id===inferred.id?{...r,name:'Custom rescue',max:3,used:1,recovery:'short',notes:'Owner override',automatic:false}:r)})
+  expect(edited.status,JSON.stringify(edited.body)).toBe(200)
+  sheet=(await request('/characters/'+id)).body
+  expect(resourcesFor(sheet).find(r=>r.id===inferred.id)).toMatchObject({name:'Custom rescue',max:3,used:1,recovery:'short',notes:'Owner override',automatic:false})
+  const removed=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:resourcesFor(sheet).map(r=>r.id===inferred.id?{...r,max:0,used:0,automatic:false}:r)})
+  expect(removed.status,JSON.stringify(removed.body)).toBe(200);sheet=removed.body
+  const rested=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,...restUpdate(sheet,'long')})
+  expect(rested.status,JSON.stringify(rested.body)).toBe(200);sheet=(await request('/characters/'+id)).body
+  expect(resourcesFor(sheet).filter(r=>r.max>0).some(r=>r.id===inferred.id)).toBe(false)
+  expect(sheet.features).toMatchObject(c.features);expect(sheet.resources.find((r:any)=>r.id==='unrelated').used).toBe(2)
+  expect(sheet.resources.find((r:any)=>r.id===inferred.id)).toMatchObject({max:0,automatic:false})
+ })
  it.each(['options','spells'] as const)('opens Compendium edits in %s, rejects an old tab and keeps explicit removal through another fingerprint',async kind=>{
   const draft=kind==='options'?newOptionDraft('feats'):newSpellDraft();draft.body.name='Shared definition'
   const first=await publish(kind,draft);expect(first.status,JSON.stringify(first.body)).toBe(200);const saved=first.body.draft,index=saved.published.index,category=kind==='options'?'feats':'spells'

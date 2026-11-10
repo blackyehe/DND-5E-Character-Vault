@@ -1,0 +1,21 @@
+{
+  "evidence": ".local/tracker-editor-20261111",
+  "checkpoint": "7a967e7",
+  "runtime": [
+    "src/components/sheet/ResourceEditor.vue"
+  ],
+  "tests": [
+    "src/components/sheet/ResourceEditor.test.ts",
+    "server/routes/definition-consistency.integration.test.ts"
+  ],
+  "testFiles": [
+    "src/components/sheet/ResourceEditor.test.ts",
+    "shared/option-trackers.test.ts",
+    "shared/character-rest.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "baselineFiles": ".local/tracker-editor-20261111/baseline-files"
+}
