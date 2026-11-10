@@ -15,6 +15,7 @@ import {definitionIdentity,editIdentity,saveNativeDefinition} from '../lib/defin
 import {workshopLibrary,resolveWorkshopCharacter} from '../lib/workshop-library'
 import {reviewedCharacter} from '../lib/compendium-character'
 import {captureSelectedDefinitions} from '../lib/selected-options'
+import {newOptionTracker} from '../../shared/option-trackers'
 import {newLinkedTracker} from '../../shared/linked-trackers'
 import {resourcesFor} from '../../shared/character-resources'
 import {restUpdate} from '../../shared/character-rest'
@@ -177,4 +178,32 @@ describe.skipIf(process.env.DEFINITION_CONSISTENCY_TESTS!=='1')('shared definiti
   sheet=second.body.character;sheet=(await request(`/rooms/${room._id}/characters/${id}/play`,'PATCH',playUpdate(sheet,{equipment:sheet.equipment.map((i:any)=>({...i,equipped:false}))}),player)).body
   const rested=await request(`/rooms/${room._id}/characters/${id}/play`,'PATCH',playUpdate(sheet,restUpdate(sheet,'long')),player);expect(rested.status,JSON.stringify(rested.body)).toBe(200)
  })
+ it('delivers option trackers on acquisition and preserves counters across both editors and grant removal',async()=>{
+  const draft=newOptionDraft('feats'),tracker={...newOptionTracker(),max:4};draft.body.name='Linked feat';draft.body.trackers=[tracker]
+  const first=await publish('options',draft);expect(first.status,JSON.stringify(first.body)).toBe(200);const index=first.body.draft.published.index
+  const c=emptyCharacter();c.meta.name='Option tracker holder';const char=await Character.create({...c,userId:owner}),id=String(char._id)
+  const granted=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:char.updatedAt.toISOString(),features:[{name:draft.body.name,description:'',origin:'feat',definition:{version:1,kind:'feats',index}}]});expect(granted.status,JSON.stringify(granted.body)).toBe(200)
+  let sheet=granted.body;const resource=sheet.resources.find((r:any)=>r.source?.kind==='option');expect(resource).toMatchObject({name:'Linked feat \u00b7 Uses',max:4,used:0})
+  const spent=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:sheet.resources.map((r:any)=>r.id===resource.id?{...r,used:2}:r)});expect(spent.status,JSON.stringify(spent.body)).toBe(200);sheet=spent.body
+  let raw=await Character.findById(id).lean();expect(raw!.compendiumRules![0]!.trackerUses).toEqual({[tracker.id]:2});expect(raw!.resources.some(r=>r.id===resource.id)).toBe(false)
+  const player=String(new mongoose.Types.ObjectId()),room=await Room.create({ownerId:owner,name:'Option room',joinToken:crypto.randomUUID(),members:[player],assignments:[{userId:player,characterId:id}]})
+  const path=`/rooms/${room._id}/characters/${id}/play`,playerSpent=await request(path,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:[{id:resource.id,used:3}]},player);expect(playerSpent.status,JSON.stringify(playerSpent.body)).toBe(200);sheet=playerSpent.body
+  expect((await request(path,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:[{id:resource.id,used:3,max:999}]},player)).status).toBe(400)
+  const second={...newOptionTracker(),name:'Second pool',recovery:'short' as const}
+  expect((await saveEdition('feats',index,entry=>{entry.optionBuilder.trackers=[{...tracker,name:'Arcane uses',max:2},second]})).status).toBe(200)
+  const opened=(await request('/workshop/options')).body.options[0];expect(opened.body.trackers).toHaveLength(2);opened.body.name='Renamed linked feat'
+  const saved=await publish('options',opened);expect(saved.status,JSON.stringify(saved.body)).toBe(200);const next=saved.body.draft.published.index;expect(next).not.toBe(index)
+  expect((await request('/characters/'+id)).body.resources.find((r:any)=>r.id===resource.id).name).toBe('Linked feat \u00b7 Uses')
+  const preview=(await request(`/compendium/feats/${next}/review`)).body,row=preview.characters.find((r:any)=>r.id===id);expect(row.changes.some((r:any)=>r.field==='resources')).toBe(true)
+  const concurrent=await request(path,'PATCH',{expectedUpdatedAt:sheet.updatedAt,resources:[{id:resource.id,used:4}]},player);expect(concurrent.status,JSON.stringify(concurrent.body)).toBe(200)
+  expect((await request(`/compendium/feats/${next}/review/${id}`,'POST',{expectedRevision:preview.revision,expectedUpdatedAt:row.updatedAt,reviewHash:row.reviewHash,confirmedSource:true})).status).toBe(409)
+  expect((await apply('feats',next,id)).status).toBe(200);sheet=(await request('/characters/'+id)).body
+  expect(sheet.resources.filter((r:any)=>r.source?.kind==='option')).toMatchObject([{id:resource.id,name:'Renamed linked feat \u00b7 Arcane uses',max:2,used:4},{name:'Renamed linked feat \u00b7 Second pool',used:0}])
+  const rested=await request(path,'PATCH',playUpdate(sheet,restUpdate(sheet,'long')),player);expect(rested.status,JSON.stringify(rested.body)).toBe(200);sheet=rested.body;expect(sheet.resources.find((r:any)=>r.id===resource.id).used).toBe(0)
+  expect((await saveEdition('feats',next,entry=>{entry.optionBuilder.trackers=[second]})).status).toBe(200);expect((await apply('feats',next,id)).status).toBe(200)
+  raw=await Character.findById(id).lean();expect(raw!.compendiumRules![0]!.trackerUses).not.toHaveProperty(tracker.id)
+  sheet=(await request('/characters/'+id)).body;const removed=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,features:[]});expect(removed.status,JSON.stringify(removed.body)).toBe(200);expect(removed.body.resources.filter((r:any)=>r.source?.kind==='option')).toEqual([])
+  raw=await Character.findById(id).lean();expect(raw!.compendiumRules!.filter((d:any)=>d.kind==='feats')).toEqual([])
+ })
+
 })

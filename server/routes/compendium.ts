@@ -102,7 +102,7 @@ async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|un
   const before=reviewedCharacter(original,library.rules,library.initial)
   const matches=(d:NonNullable<CharacterData['compendiumRules']>[number])=>sameDefinition(d,state.kind,state.index,state.source)
   const previous=before.compendiumRules?.find(matches)
-  const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.previousSource??state.source,entry:state.entry}
+  const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.previousSource??state.source,entry:state.entry,...(previous?.trackerUses?{trackerUses:previous.trackerUses}:{})}
   const candidate={...before,compendiumRules:[...(before.compendiumRules??[]).filter(d=>!matches(d)),definition]}
   if(state.kind==='spells'&&typeof state.source.spellId==='string'){
     const aliases=new Set([state.index,previous?.index,...(Array.isArray(state.source.aliases)?state.source.aliases:[])])

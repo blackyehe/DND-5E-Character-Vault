@@ -1,5 +1,6 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest'
 import {createRenderer,ssrContextKey,type Component} from 'vue'
+import {newOptionTracker} from '../../../shared/option-trackers'
 import {newOptionDraft} from '../../../shared/option-workshop'
 import {useAuthStore} from '../../stores/auth'
 import OptionWorkshop from './OptionWorkshop.vue'
@@ -46,4 +47,11 @@ it('retains the edited draft and old revision on a failed or conflicting save',a
 it('ignores a save completing after the account changes or the view unmounts',async()=>{
  await start();const pending=deferred<unknown>();mocks.post.mockReturnValue(pending.promise);const saving=bindings.publish();(useAuthStore().user as any).id='other';pending.resolve({draft:option(),message:'Old account'});await saving;expect(bindings.draft.value).toBeNull();expect(bindings.notice.value).toBe('')
  bindings.open(option());bindings.target.value=pack.id;const later=deferred<unknown>();mocks.post.mockReturnValue(later.promise);const oldNotice=bindings.notice.value,second=bindings.publish();stop!();stop=undefined;later.resolve({draft:option(),message:'After unmount'});await second;expect(bindings.notice.value).toBe(oldNotice)
+})
+
+it('explains invalid tracker fields and marks tracker changes as requiring a fresh review',async()=>{
+ await start();bindings.draft.value.body.trackers=[{...newOptionTracker(),max:0}];expect(bindings.saveProblem.value).toMatch(/uses/);await bindings.publish();expect(mocks.post).not.toHaveBeenCalled()
+ bindings.draft.value.body.trackers[0].max=3;expect(bindings.saveProblem.value).toBe('')
+ const saved=JSON.parse(JSON.stringify(bindings.draft.value));saved.published={revision:1,index:'saved',packId:pack.id,packHash:'c'.repeat(64)};mocks.post.mockResolvedValue({draft:saved,message:'Saved',pack:{...pack,hash:saved.published.packHash}})
+ await bindings.publish();expect(bindings.reviewSaved.value).toBe(true);bindings.draft.value.body.trackers[0].name='New name';expect(bindings.reviewSaved.value).toBe(false)
 })

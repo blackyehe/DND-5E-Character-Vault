@@ -10,7 +10,7 @@ import {isFeatureOptionKind} from '../../shared/option-kinds'
 import { characterBenefits, characterBenefitRows, benefitSummary, benefitKey, benefitField, entryBenefits, benefitProblems } from '../../shared/rule-benefits'
 import {ITEM_DEFINITION_FIELDS,itemDefinitionSnapshot} from '../../shared/item-definition'
 import {sameDefinition} from './definition-editions'
-import {reconcileItemTrackers} from '../../shared/linked-trackers'
+import {reconcileLinkedTrackers} from '../../shared/option-trackers'
 import {resourcesFor} from '../../shared/character-resources'
 
 const record=(v:unknown):EntryData=>v&&typeof v==='object'&&!Array.isArray(v)?v as EntryData:{}
@@ -128,15 +128,16 @@ export function applyReviewedDefinitions(c:Character):Character{
       if(!next||f.description&&f.description!==selectedText(d.before,old.description)&&f.description!==selectedText(d.entry,next.description)&&f.description!==old.description)return f
       return {...f,name:next.name,description:selectedText(d.entry,next.description),level:next.level??f.level,origin:next.origin==='other'?f.origin:next.origin}
     })
+    if(d.kind==='languages')c.proficiencies.languages=c.proficiencies.languages.map(v=>name(v)===name(d.before.name)?String(d.entry.name):v)
     if(d.kind==='backgrounds'&&(c.meta.backgroundIndex?optionHasId({...d.entry,index:d.index,name:String(d.entry.name)},c.meta.backgroundIndex):optionLabelMatches({...d.before,index:d.index,name:String(d.before.name)},c.meta.background)))c.meta.background=String(d.entry.name)
     if(d.kind==='subraces'&&(c.meta.subraceIndex?optionHasId({...d.entry,index:d.index,name:String(d.entry.name)},c.meta.subraceIndex):name(c.meta.subrace)===name(d.before.name)))c.meta.subrace=String(d.entry.name)
   }
   return c
 }
 export function reviewedCharacter(c:Character,rules:PublishedWorkshopRule[],initial:Record<string,WorkshopDraft>){
-  c=reconcileItemTrackers(c)
+  c=reconcileLinkedTrackers(c)
   const reviewed=reviewedWorkshopRules(c,rules,initial)
-  return reconcileItemTrackers(applyReviewedDefinitions(applyWorkshopRules(c,reviewed.rules,reviewed.initial)))
+  return reconcileLinkedTrackers(applyReviewedDefinitions(applyWorkshopRules(c,reviewed.rules,reviewed.initial)))
 }
 export function characterReviewChanges(before:Character,after:Character){
   const benefits=(c:Character)=>({effective:characterBenefits(c),sources:characterBenefitRows(c).map(r=>({source:r.source,benefit:benefitSummary(r.row),active:r.active,level:r.level}))});const a=benefits(before),b=benefits(after)

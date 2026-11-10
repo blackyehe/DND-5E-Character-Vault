@@ -21,7 +21,7 @@ export function itemTrackerProblems(item:Pick<EquipmentItem,'trackers'|'requires
  return issues.length?issues:!item.requiresAttunement&&item.trackers?.some(t=>t.activation==='attuned')?['Enable Requires attunement for an attuned-only tracker, or change its availability.']:[]
 }
 export const linkedItemResourceId=(item:EquipmentItem,tracker:LinkedTracker)=>`${LINKED_RESOURCE_PREFIX}${String(item._id??item.grantId??'')}:${tracker.id}`
-export const isLinkedResource=(resource:Pick<CharacterResource,'id'>)=>resource.id.startsWith(LINKED_RESOURCE_PREFIX)
+export const isLinkedResource=(resource:Pick<CharacterResource,'id'>)=>resource.id.startsWith('linked:item:')||resource.id.startsWith('linked:option:')
 export function trackerActive(item:EquipmentItem,tracker:LinkedTracker){
  if(item.qty<=0)return false
  if(tracker.activation==='carried')return true
@@ -48,5 +48,5 @@ export function reconcileItemTrackers<T extends Pick<Character,'equipment'|'reso
   if(!trackerProblems(item.trackers).length)for(const t of item.trackers??[]){const used=saved.find(r=>r.id===linkedItemResourceId(item,t))?.used??item.trackerUses?.[t.id]??0;trackerUses[t.id]=Number.isInteger(used)&&used>=0&&used<=999?used:0}
   return {...item,trackerUses}
  })
- return {...c,equipment,...(c.resources?{resources:saved.filter(r=>!isLinkedResource(r))}:{})}
+ return {...c,equipment,...(c.resources?{resources:saved.filter(r=>!r.id.startsWith(LINKED_RESOURCE_PREFIX))}:{})}
 }

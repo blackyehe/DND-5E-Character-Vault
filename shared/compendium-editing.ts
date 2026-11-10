@@ -4,7 +4,7 @@ import { BROWSE_KINDS } from './compendium-kinds'
 export const EDITABLE_KINDS = BROWSE_KINDS
 export type CompendiumKind = typeof EDITABLE_KINDS[number]
 export type EntryData = Record<string, unknown>
-export interface CompendiumDefinition { kind: CompendiumKind; index: string; revision: number; sourceHash?: string; before: EntryData; entry: EntryData }
+export interface CompendiumDefinition { kind: CompendiumKind; index: string; revision: number; sourceHash?: string; before: EntryData; entry: EntryData;trackerUses?:Record<string,number> }
 export interface CompendiumEditState {
   kind: CompendiumKind; index: string; revision: number; sourceHash: string; sourceChanged: boolean
   source: EntryData; entry: EntryData; edited: boolean

@@ -90,11 +90,18 @@ with the same audit file recording its validation and Owlbear-specific limits.
    Reviewed item/tracker renames, additions and removals update existing copies
    without resetting uses. Newly given copies retain their current source edition
    when older copies on the character are still waiting for review.
-   Next extension: add the same tracker definition controls to character options
-   and derive their pools from active approved grants, preserving IDs and counters
-   through renames/level eligibility. Built-in/manual trackers are not converted by
-   name. Other imported-item formats and independent Owlbear rollout remain later
-   work; item quantities currently share one pool per inventory entry.
+   Character-option extension implemented: Workshop and Compendium offer a Linked
+   trackers step for feats, backgrounds, subraces, invocations, boons, choice groups,
+   languages and references. Pools derive from approved, owned grants, support an
+   unlock level and keep their UUID/counter through reviewed renames and changes.
+   Removing a grant or tracker removes its pool; temporary level ineligibility
+   hides it without losing uses. Player spending and rest recovery use the source
+   counter. Classes/races retain their existing Workshop resource rules. Explicit
+   feat tracker lists replace automatic guesses; manual trackers are not converted
+   by name. Other imported-item formats and independent Owlbear rollout remain
+   later work; item quantities share one pool per inventory entry.
+   See the [option tracker audit](audits/option-trackers-2026-11-10.md) for release
+   validation and boundaries.
    Released to the website as `dpl_7eDtt8S2qHaqymXAqiEjzUEfFLPU`; see the
    [linked-item tracker audit](audits/item-trackers-2026-11-10.md).
 6. Add a clear long-rest action to website and Owlbear summary screens.

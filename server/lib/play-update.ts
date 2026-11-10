@@ -4,12 +4,14 @@ import { attunementError } from '../../shared/item-rules'
 import { availableBenefitSpells } from '../../shared/rule-benefits'
 import {isLinkedResource,itemTrackerResources,reconcileItemTrackers,trackerActive} from '../../shared/linked-trackers'
 
+import {optionTrackerResources,optionTrackerKey,optionTrackers} from '../../shared/option-trackers'
+
 const count = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
 export const playUpdateSchema = z.object({
   expectedUpdatedAt: z.iso.datetime(),
   combat: z.object({ hpCurrent: count.optional(), hpTemp: count.max(9999).optional(), hitDiceUsed: count.optional(), deathSavesSuccess: count.max(3).optional(), deathSavesFailure: count.max(3).optional(), inspiration: z.boolean().optional() }).strict().optional(),
   slots: z.array(z.object({ key: z.string().regex(/^l[1-9]$/), used: count }).strict()).max(9).optional(),
-  resources: z.array(z.object({ id: z.string().max(200), used: count.max(999) }).strict()).max(200).optional(),
+  resources: z.array(z.object({ id: z.string().max(512), used: count.max(999) }).strict()).max(200).optional(),
   equipment: z.array(z.object({ id: z.string().max(100), qty: count, equipped: z.boolean(),attuned:z.boolean().optional() }).strict()).max(1000).optional(),
   prepared: z.array(z.string().max(300)).max(1000).optional(),
   activeEffects: z.array(z.string().max(300)).max(1000).optional(),
@@ -38,17 +40,23 @@ export function applyPlayUpdate(before: Character, update: z.infer<typeof playUp
   }
   if (update.slots?.length) set['spellcasting.slots'] = slots
   const resources = structuredClone(before.resources ?? []),equipment=structuredClone(before.equipment)
-  let linkedChanged=false
+  const definitions=structuredClone(before.compendiumRules??[])
+  let linkedChanged=false,optionsChanged=false
   for (const item of update.resources ?? []) {
-    const resource = resources.find(r => r.id === item.id)??itemTrackerResources(before,true).find(r=>r.id===item.id)
+    const resource = resources.find(r => r.id === item.id)??[...itemTrackerResources(before,true),...optionTrackerResources(before,true)].find(r=>r.id===item.id)
     if (!resource || resource.unlimited) throw new Error('That resource cannot be spent.')
     const used=bound(item.used, resource.max, resource.used)
     if(resource.source?.kind==='item'){
-      const source=equipment.find(e=>String(e._id??e.grantId)===resource.source!.itemId),tracker=source?.trackers?.find(t=>t.id===resource.source!.trackerId)
+      const origin=resource.source,source=equipment.find(e=>String(e._id??e.grantId)===origin.itemId),tracker=source?.trackers?.find(t=>t.id===origin.trackerId)
       if(!source||!tracker||!trackerActive(source,tracker)&&used>resource.used)throw new Error('That item tracker is not currently available.')
       source.trackerUses={...source.trackerUses,[tracker.id]:used};linkedChanged=true
+    }else if(resource.source?.kind==='option'){
+      const origin=resource.source,source=definitions.find(d=>optionTrackerKey(d)===origin.definitionKey),tracker=source&&optionTrackers(source)?.find(t=>t.id===origin.trackerId)
+      if(!source||!tracker||!optionTrackerResources(before).some(r=>r.id===item.id)&&used>resource.used)throw new Error('That option tracker is not currently available.')
+      source.trackerUses={...source.trackerUses,[tracker.id]:used};optionsChanged=true
     }else resource.used=used
   }
+  if(optionsChanged)set.compendiumRules=definitions
   if (update.resources?.length) set.resources = resources.filter(r=>!isLinkedResource(r))
   for (const item of update.equipment ?? []) {
     const saved = equipment.find(e => String(e._id) === item.id)

@@ -1,0 +1,36 @@
+{
+  "evidence": ".local/option-trackers-20261110",
+  "checkpoint": "3844d7a",
+  "runtime": [
+    "server/lib/character-output.ts",
+    "server/lib/compendium-character.ts",
+    "server/lib/entry-builder-schema.ts",
+    "server/lib/play-update.ts",
+    "server/routes/characters.ts",
+    "server/routes/compendium.ts",
+    "shared/character-resources.ts",
+    "shared/character-rest.ts",
+    "shared/character.ts",
+    "shared/compendium-editing.ts",
+    "shared/entry-builders.ts",
+    "shared/linked-trackers.ts",
+    "shared/option-workshop.ts",
+    "src/components/compendium/EntryBuilder.vue",
+    "src/components/compendium/ReferenceEntryBuilder.vue",
+    "src/components/sheet/ResourceEditor.vue",
+    "src/components/workshop/OptionWorkshop.vue",
+    "shared/option-trackers.ts",
+    "src/components/workshop/OptionTrackersEditor.vue"
+  ],
+  "tests": [
+    "server/routes/definition-consistency.integration.test.ts",
+    "src/components/workshop/OptionWorkshop.test.ts",
+    "shared/option-trackers.test.ts",
+    "src/components/compendium/ReferenceEntryBuilder.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "baselineFiles": ".local/option-trackers-20261110/baseline-files"
+}

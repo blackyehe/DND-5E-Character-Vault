@@ -79,7 +79,7 @@ export interface CharacterFeature {
   order?: number
 }
 export interface CharacterResource {
-  source?:{kind:'item';itemId:string;trackerId:string}
+  source?:{kind:'item';itemId:string;trackerId:string}|{kind:'option';definitionKey:string;trackerId:string}
   ruleId?:string
   id: string
   name: string

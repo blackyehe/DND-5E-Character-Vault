@@ -12,6 +12,7 @@ import WorkshopLibraryTools from './WorkshopLibraryTools.vue'
 import {revealNavigationTarget} from '../../lib/navigation-scroll'
 import {announceWorkshopChange} from '../../lib/workshop-trash'
 import {sameEntry} from '../../../shared/compendium-editing'
+import {optionTrackerProblems} from '../../../shared/option-trackers'
 import {benefitProblems} from '../../../shared/rule-benefits'
 import DefinitionChangeReview from '../compendium/DefinitionChangeReview.vue'
 const EntryBuilder=defineAsyncComponent(()=>import('../compendium/EntryBuilder.vue'))
@@ -29,7 +30,7 @@ const saveProblem=computed(()=>{
  if(!draft.value.source.trim())return 'Enter a source or collection before saving.'
  if(target.value==='new'&&!/^[^<>:"/\\|?*\x00-\x1f]+\.orcbrew$/i.test(filename.value.trim()))return 'Enter a valid pack filename ending in .orcbrew.'
  if(target.value!=='new'&&!packs.value.some(p=>p.id===target.value))return loading.value?'Loading destination packs…':'The original pack is unavailable. Reload the library or restore its pack; your draft is kept.'
- return benefitProblems(draft.value.benefits)[0]??''
+ return optionTrackerProblems(draft.value.body.trackers)[0]??benefitProblems(draft.value.benefits)[0]??''
 })
 const savePanel=ref<HTMLElement|null>(null)
 function showSave(){savePanel.value?.focus({preventScroll:true});revealNavigationTarget(savePanel.value)}

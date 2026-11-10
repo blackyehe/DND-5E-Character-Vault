@@ -17,7 +17,7 @@ import { CustomContent } from '../models/CustomContent'
 import {captureSelectedDefinitions} from '../lib/selected-options'
 import {templateBenefitEdition} from '../lib/item-benefits'
 import type {Character as CharacterData} from '../../shared/character'
-import {LINKED_RESOURCE_PREFIX} from '../../shared/linked-trackers'
+import {isLinkedResource} from '../../shared/linked-trackers'
 
 const router = Router()
 router.use(requireAuth)
@@ -110,7 +110,7 @@ router.patch('/:id', async (req, res) => {
   // Read selections after loading the stored character below.
   const fields=['companionKind','meta','combat','abilities','saves','skills','attacks','equipment','spellcasting','personality','features','resources','proficiencies','homebrew']
   const patch=Object.fromEntries(fields.filter(key=>Object.hasOwn(req.body,key)).map(key=>[key,req.body[key]]))
-  if(Array.isArray(patch.resources)&&patch.resources.some(r=>r&&typeof r.id==='string'&&r.id.startsWith(LINKED_RESOURCE_PREFIX)&&(!Number.isInteger(r.used)||r.used<0||r.used>999)))return res.status(400).json({error:'Item tracker uses must be a whole number from 0 to 999.'})
+  if(Array.isArray(patch.resources)&&patch.resources.some(r=>r&&typeof r.id==='string'&&isLinkedResource(r)&&(!Number.isInteger(r.used)||r.used<0||r.used>999)))return res.status(400).json({error:'Linked tracker uses must be a whole number from 0 to 999.'})
   for(let attempt=0;attempt<3;attempt++){
     const before=await Character.findOne({_id:req.params.id,userId:req.userId}).lean()
     if(!before)return res.status(404).json({error:'Character not found'})

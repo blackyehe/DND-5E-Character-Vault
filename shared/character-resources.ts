@@ -3,6 +3,7 @@ import { abilityMod } from './calc'
 import { scaledResource } from './character-progression'
 import { isRevenantShadow } from './class-rules'
 import { featResources, matchesFeatResource } from './feat-resources'
+import {optionTrackerResources,authoredFeatTrackerKeys} from './option-trackers'
 import {isLinkedResource,itemTrackerResources} from './linked-trackers'
 
 export function classes(c: Pick<Character, 'meta'>) {
@@ -10,7 +11,7 @@ export function classes(c: Pick<Character, 'meta'>) {
   // Older multiclass imports have no per-class levels. Never assign total level to each class.
   return c.meta.klass.includes('/') ? [] : [{ name: c.meta.klass.replace(/\s*[·(—].*$/, '').trim(), level: c.meta.level }]
 }
-export function automaticResources(c: Pick<Character, 'meta' | 'abilities'> & Partial<Pick<Character,'homebrew'|'features'>>): CharacterResource[] {
+export function automaticResources(c: Pick<Character, 'meta' | 'abilities'> & Partial<Pick<Character,'homebrew'|'features'|'compendiumRules'|'proficiencies'>>): CharacterResource[] {
   const result: CharacterResource[] = []
   const add = (id: string, name: string, max: number, recovery: CharacterResource['recovery'], unlimited=false, notes?:string) => {
     const previous=result.find(r=>r.id===`auto:${id}`)
@@ -44,14 +45,15 @@ export function automaticResources(c: Pick<Character, 'meta' | 'abilities'> & Pa
     if (key === 'rogue' && l >= 20) add('stroke-of-luck', 'Stroke of Luck', 1, 'short')
     if (key === 'paladin' && l >= 14) add('cleansing-touch', 'Cleansing Touch', Math.max(1,abilityMod(c.abilities.cha)), 'long')
   }
-  return [...result, ...featResources(c)]
+  const authored=authoredFeatTrackerKeys(c)
+  return [...result, ...featResources(c).filter(r=>!authored.has(r.id.split(':')[2]!))]
 }
-export function resourcesFor(c: Pick<Character, 'meta' | 'abilities' | 'resources'> & Partial<Pick<Character,'homebrew'|'features'|'equipment'>>): CharacterResource[] {
+export function resourcesFor(c: Pick<Character, 'meta' | 'abilities' | 'resources'> & Partial<Pick<Character,'homebrew'|'features'|'compendiumRules'|'proficiencies'|'equipment'>>): CharacterResource[] {
   const saved = (c.resources ?? []).filter(r=>!isLinkedResource(r))
   const defaults=automaticResources(c).filter(r=>!c.homebrew?.bindings.some(b=>b.rule.resources.some(resource=>resource.name.toLowerCase()===r.name.toLowerCase()||/^rift points/i.test(resource.name)&&/^rift points/i.test(r.name)||/^riftborne bonus slot/i.test(resource.name)&&/^riftborne bonus slot/i.test(r.name))))
   return [...defaults.filter(a => !saved.some(r => r.id === a.id || r.name.toLowerCase() === a.name.toLowerCase() || !r.automatic && matchesFeatResource(r,a,defaults))), ...saved.flatMap(r=>{
     if(!r.automatic)return [scaledResource(c,r)]
     const current=defaults.find(d=>d.id===r.id)
     return current?[{...current,used:Math.min(current.max,r.used)}]:[]
-  })].filter(r=>r.max>0 || !r.automatic).concat(itemTrackerResources(c))
+  })].filter(r=>r.max>0 || !r.automatic).concat(itemTrackerResources(c),optionTrackerResources(c))
 }
