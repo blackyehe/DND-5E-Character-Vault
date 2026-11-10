@@ -95,6 +95,8 @@ with the same audit file recording its validation and Owlbear-specific limits.
    through renames/level eligibility. Built-in/manual trackers are not converted by
    name. Other imported-item formats and independent Owlbear rollout remain later
    work; item quantities currently share one pool per inventory entry.
+   Released to the website as `dpl_7eDtt8S2qHaqymXAqiEjzUEfFLPU`; see the
+   [linked-item tracker audit](audits/item-trackers-2026-11-10.md).
 6. Add a clear long-rest action to website and Owlbear summary screens.
    Website implemented: a top-of-summary action shares resource/slot recovery
    with Combat. HP and hit dice remain manual, as before. Owlbear is still pending:

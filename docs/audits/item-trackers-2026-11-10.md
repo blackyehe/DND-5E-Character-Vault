@@ -46,4 +46,14 @@ resource-row compatibility. Real MongoDB fixture tests close their server,
 connections and managed database process before cleanup. Tests and deployment
 do not rewrite any live campaign character or item.
 
-Deployment and final validation receipts follow after promotion.
+Live on both website aliases as `dpl_7eDtt8S2qHaqymXAqiEjzUEfFLPU`:
+https://dndoldal-5uwv1qe5a-dndenjoyerstudio.vercel.app.
+Patch checkpoint: `2bdf035`; rollback: `dpl_2obs3AK3DTVgkTbtn5Dv4sGnaSur`.
+The exact production candidate passed 577 tests (15 optional tests skipped),
+all 13 database scenarios, both type checks and the production build. All 546
+hosted source hashes match the candidate; region and custom environment-variable
+names match the baseline. Public health is JSON 200; anonymous character, item and
+pending-update access is JSON 401. Both Owlbear aliases remain unchanged.
+Workspace check reports zero disposable runs and zero Vitest filesystem cache.
+Rollback while this release remains current:
+`node .local/item-trackers-20261110/release.mjs rollback`.
