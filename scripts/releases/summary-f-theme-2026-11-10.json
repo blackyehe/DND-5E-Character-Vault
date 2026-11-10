@@ -1,0 +1,11 @@
+{
+  "evidence": ".local/summary-f-theme-20261110",
+  "checkpoint": "0d1f93f",
+  "runtime": ["src/components/sheet/CharacterSummary.vue"],
+  "tests": ["src/components/sheet/CharacterSummary.test.ts"],
+  "testFiles": [
+    "src/components/sheet/CharacterSummary.test.ts",
+    "shared/rule-benefits.test.ts",
+    "shared/character-rest.test.ts"
+  ]
+}

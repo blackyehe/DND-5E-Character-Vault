@@ -1,8 +1,9 @@
 # Character-sheet visual directions
 
-First-round previews A/B/C were rejected by the user. The current comparison is
-`character-sheet-backgrounds-2026-11-10.html` (D/E/F), awaiting a choice. The live
-website is unchanged.
+First-round previews A/B/C were rejected by the user. From the revised comparison
+`character-sheet-backgrounds-2026-11-10.html` (D/E/F), the user selected **F**.
+Requested adjustments: follow the current theme's palette and make saving-throw
+names and Combat at a glance labels brighter and bolder.
 
 The brief is to replace repeated red outlines/dividers with a consistent way of
 grouping information throughout the website and Owlbear sheets. These three quick
@@ -79,3 +80,13 @@ for readability. The existing typography and numerical content stay the same.
 The revised HTML reuses the embedded project fonts and remains a preview only.
 Checked D/E/F at 728px and D at 390px, without console errors. No application
 styles, calculations, campaign data or production deployment were changed.
+
+## Chosen implementation
+
+The website Summary adopts F for skills, saving throws and Combat at a glance.
+Backgrounds derive from `--cb-paper`, `--cb-ink` and `--cb-accent-text`; there is no
+fixed blue palette. Each entry has a background, with distinct proficient/expert
+fills based on actual effective ranks. Full saving-throw names and spell-stat
+labels use foreground text at weight 600. Wider/narrower skill grids adapt to the
+available space. Existing rest, XP and Training controls remain as before.
+The wider cross-sheet/Owlbear visual rollout remains open in the backlog.

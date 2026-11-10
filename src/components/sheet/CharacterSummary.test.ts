@@ -25,3 +25,14 @@ it('saves a rest once with the character version and reports success without cha
 it('blocks a rest during saving and leaves failed rests available for retry',async()=>{
  let bindings:any;await render(b=>bindings=b);state.store.saving=true;await bindings.longRest();expect(state.store.update).not.toHaveBeenCalled();state.store.saving=false;state.store.update.mockRejectedValueOnce(Error('Conflict'));await bindings.longRest();expect(bindings.restMessage.value).toBe('');expect(bindings.resting.value).toBe(false);expect(state.store.current.spellcasting.slots.l1.used).toBe(3);await bindings.longRest();expect(bindings.restMessage.value).toMatch(/Long rest applied/)
 })
+it('uses actual proficiency/expertise for backgrounds and spells out saving throw names',async()=>{
+ state.store.current.skills={arcana:'expert',stealth:'prof'}
+ const html=await render()
+ expect(html).toMatch(/<li data-rank="expert"><div><span>Arcana<\/span>/)
+ expect(html).toMatch(/<li data-rank="prof"><div><span>Stealth<\/span>/)
+ expect(html).toMatch(/<li data-rank="none"><div><span>Acrobatics<\/span>/)
+ expect(html).toContain('data-rank="prof"><dt>Charisma</dt>')
+ expect(html).toContain('data-rank="none"><dt>Strength</dt>')
+ state.store.current.compendiumRules[0].entry.benefits=[]
+ expect(await render()).toContain('data-rank="none"><dt>Charisma</dt>')
+})

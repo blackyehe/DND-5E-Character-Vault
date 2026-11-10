@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
-import { characterBenefits } from '../../../shared/rule-benefits'
+import {characterBenefits,benefitTitle} from '../../../shared/rule-benefits'
 import {sheetSkillRows,sheetSave,benefitSpellAttack,benefitSpellDC} from '../../lib/character-sheet'
 import {combatAttacks} from '../../lib/equipment'
 import {restUpdate} from '../../../shared/character-rest'
@@ -42,17 +42,28 @@ async function addXP(){if(store.saving||!Number.isSafeInteger(xp.value)||Number(
       </div>
       <p class="sheet-sr-only" role="status">{{message}}</p>
     </section>
-    <section class="sheet-panel sheet-summary-skills" aria-label="Skill proficiencies">
+    <section class="sheet-panel sheet-summary-skills sheet-summary-grid-panel" aria-label="Skill proficiencies">
       <h3>Skills & proficiencies <span class="sheet-count">{{skills.length}}</span></h3>
-      <ul class="sheet-trained-skills"><li v-for="skill in skills" :key="skill.key"><div><span>{{skill.name}}</span><small>{{skill.ability.toUpperCase()}} · {{skill.rank==='expert'?'Expertise':skill.rank==='prof'?'Proficient':'Not proficient'}}</small></div><strong>{{signed(skill.modifier)}}</strong></li></ul>
+      <ul class="sheet-trained-skills"><li v-for="skill in skills" :key="skill.key" :data-rank="skill.rank"><div><span>{{skill.name}}</span><small>{{skill.ability.toUpperCase()}} · {{skill.rank==='expert'?'Expertise':skill.rank==='prof'?'Proficient':'Not proficient'}}</small></div><strong>{{signed(skill.modifier)}}</strong></li></ul>
     </section>
-    <section class="sheet-panel" aria-label="Saving throws"><h3>Saving throws</h3><dl class="sheet-summary-saves"><div v-for="save in saves" :key="save.key"><dt>{{save.key.toUpperCase()}}</dt><dd>{{signed(save.modifier)}}<small>{{save.proficient?'Proficient':'Not proficient'}}</small></dd></div></dl></section>
-    <section class="sheet-panel" aria-label="Combat summary"><h3>Combat at a glance</h3><dl v-if="hasMagic" class="sheet-summary-magic"><div><dt>Spell attack</dt><dd>{{signed(benefitSpellAttack(c,benefits))}}</dd></div><div><dt>Spell save DC</dt><dd>{{benefitSpellDC(c,benefits)}}</dd></div><div><dt>Casting ability</dt><dd>{{c.spellcasting.ability.toUpperCase()}}</dd></div></dl><ul v-if="attacks.length" class="sheet-summary-attacks"><li v-for="(attack,index) in attacks" :key="index"><strong>{{attack.name}}</strong><span>Attack {{signed(attack.toHit)}}</span><span>{{attack.text}} {{attack.damageType}}</span></li></ul><p v-else class="sheet-small">No weapon or custom attacks recorded. Equip a weapon or add an attack in Edit character.</p></section>
+    <section class="sheet-panel sheet-summary-grid-panel" aria-label="Saving throws"><h3>Saving throws</h3><dl class="sheet-summary-saves"><div v-for="save in saves" :key="save.key" :data-rank="save.proficient?'prof':'none'"><dt>{{benefitTitle(save.key)}}</dt><dd>{{signed(save.modifier)}}<small>{{save.proficient?'Proficient':'Not proficient'}}</small></dd></div></dl></section>
+    <section class="sheet-panel sheet-summary-grid-panel" aria-label="Combat summary"><h3>Combat at a glance</h3><dl v-if="hasMagic" class="sheet-summary-magic"><div><dt>Spell attack</dt><dd>{{signed(benefitSpellAttack(c,benefits))}}</dd></div><div><dt>Spell save DC</dt><dd>{{benefitSpellDC(c,benefits)}}</dd></div><div><dt>Casting ability</dt><dd>{{c.spellcasting.ability.toUpperCase()}}</dd></div></dl><ul v-if="attacks.length" class="sheet-summary-attacks"><li v-for="(attack,index) in attacks" :key="index"><strong>{{attack.name}}</strong><span>Attack {{signed(attack.toHit)}}</span><span>{{attack.text}} {{attack.damageType}}</span></li></ul><p v-else class="sheet-small">No weapon or custom attacks recorded. Equip a weapon or add an attack in Edit character.</p></section>
     <section class="sheet-panel sheet-summary-training"><h3>Training & languages</h3><SheetDisclosure v-for="(values,group) in proficiencies" :key="group" :title="pretty(group)" :metadata="`${values.length} recorded`"><ul class="sheet-training-list"><li v-for="value in values" :key="value">{{value}}</li></ul><p v-if="!values.length" class="sheet-small">None recorded.</p></SheetDisclosure></section>
   </div>
 </template>
 <style scoped>
 .sheet-summary-rest{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.sheet-summary-rest h3,.sheet-summary-rest p{margin:0}.sheet-summary-rest>div{flex:1 1 220px}.sheet-summary-rest>button{min-height:44px;flex-shrink:0}.sheet-summary-rest>p{flex-basis:100%}
-.sheet-summary-saves,.sheet-summary-magic{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;font-variant-numeric:tabular-nums}.sheet-summary-saves>div,.sheet-summary-magic>div{min-width:0;border-bottom:1px solid var(--cb-line);padding-bottom:8px}.sheet-summary-saves dd,.sheet-summary-magic dd{font-size:23px;margin:0}.sheet-summary-saves small{display:block;font-size:11px;color:var(--cb-muted)}.sheet-summary-magic{margin-bottom:16px}.sheet-summary-magic dt{font-size:12px}
-.sheet-summary-attacks{list-style:none;padding:0;margin:0}.sheet-summary-attacks>li{display:flex;gap:8px 20px;align-items:baseline;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--cb-line);font-variant-numeric:tabular-nums}.sheet-summary-attacks strong{flex:1 1 180px;overflow-wrap:anywhere}.sheet-summary-attacks span{overflow-wrap:anywhere}
+.sheet-section-stack.sheet-summary-overview{--summary-entry-bg:color-mix(in srgb,var(--cb-ink) 9%,var(--cb-paper));--summary-trained-bg:color-mix(in srgb,var(--cb-accent-text) 18%,var(--summary-entry-bg));--summary-expert-bg:color-mix(in srgb,var(--cb-accent-text) 30%,var(--summary-entry-bg))}
+.sheet-section-stack.sheet-summary-overview .sheet-panel.sheet-summary-grid-panel{background:transparent;border:0;box-shadow:none;padding:0}
+.sheet-section-stack.sheet-summary-overview .sheet-trained-skills{grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:8px 12px}
+.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li,.sheet-summary-saves>div,.sheet-summary-magic>div,.sheet-summary-attacks>li{background:var(--summary-entry-fill,var(--summary-entry-bg));border:0;border-radius:6px;padding:10px 14px;min-width:0}
+.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li{min-height:64px}.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li strong{color:var(--cb-ink)}
+.sheet-section-stack.sheet-summary-overview [data-rank=prof]{--summary-entry-fill:var(--summary-trained-bg)}.sheet-section-stack.sheet-summary-overview [data-rank=expert]{--summary-entry-fill:var(--summary-expert-bg)}
+.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li small,.sheet-summary-saves small{color:var(--cb-ink);opacity:.85}.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li[data-rank=prof] small,.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li[data-rank=expert] small,.sheet-summary-saves [data-rank=prof] small{opacity:1}
+.sheet-summary-saves,.sheet-summary-magic{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-variant-numeric:tabular-nums}
+.sheet-summary-saves>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 8px}
+.sheet-summary-saves dt,.sheet-summary-magic dt{font-size:calc(14px * var(--cb-text-scale,1));font-weight:600;color:var(--cb-ink);overflow-wrap:anywhere}
+.sheet-summary-saves dd,.sheet-summary-magic dd{font-size:23px;margin:0;color:var(--cb-ink)}.sheet-summary-saves dd{display:contents}.sheet-summary-saves small{display:block;font-size:11px;grid-column:1/-1}.sheet-summary-magic{margin-bottom:16px}
+.sheet-summary-attacks{list-style:none;padding:0;margin:0;display:grid;gap:8px}.sheet-summary-attacks>li{display:flex;gap:8px 20px;align-items:baseline;flex-wrap:wrap;font-variant-numeric:tabular-nums}.sheet-summary-attacks strong{flex:1 1 180px;overflow-wrap:anywhere}.sheet-summary-attacks span{overflow-wrap:anywhere}
+@media(max-width:560px){.sheet-section-stack.sheet-summary-overview .sheet-trained-skills{grid-template-columns:repeat(2,minmax(0,1fr))}.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li{padding:10px;min-height:76px}.sheet-summary-saves>div{display:block;padding:10px}.sheet-summary-saves dd{display:block;font-size:23px}.sheet-summary-magic>div{padding:10px}}
 </style>

@@ -92,13 +92,16 @@ with the same audit file recording its validation and Owlbear-specific limits.
    overlays, spacing and typography to distinguish sections with fewer borders.
    Apply a coherent treatment across comparable panels, rows and statistics in
    the different sheets, preserving readability across themes and screen sizes.
-   The final visual treatment is still to be designed; no UI change is requested
-   in this reminder-only update.
+   The original addition was a reminder; the preview selection below now guides
+   the first implementation.
    10 November: three [comparison previews](design/character-sheet-directions-2026-11-10.html)
    were rejected: soft sections, open spacing, and grouped bands. Revised
    [background comparisons D/E/F](design/character-sheet-backgrounds-2026-11-10.html)
    give every entry a background and distinguish proficiency/expertise by actual
-   rank. Await the user's choice before changing the live styles. The [design notes](design/character-sheet-directions-2026-11-10.md)
+   rank. The user selected **F**, using the current theme colours and brighter,
+   semibold ability names and spell-stat labels. The website Summary is the first
+   implementation; equivalent elements elsewhere and in Owlbear still need the
+   wider consistency pass. The [design notes](design/character-sheet-directions-2026-11-10.md)
    preserve the scope and shared approach; authoring synchronization is still
    deferred at the earlier resume point.
 
