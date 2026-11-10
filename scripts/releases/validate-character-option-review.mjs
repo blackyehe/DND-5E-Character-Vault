@@ -41,6 +41,7 @@ await withTemporaryWorkspace('character-option-review-production',async director
   if(config.integrationRunner)await run('database-integration',source,[config.integrationRunner])
   const types=await Promise.allSettled([run('frontend-types',source,['node_modules/vue-tsc/bin/vue-tsc.js','-b']),run('server-types',path.join(source,'server'),['node_modules/typescript/bin/tsc','--noEmit'])]);for(const result of types)if(result.status==='rejected')throw result.reason
   await run('production-build',source,['node_modules/vite/bin/vite.js','build'])
+  if(config.postBuildRunner)await run('surface-colours',source,[path.join(root,config.postBuildRunner)])
   for(const file of files)assert.equal(hash(fs.readFileSync(path.join(source,file.path))),file.uid,'Source changed: '+file.path)
   write('candidate-manifest',files);write('validation',{passed:true,baseline,runtime,tests,files:files.length,logs,at:new Date().toISOString()});console.log(JSON.stringify({passed:true,files:files.length,changedRuntime:runtime.length}))
  }finally{for(const target of created.reverse())fs.unlinkSync(target)}

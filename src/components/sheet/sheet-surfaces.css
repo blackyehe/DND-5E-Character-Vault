@@ -1,0 +1,63 @@
+/* Approved C. Canonical theme treatment; mirrored unchanged into Owlbear's
+   src/sheet-surfaces.css so its build remains independent of the website. */
+.hero-sheet {
+  --sheet-surface-paper:var(--cb-paper);
+  --sheet-surface-field:var(--cb-field);
+  --sheet-surface-soft:var(--cb-soft);
+  --sheet-surface-accent:var(--cb-accent-solid);
+}
+.connected-sheet {
+  --sheet-surface-paper:var(--surface);
+  --sheet-surface-field:var(--input);
+  --sheet-surface-soft:var(--raised);
+  --sheet-surface-accent:var(--accent-solid,var(--accent));
+  --entry-surface:var(--sheet-entry-bg);
+  --entry-trained:var(--sheet-trained-bg);
+  --entry-expert:var(--sheet-expert-bg);
+}
+:is(.hero-sheet,.connected-sheet) {
+  --sheet-highlight-accent:var(--sheet-surface-accent);
+  --sheet-entry-bg:color-mix(in srgb,var(--sheet-surface-accent) 10%,var(--sheet-surface-soft));
+  --sheet-body-bg:color-mix(in srgb,var(--sheet-surface-accent) 5%,var(--sheet-surface-field));
+  --sheet-hover-bg:color-mix(in srgb,var(--sheet-surface-accent) 18%,var(--sheet-surface-soft));
+  --sheet-trained-bg:color-mix(in srgb,var(--sheet-highlight-accent) 24%,var(--sheet-surface-soft));
+  --sheet-expert-bg:color-mix(in srgb,var(--sheet-highlight-accent) 36%,var(--sheet-surface-soft));
+}
+/* Keep extreme custom accents from washing out proficiency labels, while the
+   standard theme colours retain their selected C appearance. */
+@supports(color:oklch(from red clamp(.5,l,.65) c h)) {
+  :is(.hero-sheet,.connected-sheet) { --sheet-highlight-accent:oklch(from var(--sheet-surface-accent) clamp(.5,l,.65) c h); }
+}
+
+/* Match layout/density specificity: their geometry remains, their older borders
+   and independently chosen fills no longer override the shared treatment. */
+.site-shell[data-theme] .hero-sheet .sheet-disclosure-row { border:0; padding:0; margin:8px 0; }
+.site-shell[data-theme] .hero-sheet :is(.sheet-disclosure,.sheet-inventory-description>details) { background:var(--sheet-entry-bg); border:0; border-radius:6px; overflow:hidden; }
+.site-shell[data-theme] .hero-sheet :is(.sheet-disclosure,.sheet-inventory-description>details)>summary { display:flex; align-items:center; gap:10px; min-height:64px; padding:12px 14px; list-style:none; background:var(--sheet-entry-bg); border:0; border-radius:0; box-shadow:none; color:var(--cb-ink); font-weight:600; }
+.site-shell[data-theme] .hero-sheet :is(.sheet-disclosure,.sheet-inventory-description>details)>summary::-webkit-details-marker { display:none; }
+.site-shell[data-theme] .hero-sheet :is(.sheet-disclosure,.sheet-inventory-description>details)>summary:hover { background:var(--sheet-hover-bg); }
+.site-shell[data-theme] .hero-sheet .sheet-disclosure-heading { display:grid; gap:3px; flex:1; min-width:0; width:auto; }
+.site-shell[data-theme] .hero-sheet .sheet-disclosure-meta { display:block; width:100%; margin:0; color:var(--cb-ink); opacity:1; font-weight:400; font-size:calc(12px * var(--cb-text-scale,1)); }
+.site-shell[data-theme] .hero-sheet .sheet-inventory-description>details>summary::after { content:'⌄'; margin-left:auto; opacity:.8; }
+.site-shell[data-theme] .hero-sheet .sheet-inventory-description>details[open]>summary::after { transform:rotate(180deg); }
+.sheet-disclosure-toggle { margin-left:auto; flex-shrink:0; opacity:.8; }
+.sheet-disclosure[open]>summary>.sheet-disclosure-toggle { transform:rotate(180deg); }
+.site-shell[data-theme] .hero-sheet :is(.sheet-disclosure-body,.sheet-item-expanded) { background:var(--sheet-body-bg); border:0; border-radius:0; margin-top:0; padding:12px 14px; }
+.site-shell[data-theme] .hero-sheet :is(.sheet-tracker-card,.sheet-casting-highlight,.sheet-feat-facts) { background:var(--sheet-entry-bg); border:0; border-radius:6px; }
+.site-shell[data-theme] .hero-sheet .sheet-feat-link { background:var(--sheet-entry-bg); border-color:transparent; }
+.site-shell[data-theme] .hero-sheet .sheet-feat-link:hover { background:var(--sheet-hover-bg); }
+.site-shell[data-theme] .hero-sheet .sheet-skill-row { background:var(--sheet-entry-bg); border:0; border-radius:6px; padding:10px 12px; margin:6px 0; }
+
+/* The same tokens cover the independent extension's spells, equipment,
+   references, features, stats, training, attacks and resource cards. */
+[data-theme] .connected-sheet :is(.read-disclosure,.spell-rule) { background:var(--sheet-entry-bg); border:0; border-radius:6px; overflow:hidden; }
+[data-theme] .connected-sheet :is(.read-disclosure,.spell-rule)>summary { background:var(--sheet-entry-bg); border:0; box-shadow:none; color:var(--ink); font-weight:600; }
+[data-theme] .connected-sheet :is(.read-disclosure,.spell-rule)>summary:hover { background:var(--sheet-hover-bg); }
+[data-theme] .connected-sheet :is(.read-disclosure,.spell-rule)>.read-disclosure-body { background:var(--sheet-body-bg); border:0; }
+[data-theme] .connected-sheet :is(.read-disclosure,.spell-rule)>summary small { color:var(--ink); opacity:1; }
+@media(max-width:560px) {
+  .site-shell[data-theme] .hero-sheet :is(.sheet-disclosure,.sheet-inventory-description>details)>summary { padding:10px; gap:7px; }
+  .site-shell[data-theme] .hero-sheet :is(.sheet-disclosure-body,.sheet-item-expanded) { padding:10px; }
+}
+
+.site-shell[data-theme] .hero-sheet :is(.sheet-trained-skills,.sheet-summary-saves,.sheet-summary-magic) small { color:var(--cb-ink); opacity:1; }

@@ -53,7 +53,7 @@ async function addXP(){if(store.saving||!Number.isSafeInteger(xp.value)||Number(
 </template>
 <style scoped>
 .sheet-summary-rest{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.sheet-summary-rest h3,.sheet-summary-rest p{margin:0}.sheet-summary-rest>div{flex:1 1 220px}.sheet-summary-rest>button{min-height:44px;flex-shrink:0}.sheet-summary-rest>p{flex-basis:100%}
-.sheet-section-stack.sheet-summary-overview{--summary-entry-bg:color-mix(in srgb,var(--cb-ink) 9%,var(--cb-paper));--summary-trained-bg:color-mix(in srgb,var(--cb-accent-text) 18%,var(--summary-entry-bg));--summary-expert-bg:color-mix(in srgb,var(--cb-accent-text) 30%,var(--summary-entry-bg))}
+.sheet-section-stack.sheet-summary-overview{--summary-entry-bg:var(--sheet-entry-bg);--summary-trained-bg:var(--sheet-trained-bg);--summary-expert-bg:var(--sheet-expert-bg)}
 .sheet-section-stack.sheet-summary-overview .sheet-panel.sheet-summary-grid-panel{background:transparent;border:0;box-shadow:none;padding:0}
 .sheet-section-stack.sheet-summary-overview .sheet-trained-skills{grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:8px 12px}
 .sheet-section-stack.sheet-summary-overview .sheet-trained-skills li,.sheet-summary-saves>div,.sheet-summary-magic>div,.sheet-summary-attacks>li{background:var(--summary-entry-fill,var(--summary-entry-bg));border:0;border-radius:6px;padding:10px 14px;min-width:0}

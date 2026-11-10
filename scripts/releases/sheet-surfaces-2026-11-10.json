@@ -1,0 +1,20 @@
+{
+  "evidence": ".local/sheet-surfaces-c-release-20261110",
+  "checkpoint": "a38adfb",
+  "runtime": [
+    "src/main.ts",
+    "src/components/sheet/sheet-surfaces.css",
+    "src/components/sheet/SheetDisclosure.vue",
+    "src/components/sheet/SpellbookEntry.vue",
+    "src/components/sheet/CharacterSummary.vue"
+  ],
+  "tests": [],
+  "testFiles": [
+    "src/components/sheet/CharacterSummary.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts",
+    "src/components/sheet/EquipmentSpellsTab.test.ts",
+    "src/lib/spell-profile.test.ts"
+  ],
+  "baselineFiles": ".local/sheet-surfaces-20261110/baseline-files",
+  "postBuildRunner": "scripts/check-sheet-surfaces.mjs"
+}
