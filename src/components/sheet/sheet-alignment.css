@@ -26,6 +26,31 @@
 .hero-sheet .sheet-hp-quick>p { display:inline-flex; align-items:baseline; gap:4px; }
 .hero-sheet .sheet-hp-quick>p>strong { min-inline-size:2ch; text-align:center; }
 
+/* Reserve equal horizontal space for existing actions. The independent column
+   stacks and native disclosures keep their current order/opening behaviour. */
+.site-shell .hero-sheet .spellbook-actions { flex:0 0 94px; width:94px; max-width:94px; }
+.site-shell .hero-sheet .spellbook-entry:not(:has(>.spellbook-actions)) { padding-inline-end:102px; }
+.site-shell .hero-sheet .sheet-disclosure-row>.sheet-disclosure-actions { flex:0 0 110px; width:110px; max-width:110px; }
+.site-shell .hero-sheet .sheet-inventory-controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 80px 114px; gap:10px; flex:0 0 420px; width:420px; max-width:100%; }
+.site-shell .hero-sheet .sheet-inventory-controls>.sheet-checkbox { grid-column:1; grid-row:1; min-width:0; }
+.site-shell .hero-sheet .sheet-inventory-controls>.sheet-checkbox+.sheet-checkbox { grid-column:2; }
+.site-shell .hero-sheet .sheet-inventory-controls>.sheet-item-quantity { grid-column:3; grid-row:1; }
+.site-shell .hero-sheet .sheet-inventory-controls>button { grid-column:4; grid-row:1; }
+/* Granted spells stay in their original stack above the spellbook. Their group
+   uses the same width as a class-spell column, including its existing padding. */
+.site-shell .hero-sheet .sheet-spellbook:has(>.sheet-spell-grid[data-columns="2"])>.sheet-spell-level { width:calc((100% - var(--sheet-section-gap,12px))/2); }
+
+@media(max-width:760px) {
+  .site-shell .hero-sheet .sheet-inventory-controls { display:flex; flex:0 1 auto; width:auto; }
+}
+@media(max-width:560px) {
+  .site-shell .hero-sheet .spellbook-actions { flex:0 1 auto; width:auto; max-width:none; }
+  .site-shell .hero-sheet .spellbook-entry:not(:has(>.spellbook-actions)) { padding-inline-end:0; }
+}
+@media(max-width:480px) {
+  .site-shell .hero-sheet .sheet-disclosure-row>.sheet-disclosure-actions { flex-basis:72px; width:72px; max-width:72px; }
+}
+
 /* A desktop browser may still have a narrow sheet beside an expanded roster. */
 @container sheet-content (max-width:640px) {
   .site-shell .hero-sheet .sheet-tab-content .sheet-two-columns,
@@ -35,6 +60,8 @@
   .site-shell .hero-sheet .sheet-inventory-row { flex-wrap:wrap; }
   .site-shell .hero-sheet .sheet-inventory-description { flex-basis:100%; }
   .site-shell .hero-sheet .sheet-inventory-controls { margin-left:auto; flex-wrap:wrap; }
+  .site-shell .hero-sheet .sheet-inventory-controls { display:flex; flex:0 1 auto; width:auto; }
+  .site-shell .hero-sheet .sheet-spellbook:has(>.sheet-spell-grid[data-columns="2"])>.sheet-spell-level { width:100%; }
   .site-shell .hero-sheet .sheet-vitals-form { grid-template-columns:minmax(0,1fr); }
   .site-shell .hero-sheet .sheet-vitals-extras { grid-column:auto; }
 }

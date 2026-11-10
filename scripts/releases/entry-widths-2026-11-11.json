@@ -1,0 +1,17 @@
+{
+  "evidence": ".local/entry-widths-20261111",
+  "checkpoint": "b0b6091",
+  "runtime": [
+    "src/components/sheet/sheet-alignment.css"
+  ],
+  "tests": [],
+  "testFiles": [
+    "src/components/sheet/SpellbookPanel.test.ts",
+    "src/components/sheet/EquipmentSpellsTab.test.ts"
+  ],
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "postBuildRunner": "scripts/check-entry-widths.mjs",
+  "baselineFiles": ".local/entry-widths-20261111/baseline-files"
+}
