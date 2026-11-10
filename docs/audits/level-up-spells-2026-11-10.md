@@ -52,3 +52,18 @@ Receipts, guarded release helper and exact preimages remain in
 `.local/level-up-spells-20261110/`; review on 10 December 2026. Sources/databases
 use managed temporary workspaces, existing dependencies and two test workers;
 processes/connections close before cleanup. Vitest filesystem cache stays off.
+
+Live on both website aliases and its production pointer as
+`dpl_AZ4iFNNnUkaTM2A7NENAP3ffTEt4`:
+https://dndoldal-9ojx5um40-dndenjoyerstudio.vercel.app.
+Patch checkpoint: `59b446d`. All 567 hosted source hashes match the candidate;
+region/environment-variable names and existing secondary alias protection are
+preserved. Public/authorized health is JSON 200; anonymous character access is
+JSON 401. Both Owlbear aliases remain at `dpl_pbH4Z99bAWx34cKfyvSFwtepBeUg`.
+Workspace check reports zero managed scratch runs and zero filesystem module cache.
+
+Fresh guarded traffic-only rollback while this release remains current:
+`node .local/level-up-spells-20261110/release.mjs restore`.
+It accepts only candidate/baseline website aliases, requires unchanged Owlbear
+aliases, preserves unrelated newer deployments and leaves metadata untouched.
+Website rollback baseline: `dpl_HC7Rs418PdEgihknoFcTvqaeVLQh`.
