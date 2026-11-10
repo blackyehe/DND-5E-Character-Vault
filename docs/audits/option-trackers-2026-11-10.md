@@ -41,3 +41,16 @@ reduced maxima, level gating, rests, stale reviews, grant removal, manual tracke
 preservation, incomplete drafts and compatibility with existing item pools.
 Tests and deployment do not rewrite live campaign records. Independent Owlbear
 aliases remain on their separate deployment and require their own release.
+
+Live on both website aliases as `dpl_Eb3yGcTZHVcyR9HTABHwFhpcjXkz`:
+https://dndoldal-ocl0v30s0-dndenjoyerstudio.vercel.app.
+Patch checkpoint: `fb6ef45`; rollback: `dpl_7eDtt8S2qHaqymXAqiEjzUEfFLPU`.
+The exact candidate passed 596 tests (16 conditional tests skipped), all 14
+isolated database scenarios, frontend/server type checks and the production build.
+All 550 hosted source hashes match the candidate; region and custom environment
+variable names match the baseline. Public health is JSON 200; anonymous character,
+item and pending-update access is JSON 401. Both Owlbear aliases remain at
+`dpl_6yPZh1hytcg8a2XNzSHnRpZjpz8W`. Alias propagation completed before public checks.
+Workspace check reports zero disposable runs and zero Vitest filesystem cache.
+Rollback while this release remains current:
+`node .local/option-trackers-20261110/release.mjs rollback`.

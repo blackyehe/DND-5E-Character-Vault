@@ -102,6 +102,8 @@ with the same audit file recording its validation and Owlbear-specific limits.
    later work; item quantities share one pool per inventory entry.
    See the [option tracker audit](audits/option-trackers-2026-11-10.md) for release
    validation and boundaries.
+   Option trackers released to both website aliases as
+   `dpl_Eb3yGcTZHVcyR9HTABHwFhpcjXkz`.
    Released to the website as `dpl_7eDtt8S2qHaqymXAqiEjzUEfFLPU`; see the
    [linked-item tracker audit](audits/item-trackers-2026-11-10.md).
 6. Add a clear long-rest action to website and Owlbear summary screens.
