@@ -1,0 +1,33 @@
+{
+  "evidence": ".local/spell-creator-20261110",
+  "checkpoint": "61f922f",
+  "runtime": [
+    "server/lib/option-authoring-library.ts",
+    "server/lib/orcbrew.ts",
+    "server/lib/orcbrew-background-worker.cjs",
+    "server/lib/orcbrew-background-worker.ts",
+    "server/lib/spell-workshop.ts",
+    "server/lib/workshop-pack.ts",
+    "server/lib/workshop-trash.ts",
+    "server/routes/compendium.ts",
+    "server/routes/spell-workshop.ts",
+    "server/routes/workshop-trash.ts",
+    "server/routes/workshop.ts",
+    "shared/compendium-editing.ts",
+    "shared/entry-builders.ts",
+    "shared/spell-builder.ts",
+    "shared/spell-workshop.ts",
+    "src/components/workshop/SpellWorkshop.vue",
+    "src/lib/account-backup.ts",
+    "src/lib/workshop-trash.ts",
+    "src/views/HomebrewWorkshopView.vue"
+  ],
+  "tests": [
+    "server/lib/background-pack-parser.test.ts",
+    "server/lib/spell-workshop.test.ts",
+    "server/routes/compendium.test.ts",
+    "server/routes/spell-workshop.test.ts",
+    "src/components/workshop/SpellWorkshop.test.ts",
+    "src/lib/account-backup.test.ts"
+  ]
+}

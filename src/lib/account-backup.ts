@@ -1,6 +1,6 @@
 import {BACKUP_FILE_BYTES,remapBackupReferences,type BackupRestoreResult} from '../../shared/account-backup'
 
-const arrays={optionDrafts:'codex:option-workshop:v1:',monsterDrafts:'codex:monster-workshop:v1:',workshopDrafts:'codex:homebrew-workshop:v1:',deletedDrafts:'codex:workshop-trash:v1:'} as const
+const arrays={spellDrafts:'codex:spell-workshop:v1:',optionDrafts:'codex:option-workshop:v1:',monsterDrafts:'codex:monster-workshop:v1:',workshopDrafts:'codex:homebrew-workshop:v1:',deletedDrafts:'codex:workshop-trash:v1:'} as const
 const fields=new Set([...Object.keys(arrays),'characterDraft','appearance'])
 export function validateBackupDevice(value:unknown):Record<string,any>{
   if(value===undefined)return{}

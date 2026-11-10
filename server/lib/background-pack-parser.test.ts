@@ -4,6 +4,14 @@ import {build} from 'esbuild'
 import {expect,it} from 'vitest'
 import {parseBackgroundPack} from './background-pack-parser'
 import {inspectOrcbrew,buildOrcbrewCatalog} from './orcbrew'
+import {newSpellDraft} from '../../shared/spell-workshop'
+import {spellRecord,spellKey} from './spell-workshop'
+import {placeNativeEntry} from './workshop-pack'
+it('preserves authored spell casting fields and scaling in the background parser',async()=>{
+ const d=newSpellDraft();d.body.name='Worker spark';d.body.damage={'1':'1d6','5':'2d6'};d.body.attackType='ranged';d.body.classes=['wizard']
+ const source=placeNativeEntry(undefined,'spells',spellKey(d.id),spellRecord(d,1,[]),d.id,':codex/spell'),parsed=await parseBackgroundPack(source,performance.now()+5000)
+ expect(parsed.entries.spells[0]).toMatchObject({spellId:d.id,spellBuilder:{attackType:'ranged'},damage:{damage_at_character_level:{'5':'2d6'}}});expect(parsed).toEqual(JSON.parse(JSON.stringify(inspectOrcbrew(source))))
+})
 it('uses the canonical parser and preserves complete catalogue values across the worker boundary',async()=>{
  const source='{:orcpub.dnd.e5/classes {:oracle {:name "Oracle" :description "Complete rules \\u00e9" :traits [{:name "Choice" :description "Original"}]}} :orcpub.dnd.e5/languages {:a {:name "Language" :speakers #{"First" "Second"}}}}'
  const original=inspectOrcbrew(source),parsed=await parseBackgroundPack(source,performance.now()+5000)

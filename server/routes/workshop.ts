@@ -1,3 +1,4 @@
+import spellRoutes from './spell-workshop'
 import { env } from '../env'
 import { Router } from 'express'
 import { storedPackData,MAX_PACK_BYTES } from '../lib/pack-storage'
@@ -16,6 +17,7 @@ import {createAccountBackup,BackupError} from '../lib/account-backup'
 
 const router=Router();router.use(requireAuth)
 router.use('/options',optionRoutes)
+router.use('/spells',spellRoutes)
 const filename=z.string().min(1).max(255).regex(/^[^<>:"/\\|?*\x00-\x1f]+\.orcbrew$/i)
 const saveSchema=z.object({draft:workshopDraftSchema,target:z.object({packId:z.string().optional(),filename:filename.optional(),expectedHash:z.string().optional()}),expectedRevision:z.number().int().min(0)})
 const queues=new Map<string,Promise<unknown>>()

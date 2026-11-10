@@ -99,10 +99,15 @@ router.put('/:kind/:index',async(req,res)=>{
 async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|undefined){
   const library=await characterRuleLibrary(userId,characterRuleExtraKinds(raw,[state.kind])),original=raw as CharacterData
   const before=reviewedCharacter(original,library.rules,library.initial)
-  const matches=(d:NonNullable<CharacterData['compendiumRules']>[number])=>d.kind===state.kind&&(d.index===state.index||isOptionKind(state.kind)&&sameOptionIdentity({...d.entry,index:d.index,name:String(d.entry.name)},{...state.source,index:state.index,name:String(state.source.name)}))
+  const matches=(d:NonNullable<CharacterData['compendiumRules']>[number])=>d.kind===state.kind&&(d.index===state.index||isOptionKind(state.kind)&&sameOptionIdentity({...d.entry,index:d.index,name:String(d.entry.name)},{...state.source,index:state.index,name:String(state.source.name)})||state.kind==='spells'&&typeof state.source.spellId==='string'&&d.entry.spellId===state.source.spellId)
   const previous=before.compendiumRules?.find(matches)
   const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.source,entry:state.entry}
   const candidate={...before,compendiumRules:[...(before.compendiumRules??[]).filter(d=>!matches(d)),definition]}
+  if(state.kind==='spells'&&typeof state.source.spellId==='string'){
+    const aliases=new Set([state.index,previous?.index,...(Array.isArray(state.source.aliases)?state.source.aliases:[])])
+    const relink=(ids:string[])=>[...new Set(ids.map(id=>aliases.has(id)?state.index:id))]
+    candidate.spellcasting={...before.spellcasting,known:relink(before.spellcasting.known),prepared:relink(before.spellcasting.prepared),...(before.spellcasting.activeEffects?{activeEffects:relink(before.spellcasting.activeEffects)}:{})}
+  }
   candidate.meta=JSON.parse(JSON.stringify(candidate.meta)) as CharacterData['meta']
   if(state.kind==='backgrounds')candidate.meta.backgroundIndex=state.index
   if(isFeatureOptionKind(state.kind))candidate.features=candidate.features.map(f=>f.definition?.kind===state.kind&&optionHasId({...state.source,index:state.index,name:String(state.source.name)},f.definition.index)?{...f,definition:{...f.definition,index:state.index}}:f)

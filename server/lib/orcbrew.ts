@@ -1,3 +1,5 @@
+import {restoreSpellDraft} from '../../shared/spell-workshop'
+import {applySpellBuilder} from '../../shared/spell-builder'
 import { createHash } from 'node:crypto'
 import { isEdnSet, readEdn, type EdnValue } from './edn'
 import { normalizeOrcbrewItem } from './orcbrew-items'
@@ -82,7 +84,7 @@ function normalizeSpell(key: string, value: unknown) {
     .filter(([, enabled]) => enabled === true)
     .map(([name]) => ref(slug(name)))
   const description = textValue(get(spell, 'description'))
-  return {
+  const normalized = {
     index: entityIndex(key, spell),
     name: textValue(get(spell, 'name'), key.replace(/^:/, '').replace(/-/g, ' ')),
     url: '',
@@ -98,6 +100,10 @@ function normalizeSpell(key: string, value: unknown) {
     classes,
     homebrew: true,
   }
+  let native:ReturnType<typeof restoreSpellDraft>|undefined
+  const authored=get(value,'codex/spell')
+  if(authored)try{const draft=restoreSpellDraft(authored);if(draft.body.name.trim()&&draft.source.trim())native=draft}catch{/* Malformed native metadata keeps the ordinary imported spell fields. */}
+  return native?{...applySpellBuilder({...normalized,...(native.body.level===0?{damage:{damage_at_character_level:{}}}:{}),spellBuilder:native.body,benefits:native.benefits},native.body),spellId:native.id,spellRevision:get(value,'codex/revision')}:normalized
 }
 
 function normalizeRace(key: string, value: unknown) {
@@ -339,7 +345,7 @@ export function buildOrcbrewCatalog(packs: CatalogPack[]): OrcbrewEntries {
         const source = item.source || pack.filename
         const alias = `homebrew-${pack.id}-${item.legacyKey}`
         const previousIds=(item.details as Record<string,unknown>)?.[':codex/previous-indexes']
-        const optionAliases=isOptionKind(kind)&&item.optionId&&Array.isArray(previousIds)?previousIds.filter((id):id is string=>typeof id==='string'&&id.length<=300).slice(0,200):[]
+        const optionAliases=(isOptionKind(kind)&&item.optionId||kind==='spells'&&item.spellId)&&Array.isArray(previousIds)?previousIds.filter((id):id is string=>typeof id==='string'&&id.length<=300).slice(0,200):[]
         const previous = unique.get(item.index)
         if (previous) {
           previous.sources = [...new Set([...(previous.sources as string[]), source])].sort()

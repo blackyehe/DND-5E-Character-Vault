@@ -63,6 +63,12 @@ with the same audit file recording its validation and Owlbear-specific limits.
    the deferred resume point; this control addition does not solve that layer.
    Released on the website as `dpl_GHue5E3BbMEiMr2Lwwh824ikXHGh`.
 4. Add spell creation to the Homebrew Workshop, reusing the existing spell builder.
+   Implemented: a Spells section reuses the Compendium editor's Spell, Casting,
+   Targets & effects, Benefits and Review steps. Device drafts, pack publishing,
+   later editing, review/apply, backup and Recently deleted are connected. Native
+   spell edits retain previous source aliases and relink known/prepared/active
+   references only when reviewed; spent slots and unrelated play state stay saved.
+   The wider Workshop/Compendium personal-edition reconciliation remains deferred.
 5. Add source-linked trackers to items, feats and other grants. Activation,
    removal/unequipping, recovery and preserved spent uses must follow the source.
 6. Add a clear long-rest action to website and Owlbear summary screens.

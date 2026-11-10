@@ -47,6 +47,17 @@ async function state(kind='feats'){const response=await request(`/${kind}/exampl
 async function save(kind='feats',description='Revised rule'){const current=await state(kind);return request(`/${kind}/example`,'PUT',{expectedRevision:current.revision,expectedSourceHash:current.sourceHash,entry:{...current.entry,description}})}
 function character(){const c={...emptyCharacter(),_id:'a'.repeat(24),userId:'owner',updatedAt:new Date('2026-10-23T00:00:00Z'),compendiumRules:undefined as unknown[]|undefined};c.meta.name='Test hero';c.features=[{name:'Example',description:'Original rule',origin:'feat',pinned:true}];c.combat.hpCurrent=4;c.combat.hpTemp=3;c.resources=[{id:'spent',name:'Uses',max:3,used:2,recovery:'long'}];return c}
 describe('personal Compendium editions',()=>{
+  it('reviews a revised native spell without duplicating definitions or losing known, prepared and active choices',async()=>{
+    const c=character(),old='homebrew-spells-old',next='homebrew-spells-new',spellId='f69246da-059c-4280-9cb4-cd931d38ca67'
+    c.spellcasting.known=[old,'other'];c.spellcasting.prepared=[old];c.spellcasting.activeEffects=[old];c.spellcasting.slots={l1:{max:4,used:3}}
+    const before={index:old,name:'Spark',spellId,benefits:[{type:'ac-bonus',value:1}]};c.compendiumRules=[{kind:'spells',index:old,revision:0,before,entry:before}];db.characters.push(c)
+    db.sources.set('spells:'+next,{...before,index:next,aliases:[old],benefits:[{type:'ac-bonus',value:2}]})
+    const preview=await(await request(`/spells/${next}/review`)).json(),row=preview.characters[0],play=JSON.stringify({combat:c.combat,resources:c.resources,equipment:c.equipment})
+    expect(row).toBeDefined();expect(c.spellcasting.known).toEqual([old,'other'])
+    const response=await request(`/spells/${next}/review/${c._id}`,'POST',{expectedRevision:preview.revision,expectedUpdatedAt:row.updatedAt,reviewHash:row.reviewHash,confirmedSource:true})
+    expect(response.status).toBe(200);expect(c.compendiumRules).toHaveLength(1);expect(c.spellcasting.known).toEqual([next,'other']);expect(c.spellcasting.prepared).toEqual([next]);expect(c.spellcasting.activeEffects).toEqual([next]);expect(c.spellcasting.slots.l1!.used).toBe(3);expect(JSON.stringify({combat:c.combat,resources:c.resources,equipment:c.equipment})).toBe(play)
+    const again=await(await request(`/spells/${next}/review`)).json();expect(again.characters[0].alreadyReviewed).toBe(true)
+  })
   it('reviews a changed native feat across fingerprints, previews total spell modifiers, and applies or removes it without resetting play state',async()=>{
     const c=character(),oldIndex='homebrew-feats-old',nextIndex='homebrew-feats-next',optionId='f69246da-059c-4280-9cb4-cd931d38ca67'
     c.meta.name='Volenta';c.meta.level=6;c.meta.klass='Wizard';c.abilities.int=20;c.spellcasting.ability='int';c.spellcasting.known=['light'];c.spellcasting.slots={l1:{max:4,used:2}}

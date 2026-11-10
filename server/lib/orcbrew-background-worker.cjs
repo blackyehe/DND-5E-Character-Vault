@@ -3,6 +3,37 @@
 // server/lib/orcbrew-background-worker.ts
 var import_node_worker_threads = require("node:worker_threads");
 
+// shared/spell-builder.ts
+var cloneEntry = (value) => JSON.parse(JSON.stringify(value));
+var object = (v) => v && typeof v === "object" && !Array.isArray(v) ? v : {};
+var list = (v) => Array.isArray(v) ? v.map(object) : [];
+function applySpellBuilder(e, s) {
+  const result = cloneEntry(e);
+  Object.assign(result, { name: s.name, desc: s.description.split(/\n\s*\n/), higher_level: s.higherLevel ? s.higherLevel.split(/\n\s*\n/) : [], level: s.level, school: { index: s.school, name: s.school.replace(/^./, (c) => c.toUpperCase()) }, casting_time: s.castingTime, range: s.range, duration: s.duration, concentration: s.concentration, ritual: s.ritual, components: s.components, material: s.material, attack_type: s.attackType, classes: s.classes.map((index) => ({ ...list(e.classes).find((c) => c.index === index), index, name: index.replace(/^./, (c) => c.toUpperCase()) })) });
+  if (s.saveAbility) result.dc = { ...object(e.dc), dc_type: { index: s.saveAbility, name: s.saveAbility.toUpperCase() }, dc_success: s.saveSuccess };
+  else delete result.dc;
+  if (s.damageType || Object.keys(s.damage).length) result.damage = { ...object(e.damage), damage_type: { index: s.damageType, name: s.damageType }, [object(e.damage).damage_at_character_level ? "damage_at_character_level" : "damage_at_slot_level"]: s.damage };
+  else delete result.damage;
+  if (Object.keys(s.healing).length) result.heal_at_slot_level = s.healing;
+  else delete result.heal_at_slot_level;
+  if (s.areaType) result.area_of_effect = { ...object(e.area_of_effect), type: s.areaType, size: s.areaSize };
+  else delete result.area_of_effect;
+  return result;
+}
+
+// shared/spell-workshop.ts
+function restoreSpellDraft(value) {
+  const d = value, b = d?.body;
+  if (d?.version !== 1 || d.kind !== "spells" || !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(d.id) || typeof d.source !== "string" || typeof d.updatedAt !== "string" || !Array.isArray(d.benefits) || !b) throw Error("Invalid spell draft");
+  for (const key of ["name", "description", "higherLevel", "school", "castingTime", "range", "duration", "material", "attackType", "saveAbility", "saveSuccess", "damageType", "areaType"]) if (typeof b[key] !== "string") throw Error("Invalid spell fields");
+  for (const key of ["level", "areaSize"]) if (!Number.isInteger(b[key])) throw Error("Invalid spell numbers");
+  for (const key of ["concentration", "ritual"]) if (typeof b[key] !== "boolean") throw Error("Invalid spell flags");
+  for (const key of ["classes", "components"]) if (!Array.isArray(b[key]) || b[key].some((v) => typeof v !== "string")) throw Error("Invalid spell choices");
+  for (const key of ["damage", "healing"]) if (!b[key] || typeof b[key] !== "object" || Array.isArray(b[key]) || Object.values(b[key]).some((v) => typeof v !== "string")) throw Error("Invalid spell progression");
+  if (d.published && (!Number.isInteger(d.published.revision) || d.published.revision < 1 || typeof d.published.index !== "string" || !/^[a-f0-9]{24}$/i.test(d.published.packId) || !/^[a-f0-9]{64}$/i.test(d.published.packHash))) throw Error("Invalid saved spell identity");
+  return JSON.parse(JSON.stringify(d));
+}
+
 // server/lib/orcbrew.ts
 var import_node_crypto = require("node:crypto");
 
@@ -280,7 +311,7 @@ function monsterRuleText(value) {
 }
 
 // shared/five-tools-monster.ts
-var object = (v) => v && typeof v === "object" && !Array.isArray(v) ? v : {};
+var object2 = (v) => v && typeof v === "object" && !Array.isArray(v) ? v : {};
 var array = (v) => Array.isArray(v) ? v : [];
 var string = (v) => typeof v === "string" ? v : typeof v === "number" ? String(v) : "";
 function fiveToolsText(value, depth = 0) {
@@ -289,9 +320,9 @@ function fiveToolsText(value, depth = 0) {
   if (value === null || value === void 0) return "";
   if (typeof value !== "object") return monsterRuleText(string(value));
   if (Array.isArray(value)) return value.map(text).filter(Boolean).join("\n\n");
-  const o = object(value), kind = string(o.type);
+  const o = object2(value), kind = string(o.type);
   if (kind === "list") return array(o.items).map((v) => "\u2022 " + text(v)).join("\n");
-  if (kind === "table") return [text(o.caption), array(o.colLabels).map(text).join(" | "), ...array(o.rows).map((row) => array(object(row).row ?? row).map(text).join(" | ")), text(o.footnotes)].filter(Boolean).join("\n");
+  if (kind === "table") return [text(o.caption), array(o.colLabels).map(text).join(" | "), ...array(o.rows).map((row) => array(object2(row).row ?? row).map(text).join(" | ")), text(o.footnotes)].filter(Boolean).join("\n");
   if (kind === "image") return "";
   if (kind === "dice") return text(o.toRoll);
   const parts = [o.name ? string(o.name) + "." : "", text(o.entries ?? o.entry ?? o.items), text(o.headerEntries), text(o.footerEntries)];
@@ -304,7 +335,7 @@ function fiveToolsText(value, depth = 0) {
 // shared/five-tools-item.ts
 var obj = (v) => v && typeof v === "object" && !Array.isArray(v) ? v : {};
 var str = (v) => typeof v === "string" || typeof v === "number" ? String(v) : "";
-var list = (v) => Array.isArray(v) ? v : [];
+var list2 = (v) => Array.isArray(v) ? v : [];
 var slug = (v) => str(v).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 var damage = { A: "acid", B: "bludgeoning", C: "cold", F: "fire", O: "force", L: "lightning", N: "necrotic", P: "piercing", I: "poison", Y: "psychic", R: "radiant", S: "slashing", T: "thunder" };
 var types = { LA: "light", MA: "medium", HA: "heavy", S: "shield" };
@@ -329,7 +360,7 @@ function fiveToolsItemView(record) {
     requiresAttunement: attune,
     attunementRequirement: typeof m.reqAttune === "string" ? m.reqAttune : "",
     ...typeof m.value === "number" ? { value: { amount: m.value / 100, currency: "gp" } } : {},
-    ...weapon ? { weapon: { dice: str(m.dmg1), damageType: damage[str(m.dmgType)] ?? str(m.dmgType), range: str(m.range) || (type === "R" ? "ranged" : "melee"), ranged: type === "R", finesse: list(m.property).some((p) => str(p).split("|")[0] === "F"), category: str(m.weaponCategory) } } : {},
+    ...weapon ? { weapon: { dice: str(m.dmg1), damageType: damage[str(m.dmgType)] ?? str(m.dmgType), range: str(m.range) || (type === "R" ? "ranged" : "melee"), ranged: type === "R", finesse: list2(m.property).some((p) => str(p).split("|")[0] === "F"), category: str(m.weaponCategory) } } : {},
     ...armor ? { armor: { base: typeof m.ac === "number" ? m.ac : 0, dex: armorType === "light" || armorType === "medium", ...armorType === "medium" ? { cap: 2 } : {}, shield: armorType === "shield", category: armorType } } : {}
   };
   const stats = [];
@@ -347,8 +378,8 @@ function fiveToolsItemView(record) {
   add(armorType === "shield" ? "Shield AC bonus" : "Base AC", m.ac);
   add("Strength required", m.strength);
   add("Stealth", m.stealth ? "Disadvantage" : void 0);
-  add("Properties", list(m.property).map((p) => str(p).split("|")[0]).join(", "));
-  add("Mastery", list(m.mastery).map((p) => str(p).split("|")[0]).join(", "));
+  add("Properties", list2(m.property).map((p) => str(p).split("|")[0]).join(", "));
+  add("Mastery", list2(m.mastery).map((p) => str(p).split("|")[0]).join(", "));
   add("Charges", m.charges);
   add("Recharge", m.recharge);
   add("Attacks / damage bonus", m.bonusWeapon);
@@ -356,7 +387,7 @@ function fiveToolsItemView(record) {
   add("Saving throw bonus", m.bonusSavingThrow);
   add("Spell attack bonus", m.bonusSpellAttack);
   add("Spell save DC bonus", m.bonusSpellSaveDc);
-  const images = list(record.fluff?.images).flatMap((v) => {
+  const images = list2(record.fluff?.images).flatMap((v) => {
     const image = obj(v), href = obj(image.href), url = href.type === "external" ? str(href.url) : href.type === "internal" ? "https://5e.tools/img/" + str(href.path) : "";
     return /^https:\/\//.test(url) ? [{ url, title: str(image.title) || str(m.name) }] : [];
   });
@@ -428,7 +459,7 @@ function normalizeSpell(key, value) {
   const components = Object.entries(mapValue(get(spell, "components"))).filter(([, enabled]) => enabled === true || typeof enabled === "string" && enabled.trim() !== "").map(([name]) => ({ ":verbal": "V", ":somatic": "S", ":material": "M" })[name] ?? name.replace(/^:/, ""));
   const classes = Object.entries(mapValue(get(spell, "spell-lists"))).filter(([, enabled]) => enabled === true).map(([name]) => ref(slug2(name)));
   const description = textValue(get(spell, "description"));
-  return {
+  const normalized = {
     index: entityIndex(key, spell),
     name: textValue(get(spell, "name"), key.replace(/^:/, "").replace(/-/g, " ")),
     url: "",
@@ -444,6 +475,14 @@ function normalizeSpell(key, value) {
     classes,
     homebrew: true
   };
+  let native;
+  const authored = get(value, "codex/spell");
+  if (authored) try {
+    const draft = restoreSpellDraft(authored);
+    if (draft.body.name.trim() && draft.source.trim()) native = draft;
+  } catch {
+  }
+  return native ? { ...applySpellBuilder({ ...normalized, ...native.body.level === 0 ? { damage: { damage_at_character_level: {} } } : {}, spellBuilder: native.body, benefits: native.benefits }, native.body), spellId: native.id, spellRevision: get(value, "codex/revision") } : normalized;
 }
 function normalizeRace(key, value) {
   const race = mapValue(value);

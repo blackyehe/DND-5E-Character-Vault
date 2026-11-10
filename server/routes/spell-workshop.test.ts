@@ -1,0 +1,48 @@
+import {afterAll,beforeAll,beforeEach,expect,it,vi} from 'vitest'
+import express from 'express'
+import type {Server} from 'node:http'
+import {newSpellDraft,type SpellDraft} from '../../shared/spell-workshop'
+import {inspectOrcbrew,sourceHash} from '../lib/orcbrew'
+import {nativeSpell,spellRecord,spellKey} from '../lib/spell-workshop'
+import {placeNativeEntry} from '../lib/workshop-pack'
+const mocks=vi.hoisted(()=>({library:vi.fn(),read:vi.fn(),write:vi.fn(),create:vi.fn()}))
+vi.mock('../lib/option-authoring-library',()=>({authoringPacks:mocks.library}))
+vi.mock('../lib/pack-source',()=>({readPackDocuments:mocks.read}))
+vi.mock('../models/CustomContent',()=>({CustomContent:{findOneAndUpdate:(...args:unknown[])=>({lean:()=>mocks.write(...args)}),create:mocks.create}}))
+import router from './spell-workshop'
+let server:Server,base:string
+const packId='a'.repeat(24),draft=newSpellDraft();draft.body.name='Arcane Spark'
+const source=placeNativeEntry(undefined,'spells',spellKey(draft.id),spellRecord(draft,1,[]),draft.id,':codex/spell'),pack={id:packId,filename:'Blacky.orcbrew',includeDisabled:false,parsed:inspectOrcbrew(source)},entry=pack.parsed.entries.spells[0]!,hash=sourceHash(source)
+const oldDraft={...nativeSpell(entry)!,published:{revision:1,index:entry.index,packId,packHash:hash}},doc={_id:packId,userId:'owner',type:'orcbrew',updatedAt:new Date('2026-11-09'),data:{filename:pack.filename,source}}
+beforeAll(async()=>{const app=express();app.use(express.json());app.use((req,res,next)=>{if(req.get('x-user')!=='owner')return res.sendStatus(401);req.userId='owner';next()});app.use(router);server=await new Promise<Server>(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});const address=server.address();if(!address||typeof address==='string')throw Error('No address');base=`http://127.0.0.1:${address.port}`})
+afterAll(()=>new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve())))
+beforeEach(()=>{vi.clearAllMocks();mocks.library.mockResolvedValue({packs:[pack],hashes:new Map([[packId,hash]]),warnings:[]});mocks.read.mockResolvedValue([doc]);mocks.write.mockResolvedValue({...doc,updatedAt:new Date()});mocks.create.mockResolvedValue({_id:packId})})
+async function request(body:unknown){return fetch(base+'/publish',{method:'POST',headers:{'Content-Type':'application/json','x-user':'owner',connection:'close'},body:JSON.stringify(body)})}
+function payload(){return {draft:{...oldDraft,benefits:[{type:'spell-attack-bonus',value:1},{type:'spell-dc-bonus',value:1}]},target:{packId,expectedHash:hash},expectedRevision:1}}
+it('lists saved spells with their editable builder and current pack revision',async()=>{
+ const response=await fetch(base+'/',{headers:{'x-user':'owner',connection:'close'}}),value=await response.json() as {spells:SpellDraft[];packs:unknown[]}
+ expect(response.status).toBe(200);expect(value.spells[0]).toMatchObject({id:draft.id,kind:'spells',body:{name:draft.body.name},published:{revision:1,index:entry.index,packId,packHash:hash}});expect(value.packs).toEqual([{id:packId,filename:pack.filename,hash}])
+})
+it('creates a spell in a new pack without rewriting or reading an existing pack',async()=>{
+ const fresh=newSpellDraft();fresh.body.name='New spark'
+ const response=await request({draft:fresh,target:{filename:'My Spells.orcbrew'},expectedRevision:0});expect(response.status).toBe(200);expect(mocks.read).not.toHaveBeenCalled();expect(mocks.write).not.toHaveBeenCalled()
+ const saved=mocks.create.mock.calls[0]![0];expect(saved).toMatchObject({userId:'owner',type:'orcbrew',data:{filename:'My Spells.orcbrew'}});expect(nativeSpell(inspectOrcbrew(saved.data.source).entries.spells[0]!)!.id).toBe(fresh.id)
+})
+it('reads only the target pack source and returns its new hash without a post-save library rebuild',async()=>{
+ const response=await request(payload());expect(response.status).toBe(200);const result=await response.json() as {draft:SpellDraft;pack:unknown};expect(mocks.read).toHaveBeenCalledExactlyOnceWith('owner',packId);expect(mocks.library).toHaveBeenCalledExactlyOnceWith('owner',['spells']);expect(result.pack).toEqual({id:packId,filename:pack.filename,hash:result.draft.published!.packHash});expect(result.draft.published!.revision).toBe(2);expect(result.draft.benefits).toEqual(payload().draft.benefits)
+ const [filter,update]=mocks.write.mock.calls[0]!;expect(filter).toMatchObject({_id:packId,userId:'owner',updatedAt:doc.updatedAt});const saved=inspectOrcbrew(update.$set.data.source);expect(nativeSpell(saved.entries.spells[0]!)!.benefits).toEqual(payload().draft.benefits)
+})
+it('keeps using already-read source documents on the legacy path',async()=>{
+ const library=await mocks.library();mocks.library.mockResolvedValue({...library,docs:[doc]})
+ expect((await request(payload())).status).toBe(200);expect(mocks.read).not.toHaveBeenCalled()
+})
+it.each(['hash','revision','missing','concurrent'])('rejects a %s source conflict without overwriting a pack',async condition=>{
+ const body=payload();if(condition==='hash')body.target.expectedHash='b'.repeat(64)
+ if(condition==='revision')body.expectedRevision=0
+ if(condition==='missing')mocks.read.mockResolvedValue([])
+ if(condition==='concurrent')mocks.write.mockResolvedValue(null)
+ const response=await request(body);expect(response.status).toBe(condition==='missing'?404:409);if(condition!=='concurrent')expect(mocks.write).not.toHaveBeenCalled();expect(mocks.create).not.toHaveBeenCalled()
+})
+it('does not save a new copy of an existing option in another pack',async()=>{
+ const body=payload();body.target.packId='b'.repeat(24);expect((await request(body)).status).toBe(409);expect(mocks.read).not.toHaveBeenCalled();expect(mocks.write).not.toHaveBeenCalled()
+})
