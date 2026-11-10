@@ -51,3 +51,20 @@ use `.local/sheet-surfaces-20261110/baseline-files/`. Intermediate sheet-surface
 directories retain small candidate/diagnostic evidence. Review on 10 December
 2026. Managed temporary sources/profiles reuse dependencies and close contexts
 before cleanup. Existing unrelated AGENTS/backlog edits are preserved.
+
+Live website: `dpl_HC7Rs418PdEgihknoFcTvqaeVLQh` on both aliases and the
+production pointer; immutable `dndoldal-jif8agr2n-dndenjoyerstudio.vercel.app`.
+Live Owlbear: `dpl_pbH4Z99bAWx34cKfyvSFwtepBeUg` on both aliases; immutable
+`owlbear-character-sheet-lqcup8qu5-dndenjoyerstudio.vercel.app`.
+Website checkpoint: `444e27d`. All 561 hosted website source hashes and both
+complete 22-file static surfaces/security headers match their audited packages.
+Region, environment-variable names and existing secondary website protection
+are preserved. Public/authorized health gates pass. Workspace check reports zero
+managed runs and zero Vitest filesystem cache. No live campaign writes occurred.
+
+Guarded traffic-only rollback while these releases remain current:
+`node .local/sheet-surfaces-c-release-20261110/release.mjs restore`.
+It accepts only candidate/baseline alias identities, preserves unrelated newer
+releases and reports administrative metadata separately. Website baseline is
+`dpl_DZU1MAhtzZbrv4gnSKe6C2uwE4Ai`; static baseline is
+`dpl_xvY339uSYRswgryrZBM9pLF63WNj`.
