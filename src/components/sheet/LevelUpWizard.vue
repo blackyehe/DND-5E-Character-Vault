@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SpellCastingDetails from '../SpellCastingDetails.vue'
 import { revealNavigationTarget } from '../../lib/navigation-scroll'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useCharactersStore } from '../../stores/characters'
@@ -1285,10 +1286,7 @@ async function save() {
               <p v-if="spellBusy" role="status">Loading spell rules…</p>
               <article v-if="spellDetail" class="level-up-feature">
                 <h4>{{ spellDetail.name }}</h4>
-                <p class="sheet-small">
-                  {{ spellDetail.casting_time }} · {{ spellDetail.range }} ·
-                  {{ spellDetail.duration }}
-                </p>
+                <SpellCastingDetails class="sheet-small" :spell="spellDetail" />
                 <p
                   v-for="line in spellDetail.desc"
                   :key="line"

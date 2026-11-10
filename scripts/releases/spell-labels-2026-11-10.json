@@ -1,0 +1,19 @@
+{
+  "evidence": ".local/spell-labels-20261110",
+  "checkpoint": "459b7d4",
+  "runtime": [
+    "src/components/party/PartyCombatKit.vue",
+    "src/components/sheet/LevelUpWizard.vue",
+    "src/components/sheet/SpellbookPanel.vue",
+    "src/views/CharacterCreationView.vue",
+    "src/views/CompendiumView.vue",
+    "src/components/SpellCastingDetails.vue"
+  ],
+  "tests": [
+    "src/lib/compendium-spell-groups.test.ts"
+  ],
+  "testFiles": [
+    "src/lib/compendium-spell-groups.test.ts"
+  ],
+  "baselineFiles": ".local/spell-labels-20261110/baseline-files"
+}

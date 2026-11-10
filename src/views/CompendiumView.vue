@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SpellCastingDetails from '../components/SpellCastingDetails.vue'
 import WorkshopLibraryTools from '../components/workshop/WorkshopLibraryTools.vue'
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {useRoute} from 'vue-router'
@@ -286,10 +287,8 @@ search()
             <p v-if="detail.sourcePack" class="text-sm mb-4">{{ detail.sourcePack }}</p>
             <ImportedItemDetails v-if="isItemTab&&detail.itemView" :key="detail.index" :view="detail.itemView" />
             <template v-else-if="tab === 'spells'">
-              <p class="text-sm mb-4">
-                Level {{ spellDetail?.level }} {{ spellDetail?.school?.name }} · {{ spellDetail?.casting_time }} · {{ spellDetail?.range }}
-                <br />{{ spellDetail?.components?.join(', ') }} · {{ spellDetail?.duration }}{{ spellDetail?.concentration ? ' · Concentration' : '' }}{{ spellDetail?.ritual ? ' · Ritual' : '' }}
-              </p>
+              <p class="text-sm">Level {{ spellDetail?.level }} {{ spellDetail?.school?.name }}</p>
+              <SpellCastingDetails v-if="spellDetail" class="text-sm mb-4" :spell="spellDetail" />
               <p v-if="detail.material" class="text-sm mb-4">Material: {{detail.material}}</p>
               <p v-for="(paragraph, index) in spellDetail?.desc ?? []" :key="index" class="mb-3 whitespace-pre-wrap leading-relaxed">{{ paragraph }}</p>
               <template v-if="spellDetail?.higher_level?.length"><h3 class="font-display text-lg mb-2">At higher levels</h3><p v-for="(paragraph,index) in spellDetail.higher_level" :key="`higher-${index}`" class="mb-3 whitespace-pre-wrap leading-relaxed">{{paragraph}}</p></template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SpellCastingDetails from '../components/SpellCastingDetails.vue'
 import { vMotionPanel } from '../directives/siteMotion'
 import { revealNavigationTarget } from '../lib/navigation-scroll'
 import WorkshopCharacterChoices from '../components/workshop/WorkshopCharacterChoices.vue'
@@ -299,7 +300,7 @@ async function createCharacter() {
                   <template v-else-if="spellDetail">
                     <div :key="spellDetail.index" class="cb-spell-description" tabindex="0" role="region" :aria-label="`${spellDetail.name} description`">
                       <span class="cb-badge">{{ spellDetail.level === 0 ? 'CANTRIP' : `LEVEL ${spellDetail.level}` }} · {{ spellDetail.school.name }}</span><h3>{{ spellDetail.name }}</h3>
-                      <p class="cb-field-hint">{{ spellDetail.casting_time }} · {{ spellDetail.range }}<br />{{ spellDetail.duration }}</p>
+                      <SpellCastingDetails class="cb-field-hint" :spell="spellDetail" />
                       <p v-for="(paragraph, index) in spellDetail.desc" :key="index" class="cb-reference-copy">{{ paragraph }}</p>
                       <template v-if="spellDetail.higher_level?.length"><h4>At higher levels</h4><p v-for="(paragraph, index) in spellDetail.higher_level" :key="index" class="cb-reference-copy">{{ paragraph }}</p></template>
                     </div>
