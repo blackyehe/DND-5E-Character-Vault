@@ -1,6 +1,8 @@
 # Character-sheet visual directions
 
-Preview only, awaiting the user's choice. The live website is unchanged.
+First-round previews A/B/C were rejected by the user. The current comparison is
+`character-sheet-backgrounds-2026-11-10.html` (D/E/F), awaiting a choice. The live
+website is unchanged.
 
 The brief is to replace repeated red outlines/dividers with a consistent way of
 grouping information throughout the website and Owlbear sheets. These three quick
@@ -57,3 +59,23 @@ It embeds the existing Barlow/Barlow Condensed Latin fonts for a self-contained
 preview; their OFL notices remain in `src/assets/fonts/barlow/`. Visual checks:
 all three directions at 728px, grouped bands at 390px, no console errors. Secondary
 text was brightened and the grouped-label surface strengthened after inspection.
+
+## Second round: backgrounds for every entry
+
+The user liked stronger emphasis on proficient entries, but wants differing
+backgrounds for the remaining entries too. All three new options shade every
+skill, save and combat entry. Skill/save highlighting follows actual proficiency
+and expertise rather than alternating row positions. Text labels retain that
+meaning independently of colour, and highlighted text uses full foreground colour
+for readability. The existing typography and numerical content stay the same.
+
+- **D — Tonal tiles:** neutral untrained entries, an accent tint for proficiency,
+  and a stronger tint for expertise. A restrained continuation of the first idea.
+- **E — Soft colour:** cool untrained entries, muted green proficiency, and a
+  warm expertise background. Otherwise the same layout as D for easy comparison.
+- **F — Compact rows:** two skill columns and compact save rows, with neutral,
+  lighter trained and strongest expertise surfaces. Section backgrounds are open.
+
+The revised HTML reuses the embedded project fonts and remains a preview only.
+Checked D/E/F at 728px and D at 390px, without console errors. No application
+styles, calculations, campaign data or production deployment were changed.

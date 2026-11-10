@@ -95,8 +95,10 @@ with the same audit file recording its validation and Owlbear-specific limits.
    The final visual treatment is still to be designed; no UI change is requested
    in this reminder-only update.
    10 November: three [comparison previews](design/character-sheet-directions-2026-11-10.html)
-   are prepared: soft sections, open spacing, and grouped bands. Await the user's
-   choice before changing the live styles. The [design notes](design/character-sheet-directions-2026-11-10.md)
+   were rejected: soft sections, open spacing, and grouped bands. Revised
+   [background comparisons D/E/F](design/character-sheet-backgrounds-2026-11-10.html)
+   give every entry a background and distinguish proficiency/expertise by actual
+   rank. Await the user's choice before changing the live styles. The [design notes](design/character-sheet-directions-2026-11-10.md)
    preserve the scope and shared approach; authoring synchronization is still
    deferred at the earlier resume point.
 
