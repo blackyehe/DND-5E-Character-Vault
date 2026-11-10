@@ -100,7 +100,8 @@ with the same audit file recording its validation and Owlbear-specific limits.
    give every entry a background and distinguish proficiency/expertise by actual
    rank. The user selected **F**, using the current theme colours and brighter,
    semibold ability names and spell-stat labels. The website Summary is the first
-   implementation; equivalent elements elsewhere and in Owlbear still need the
+   implementation, released as `dpl_Gy5h9g4AUUSuYm3ZJ8t9XWcjd1dW` (see the
+   [release audit](audits/summary-f-theme-2026-11-10.md)); equivalent elements elsewhere and in Owlbear still need the
    wider consistency pass. The [design notes](design/character-sheet-directions-2026-11-10.md)
    preserve the scope and shared approach; authoring synchronization is still
    deferred at the earlier resume point.
