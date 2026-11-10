@@ -35,3 +35,17 @@ item/attunement/feat changes, applicable attack/save combinations, missing rules
 rendered source labels, granted scaling text, preparation and search controls.
 This is a frontend presentation release; campaign records and backend schemas
 are not migrated. Owlbear remains a separate rollout.
+
+The exact production candidate passed 603 tests (16 conditional tests skipped),
+both frontend/server type checks and the production build. Workspace checks show
+zero managed scratch runs and zero Vitest filesystem cache after validation.
+
+Live on both website aliases as `dpl_4BMNpFsinatUN91ac87fFZXguWnk`:
+https://dndoldal-cvt1pkcq2-dndenjoyerstudio.vercel.app.
+Patch checkpoint: `bf11c6f`; rollback: `dpl_Eb3yGcTZHVcyR9HTABHwFhpcjXkz`.
+All 554 hosted source hashes match the validated candidate. Region and custom
+environment-variable names match the baseline. Public health is JSON 200;
+anonymous character, item and pending-update access is JSON 401. Both independent
+Owlbear aliases remain at `dpl_6yPZh1hytcg8a2XNzSHnRpZjpz8W`.
+Rollback while this deployment remains current:
+`node .local/spell-rows-20261110/release.mjs rollback`.

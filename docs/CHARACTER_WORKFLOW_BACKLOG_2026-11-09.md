@@ -135,6 +135,7 @@ with the same audit file recording its validation and Owlbear-specific limits.
    unknown imported mechanics point to the rules. Prepare controls and expanded
    details remain available. See the [spell-row audit](audits/spell-rows-2026-11-10.md).
    Owlbear and equivalent per-spell rows in other combat surfaces remain pending.
+   Released to both website aliases as `dpl_4BMNpFsinatUN91ac87fFZXguWnk`.
 9. Re-imagine repeated character-sheet UI elements consistently across the website
    and Owlbear. The supplied [sheet example](references/character-ui-2026-11-09/sheet-section-dividers.png)
    shows too many red outlines and divider lines in skills, saving throws and the
