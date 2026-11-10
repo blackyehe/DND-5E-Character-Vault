@@ -1,5 +1,10 @@
 # Homebrew spell creator — 10 November 2026
 
+Live on both website aliases as `dpl_2uySpBC89mtPVjThordZcZn2wy2Y`, immutable
+https://dndoldal-c6p4uojl7-dndenjoyerstudio.vercel.app.
+Patch checkpoint: `718b5d8`. Previous/rollback deployment:
+`dpl_Gy5h9g4AUUSuYm3ZJ8t9XWcjd1dW`.
+
 Homebrew Workshop has a Spells section using the existing Compendium EntryBuilder
 and spell form, validation and projection. It supports casting details, classes,
 damage/healing scaling, areas, Benefits, device drafts and pack saves. No separate
@@ -31,3 +36,14 @@ also pass after the parser's ordinary-import fast path was retained.
 Release isolation uses `scripts/releases/spell-creator-2026-11-10.json` with
 `scripts/releases/validate-character-option-review.mjs`. Concise source manifests
 and receipts are kept in `.local/spell-creator-20261110/`.
+
+Exact production candidate: 544 tests passed, two optional tests skipped; both
+type checks and production build passed. All 533 hosted source hashes match the
+candidate. Existing changed-file preimages match the preceding hosted code;
+HomebrewWorkshopView differed only in mixed line endings. Region and custom
+environment-variable names match the baseline. Public health is JSON 200;
+anonymous character and spell-authoring requests are JSON 401. Independent
+Owlbear extension aliases remain unchanged. No campaign records were changed
+during verification. Managed scratch directories and dependency junctions were
+removed. Rollback, while this release remains current:
+`node .local/spell-creator-20261110/release.mjs rollback`.

@@ -69,6 +69,8 @@ with the same audit file recording its validation and Owlbear-specific limits.
    spell edits retain previous source aliases and relink known/prepared/active
    references only when reviewed; spent slots and unrelated play state stay saved.
    The wider Workshop/Compendium personal-edition reconciliation remains deferred.
+   Released on the website as `dpl_2uySpBC89mtPVjThordZcZn2wy2Y`; see the
+   [spell-creator audit](audits/spell-creator-2026-11-10.md).
 5. Add source-linked trackers to items, feats and other grants. Activation,
    removal/unequipping, recovery and preserved spent uses must follow the source.
 6. Add a clear long-rest action to website and Owlbear summary screens.
