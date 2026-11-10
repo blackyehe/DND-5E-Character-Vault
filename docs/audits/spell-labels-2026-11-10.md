@@ -17,4 +17,13 @@ and release receipts are retained in `.local/spell-labels-20261110/` for rollbac
 and reconstruction; review them on 10 December 2026. Managed source copies and
 dependency links are removed after validation.
 
-Deployment verification is recorded after promotion.
+Live on both website aliases as `dpl_2obs3AK3DTVgkTbtn5Dv4sGnaSur`:
+https://dndoldal-o0pfp6mjp-dndenjoyerstudio.vercel.app.
+Patch checkpoint: `2bbcf86`. All 542 hosted source hashes match the candidate;
+region and custom environment-variable names match the preceding release.
+Five focused checks, both type checks and the production build passed. Public
+health is JSON 200 and anonymous character access is JSON 401. Independent
+Owlbear aliases remain on `dpl_6yPZh1hytcg8a2XNzSHnRpZjpz8W`.
+Workspace check reports zero scratch runs and zero Vitest filesystem cache.
+Rollback while this release is current:
+`node .local/spell-labels-20261110/release.mjs rollback`.
