@@ -1,0 +1,15 @@
+{
+  "evidence": ".local/spell-rows-20261110",
+  "checkpoint": "d5c5a86",
+  "runtime": [
+    "src/lib/srd.ts",
+    "src/lib/spell-profile.ts",
+    "src/components/sheet/SpellbookEntry.vue",
+    "src/components/sheet/SpellbookPanel.vue"
+  ],
+  "tests": [
+    "src/lib/spell-profile.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts"
+  ],
+  "baselineFiles": ".local/spell-rows-20261110/baseline-files"
+}

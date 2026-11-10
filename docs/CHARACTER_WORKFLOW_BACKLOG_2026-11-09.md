@@ -128,8 +128,13 @@ with the same audit file recording its validation and Owlbear-specific limits.
    10 November: the website now uses one shared spell-detail block with bold
    Casting time, Range, Duration and Components labels. It is used in ordinary
    and innate spellbooks, the party combat view, Compendium, character creation
-   and level-up previews. Ritual/concentration markers remain visible. Source,
-   casting ability and per-spell attack/DC rows remain pending, as does Owlbear.
+   and level-up previews. Ritual/concentration markers remain visible.
+   The selected B presentation is implemented in the website spellbook: shaded
+   compact rows show recorded casting source/ability and applicable attack/save
+   values using current active bonuses. Granted spells use their own ability;
+   unknown imported mechanics point to the rules. Prepare controls and expanded
+   details remain available. See the [spell-row audit](audits/spell-rows-2026-11-10.md).
+   Owlbear and equivalent per-spell rows in other combat surfaces remain pending.
 9. Re-imagine repeated character-sheet UI elements consistently across the website
    and Owlbear. The supplied [sheet example](references/character-ui-2026-11-09/sheet-section-dividers.png)
    shows too many red outlines and divider lines in skills, saving throws and the

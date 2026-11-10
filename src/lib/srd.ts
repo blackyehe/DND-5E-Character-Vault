@@ -79,6 +79,10 @@ export interface SrdSubrace extends SrdRef {
 
 export interface SrdSpell extends SrdRef {
   referenceFallback?:boolean
+  homebrew?:boolean
+  spellBuilder?:import('../../shared/spell-builder').SpellBuilder
+  attack_type?:string
+  dc?:{dc_type?:{index?:string;name?:string};dc_success?:string}
   level: number
   school: SrdRef
   casting_time: string
