@@ -94,6 +94,11 @@ with the same audit file recording its validation and Owlbear-specific limits.
    the different sheets, preserving readability across themes and screen sizes.
    The final visual treatment is still to be designed; no UI change is requested
    in this reminder-only update.
+   10 November: three [comparison previews](design/character-sheet-directions-2026-11-10.html)
+   are prepared: soft sections, open spacing, and grouped bands. Await the user's
+   choice before changing the live styles. The [design notes](design/character-sheet-directions-2026-11-10.md)
+   preserve the scope and shared approach; authoring synchronization is still
+   deferred at the earlier resume point.
 
 A stage is complete only after its implementation and relevant checks. A release
 must preserve the current deployed baseline; the working checkout also contains
