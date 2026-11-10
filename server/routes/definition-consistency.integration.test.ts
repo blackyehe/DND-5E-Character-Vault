@@ -206,4 +206,13 @@ describe.skipIf(process.env.DEFINITION_CONSISTENCY_TESTS!=='1')('shared definiti
   raw=await Character.findById(id).lean();expect(raw!.compendiumRules!.filter((d:any)=>d.kind==='feats')).toEqual([])
  })
 
+ it('includes explicit spell classes in the owned advancement catalog without downloading full rules',async()=>{
+  const draft=newSpellDraft();draft.body.name='Wizard source fixture';draft.body.classes=['wizard'];draft.body.level=2;draft.body.description='Rules stay in the definition endpoint.'
+  const saved=await publish('spells',draft);expect(saved.status,JSON.stringify(saved.body)).toBe(200)
+  const c=emptyCharacter();c.meta.name='Advancement fixture';const character=await Character.create({...c,userId:owner}),path='/characters/'+character._id+'/advancement-options'
+  const response=await request(path);expect(response.status,JSON.stringify(response.body)).toBe(200);const spell=response.body.spells.find((s:any)=>s.index===saved.body.draft.published.index)
+  expect(spell).toMatchObject({level:2,classes:[{index:'wizard',name:'Wizard'}],definitionAvailable:true});expect(spell).not.toHaveProperty('desc');expect(spell).not.toHaveProperty('spellBuilder')
+  expect((await request(path,'GET',undefined,String(new mongoose.Types.ObjectId()))).status).toBe(404)
+ })
+
 })

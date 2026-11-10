@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import SpellCastingDetails from '../SpellCastingDetails.vue'
+import LevelUpSpellChooser from './LevelUpSpellChooser.vue'
+import {mergeAdvancementSpells,eligibleClassSpells,spellIsKnown,type AdvancementSpell} from '../../lib/advancement-spells'
 import { revealNavigationTarget } from '../../lib/navigation-scroll'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useCharactersStore } from '../../stores/characters'
@@ -27,7 +28,7 @@ import { progressionClasses } from '../../../shared/character-progression'
 import { ruleName } from '../../../shared/workshop-character'
 import type { Character } from '../../../shared/character'
 import './level-up.css'
-import { featEffects, findFeats, sortSpellsByLevel, type FeatEffect } from '../../lib/advancement-discovery'
+import { featEffects, findFeats, type FeatEffect } from '../../lib/advancement-discovery'
 const emit = defineEmits<{ dirty: [value: boolean]; saved: []; cancel: [] }>(),
   store = useCharactersStore()
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v))
@@ -117,11 +118,7 @@ const featIndex = ref(''),
   featQuery = ref(''),
   featEffect = ref<FeatEffect | ''>(''),
   featSource = ref(''),
-  spellQuery = ref(''),
-  spellDetail = ref<SrdSpell | null>(null),
-  spellBusy = ref(false),
-  spells = ref<(SrdRef & { level: number })[]>([]),
-  spellList = ref<string[]>([]),
+  spells = ref<AdvancementSpell[]>([]),
   spellCatalogBusy = ref(false),
   spellError = ref('')
 const availableFeats = computed(() => findFeats(catalog.value.feats, featQuery.value, featEffect.value, featSource.value))
@@ -134,55 +131,15 @@ function resetFeatFilters() {
   featSource.value = ''
   featSearchInput.value?.focus()
 }
-const availableSpells = computed(() =>
-  sortSpellsByLevel(spells.value
-    .filter(
-      (s) =>
-        !base.value.spellcasting.known.includes(s.index) &&
-        !decisions.spells.includes(s.index) &&
-        !decisions.cantrips.includes(s.index) &&
-        (s.level === 0
-          ? (rules.value?.casting?.cantrips ?? 0) > 0
-          : s.level <= (rules.value?.casting?.maxSpellLevel ?? 0)) &&
-        (!spellList.value.length || spellList.value.includes(s.index)) &&
-        `${s.name} ${s.sourcePack ?? ''}`
-          .toLowerCase()
-          .includes(spellQuery.value.toLowerCase()),
-    ))
-    .slice(0, 40),
-)
-const grantQuery = ref(''),
-  grantOptions = ref<(SrdRef & { level: number })[]>([]),
-  grantDetail = ref<SrdSpell | null>(null),
-  grantBusy = ref(false),
-  grantError = ref('')
-const matchingGrants = computed(() =>
-  sortSpellsByLevel(grantOptions.value
-    .filter(
-      (s) =>
-        !base.value.spellcasting.known.includes(s.index) &&
-        !decisions.extraSpells.includes(s.index) &&
-        !decisions.spells.includes(s.index) &&
-        !decisions.cantrips.includes(s.index) &&
-        s.name.toLowerCase().includes(grantQuery.value.toLowerCase()),
-    ))
-    .slice(0, 30),
-)
-async function loadGrants(event: Event) {
-  if (!(event.target as HTMLDetailsElement).open || grantOptions.value.length)
-    return
-  grantBusy.value = true
-  try {
-    grantOptions.value = [
-      ...((await srd.spells()) as (SrdRef & { level: number })[]),
-      ...catalog.value.spells,
-    ]
-  } catch {
-    grantError.value =
-      'Spell definitions could not load. Close and reopen this section to retry.'
-  } finally {
-    grantBusy.value = false
-  }
+const availableSpells = computed(() => spells.value.filter(s=>!spellIsKnown(s,base.value.spellcasting.known)&&!decisions.extraSpells.includes(s.index)&&(s.level===0?(rules.value?.casting?.cantrips??0)>0:s.level<=(rules.value?.casting?.maxSpellLevel??0)&&((rules.value?.casting?.spells??0)>0||(rules.value?.casting?.replacements??0)>0))))
+const grantOptions=ref<AdvancementSpell[]>([]),grantBusy=ref(false),grantError=ref('')
+const matchingGrants=computed(()=>grantOptions.value.filter(s=>Number.isInteger(s.level)&&s.level>=0&&s.level<=9&&!spellIsKnown(s,base.value.spellcasting.known)&&!decisions.spells.includes(s.index)&&!decisions.cantrips.includes(s.index)))
+async function loadGrants(event?:Event){
+ if((event&&!(event.target as HTMLDetailsElement).open)||grantOptions.value.length||grantBusy.value)return
+ const run=generation;grantBusy.value=true;grantError.value=''
+ try{const all=await srd.spells() as AdvancementSpell[];if(alive&&run===generation)grantOptions.value=mergeAdvancementSpells(all,catalog.value.spells)}
+ catch{if(alive&&run===generation)grantError.value='Spell definitions could not load. Retry spell choices.'}
+ finally{if(alive&&run===generation)grantBusy.value=false}
 }
 async function spellDefinition(index: string): Promise<SrdSpell> {
   return index.startsWith('homebrew-')
@@ -191,26 +148,13 @@ async function spellDefinition(index: string): Promise<SrdSpell> {
       )
     : srd.spell(index)
 }
-async function inspectGrant(s: SrdRef) {
-  grantBusy.value = true
-  grantError.value = ''
-  try {
-    grantDetail.value = await spellDefinition(s.index)
-  } catch {
-    grantError.value =
-      'This spell has no available rule definition. Choose another definition.'
-  } finally {
-    grantBusy.value = false
-  }
+function addGrant(s:AdvancementSpell){
+ if(store.saving||!rules.value||decisions.extraSpells.includes(s.index)||!matchingGrants.value.some(v=>v.index===s.index))return
+ decisions.extraSpells.push(s.index)
+ rules.value.extraSpellOptions=[...new Set([...(rules.value.extraSpellOptions??[]),s.index])]
 }
-function addGrant() {
-  if (!grantDetail.value || !rules.value) return
-  decisions.extraSpells.push(grantDetail.value.index)
-  ;(rules.value.extraSpellOptions ??= []).push(grantDetail.value.index)
-  grantDetail.value = null
-}
-const featureQueries = reactive<Record<string, string>>({})
-const featureOptions = (f: AdvancementFeature) =>
+const featureQueries = reactive<Record<string, string>>({}),featureOptionLimits=reactive<Record<string,number>>({})
+const featureMatches = (f: AdvancementFeature) =>
   f.options
     ?.filter(
       (o) =>
@@ -219,7 +163,7 @@ const featureOptions = (f: AdvancementFeature) =>
           .toLowerCase()
           .includes((featureQueries[f.id] ?? '').toLowerCase()),
     )
-    .slice(0, 30)
+const featureOptions=(f:AdvancementFeature)=>{const selected=new Set(decisions.choices[f.id]??[]),matches=featureMatches(f)??[];return [...matches.filter(o=>selected.has(o.id)),...matches.filter(o=>!selected.has(o.id)).slice(0,featureOptionLimits[f.id]??30)]}
 const newSpellIds = computed(
   () =>
     plan.value?.next.spellcasting.known.filter(
@@ -320,8 +264,7 @@ async function initialise() {
 }
 async function loadRules() {
   spellCatalogBusy.value = false
-  spellDetail.value = null
-  grantDetail.value = null
+  grantBusy.value = false
   const run = ++generation
   rulesBusy.value = true
   error.value = ''
@@ -371,7 +314,6 @@ async function chooseSubclass(event: Event) {
 }
 async function loadSpells(r: AdvancementRules, run: number) {
   spells.value = []
-  spellList.value = []
   spellError.value = ''
   if (
     !r.casting ||
@@ -387,20 +329,9 @@ async function loadSpells(r: AdvancementRules, run: number) {
         : Promise.resolve([]),
     ])
     if (run !== generation) return
-    spells.value = [...all, ...catalog.value.spells]
-    spellList.value = r.workshop?.magic.spellList.length
-      ? r.workshop.magic.spellList
-      : list.map((s) => s.index)
-    spellList.value = [
-      ...new Set([...spellList.value, ...(r.spellListExtras ?? [])]),
-    ]
-    r.casting!.eligible = spells.value
-      .filter(
-        (s) =>
-          Number.isInteger(s.level) &&
-          (!spellList.value.length || spellList.value.includes(s.index)),
-      )
-      .map((s) => ({ id: s.index, level: s.level }))
+    spells.value = eligibleClassSpells(mergeAdvancementSpells(all,catalog.value.spells),r,list.map(s=>s.index))
+    const casting=rules.value?.casting??r.casting!
+    casting.eligible=spells.value.map(s=>({id:s.index,level:s.level}))
   } catch {
     spellError.value =
       'Spell choices could not load. Retry rules before selecting spells.'
@@ -446,30 +377,11 @@ function selectFeat() {
   decisions.feat = f ? { name: f.name, description: f.description } : undefined
   decisions.featReviewed = false
 }
-async function inspectSpell(s: SrdRef) {
-  spellBusy.value = true
-  spellDetail.value = null
-  try {
-    spellDetail.value = await spellDefinition(s.index)
-  } catch (e) {
-    spellError.value =
-      e instanceof Error ? e.message : 'Spell definition unavailable.'
-  } finally {
-    spellBusy.value = false
-  }
-}
-function addSpell() {
-  const s = spellDetail.value
-  if (!s) return
-  const key = s.level === 0 ? 'cantrips' : 'spells'
-  if (
-    decisions[key].length >=
-    (rules.value?.casting?.[key] ?? 0) +
-      (key === 'spells' ? decisions.removedSpells.length : 0)
-  )
-    return
-  decisions[key].push(s.index)
-  spellDetail.value = null
+function addSpell(s:AdvancementSpell){
+ if(store.saving||!availableSpells.value.some(v=>v.index===s.index))return
+ const key=s.level===0?'cantrips':'spells'
+ if(decisions[key].includes(s.index)||decisions[key].length>=(rules.value?.casting?.[key]??0)+(key==='spells'?decisions.removedSpells.length:0))return
+ decisions[key].push(s.index)
 }
 function removeSpell(id: string) {
   decisions.spells = decisions.spells.filter((s) => s !== id)
@@ -997,7 +909,7 @@ async function save() {
                   :placeholder="`Search ${f.name} options...`"
               /></label>
               <p v-if="(f.options?.length ?? 0) > 30" class="sheet-small">
-                Search to narrow the options. Selected choices stay visible.
+                Showing {{featureOptions(f).length}} of {{featureMatches(f)?.length??0}} matching options. Selected choices stay visible.
               </p>
               <div
                 v-for="o in featureOptions(f)"
@@ -1025,6 +937,7 @@ async function save() {
                   <p class="level-up-rule-text">{{ o.description }}</p>
                 </details>
               </div>
+              <button v-if="featureOptions(f).length<(featureMatches(f)?.length??0)" type="button" class="sheet-button" @click="featureOptionLimits[f.id]=(featureOptionLimits[f.id]??30)+30">Show more options</button>
             </fieldset>
             <label class="level-up-check"
               ><input
@@ -1253,81 +1166,7 @@ async function save() {
                 Retry spell choices
               </button>
             </div>
-            <div
-              v-if="rules.casting.spells || rules.casting.cantrips"
-              class="level-up-spell-picker"
-            >
-              <label
-                >Find a spell<input
-                  v-model="spellQuery"
-                  type="search"
-                  placeholder="Search this class’s spell list…"
-              /></label>
-              <div class="level-up-spell-list">
-                <button
-                  v-for="s in availableSpells"
-                  :key="s.index"
-                  type="button"
-                  :disabled="spellBusy"
-                  @click="inspectSpell(s)"
-                >
-                  <strong>{{ s.name }}</strong
-                  ><small>{{
-                    s.level === 0 ? 'Cantrip' : `Level ${s.level}`
-                  }}</small>
-                </button>
-              </div>
-              <p
-                v-if="!availableSpells.length && !spellCatalogBusy"
-                class="sheet-small"
-              >
-                No matching eligible spells.
-              </p>
-              <p v-if="spellBusy" role="status">Loading spell rules…</p>
-              <article v-if="spellDetail" class="level-up-feature">
-                <h4>{{ spellDetail.name }}</h4>
-                <SpellCastingDetails class="sheet-small" :spell="spellDetail" />
-                <p
-                  v-for="line in spellDetail.desc"
-                  :key="line"
-                  class="level-up-rule-text"
-                >
-                  {{ line }}
-                </p>
-                <button
-                  type="button"
-                  class="sheet-button"
-                  :disabled="
-                    spellDetail.level === 0
-                      ? decisions.cantrips.length >= rules.casting.cantrips
-                      : decisions.spells.length >=
-                        rules.casting.spells + decisions.removedSpells.length
-                  "
-                  @click="addSpell"
-                >
-                  Learn {{ spellDetail.name }}
-                </button>
-              </article>
-            </div>
-            <ul
-              v-if="decisions.spells.length || decisions.cantrips.length"
-              class="level-up-chosen"
-            >
-              <li
-                v-for="id in [...decisions.cantrips, ...decisions.spells]"
-                :key="id"
-              >
-                {{ spellName(id)
-                }}<button
-                  type="button"
-                  class="sheet-button"
-                  :aria-label="`Remove ${spellName(id)}`"
-                  @click="removeSpell(id)"
-                >
-                  Remove
-                </button>
-              </li>
-            </ul>
+            <LevelUpSpellChooser v-if="rules.casting.spells || rules.casting.cantrips || rules.casting.replacements" :key="rules.index+':'+rules.classLevel" :spells="availableSpells" :selected="[...decisions.cantrips,...decisions.spells]" :load-definition="spellDefinition" :remaining-spells="rules.casting.spells+decisions.removedSpells.length-decisions.spells.length" :remaining-cantrips="rules.casting.cantrips-decisions.cantrips.length" :disabled="store.saving||rulesBusy" :loading="spellCatalogBusy" label="Choose new class spells" @add="addSpell" @remove="removeSpell" />
             <label class="level-up-check"
               ><input
                 v-model="decisions.magicReviewed"
@@ -1386,60 +1225,8 @@ async function save() {
               their source and casting limits in the review notes; these do not
               use the class learning allowance.
             </p>
-            <label
-              >Find a granted spell<input
-                v-model="grantQuery"
-                type="search"
-                placeholder="Search all spell definitions..."
-            /></label>
-            <p v-if="grantBusy" role="status">Loading spell definitions...</p>
-            <p v-if="grantError" class="sheet-alert" role="alert">
-              {{ grantError }}
-            </p>
-            <div v-if="grantQuery" class="level-up-spell-list">
-              <button
-                v-for="s in matchingGrants"
-                :key="s.index"
-                type="button"
-                :disabled="grantBusy"
-                @click="inspectGrant(s)"
-              >
-                <strong>{{ s.name }}</strong
-                ><small>{{
-                  s.level === 0 ? 'Cantrip' : `Level ${s.level}`
-                }}</small>
-              </button>
-            </div>
-            <article v-if="grantDetail" class="level-up-feature">
-              <h4>{{ grantDetail.name }}</h4>
-              <p
-                v-for="line in grantDetail.desc"
-                :key="line"
-                class="level-up-rule-text"
-              >
-                {{ line }}
-              </p>
-              <button type="button" class="sheet-button" @click="addGrant">
-                Add granted spell
-              </button>
-            </article>
-            <ul class="level-up-chosen">
-              <li v-for="id in decisions.extraSpells" :key="id">
-                {{ spellName(id)
-                }}<button
-                  type="button"
-                  class="sheet-button"
-                  :aria-label="`Remove granted ${spellName(id)}`"
-                  @click="
-                    decisions.extraSpells = decisions.extraSpells.filter(
-                      (s) => s !== id,
-                    )
-                  "
-                >
-                  Remove
-                </button>
-              </li>
-            </ul>
+            <div v-if="grantError" class="sheet-alert" role="alert"><p>{{grantError}}</p><button type="button" class="sheet-button" @click="loadGrants()">Retry spell choices</button></div>
+            <LevelUpSpellChooser :key="'grants:'+rules.index+':'+rules.classLevel" :spells="matchingGrants" :selected="decisions.extraSpells" :load-definition="spellDefinition" :disabled="store.saving||rulesBusy" :loading="grantBusy" label="Choose spells granted by another source" granted @add="addGrant" @remove="decisions.extraSpells=decisions.extraSpells.filter(id=>id!==$event)" />
           </details>
           <h4>Spell slots</h4>
           <div v-if="plan.slotMode === 'manual'">

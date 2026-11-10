@@ -1,0 +1,34 @@
+{
+  "evidence": ".local/level-up-spells-20261110",
+  "checkpoint": "fdd3025",
+  "runtime": [
+    "server/routes/characters.ts",
+    "src/lib/advancement-spells.ts",
+    "src/lib/level-up-rules.ts",
+    "src/components/sheet/LevelUpSpellChooser.vue",
+    "src/components/sheet/LevelUpWizard.vue"
+  ],
+  "tests": [
+    "src/lib/advancement-spells.test.ts",
+    "src/components/sheet/LevelUpSpellChooser.test.ts",
+    "src/components/sheet/LevelUpWizard.test.ts",
+    "src/lib/level-up-rules.test.ts",
+    "server/routes/definition-consistency.integration.test.ts"
+  ],
+  "testFiles": [
+    "src/lib/advancement-spells.test.ts",
+    "src/components/sheet/LevelUpSpellChooser.test.ts",
+    "src/components/sheet/LevelUpWizard.test.ts",
+    "src/lib/level-up-rules.test.ts",
+    "shared/level-up.test.ts",
+    "src/lib/advancement-discovery.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs",
+    "shared/level-up.test.ts",
+    "src/lib/advancement-discovery.test.ts"
+  ],
+  "baselineFiles": ".local/level-up-spells-20261110/baseline-files"
+}

@@ -182,11 +182,12 @@ describe('advancement rule coverage', () => {
       { index: 'fireball', name: 'Fireball', url: '', level: 3 },
       { index: 'wish', name: 'Wish', url: '', level: 9 },
     ] as never)
-    const r = await loadAdvancementRules(c, newAdvancement(c), catalog())
+    const library=catalog();library.spells=[{index:'imported',name:'Imported spell',url:'',level:3,classes:[{index:'wizard'}]}]
+    const r = await loadAdvancementRules(c, newAdvancement(c), library)
     expect(r.casting?.spells).toBe(0)
     expect(r.features.find((f) => f.id === 'magical-secrets')).toMatchObject({
       choose: 2,
-      options: [{ id: 'fireball', spell: 'fireball' }],
+      options: expect.arrayContaining([expect.objectContaining({id:'fireball',spell:'fireball'}),expect.objectContaining({id:'imported',spell:'imported'})]),
     })
   })
   it('requires a level-six Mystic Arcanum choice while Pact Magic remains at spell rank five', async () => {
@@ -214,12 +215,14 @@ describe('advancement rule coverage', () => {
     vi.mocked(srd.classSpells).mockResolvedValue([
       { index: 'mass-suggestion', name: 'Mass Suggestion', url: '' },
     ])
+    const library=catalog();library.spells=[{index:'imported-arcanum',name:'Imported arcanum',url:'',level:6,classes:[{index:'warlock'}]},{index:'not-warlock',name:'Not warlock',url:'',level:6,classes:[{index:'cleric'}]}]
     const d = newAdvancement(c),
-      r = await loadAdvancementRules(c, d, catalog())
+      r = await loadAdvancementRules(c, d, library)
     expect(r.features[0]).toMatchObject({
       choose: 1,
-      options: [{ id: 'mass-suggestion' }],
+      options: expect.arrayContaining([expect.objectContaining({id:'mass-suggestion'}),expect.objectContaining({id:'imported-arcanum'})]),
     })
+    expect(r.features[0]!.options!.some(o=>o.id==='not-warlock')).toBe(false)
     expect(r.casting?.maxSpellLevel).toBe(5)
     d.choices.arcanum = ['mass-suggestion']
     expect(levelUpPlan(c, r, d).next.spellcasting.known).toContain(

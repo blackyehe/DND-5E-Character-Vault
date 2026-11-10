@@ -23,6 +23,7 @@ import {
 } from '../../shared/homebrew-workshop'
 import { raceFeatures } from '../../shared/workshop-race'
 import { abilityMod } from './calc'
+import {mergeAdvancementSpells,eligibleClassSpells,type AdvancementSpell} from './advancement-spells'
 import { sortSpellsByLevel } from './advancement-discovery'
 import { subclassMatchesClass } from '../../shared/subclass-identity'
 
@@ -40,7 +41,7 @@ export interface AdvancementCatalog {
     ability_increases?: unknown[]
     sourcePack?: string
   }[]
-  spells: (SrdRef & { level: number })[]
+  spells: AdvancementSpell[]
 }
 type Detail = SrdRef & {
   desc: string[]
@@ -506,10 +507,11 @@ export async function loadAdvancementRules(
     /mystic arcanum|magical secrets/i.test(f.name),
   )
   if (specialSpells.length) {
-    const [all, classList] = await Promise.all([
+    const [coreSpells, classList] = await Promise.all([
       srd.spells() as Promise<(SrdRef & { level: number })[]>,
       srd.classSpells(key),
     ])
+    const all=mergeAdvancementSpells(coreSpells,catalog.spells),classSpells=new Set(eligibleClassSpells(all,r,classList.map(s=>s.index)).map(s=>s.index))
     for (const f of specialSpells) {
       const arcanum = /mystic arcanum/i.test(f.name),
         rank = arcanum
@@ -519,12 +521,12 @@ export async function loadAdvancementRules(
       f.options = sortSpellsByLevel(all)
         .filter((s) =>
           arcanum
-            ? s.level === rank && classList.some((v) => v.index === s.index)
+            ? s.level === rank && classSpells.has(s.index)
             : s.level <= rank,
         )
         .map((s) => ({
           id: s.index,
-          name: s.name,
+          name: s.displayName??s.name,
           description: `${s.level === 0 ? 'Cantrip' : `Level ${s.level} spell`}. ${arcanum ? 'Cast this arcanum once per long rest without a slot.' : 'Counts as a bard spell for you.'}`,
           spell: s.index,
         }))
