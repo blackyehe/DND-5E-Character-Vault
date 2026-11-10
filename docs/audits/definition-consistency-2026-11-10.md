@@ -1,6 +1,9 @@
 # Definition synchronization - 10 November 2026
 
-Website candidate prepared against `dpl_2uySpBC89mtPVjThordZcZn2wy2Y`.
+Live on both website aliases as `dpl_BBrEU5XjSSpSNeBkfKu91mziGXWx`:
+https://dndoldal-5h6afv17v-dndenjoyerstudio.vercel.app.
+Patch checkpoint: `4fe0a37`. Previous/rollback deployment:
+`dpl_2uySpBC89mtPVjThordZcZn2wy2Y`.
 
 Compendium and native Workshop definitions share a stable edition identity.
 Native option/spell UUIDs, class/race Workshop IDs and item template IDs survive
@@ -46,4 +49,21 @@ room assignment permissions. The Volenta-style fixture verifies spell attack/DC
 from +11/19 to +12/20 and back to +11/19, preserving HP, spent uses, equipment and
 slots. No actual Volenta or Zhaerin campaign record is changed by tests or release.
 
-Final validation and deployment receipts follow after promotion.
+The full isolated production candidate passed 553 tests (13 optional tests
+skipped), all 11 database integration scenarios, both type checks and the
+production build. The final stable-ID matching adjustment passed 55 focused tests,
+all 11 database scenarios, both type checks and a fresh build against the same
+verified baseline. Before that adjustment, the working checkout passed 1,185 tests
+with 78 environment/optional tests skipped. The focused runs cover the adjustment.
+
+All 541 hosted source hashes match the final candidate. Region and custom
+environment-variable names match the baseline. Public health is JSON 200;
+anonymous character, item, pending-update, option and spell requests are JSON 401.
+Both website aliases point to this release. Both Owlbear aliases remain on
+`dpl_6yPZh1hytcg8a2XNzSHnRpZjpz8W`.
+
+Managed test databases, source copies and dependency junctions were removed.
+Workspace check reports zero disposable runs and zero Vitest filesystem cache.
+The retained small manifests, preimages and receipts support release reconstruction
+and rollback; review them on 10 December 2026. Rollback, while this remains current:
+`node .local/definition-consistency-20261110/release.mjs rollback`.

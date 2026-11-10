@@ -32,6 +32,7 @@ isolated fixture; the final live record comparison/application remains an owner
 review through the new controls. Deployment does not rewrite campaign records.
 Next stage: source-linked trackers (item 5 below), using this shared identity and
 review behaviour. Owlbear UI and broader pack-saving performance remain separate.
+Released on both website aliases as `dpl_BBrEU5XjSSpSNeBkfKu91mziGXWx`.
 
 - Give Workshop and Compendium saves the same affected-character preview and
   explicit apply controls. Show actual spell attack/DC changes clearly.
