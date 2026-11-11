@@ -55,8 +55,7 @@ function rest(kind: 'short' | 'long') {
 <template>
   <section class="sheet-panel sheet-trackers" :class="{'sheet-trackers-rail':variant==='rail'}">
     <header class="sheet-trackers-heading"><h3>Spell slots & resources</h3></header>
-    <p v-if="hasMagic&&variant==='rail'" class="sheet-small sheet-rail-casting">Casting ability <strong>{{ c.spellcasting.ability.toUpperCase() }}</strong></p>
-    <dl v-if="hasMagic" class="sheet-casting-stats sheet-casting-highlight" aria-label="Spellcasting statistics"><div><dt>Spell attack</dt><dd>{{ signed(spellAttack) }}</dd></div><div><dt>Save DC</dt><dd>{{ benefitSpellDC(c) }}</dd></div><div v-if="variant!=='rail'"><dt>Casting</dt><dd>{{ c.spellcasting.ability.toUpperCase() }}</dd></div></dl>
+    <dl v-if="hasMagic" class="sheet-casting-inline" aria-label="Spellcasting statistics"><div><dt>Spell attack</dt><dd>{{ signed(spellAttack) }}</dd></div><div><dt>Save DC</dt><dd>{{ benefitSpellDC(c) }}</dd></div><div><dt>Casting</dt><dd>{{ c.spellcasting.ability.toUpperCase() }}</dd></div></dl>
     <fieldset :disabled="store.saving"><div class="sheet-tracker-grid">
       <article v-if="variant==='rail'&&slots.length" class="sheet-tracker-card sheet-slot-group">
         <h4>Spell slots</h4>
@@ -85,9 +84,13 @@ function rest(kind: 'short' | 'long') {
 </template>
 
 <style scoped>
-.sheet-trackers .sheet-casting-stats.sheet-casting-highlight{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:12px;margin:0 0 16px;border:1px solid var(--cb-line);border-radius:6px;background:var(--cb-soft)}
-.sheet-trackers .sheet-casting-stats.sheet-casting-highlight>div{display:grid;grid-template-rows:minmax(2.5em,auto) auto;justify-items:center;align-content:start}
-.sheet-trackers .sheet-casting-highlight>div>dt{font-size:12px}.sheet-trackers .sheet-casting-highlight>div>dd{font-size:26px;line-height:1.2;font-weight:600}.sheet-trackers .sheet-casting-highlight>div:last-child>dd{font-size:18px}
+.sheet-casting-inline{display:flex;flex-wrap:wrap;align-items:baseline;gap:7px 0;padding:0;margin:0 0 16px;border:0;background:transparent;box-shadow:none}
+.sheet-casting-inline>div{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap;padding-inline-end:12px;margin-inline-end:12px;border-inline-end:1px solid var(--cb-line)}
+.sheet-casting-inline>div:last-child{border:0;padding-inline-end:0;margin-inline-end:0}
+.sheet-casting-inline dt{font-size:calc(12px * var(--cb-text-scale,1));color:var(--cb-muted);margin:0}
+.sheet-casting-inline dd{font-size:calc(15px * var(--cb-text-scale,1));line-height:1.4;font-weight:600;color:var(--cb-ink);margin:0;font-variant-numeric:tabular-nums}
+.sheet-trackers.sheet-panel .sheet-tracker-card{background:color-mix(in srgb,var(--cb-accent-solid) 3%,var(--cb-paper));border:1px solid color-mix(in srgb,var(--cb-accent-solid) 40%,var(--cb-line))}
+.sheet-trackers.sheet-panel .sheet-track-pips button.spent{background:transparent}
 .sheet-trackers:not(.sheet-trackers-rail) .sheet-tracker-grid{grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));align-items:stretch}
 .sheet-trackers:not(.sheet-trackers-rail) .sheet-tracker-card{display:grid;grid-template-rows:auto auto auto 1fr auto;gap:8px}
 .sheet-trackers:not(.sheet-trackers-rail) .sheet-tracker-card>header{align-items:start;min-height:2.7em}.sheet-trackers .sheet-tracker-total{flex-shrink:0}

@@ -1,0 +1,22 @@
+{
+  "evidence": ".local/tracker-outline-stat-line-20261111",
+  "checkpoint": "3c4133f",
+  "runtime": [
+    "src/components/sheet/CombatTrackers.vue",
+    "src/components/sheet/sheet-alignment.css"
+  ],
+  "tests": [],
+  "testFiles": [
+    "src/components/sheet/CombatTrackers.test.ts",
+    "src/components/sheet/CharacterSummary.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts",
+    "src/components/sheet/EquipmentSpellsTab.test.ts",
+    "src/components/party/PartyCombatKit.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "postBuildRunner": "scripts/check-tracker-outline-stat-line.mjs",
+  "baselineFiles": ".local/tracker-outline-stat-line-20261111/baseline-files"
+}

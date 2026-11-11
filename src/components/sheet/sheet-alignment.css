@@ -28,7 +28,7 @@
 
 /* Reserve equal horizontal space for existing actions. The independent column
    stacks and native disclosures keep their current order/opening behaviour. */
-.site-shell .hero-sheet .spellbook-actions { flex:0 0 94px; width:94px; max-width:94px; }
+.site-shell .hero-sheet .spellbook-actions { flex:0 0 94px; width:94px; max-width:94px; justify-content:center; text-align:center; }
 .site-shell .hero-sheet .spellbook-entry:not(:has(>.spellbook-actions)) { padding-inline-end:102px; }
 .site-shell .hero-sheet .sheet-disclosure-row>.sheet-disclosure-actions { flex:0 0 110px; width:110px; max-width:110px; justify-content:center; min-height:var(--sheet-disclosure-header-height,64px); padding-top:0; }
 .site-shell .hero-sheet .sheet-inventory-controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 80px 114px; gap:10px; flex:0 0 420px; width:420px; max-width:100%; }
@@ -44,7 +44,7 @@
   .site-shell .hero-sheet .sheet-inventory-controls { display:flex; flex:0 1 auto; width:auto; }
 }
 @media(max-width:560px) {
-  .site-shell .hero-sheet .spellbook-actions { flex:0 1 auto; width:auto; max-width:none; }
+  .site-shell .hero-sheet .spellbook-actions { flex:1 1 100%; width:100%; max-width:none; margin-left:0; }
   .site-shell .hero-sheet .spellbook-entry:not(:has(>.spellbook-actions)) { padding-inline-end:0; }
 }
 @media(max-width:480px) {
