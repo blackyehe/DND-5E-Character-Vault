@@ -65,6 +65,7 @@ export interface EquipmentItem {
 
 export type FeatureOrigin = 'racial' | 'class' | 'subclass' | 'background' | 'feat' | 'other'
 export interface CharacterFeature {
+  compendiumSource?:{kind:import('./option-kinds').OptionKind;index:string;key:string}
   definition?: {version:1;kind:import('./option-kinds').FeatureOptionKind;index:string;grantConfirmed?:boolean;choiceIds?:string[]}
   selectedOptions?:string[]
   ruleId?:string

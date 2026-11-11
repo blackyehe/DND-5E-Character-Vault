@@ -58,7 +58,10 @@ export function pinSelectedOptions(character:Character,library:CharacterRuleLibr
   if(group){const issue=choiceSelectionProblem(group,def.choiceIds);if(issue)throw new Error(issue)}
   else if(def.choiceIds?.length)throw new Error('This source has no structured choices. Restore the saved group or remove the selection.')
  }
- return {...character,...(retained.length||character.compendiumRules?{compendiumRules:retained}:{})}
+ // Descriptive child traits do not count as selecting their parent option.
+ // Removing that selection also removes its source-owned child rows.
+ const features=character.features.filter(f=>!f.compendiumSource||retained.some(d=>d.kind===f.compendiumSource!.kind&&[d.before,d.entry].some(entry=>optionHasId({...entry,index:d.index,name:String(entry.name)},f.compendiumSource!.index))))
+ return {...character,features,...(retained.length||character.compendiumRules?{compendiumRules:retained}:{})}
 }
 
 /** New acquisitions receive the current edition. Already approved grants remain

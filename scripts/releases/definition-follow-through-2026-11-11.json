@@ -1,0 +1,37 @@
+{
+  "evidence": ".local/definition-follow-through-20261111-r2",
+  "checkpoint": "bcc2507",
+  "runtime": [
+    "server/lib/compendium-character.ts",
+    "server/lib/sheet-references.ts",
+    "server/models/Character.ts",
+    "server/routes/compendium.ts",
+    "shared/character.ts",
+    "server/lib/selected-options.ts"
+  ],
+  "tests": [
+    "server/lib/compendium-character.test.ts",
+    "server/routes/definition-consistency.integration.test.ts",
+    "server/routes/compendium.test.ts"
+  ],
+  "testFiles": [
+    "server/lib/compendium-character.test.ts",
+    "server/routes/compendium.test.ts",
+    "server/lib/option-workshop.test.ts",
+    "server/lib/manual-options.test.ts",
+    "server/lib/choice-options.test.ts",
+    "shared/rule-benefits.test.ts",
+    "shared/rule-benefits-audit.test.ts",
+    "src/components/compendium/DefinitionChangeReview.test.ts",
+    "src/lib/definition-change-summary.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs",
+    "server/lib/option-workshop.test.ts",
+    "server/lib/manual-options.test.ts",
+    "server/lib/choice-options.test.ts"
+  ],
+  "postBuildRunner": "scripts/check-character-update-ui.mjs",
+  "baselineFiles": ".local/definition-follow-through-20261111-r2/baseline-files"
+}

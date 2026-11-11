@@ -146,6 +146,51 @@ describe.skipIf(process.env.DEFINITION_CONSISTENCY_TESTS!=='1')('shared definiti
   const raw=await Character.findById(char._id).lean(),resolved=await resolveWorkshopCharacter(raw,owner);expect(resolved.resources![0]!.max).toBe(3);expect(resolved.resources![0]!.used).toBe(2)
   expect((await apply('classes',second.body.draft.published.index,String(char._id))).status).toBe(200);const after=await Character.findById(char._id).lean();expect(after!.resources[0]!.max).toBe(5);expect(after!.resources[0]!.used).toBe(2)
  })
+ it('reviews granted-only spell revisions across fingerprints without changing the grant or class spell lists',async()=>{
+  const draft=newSpellDraft();draft.body.name='Granted fixture';draft.body.level=1;draft.body.description='Original rules'
+  const saved=(await publish('spells',draft)).body.draft,index=saved.published.index
+  const c=emptyCharacter();c.meta.name='Granted spell holder';c.equipment=[{name:'Spell focus',qty:1,weight:0,equipped:true,notes:'',benefits:[{type:'spell',value:{key:index,ability:'cha',level:1}}]}]
+  const char=await Character.create({...c,userId:owner}),id=String(char._id)
+  const edited=structuredClone(saved);edited.body.name='Renamed granted fixture';edited.body.description='Second rules'
+  const published=await publish('spells',edited);expect(published.status,JSON.stringify(published.body)).toBe(200);const second=published.body.draft,secondIndex=second.published.index
+  expect(secondIndex).not.toBe(index);expect((await apply('spells',secondIndex,id)).status).toBe(200)
+  // A subsequent review must keep the grant's original source-owned key.
+  const reopened=(await request(`/compendium/spells/${secondIndex}`)).body
+  expect((await saveEdition('spells',secondIndex,entry=>{entry.spellBuilder.description='Third rules'})).status).toBe(200)
+  expect((await apply('spells',secondIndex,id)).status).toBe(200)
+  const refs=(await request(`/characters/${id}/references`)).body,spell=refs.spells.find((s:any)=>s.aliases?.includes(index))
+  expect(spell).toMatchObject({name:'Renamed granted fixture',desc:['Third rules']});expect(refs.character.spellcasting.known).toEqual([]);expect(refs.character.spellcasting.prepared).toEqual([])
+  expect(refs.character.equipment[0].benefits[0].value.key).toBe(index);expect(reopened.entry.spellId).toBeDefined()
+  expect((await request('/compendium/pending/'+id)).body).toEqual([])
+ })
+ it('persists reviewed weapon attacks and their damage comparison while preserving custom attacks and play state',async()=>{
+  const item:EquipmentItem={name:'Blade fixture',kind:'weapon',qty:1,weight:2,equipped:true,notes:'',weapon:{dice:'1d6',range:'Melee',damageType:'Slashing',finesse:false,ranged:false}}
+  const created=await request('/items','POST',{requestId:crypto.randomUUID(),item});expect(created.status).toBe(201);const index=`workshop-item-${created.body.id}`
+  const c=emptyCharacter();c.meta.name='Weapon holder';c.combat.hpCurrent=3;c.equipment=[{...item,templateId:created.body.id,notes:'Personal item notes'}];c.attacks=[{name:item.name,ability:'str',range:'Melee',damageDice:'1d6',damageType:'Slashing',damageBonus:0,magicBonus:0,notes:'Personal attack notes'},{name:'Manual attack',ability:'cha',range:'Special',damageDice:'3d10',damageType:'Force',damageBonus:2,magicBonus:0,notes:'Keep me'}]
+  const char=await Character.create({...c,userId:owner}),id=String(char._id)
+  expect((await saveEdition('equipment',index,entry=>{entry.workshopItem.weapon.dice='1d8';entry.workshopItem.name='Greater blade fixture'})).status).toBe(200)
+  const review=(await request(`/compendium/equipment/${index}/review`)).body,row=review.characters.find((r:any)=>r.id===id)
+  expect(row.changes.some((r:any)=>r.field==='attacks')).toBe(true);expect(row.statistics.some((r:any)=>r.before.includes('1d6')&&r.after.includes('1d8'))).toBe(true)
+  expect((await apply('equipment',index,id)).status).toBe(200)
+  const stored=await Character.findById(id).lean();expect(stored!.attacks[0]).toMatchObject({name:'Greater blade fixture',damageDice:'1d8',notes:'Personal attack notes'});expect(stored!.attacks[1]).toMatchObject(c.attacks[1]!);expect(stored!.combat.hpCurrent).toBe(3)
+  const sheet=(await request('/characters/'+id)).body;expect(sheet.attacks[0].damageDice).toBe('1d8');expect(sheet.equipment[0].notes).toBe('Personal item notes')
+ })
+ it('persists source trait additions/removals and provenance, preserving custom traits through another source edit',async()=>{
+  const draft=newOptionDraft('backgrounds');draft.body.name='Trait fixture';draft.body.description='Background rules';draft.body.featureName='First trait';draft.body.featureDescription='Original trait rules'
+  const saved=(await publish('options',draft)).body.draft,index=saved.published.index,state=(await request(`/compendium/backgrounds/${index}`)).body
+  const c=emptyCharacter();c.meta.name='Trait holder';c.meta.background=draft.body.name;c.meta.backgroundIndex=index;c.features=[{name:'First trait',description:'Original trait rules',origin:'background',pinned:true},{name:'Manual',description:'Personal feature',origin:'other'}];c.compendiumRules=[{kind:'backgrounds',index,revision:state.revision,before:state.source,entry:state.entry}]
+  const char=await Character.create({...c,userId:owner}),id=String(char._id)
+  expect((await saveEdition('backgrounds',index,entry=>{entry.traits=[{name:'Added trait',description:'Added rules'}];delete entry.feature;entry.optionBuilder.featureName='';entry.optionBuilder.featureDescription=''})).status).toBe(200)
+  expect((await apply('backgrounds',index,id)).status).toBe(200)
+  let stored=await Character.findById(id).lean();expect(stored!.features.map(f=>f.name)).toEqual(['Manual','Added trait']);expect(stored!.features[1]).toMatchObject({compendiumSource:{kind:'backgrounds',index,key:'name:added trait'}})
+  const sheet=(await request('/characters/'+id)).body,features=sheet.features.map((f:any)=>f.name==='Added trait'?{...f,description:'My edited rules'}:f)
+  expect((await request('/characters/'+id,'PATCH',{expectedUpdatedAt:sheet.updatedAt,features})).status).toBe(200)
+  expect((await saveEdition('backgrounds',index,entry=>{entry.traits=[]})).status).toBe(200);expect((await apply('backgrounds',index,id)).status).toBe(200)
+  stored=await Character.findById(id).lean();expect(stored!.features.find(f=>f.name==='Added trait')!.description).toBe('My edited rules');expect((stored!.features.find(f=>f.name==='Added trait') as any).compendiumSource.index).toBe(index)
+  const current=(await request('/characters/'+id)).body
+  const removed=await request('/characters/'+id,'PATCH',{expectedUpdatedAt:current.updatedAt,meta:{...current.meta,background:'',backgroundIndex:undefined}})
+  expect(removed.status,JSON.stringify(removed.body)).toBe(200);expect(removed.body.features).toEqual(expect.arrayContaining([expect.objectContaining({name:'Manual'})]));expect(removed.body.features.some((f:any)=>f.compendiumSource?.index===index)).toBe(false)
+ })
  it('exposes pending names only through current ownership or an active room assignment; players cannot apply editions',async()=>{
   const draft=newOptionDraft('feats');draft.body.name='Assigned source';const saved=(await publish('options',draft)).body.draft,index=saved.published.index,state=(await request(`/compendium/feats/${index}`)).body
   const c=emptyCharacter();c.meta.name='Assigned hero';c.features=[{name:draft.body.name,description:'',origin:'feat',definition:{version:1,kind:'feats',index}}];c.compendiumRules=[{kind:'feats',index,revision:state.revision,before:state.source,entry:state.entry}]

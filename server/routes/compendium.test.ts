@@ -51,6 +51,16 @@ async function state(kind='feats'){const response=await request(`/${kind}/exampl
 async function save(kind='feats',description='Revised rule'){const current=await state(kind);return request(`/${kind}/example`,'PUT',{expectedRevision:current.revision,expectedSourceHash:current.sourceHash,entry:{...current.entry,description}})}
 function character(){const c={...emptyCharacter(),_id:'a'.repeat(24),userId:'owner',updatedAt:new Date('2026-10-23T00:00:00Z'),compendiumRules:undefined as unknown[]|undefined};c.meta.name='Test hero';c.features=[{name:'Example',description:'Original rule',origin:'feat',pinned:true}];c.combat.hpCurrent=4;c.combat.hpTemp=3;c.resources=[{id:'spent',name:'Uses',max:3,used:2,recovery:'long'}];return c}
 describe('personal Compendium editions',()=>{
+  it('retains a grant-only spell identity after ordinary source aliases expire',async()=>{
+    const c=character(),original='homebrew-spells-original',previous='homebrew-spells-previous',current='homebrew-spells-current',spellId='f69246da-059c-4280-9cb4-cd931d38ca67'
+    c.features=[];c.equipment=[{name:'Gift',qty:1,weight:0,equipped:true,notes:'',benefits:[{type:'spell',value:{key:original,ability:'cha',level:1}}]}]
+    c.compendiumRules=[{kind:'spells',index:previous,revision:0,before:{index:original,name:'Gift spell',spellId,aliases:[]},entry:{index:previous,name:'Gift spell',spellId,aliases:[]}}]
+    db.characters.push(c);db.sources.set('spells:'+current,{index:current,name:'New gift spell',spellId,aliases:[],desc:['New rules']})
+    const review=await(await request(`/spells/${current}/review`)).json(),row=review.characters[0];expect(row).toBeDefined()
+    expect((await request(`/spells/${current}/review/${c._id}`,'POST',{expectedRevision:review.revision,expectedUpdatedAt:row.updatedAt,reviewHash:row.reviewHash,confirmedSource:true})).status).toBe(200)
+    expect(c.compendiumRules).toHaveLength(1);expect((c.compendiumRules[0] as any).before.aliases).toContain(original);expect(c.equipment[0]!.benefits).toEqual([{type:'spell',value:{key:original,ability:'cha',level:1}}]);expect(c.spellcasting.known).toEqual([]);expect(c.spellcasting.prepared).toEqual([])
+    expect((await(await request(`/spells/${current}/review`)).json()).characters[0].alreadyReviewed).toBe(true)
+  })
   it('reviews a revised native spell without duplicating definitions or losing known, prepared and active choices',async()=>{
     const c=character(),old='homebrew-spells-old',next='homebrew-spells-new',spellId='f69246da-059c-4280-9cb4-cd931d38ca67'
     c.spellcasting.known=[old,'other'];c.spellcasting.prepared=[old];c.spellcasting.activeEffects=[old];c.spellcasting.slots={l1:{max:4,used:3}}

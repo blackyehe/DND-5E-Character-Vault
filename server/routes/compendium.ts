@@ -105,7 +105,10 @@ async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|un
   const definition={kind:state.kind,index:state.index,revision:state.revision,sourceHash:state.sourceHash,before:previous?.entry??state.previousSource??state.source,entry:state.entry,...(previous?.trackerUses?{trackerUses:previous.trackerUses}:{})}
   const candidate={...before,compendiumRules:[...(before.compendiumRules??[]).filter(d=>!matches(d)),definition]}
   if(state.kind==='spells'&&typeof state.source.spellId==='string'){
-    const aliases=new Set([state.index,previous?.index,...(Array.isArray(state.source.aliases)?state.source.aliases:[])])
+    // Grants keep their source-owned spell keys. Retain their old identities
+    // across fingerprints so the reviewed spell still resolves on this sheet.
+    const aliases=new Set([state.index,previous?.index,...[state.source,state.entry,previous?.before,previous?.entry].flatMap(e=>e?[e.index,e.contentKey,...(Array.isArray(e.aliases)?e.aliases:[])]:[])].filter((id):id is string=>typeof id==='string'))
+    definition.before={...definition.before,aliases:[...aliases]}
     const relink=(ids:string[])=>[...new Set(ids.map(id=>aliases.has(id)?state.index:id))]
     candidate.spellcasting={...before.spellcasting,known:relink(before.spellcasting.known),prepared:relink(before.spellcasting.prepared),...(before.spellcasting.activeEffects?{activeEffects:relink(before.spellcasting.activeEffects)}:{})}
   }
@@ -130,7 +133,7 @@ async function reviewPlan(raw:unknown,state:CompendiumEditState,userId:string|un
   const after=reviewedCharacter(candidate,library.rules,library.initial)
   const changes=characterReviewChanges(before,after)
   const warnings=[...selectionErrors.map(issue=>'Selection needs repair before applying: '+issue),...new Set(after.homebrew?.conflicts.map(c=>c.message)??[])]
-  if(!['classes','subclasses','races','spells','equipment','magic-items'].includes(state.kind))warnings.push('Selected benefits appear in the comparison and apply through the shared rules. Matching saved feature text is updated. Ability-score grants, prerequisites, removed features and player choices still need manual review.')
+  if(!['classes','subclasses','races','spells','equipment','magic-items'].includes(state.kind))warnings.push('Selected benefits and source trait additions/removals appear in the comparison. Custom or ambiguous features are preserved for manual review. Ability-score grants, prerequisites and player choices still need manual review.')
   if(state.kind==='spells')warnings.push('The reviewed spell definition will be used on this sheet. Known and prepared spells and spent slots stay as saved.')
   if(state.kind==='equipment'||state.kind==='magic-items')warnings.push('Custom item values are kept when they differ from the source. Quantity, equipped state, attunement and personal notes stay as saved.')
   const sourceConfirmation=true
@@ -162,9 +165,9 @@ router.post('/:kind/:index/review/:characterId',async(req,res)=>{
   if(plan.blocked)return res.status(409).json({error:'The saved selection no longer fits this definition. Keep the approved rules, or repair the selection and its parent before applying source changes.'})
   if(plan.reviewHash!==parsed.data.reviewHash)return res.status(409).json({error:'The proposed changes changed. Refresh the review before applying them.'})
   if(plan.sourceConfirmation&&!parsed.data.confirmedSource)return res.status(400).json({error:'Confirm this is the intended source for the character.'})
-  const {meta,features,equipment,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}=plan.after
+  const {meta,features,equipment,attacks,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}=plan.after
   let saved
-  try{saved=await withCurrentDefinition(req.userId,state.kind,state.index,state.source,state.revision,async session=>Character.findOneAndUpdate({_id:raw._id,userId:req.userId,updatedAt:raw.updatedAt},{$set:{meta,features,equipment,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}},{new:true,runValidators:true,session}).lean())}
+  try{saved=await withCurrentDefinition(req.userId,state.kind,state.index,state.source,state.revision,async session=>Character.findOneAndUpdate({_id:raw._id,userId:req.userId,updatedAt:raw.updatedAt},{$set:{meta,features,equipment,attacks,combat,abilities,saves,skills,resources,spellcasting,proficiencies,homebrew,compendiumRules}},{new:true,runValidators:true,session}).lean())}
   catch(error){if(error instanceof DefinitionConflict)return res.status(409).json({error:error.message});throw error}
   if(!saved)return res.status(409).json({error:'The character changed while applying. Refresh the review; no changes were applied.'})
   res.json({character:savedCharacterOutput(saved),message:'Reviewed changes applied to this character.'})

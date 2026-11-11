@@ -48,11 +48,13 @@ export function sheetReferences(c:Character,library:CharacterRuleLibrary) {
     if(!(definition.kind in result))continue
     if(!characterUsesDefinition(c,{...definition,before:definition.entry},false))continue
     const rows=result[definition.kind as keyof typeof result] as Record<string,unknown>[]
-    const exact=rows.findIndex(entry=>entry.index===definition.index||Array.isArray(entry.aliases)&&entry.aliases.includes(definition.index))
+    const spellAliases=definition.kind==='spells'?[...new Set([definition.index,...[definition.before,definition.entry].flatMap(e=>[e.index,e.contentKey,...(Array.isArray(e.aliases)?e.aliases:[])])].filter((id):id is string=>typeof id==='string'))]:undefined
+    const exact=rows.findIndex(entry=>entry.index===definition.index||Array.isArray(entry.aliases)&&entry.aliases.includes(definition.index)||spellAliases?.some(id=>entry.index===id||entry.contentKey===id||Array.isArray(entry.aliases)&&entry.aliases.includes(id)))
     const named=rows.filter(entry=>entry.name===definition.before.name)
     const option=isOptionKind(definition.kind)
     const i=exact>=0?exact:!option&&named.length===1?rows.indexOf(named[0]!):-1
-    const {details,...entry}=definition.entry
+    const {details,...values}=definition.entry
+    const entry=spellAliases?{...values,aliases:spellAliases}:values
     const sourceUnavailable=option&&library.catalog[definition.kind as keyof typeof library.catalog]!==undefined&&!(library.catalog[definition.kind as 'feats'|'backgrounds'|'invocations'|'boons'|'selections'|'languages'|'other'|'subraces']??[]).some(e=>e.index===definition.index||(e.aliases as string[]??[]).includes(definition.index)||e.optionId&&e.optionId===entry.optionId)
     if(i>=0)rows[i]={...rows[i],...entry,definitionAvailable:true,...(sourceUnavailable?{sourceUnavailable:true}:{})}
     else rows.push({...entry,definitionAvailable:true,...(sourceUnavailable?{sourceUnavailable:true}:{})})

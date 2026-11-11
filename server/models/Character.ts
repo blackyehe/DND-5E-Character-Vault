@@ -186,6 +186,7 @@ const personalitySchema = new Schema(
 
 const featureSchema = new Schema(
   {
+    compendiumSource:{type:new Schema({kind:{type:String,enum:['feats','backgrounds','invocations','boons','selections','languages','other','subraces'],required:true},index:{type:String,required:true,maxlength:300},key:{type:String,required:true,maxlength:500}},{_id:false}),default:undefined},
     ruleId:String,featureId:String,selectedOptions:{type:[String],default:undefined},
     definition:{type:new Schema({version:{type:Number,enum:[1],required:true},kind:{type:String,enum:['feats','invocations','boons','selections','other'],required:true},index:{type:String,required:true,maxlength:300},grantConfirmed:Boolean,choiceIds:{type:[String],default:undefined}},{_id:false}),default:undefined},
     name: { type: String, default: '' },
