@@ -8,6 +8,7 @@ import {newLinkedTracker} from '../../../shared/linked-trackers'
 const mocks=vi.hoisted(()=>({post:vi.fn(),put:vi.fn(),giveItem:vi.fn()}))
 vi.mock('../../lib/api',()=>({api:{post:mocks.post,put:mocks.put,get:vi.fn()}}))
 vi.mock('../../stores/characters',()=>({useCharactersStore:()=>({giveItem:mocks.giveItem})}))
+vi.mock('../../stores/auth',()=>({useAuthStore:()=>({user:{id:'owner'}})}))
 const benefits=[{type:'spell-attack-bonus',value:3,level:1},{type:'spell-dc-bonus',value:3,level:1}]
 const item:EquipmentItem={name:'Custom focus',magical:true,kind:'accessory',qty:1,weight:1,notes:'Keep',equipped:false,benefits,requiresAttunement:true}
 beforeEach(()=>{vi.clearAllMocks();mocks.post.mockResolvedValue({id:'saved'});mocks.put.mockResolvedValue({message:'Updated'});mocks.giveItem.mockResolvedValue({message:'Given'})})
@@ -31,3 +32,18 @@ it('offers the same linked tracker controls in library and Compendium item editi
  const {html}=await render('library',value=>b=value,initial);expect(html).toContain('Linked trackers');b.itemTrackers.value=[{...tracker,name:'Renamed charges'}];await b.submit();expect(mocks.put.mock.calls[0]![1].item.trackers).toEqual([{...tracker,name:'Renamed charges'}]);expect((await render('entry',()=>{},initial)).html).toContain('Linked trackers')
 })
 it('blocks invalid tracker definitions without discarding the draft',async()=>{let b:any;await render('library',v=>b=v);b.itemTrackers.value=[{...newLinkedTracker(),max:0}];expect(b.canSubmit.value).toBe(false);expect(b.trackerIssue.value).toContain('1');await b.submit();expect(mocks.post).not.toHaveBeenCalled();expect(b.itemTrackers.value[0].max).toBe(0)})
+
+it('keeps the saved item editor open and uses returned revisions for a second save',async()=>{
+ const initial={...item,templateId:'saved',templateRevision:2};let b:any
+ const {html,events}=await render('library',value=>b=value,initial)
+ expect(html).toContain('Update existing characters');expect(b.canSubmit.value).toBe(false);expect(b.canUpdate.value).toBe(true)
+ b.item.name='Edited';expect(b.canUpdate.value).toBe(false)
+ mocks.put.mockResolvedValueOnce({id:'saved',item:{...initial,name:'Edited',templateRevision:3},definitionRevision:7})
+ await b.submit();expect(events).not.toContainEqual(['close']);expect(b.canUpdate.value).toBe(true);expect(b.canSubmit.value).toBe(false)
+ b.item.notes='Second edit';mocks.put.mockResolvedValueOnce({id:'saved',item:{...initial,name:'Edited',notes:'Second edit',templateRevision:4},definitionRevision:8});await b.submit()
+ expect(mocks.put.mock.calls[1]![1]).toMatchObject({expectedRevision:3,expectedDefinitionRevision:7});expect(b.itemRevision.value).toBe(4);expect(b.definitionRevision.value).toBe(8);expect(initial.name).toBe('Custom focus')
+})
+it('keeps a failed library save as an unsaved draft with character updating disabled',async()=>{
+ let b:any;const {events}=await render('library',value=>b=value,{...item,templateId:'saved',templateRevision:2});b.item.notes='My changed rules';mocks.put.mockRejectedValueOnce(new Error('Version changed'))
+ await b.submit();expect(b.item.notes).toBe('My changed rules');expect(b.itemRevision.value).toBe(2);expect(b.error.value).toBe('Version changed');expect(b.canUpdate.value).toBe(false);expect(events).not.toContainEqual(['close'])
+})

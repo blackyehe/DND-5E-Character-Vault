@@ -1,0 +1,35 @@
+{
+  "evidence": ".local/character-updates-20261111",
+  "checkpoint": "c74a4fb",
+  "runtime": [
+    "src/components/compendium/DefinitionChangeReview.vue",
+    "src/components/compendium/CompendiumEntryEditor.vue",
+    "src/components/items/ItemComposer.vue",
+    "src/components/items/ItemWorkshop.vue",
+    "src/components/sheet/DefinitionUpdates.vue",
+    "src/components/workshop/OptionWorkshop.vue",
+    "src/components/workshop/SpellWorkshop.vue",
+    "src/lib/definition-change-summary.ts"
+  ],
+  "tests": [
+    "src/components/compendium/DefinitionChangeReview.test.ts",
+    "src/components/items/ItemComposer.test.ts",
+    "src/components/items/ItemWorkshop.test.ts",
+    "src/lib/definition-change-summary.test.ts"
+  ],
+  "testFiles": [
+    "src/components/compendium/DefinitionChangeReview.test.ts",
+    "src/components/items/ItemComposer.test.ts",
+    "src/components/items/ItemWorkshop.test.ts",
+    "src/lib/definition-change-summary.test.ts",
+    "src/components/workshop/OptionWorkshop.test.ts",
+    "src/components/workshop/SpellWorkshop.test.ts",
+    "src/components/sheet/DefinitionUpdates.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "postBuildRunner": "scripts/check-character-update-ui.mjs",
+  "baselineFiles": ".local/character-updates-20261111/baseline-files"
+}

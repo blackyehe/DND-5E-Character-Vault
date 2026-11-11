@@ -29,6 +29,7 @@ const path=`/api/compendium/${props.kind}/${encodeURIComponent(props.index)}`
 const dirty=computed(()=>!!state.value&&!sameEntry(draft.value,state.value.entry))
 const problems=computed(()=>state.value?entryProblems(state.value.source,draft.value):[])
 const reviewBusy=ref(false),reviewVersion=ref(0)
+const characterReview=ref<InstanceType<typeof DefinitionChangeReview>|null>(null)
 async function load(){loading.value=true;error.value='';try{state.value=await api.get<CompendiumEditState>(path,{timeoutMs:60000});draft.value=cloneEntry(state.value.entry);conflict.value=false;confirmDiscard.value=false;confirmRestore.value=false;reviewVersion.value++;await nextTick();pane.value?.focus()}catch(e){error.value=(e as Error).message}finally{loading.value=false}}
 function close(){if(busy.value||reviewBusy.value)return;if(dirty.value){confirmDiscard.value=true;return}emit('close')}
 async function save(restore=false){
@@ -36,7 +37,7 @@ async function save(restore=false){
   busy.value=true;error.value='';notice.value=''
   try{
     const result=await api.put<CompendiumEditState>(path,{entry:restore?undefined:draft.value,restore,expectedRevision:state.value.revision,expectedSourceHash:state.value.sourceHash})
-    state.value=result;draft.value=cloneEntry(result.entry);conflict.value=false;confirmRestore.value=false;reviewVersion.value++;notice.value=restore?'Source restored in your Compendium. Review characters to restore their saved rules too.':'Changes saved to your Compendium. Review existing characters before updating their rules.';emit('saved',result)
+    state.value=result;draft.value=cloneEntry(result.entry);conflict.value=false;confirmRestore.value=false;reviewVersion.value++;notice.value=restore?'Source restored. Choose Update existing characters to restore their saved rules too.':'Changes saved. Choose Update existing characters to apply them.';emit('saved',result)
   }catch(e){error.value=(e as Error).message;conflict.value=e instanceof ApiError&&e.status===409}finally{busy.value=false}
 }
 function download(){const url=URL.createObjectURL(new Blob([JSON.stringify(draft.value,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`${props.index}-draft.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -55,9 +56,9 @@ onBeforeUnmount(()=>{background.forEach(({element,inert})=>{element.inert=inert}
   <template v-if="state&&!loading"><p class="entry-hint">Save edits for your Compendium here. Source files stay available through Restore source. Existing character rules update only after you review and apply them below.</p><p v-if="state.sourceChanged" class="entry-callout" role="status">The original source has changed since your last edit. Compare the fields before saving this edition again.</p>
     <div class="entry-builder-form"><fieldset :disabled="busy||reviewBusy"><EntryBuilder :key="state.revision+':'+state.sourceHash" v-model="draft" :kind="kind" /></fieldset>
     <p v-if="problems.length" class="entry-error" role="alert">{{problems[0]}}</p>
-    <footer class="entry-editor-actions"><button type="button" @click="save()" class="btn-primary" :disabled="busy||reviewBusy||!dirty||!!problems.length">{{busy?'Saving…':'Save changes'}}</button><button type="button" class="btn-ghost" :disabled="busy||reviewBusy" @click="close">Cancel</button><button v-if="state.edited" type="button" class="btn-ghost" :disabled="busy||reviewBusy" @click="confirmRestore=true">Restore source</button><span class="entry-hint">{{dirty?'Unsaved changes':`Saved revision ${state.revision}`}}</span></footer></div>
+    <footer class="entry-editor-actions"><button type="button" @click="save()" class="btn-primary" :disabled="busy||reviewBusy||!dirty||!!problems.length">{{busy?'Saving…':'Save changes'}}</button><button type="button" class="btn-ghost" :disabled="dirty||busy||reviewBusy" @click="characterReview?.open()">Update existing characters</button><button type="button" class="btn-ghost" :disabled="busy||reviewBusy" @click="close">Cancel</button><button v-if="state.edited" type="button" class="btn-ghost" :disabled="busy||reviewBusy" @click="confirmRestore=true">Restore source</button><span class="entry-hint">{{dirty?'Unsaved changes · Save before updating characters':`Saved revision ${state.revision}`}}</span></footer></div>
     <div v-if="confirmRestore" class="entry-callout" role="alert"><p>Restore the source definition in your Compendium? Existing characters keep their reviewed rules until you review them again.</p><p v-if="dirty">This will replace your unsaved draft.</p><button v-if="dirty" class="btn-ghost" @click="download">Download draft</button><button class="btn-ghost" :disabled="busy" @click="confirmRestore=false">Keep edition</button><button class="btn-ghost" :disabled="busy" @click="save(true)">Restore source definition</button></div>
     <details class="entry-field-group" @toggle="showSource=($event.target as HTMLDetailsElement).open"><summary>Compare with source</summary><div v-if="showSource" class="entry-review-body"><ReferenceValue :value="displayValue(state.source)" /></div></details>
-    <DefinitionChangeReview :kind="kind" :index="index" :version="reviewVersion" :disabled="dirty||busy" @busy="reviewBusy=$event" />
+    <DefinitionChangeReview ref="characterReview" :kind="kind" :index="index" :source-name="String(state.entry.name??'Saved entry')" :version="reviewVersion" :disabled="dirty||busy" hide-trigger @busy="reviewBusy=$event" />
   </template>
 </section></div></Teleport></template>

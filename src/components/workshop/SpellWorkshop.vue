@@ -19,6 +19,7 @@ type Pack={id:string;filename:string;hash:string}
 const draft=ref<SpellDraft|null>(null),drafts=ref<SpellDraft[]>([]),spells=ref<SpellDraft[]>([]),packs=ref<Pack[]>([]),query=ref(''),target=ref('new'),filename=ref('My Spells.orcbrew')
 const loading=ref(false),busy=ref(false),error=ref(''),storageError=ref(''),notice=ref(''),warnings=ref<string[]>([]),storageReadable=ref(true)
 const reviewBusy=ref(false)
+const characterReview=ref<InstanceType<typeof DefinitionChangeReview>|null>(null)
 const savedDraft=computed(()=>spells.value.find(d=>d.id===draft.value?.id))
 const reviewSaved=computed(()=>!!draft.value?.published&&!!savedDraft.value&&sameEntry([draft.value.body,draft.value.benefits,draft.value.source],[savedDraft.value.body,savedDraft.value.benefits,savedDraft.value.source]))
 const saveProblem=computed(()=>{
@@ -66,10 +67,10 @@ onBeforeUnmount(()=>{clearTimeout(timer);++loadNumber;++accountGeneration;persis
   <section ref="savePanel" tabindex="-1" class="hw-panel spell-save-panel" aria-label="Save spell"><h3>Save spell to pack</h3><p class="hw-hint">Saving makes this spell available in your Compendium and character choices. Existing characters keep their reviewed rules until you review and apply the saved spell below.</p>
    <label>Destination pack<select v-model="target" :disabled="!!draft.published"><option v-if="!draft.published" value="new">New pack</option><option v-if="draft.published&&!packs.some(p=>p.id===draft!.published!.packId)" :value="draft.published.packId">Original pack unavailable</option><option v-for="pack in packs" :key="pack.id" :value="pack.id">{{pack.filename}}</option></select></label>
    <label v-if="target==='new'">New pack filename<input v-model="filename" maxlength="255" /></label>
-   <button type="button" class="hw-button hw-button-primary" :disabled="busy||reviewBusy||!!saveProblem" :aria-describedby="saveProblem?'spell-save-problem':undefined" @click="publish">{{busy?'Saving…':`Save ${'spell'} to pack`}}</button>
+   <div class="hw-actions"><button type="button" class="hw-button hw-button-primary" :disabled="busy||reviewBusy||!!saveProblem" :aria-describedby="saveProblem?'spell-save-problem':undefined" @click="publish">{{busy?'Saving…':`Save ${'spell'} to pack`}}</button><button v-if="draft.published" type="button" class="hw-button" :disabled="busy||reviewBusy||!reviewSaved" @click="characterReview?.open()">Update existing characters</button></div><p v-if="draft.published&&!reviewSaved" class="hw-hint">Save your changes before updating existing characters.</p>
    <p v-if="saveProblem" id="spell-save-problem" class="hw-hint" role="status">{{saveProblem}}</p>
   </section></fieldset>
-  <DefinitionChangeReview v-if="draft.published" :kind="draft.kind" :index="draft.published.index" :version="draft.published.revision" :disabled="busy||!reviewSaved" @busy="reviewBusy=$event" />
+  <DefinitionChangeReview v-if="draft.published" ref="characterReview" :kind="draft.kind" :index="draft.published.index" :source-name="draft.body.name" :version="draft.published.revision" :disabled="busy||!reviewSaved" hide-trigger @busy="reviewBusy=$event" />
  </template>
  <template v-else><WorkshopLibraryTools title="Spells" description="Create spells using the same casting, effects and Benefits editor as the Compendium."><template #search><label>Find spells<input v-model="query" type="search" placeholder="Search by name or source…" /></label></template><template #actions><button type="button" class="hw-button hw-button-primary" :disabled="!storageReadable" @click="open(newSpellDraft())">+ New spell</button></template><template #utility><button type="button" class="hw-text-button" :disabled="busy||reviewBusy||loading" @click="refresh">Reload library</button></template></WorkshopLibraryTools>
   <p v-if="loading" class="hw-hint" role="status">Loading saved spells… Device drafts remain available.</p>

@@ -47,3 +47,9 @@ it('aborts pending requests and ignores results after unmount',async()=>{
   expect(signal.aborted).toBe(true);pending.resolve(items);await Promise.resolve();await Promise.resolve()
   expect(bindings.items.value).toEqual([])
 })
+it('opens character updates directly from a saved library item and guards active updates',async()=>{
+ get.mockResolvedValue([]);mount();await vi.waitFor(()=>expect(bindings.loading.value).toBe(false))
+ const open=vi.fn().mockResolvedValue(undefined);bindings.characterReview.value={open};const item={name:'Focus',templateId:'saved'}
+ await bindings.review(item);expect(bindings.reviewItem.value).toEqual(item);expect(open).toHaveBeenCalledTimes(1)
+ bindings.reviewBusy.value=true;await bindings.review({name:'Other'});expect(open).toHaveBeenCalledTimes(1);bindings.edit({name:'Other'});expect(bindings.open.value).toBe(false)
+})

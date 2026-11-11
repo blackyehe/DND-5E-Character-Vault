@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed,onMounted,onUnmounted,ref } from 'vue'
+import { computed,nextTick,onMounted,onUnmounted,ref } from 'vue'
 import { api } from '../../lib/api'
 import type { EquipmentItem,CharacterSummary } from '../../../shared/character'
 import ItemComposer from './ItemComposer.vue'
@@ -12,6 +12,7 @@ import { equipmentTags,itemClassificationLabel } from '../../../shared/item-clas
 const items=ref<{id:string;item:EquipmentItem;definitionRevision?:number}[]>([]),characters=ref<CharacterSummary[]>([]),target=ref(''),query=ref(''),filter=ref('all')
 const open=ref(false),mode=ref<'library'|'give'>('library'),initial=ref<EquipmentItem>(),magical=ref(false),message=ref(''),error=ref(''),loading=ref(false)
 const definitionRevision=ref(0),reviewItem=ref<EquipmentItem>()
+const characterReview=ref<InstanceType<typeof DefinitionChangeReview>|null>(null),reviewBusy=ref(false)
 const filters=ref(emptyItemFilters())
 const matches=computed(()=>items.value.filter(e=>(filter.value==='all'||!!e.item.magical===(filter.value==='magic'))&&itemSearchText(e.item).includes(query.value.toLowerCase())&&matchesEquipmentItem(e.item,filters.value)))
 let loadRun=0,disposed=false,loadAbort:AbortController|undefined
@@ -29,10 +30,11 @@ async function load(){
   }catch(e){if(!disposed&&run===loadRun&&!controller.signal.aborted)error.value=e instanceof Error?e.message:'Could not load items.'}
   finally{if(run===loadRun)loading.value=false}
 }
-function create(value:boolean){mode.value='library';initial.value=undefined;magical.value=value;open.value=true}
-function edit(item:EquipmentItem){mode.value='library';initial.value=item;definitionRevision.value=items.value.find(e=>e.id===item.templateId)?.definitionRevision??0;open.value=true}
-function give(item:EquipmentItem){mode.value='give';initial.value=item;open.value=true}
-async function saved(text:string){const id=initial.value?.templateId;message.value=text;await load();if(mode.value==='library'&&id)reviewItem.value=items.value.find(e=>e.id===id)?.item}
+function create(value:boolean){if(reviewBusy.value)return;mode.value='library';initial.value=undefined;magical.value=value;open.value=true}
+function edit(item:EquipmentItem){if(reviewBusy.value)return;mode.value='library';initial.value=item;definitionRevision.value=items.value.find(e=>e.id===item.templateId)?.definitionRevision??0;open.value=true}
+function give(item:EquipmentItem){if(reviewBusy.value)return;mode.value='give';initial.value=item;open.value=true}
+async function saved(text:string){message.value=text;await load()}
+async function review(item:EquipmentItem){if(reviewBusy.value)return;reviewItem.value=item;await nextTick();if(!disposed)await characterReview.value?.open()}
 async function removed(text:string){open.value=false;message.value=text;await load()}
 onMounted(load)
 onUnmounted(()=>{disposed=true;loadRun++;loadAbort?.abort()})
@@ -49,9 +51,9 @@ onUnmounted(()=>{disposed=true;loadRun++;loadAbort?.abort()})
     <section class="hw-panel hw-library-settings"><details class="hw-library-details"><summary>Filter by type, tags, rarity or attunement</summary><ItemFilters v-model="filters" :extra-tags="items.flatMap(e=>equipmentTags(e.item))" /></details><label>Give items to<select v-model="target"><option value="">Choose a character…</option><option v-for="c in characters" :key="c._id" :value="c._id">{{c.meta.name}}</option></select></label></section>
     <section class="hw-library-section"><div class="hw-between"><h3>Saved in your item library <span class="hw-pill">{{matches.length}}</span></h3><span class="hw-hint">Reusable copies saved to your account</span></div>
       <p v-if="loading" class="hw-hint" role="status">Loading your items…</p><p v-else-if="!matches.length" class="hw-empty-inline">{{items.length?'No items match. Clear your filters or try another search.':'Create your first item above. You can also choose an SRD item in the creator and save it to your library.'}}</p>
-      <div class="hw-library-grid"><article v-for="entry in matches" :key="entry.id" class="hw-creation-card"><button type="button" class="hw-content-card" @click="edit(entry.item)"><span class="hw-card-kind">{{entry.item.magical?'Magic':'Normal'}} · {{entry.item.kind??'Gear'}}</span><strong>{{entry.item.name}}</strong><small v-if="itemClassificationLabel(entry.item)">{{itemClassificationLabel(entry.item)}}</small><span class="hw-card-description">{{entry.item.description?.slice(0,160)||'No additional description.'}}</span><span class="hw-content-footer">Account library <b>Edit item</b></span></button><div class="hw-card-actions"><button type="button" class="hw-text-button" :disabled="!target" @click="give(entry.item)">Give item</button><DeleteCreationButton :target="{scope:'record',id:entry.id,kind:'item',revision:entry.item.templateRevision??0,name:entry.item.name}" @deleted="removed"/></div></article></div>
+      <div class="hw-library-grid"><article v-for="entry in matches" :key="entry.id" class="hw-creation-card"><button type="button" class="hw-content-card" @click="edit(entry.item)"><span class="hw-card-kind">{{entry.item.magical?'Magic':'Normal'}} · {{entry.item.kind??'Gear'}}</span><strong>{{entry.item.name}}</strong><small v-if="itemClassificationLabel(entry.item)">{{itemClassificationLabel(entry.item)}}</small><span class="hw-card-description">{{entry.item.description?.slice(0,160)||'No additional description.'}}</span><span class="hw-content-footer">Account library <b>Edit item</b></span></button><div class="hw-card-actions"><button type="button" class="hw-text-button" :disabled="reviewBusy" @click="review(entry.item)">Update characters</button><button type="button" class="hw-text-button" :disabled="!target" @click="give(entry.item)">Give item</button><DeleteCreationButton :target="{scope:'record',id:entry.id,kind:'item',revision:entry.item.templateRevision??0,name:entry.item.name}" @deleted="removed"/></div></article></div>
     </section>
-    <DefinitionChangeReview v-if="reviewItem?.templateId&&!open" :kind="reviewItem.magical?'magic-items':'equipment'" :index="`workshop-item-${reviewItem.templateId}`" :version="items.find(e=>e.id===reviewItem!.templateId)?.definitionRevision" />
+    <DefinitionChangeReview v-if="reviewItem?.templateId&&!open" ref="characterReview" :kind="reviewItem.magical?'magic-items':'equipment'" :index="`workshop-item-${reviewItem.templateId}`" :source-name="reviewItem.name" :version="items.find(e=>e.id===reviewItem!.templateId)?.definitionRevision" hide-trigger @busy="reviewBusy=$event" />
     <ItemComposer v-if="open" :mode="mode" :initial="initial" :definition-revision="definitionRevision" :initial-magical="magical" :character-id="target" :character-name="characters.find(c=>c._id===target)?.meta.name" @close="open=false" @saved="saved" />
   </section>
 </template>

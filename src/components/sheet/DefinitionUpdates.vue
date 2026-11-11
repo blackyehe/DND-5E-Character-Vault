@@ -34,6 +34,6 @@ onBeforeUnmount(()=>{++generation;controller?.abort();window.removeEventListener
   <ul><li v-for="row in updates" :key="row.kind+row.index"><strong>{{row.name}}</strong> — {{row.missing?'Source unavailable; keeping approved rules.':'A saved definition needs review.'}} <button v-if="canApply&&!row.missing" type="button" class="sheet-button sheet-small-button" :disabled="disabled||reviewBusy" @click="selected=row">Review changes</button></li></ul>
   <p v-if="!canApply" class="sheet-small">Your DM can review and apply these changes.</p>
   <button type="button" class="sheet-button sheet-small-button" :disabled="disabled||busy||reviewBusy" @click="load">{{busy?'Checking…':'Check for updates'}}</button>
-  <DefinitionChangeReview v-if="selected&&canApply" :kind="selected.kind" :index="selected.index" :character-id="characterId" :disabled="disabled" @busy="reviewBusy=$event" @applied="applied" />
+  <DefinitionChangeReview v-if="selected&&canApply" :kind="selected.kind" :index="selected.index" :source-name="selected.name" :character-id="characterId" :disabled="disabled" hide-trigger auto-open @busy="reviewBusy=$event" @applied="applied" />
  </details>
 </template>
