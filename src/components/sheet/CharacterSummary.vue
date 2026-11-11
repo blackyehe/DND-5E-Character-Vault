@@ -42,11 +42,11 @@ async function addXP(){if(store.saving||!Number.isSafeInteger(xp.value)||Number(
       </div>
       <p class="sheet-sr-only" role="status">{{message}}</p>
     </section>
-    <section class="sheet-panel sheet-summary-skills sheet-summary-grid-panel" aria-label="Skill proficiencies">
+    <section class="sheet-panel sheet-summary-skills sheet-summary-grid-panel" aria-label="Skills and saving throws">
       <h3>Skills & proficiencies <span class="sheet-count">{{skills.length}}</span></h3>
       <ul class="sheet-trained-skills"><li v-for="skill in skills" :key="skill.key" :data-rank="skill.rank"><div><span>{{skill.name}}</span><small>{{skill.ability.toUpperCase()}} · {{skill.rank==='expert'?'Expertise':skill.rank==='prof'?'Proficient':'Not proficient'}}</small></div><strong>{{signed(skill.modifier)}}</strong></li></ul>
+      <section class="sheet-summary-save-group" aria-label="Saving throws"><h4>Saving throws</h4><dl class="sheet-summary-saves"><div v-for="save in saves" :key="save.key" :data-rank="save.proficient?'prof':'none'"><dt>{{benefitTitle(save.key)}}</dt><dd>{{signed(save.modifier)}}<small>{{save.proficient?'Proficient':'Not proficient'}}</small></dd></div></dl></section>
     </section>
-    <section class="sheet-panel sheet-summary-grid-panel" aria-label="Saving throws"><h3>Saving throws</h3><dl class="sheet-summary-saves"><div v-for="save in saves" :key="save.key" :data-rank="save.proficient?'prof':'none'"><dt>{{benefitTitle(save.key)}}</dt><dd>{{signed(save.modifier)}}<small>{{save.proficient?'Proficient':'Not proficient'}}</small></dd></div></dl></section>
     <section class="sheet-panel sheet-summary-grid-panel" aria-label="Combat summary"><h3>Combat at a glance</h3><dl v-if="hasMagic" class="sheet-summary-magic"><div><dt>Spell attack</dt><dd>{{signed(benefitSpellAttack(c,benefits))}}</dd></div><div><dt>Spell save DC</dt><dd>{{benefitSpellDC(c,benefits)}}</dd></div><div><dt>Casting ability</dt><dd>{{c.spellcasting.ability.toUpperCase()}}</dd></div></dl><ul v-if="attacks.length" class="sheet-summary-attacks"><li v-for="(attack,index) in attacks" :key="index"><strong>{{attack.name}}</strong><span>Attack {{signed(attack.toHit)}}</span><span>{{attack.text}} {{attack.damageType}}</span></li></ul><p v-else class="sheet-small">No weapon or custom attacks recorded. Equip a weapon or add an attack in Edit character.</p></section>
     <section class="sheet-panel sheet-summary-training"><h3>Training & languages</h3><SheetDisclosure v-for="(values,group) in proficiencies" :key="group" :title="pretty(group)" :metadata="`${values.length} recorded`"><ul class="sheet-training-list"><li v-for="value in values" :key="value">{{value}}</li></ul><p v-if="!values.length" class="sheet-small">None recorded.</p></SheetDisclosure></section>
   </div>
@@ -54,7 +54,7 @@ async function addXP(){if(store.saving||!Number.isSafeInteger(xp.value)||Number(
 <style scoped>
 .sheet-summary-rest{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.sheet-summary-rest h3,.sheet-summary-rest p{margin:0}.sheet-summary-rest>div{flex:1 1 220px}.sheet-summary-rest>button{min-height:44px;flex-shrink:0}.sheet-summary-rest>p{flex-basis:100%}
 .sheet-section-stack.sheet-summary-overview{--summary-entry-bg:var(--sheet-entry-bg);--summary-trained-bg:var(--sheet-trained-bg);--summary-expert-bg:var(--sheet-expert-bg)}
-.sheet-section-stack.sheet-summary-overview .sheet-panel.sheet-summary-grid-panel{background:transparent;border:0;box-shadow:none;padding:0}
+.sheet-summary-save-group{margin-top:22px}.sheet-summary-save-group>h4{font:calc(20px * var(--cb-text-scale,1)) var(--sheet-title-font);color:var(--cb-ink);margin:0 0 14px}
 .sheet-section-stack.sheet-summary-overview .sheet-trained-skills{grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:8px 12px}
 .sheet-section-stack.sheet-summary-overview .sheet-trained-skills li,.sheet-summary-saves>div,.sheet-summary-magic>div,.sheet-summary-attacks>li{background:var(--summary-entry-fill,var(--summary-entry-bg));border:0;border-radius:6px;padding:10px 14px;min-width:0}
 .sheet-section-stack.sheet-summary-overview .sheet-trained-skills li{min-height:64px}.sheet-section-stack.sheet-summary-overview .sheet-trained-skills li strong{color:var(--cb-ink)}

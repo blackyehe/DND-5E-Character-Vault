@@ -30,7 +30,7 @@
    stacks and native disclosures keep their current order/opening behaviour. */
 .site-shell .hero-sheet .spellbook-actions { flex:0 0 94px; width:94px; max-width:94px; }
 .site-shell .hero-sheet .spellbook-entry:not(:has(>.spellbook-actions)) { padding-inline-end:102px; }
-.site-shell .hero-sheet .sheet-disclosure-row>.sheet-disclosure-actions { flex:0 0 110px; width:110px; max-width:110px; }
+.site-shell .hero-sheet .sheet-disclosure-row>.sheet-disclosure-actions { flex:0 0 110px; width:110px; max-width:110px; justify-content:center; min-height:var(--sheet-disclosure-header-height,64px); padding-top:0; }
 .site-shell .hero-sheet .sheet-inventory-controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 80px 114px; gap:10px; flex:0 0 420px; width:420px; max-width:100%; }
 .site-shell .hero-sheet .sheet-inventory-controls>.sheet-checkbox { grid-column:1; grid-row:1; min-width:0; }
 .site-shell .hero-sheet .sheet-inventory-controls>.sheet-checkbox+.sheet-checkbox { grid-column:2; }

@@ -1,0 +1,22 @@
+{
+  "evidence": ".local/summary-panels-pins-20261111",
+  "checkpoint": "a35a0a6",
+  "runtime": [
+    "src/components/sheet/CharacterSummary.vue",
+    "src/components/sheet/SheetDisclosure.vue",
+    "src/components/sheet/sheet-alignment.css"
+  ],
+  "tests": [],
+  "testFiles": [
+    "src/components/sheet/CharacterSummary.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts",
+    "src/components/sheet/EquipmentSpellsTab.test.ts",
+    "src/components/party/PartyCombatKit.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "postBuildRunner": "scripts/check-summary-panels-pins.mjs",
+  "baselineFiles": ".local/summary-panels-pins-20261111/baseline-files"
+}
