@@ -63,6 +63,23 @@ describe('typed benefit mechanics',()=>{
  it('deduplicates copied item and repeated same-source bonuses',()=>{const c=grant(hero(),'magic-items',[{type:'ac-bonus',value:2},{type:'ac-bonus',value:2}]);c.equipment.push({...c.equipment[0]!});expect(sheetAC(c)).toBe(12)})
  it('reads imported namespaced modifiers and supports explicit removal',()=>{const c=grant(hero(),'feats');c.compendiumRules![0]!.entry={name:'Example',index:'example',details:{':level-modifiers':[{':type':':damage-resistance',':value':':necrotic',':level':1}]}};expect(characterBenefits(c).resistances).toEqual(['necrotic']);c.compendiumRules![0]!.entry.benefits=[];expect(characterBenefits(c).resistances).toEqual([])})
  it('reads native and imported race defenses without stacking duplicates',()=>{const c=hero(),draft=newWorkshopDraft('race');draft.name='Example';draft.race!.resistances=['necrotic'];c.meta.race='Example';c.homebrew={bindings:[{ruleId:draft.id,revision:1,index:'race',className:'Example',rule:draft}],choices:{},conflicts:[],acknowledged:[]};expect(characterBenefits(c).resistances).toEqual(['necrotic'])})
+ it('shows each imported race defense once across raw modifiers, properties and Workshop projections',()=>{
+  const c=hero(),draft=newWorkshopDraft('race');draft.name='Example';draft.race!.resistances=['necrotic','cold'];draft.imported={index:'race',contentKey:'race',sources:[],raw:{':level-modifiers':[{':type':':damage-resistance',':value':':necrotic',':level':1}],':props':{':damage-resistance':{':necrotic':true,':cold':true}}}}
+  c.meta.race='Example';c.homebrew={bindings:[{ruleId:draft.id,revision:1,index:'race',className:'Example',rule:draft}],choices:{},conflicts:[],acknowledged:[]}
+  const saved=JSON.stringify(c)
+  expect(characterBenefitRows(c)).toHaveLength(2);expect(characterBenefits(c).resistances).toEqual(['necrotic','cold']);expect(benefitDamage(9,'necrotic',characterBenefits(c))).toBe(4);expect(JSON.stringify(c)).toBe(saved)
+ })
+ it('collapses repeated numeric bonuses without hiding different values, sources or unlock levels',()=>{
+  const c=grant(hero(),'feats',[{type:'spell-attack-bonus',value:1},{':type':':spell-attack-bonus',':value':1,':level':1},{type:'spell-attack-bonus',value:2},{type:'spell-attack-bonus',value:1,level:5}])
+  c.equipment=[{name:'Other source',magicIndex:'focus',qty:1,weight:0,equipped:true,notes:'',benefits:[{type:'spell-attack-bonus',value:1},{type:'spell-attack-bonus',value:1}]}]
+  expect(characterBenefitRows(c)).toHaveLength(4);expect(characterBenefitRows(c).filter(r=>r.active)).toHaveLength(3);expect(characterBenefits(c).spellAttack).toBe(4)
+  c.meta.level=5;expect(characterBenefitRows(c)).toHaveLength(4);expect(characterBenefits(c).spellAttack).toBe(4)
+ })
+ it('keeps active and inactive copies distinct and preserves different spell casting abilities',()=>{
+  const c=hero(),item={name:'Focus',magicIndex:'focus',qty:1,weight:0,equipped:true,notes:'',benefits:[{type:'spell',value:{key:'light',ability:'cha',level:0}},{type:'spell',value:{level:0,ability:'cha',key:'light'}},{type:'spell',value:{key:'light',ability:'int',level:0}}]}
+  c.equipment=[item,{...item,equipped:false}]
+  expect(characterBenefitRows(c)).toHaveLength(4);expect(characterBenefitRows(c).filter(r=>r.active)).toHaveLength(2);expect(innateRaceSpells(c).map(s=>s.ability)).toEqual(['cha','int'])
+ })
  it('exposes a new granted spell to the same innate/reference path',()=>{const c=grant(hero(),'feats',[{type:'spell',value:{key:'misty-step',ability:'cha',level:2}}]);expect(innateRaceSpells(c)).toMatchObject([{index:'misty-step',ability:'cha',source:'Example'}])})
  it('permits player activation only for reviewed spells already on the character',()=>{const c=grant(hero(),'spells'),request={expectedUpdatedAt:c.updatedAt,activeEffects:['example']};expect(playUpdateSchema.safeParse(request).success).toBe(true);expect(applyPlayUpdate(c,request)['spellcasting.activeEffects']).toEqual(['example']);expect(()=>applyPlayUpdate(c,{...request,activeEffects:['foreign']})).toThrow('Only reviewed');expect(applyPlayUpdate(c,{...request,activeEffects:[]})['spellcasting.activeEffects']).toEqual([])})
  it('makes mechanical changes reviewable and preserves play state',()=>{const old=grant(hero(),'feats',[]);old.combat.hpCurrent=3;old.resources=[{id:'focus',name:'Focus',max:3,used:2,recovery:'long'}];const next=structuredClone(old);next.compendiumRules![0]!.entry.benefits=[resistance];const reviewed=reviewedCharacter(next,[],{});expect(characterReviewChanges(old,reviewed).find(c=>c.field==='benefits and defenses')).toBeDefined();expect(reviewed.combat.hpCurrent).toBe(3);expect(reviewed.resources![0]!.used).toBe(2)})

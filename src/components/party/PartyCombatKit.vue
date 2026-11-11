@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import SpellCastingDetails from '../SpellCastingDetails.vue'
+import SpellbookEntry from '../sheet/SpellbookEntry.vue'
+import {spellProfile} from '../../lib/spell-profile'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import type { Character } from '../../../shared/character'
 import { api } from '../../lib/api'
@@ -70,7 +71,7 @@ const features = computed(() => featFeatureRows(character.value?.features ?? [])
   .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || (a.order ?? a.index) - (b.order ?? b.index)))
 const attacks = computed(() => character.value ? combatAttacks(character.value,benefits.value).filter(a => matches(`${a.name} ${a.notes}`)) : [])
 const spellList = computed(() => [...new Set([...(character.value?.spellcasting.prepared ?? []), ...(character.value?.spellcasting.known ?? [])])]
-  .map(index => ({ index, detail: spells.value[index], name: spells.value[index]?.name ?? pretty(index.replace(/^homebrew-/, '')), prepared: character.value?.spellcasting.prepared.includes(index) }))
+  .map(index => ({ index, detail: spells.value[index], name: spells.value[index]?.name ?? pretty(index.replace(/^homebrew-/, '')), prepared: character.value?.spellcasting.prepared.includes(index),profile:spellProfile(character.value!,spells.value[index],'Spellbook',character.value!.spellcasting.ability,benefits.value) }))
   .filter(s => matches(`${s.name} ${s.detail?.desc.join(' ') ?? ''}`)).sort((a, b) => Number(!!b.prepared) - Number(!!a.prepared) || a.name.localeCompare(b.name)))
 </script>
 <template>
@@ -111,7 +112,7 @@ const spellList = computed(() => [...new Set([...(character.value?.spellcasting.
           </section>
         <div class="party-reference-trackers"><slot name="trackers" /></div>
         <section v-if="character.spellcasting.known.length||character.spellcasting.prepared.length" class="party-reference-section party-reference-spells" aria-label="Spells"><div class="party-reference-heading"><h5>Spells <span class="party-section-count">{{spellList.length}}</span></h5><button type="button" class="party-sheet-link" :disabled="disabled" @click="emit('open','spells')">Full spellbook</button></div>
-            <p class="sheet-small">Prepared spells first. Innate spells and complete references are on the sheet.</p><SheetDisclosure v-for="spell in spellList" :key="spell.index" :title="spell.name" :metadata="[spell.prepared?'Prepared':'Known',spell.detail?spell.detail.level?`Level ${spell.detail.level}`:'Cantrip':'',spell.detail?.casting_time??'',spell.detail?.range??''].filter(Boolean).join(' · ')"><template v-if="spell.detail"><SpellCastingDetails class="sheet-small" :spell="spell.detail" /><FeatureText :text="spell.detail.desc.join('\n\n')" /></template><p v-else class="sheet-small">Open the full spellbook for this spell’s reference.</p></SheetDisclosure><p v-if="!spellList.length" class="sheet-small">No matching spells.</p>
+            <p class="sheet-small">Prepared spells first. Granted spells are available in the full spellbook.</p><SpellbookEntry v-for="spell in spellList" :key="spell.index" :name="spell.name" :spell="spell.detail" :profile="spell.profile"><p class="sheet-small">{{spell.prepared?'Prepared':'Known'}} · Read-only combat reference.</p></SpellbookEntry><p v-if="!spellList.length" class="sheet-small">No matching spells.</p>
           </section>
       </div>
       </details>

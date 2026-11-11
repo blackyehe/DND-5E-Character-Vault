@@ -123,7 +123,16 @@ export function characterBenefitRows(c:Character):ActiveBenefit[]{
  const rows:ActiveBenefit[]=[],approved=c.compendiumRules??[]
  for(const d of approved){const level=benefitDefinitionLevel(c,d.kind,d.index,d.entry)||benefitDefinitionLevel(c,d.kind,d.index,d.before);for(const row of selectedEntryBenefits(c,d))rows.push({source:String(d.entry.name),kind:d.kind,index:d.index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0})}
  for(const b of c.homebrew?.bindings??[]){if(approved.some(d=>d.index===b.index||d.entry.workshop&&benefitObject(d.entry.workshop).id===b.ruleId))continue;const kind=b.rule.kind==='class'?'classes':b.rule.kind==='race'?'races':'subclasses',entry={...b.rule.imported?.raw,name:b.rule.name,details:b.rule.imported?.raw,workshop:b.rule},level=benefitDefinitionLevel(c,kind,b.index,entry);for(const row of entryBenefits(entry))rows.push({source:b.rule.name,kind,index:b.index,row,level,active:level>0&&Number(benefitField(row,'level')??1)<=level&&benefitProblems([row]).length===0})}
- return [...rows,...inventoryBenefitRows(c)]
+ const seen=new Set<string>()
+ return [...rows,...inventoryBenefitRows(c)].filter(r=>{
+  const type=benefitKey(benefitField(r.row,'type')),spec=Object.hasOwn(BENEFIT_TYPES,type)?BENEFIT_TYPES[type]:undefined,raw=benefitField(r.row,'value')
+  // Compare rule values rather than import spelling or object field order.
+  // Unknown payloads retain their full identity; never guess their semantics.
+  const value=!spec?r.row:spec.spell?[benefitKey(benefitField(raw,'key')),benefitKey(benefitField(raw,'ability')),benefitField(raw,'level')??0]:spec.flag?null:spec.values?.find(v=>optionKey(v)===optionKey(raw))??raw
+  const id=JSON.stringify([r.kind,r.index,r.source,r.level,r.active,type,value,benefitField(r.row,'level')??1])
+  if(seen.has(id))return false
+  seen.add(id);return true
+ })
 }
 export function characterBenefits(c:Character){
  const skills={...c.skills},saves={...c.saves},proficiencies={armor:[...c.proficiencies.armor],weapons:[...c.proficiencies.weapons],tools:[...c.proficiencies.tools],languages:[...c.proficiencies.languages]}

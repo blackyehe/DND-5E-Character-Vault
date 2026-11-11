@@ -1,0 +1,27 @@
+{
+  "evidence": ".local/benefit-rows-party-spells-20261111",
+  "checkpoint": "28c2d68",
+  "runtime": [
+    "shared/rule-benefits.ts",
+    "src/components/party/PartyCombatKit.vue"
+  ],
+  "tests": [
+    "shared/rule-benefits.test.ts",
+    "src/components/party/PartyCombatKit.test.ts"
+  ],
+  "testFiles": [
+    "shared/rule-benefits.test.ts",
+    "src/components/party/PartyCombatKit.test.ts",
+    "shared/rule-benefits-audit.test.ts",
+    "server/lib/compendium-character.test.ts",
+    "server/routes/compendium.test.ts",
+    "src/lib/spell-profile.test.ts",
+    "src/components/sheet/SpellbookPanel.test.ts"
+  ],
+  "integrationRunner": "scripts/check-definition-consistency.mjs",
+  "validationSupport": [
+    "workspace-artifacts.mjs"
+  ],
+  "postBuildRunner": "scripts/check-party-spell-ui.mjs",
+  "baselineFiles": ".local/benefit-rows-party-spells-20261111/baseline-files"
+}
